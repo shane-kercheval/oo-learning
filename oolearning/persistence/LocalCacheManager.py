@@ -1,0 +1,103 @@
+import os.path
+import pickle
+import string
+from typing import Callable
+
+from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
+
+
+class LocalCacheManager(PersistenceManagerBase):
+    """
+    # TODO: document
+    can either set the key in the constructor (perhaps for only retrieving a single object, or can set the
+    key when calling get_object (perhaps when retrieving multiple objects from the same directory)
+    """
+
+    def __init__(self,
+                 cache_directory: str,
+                 key: str=None,
+                 key_prefix: str=None,
+                 create_dir_if_not_exist: bool=True):
+        """
+        # TODO document
+        :param cache_directory:
+        :param key:
+        :type key_prefix: object
+        :param create_dir_if_not_exist:
+        :return:
+        """
+        super().__init__()
+        # if we aren't going to create the directory, it should exist
+        if not create_dir_if_not_exist and not os.path.exists(cache_directory):
+            raise NotADirectoryError()
+
+        self._cache_directory = cache_directory
+        self._key_prefix = key_prefix
+        self._cache_path = None if key is None else self._create_cached_path(key)
+
+    def set_key(self, key: str):
+        self._cache_path = self._create_cached_path(key=key)
+
+    def set_key_prefix(self, prefix: str):
+        """
+        NOTE: setting the prefix invalidates the current cache_path, so if the key was previously set, it must
+            be reset.
+        :param prefix: all future keys used are prefixed with this string
+        """
+        self._cache_path = None  # setting the prefix invalidates whatever the current cache_path is
+        self._key_prefix = prefix
+
+    def get_object(self, fetch_function: Callable[[], object], key: str=None) -> object:
+        """
+        # TODO document
+        :param fetch_function:
+        :param key:
+        :return:
+        """
+        # we either have to have the `_cache_path` built up from `key` being passed into constructor or a
+        # previous call to `get_object`; or we have to have the `key` passed in
+        assert self._cache_path is not None or key is not None
+
+        if key is not None:  # create the path (either for first time or replace existing)
+            self._cache_path = self._create_cached_path(key=key)
+
+        # if the cached object exists, then return the cache; else fetch, store, and return the object
+        if os.path.isfile(self._cache_path):
+            with open(self._cache_path, 'rb') as saved_object:
+                return pickle.load(saved_object)
+        else:
+            # fetch
+            fetched_object = fetch_function()
+            assert fetched_object is not None
+            # save; note, either the directory exists, or it doesn't exist but it is ok to create it
+            # (otherwise we would have raised a NotADirectoryError in the constructor)
+            os.makedirs(os.path.dirname(self._cache_path), exist_ok=True)
+            with open(self._cache_path, 'xb') as output:
+                pickle.dump(fetched_object, output, pickle.HIGHEST_PROTOCOL)
+
+            return fetched_object
+
+    def _create_cached_path(self, key):
+        """
+        # TODO document
+
+        :param key:
+        :return: directory + final file name based off of the key.
+            NOTE: if the final file name is > 255 characters, which is the max length in most popular
+            operating systems, then the filename is converted to a hash.
+        """
+        assert key is not None
+
+        key = key if self._key_prefix is None else self._key_prefix + key
+
+        # there might be invalid characters in the key i.e. file name
+        valid_chars = "-_.()k%s%s" % (string.ascii_letters, string.digits)
+        key = ''.join(c for c in key if c in valid_chars)
+
+        key = key + '.pkl'
+
+        if len(key) > 255:  # 255 is max filename length in most popular systems
+            key = str(hash(key)) + '.pkl'
+
+        cache_path = os.path.join(self._cache_directory, key)
+        return cache_path if cache_path[0] != '/' else cache_path[1:]
