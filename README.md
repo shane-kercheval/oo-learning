@@ -1,3 +1,11 @@
+
+**THIS PROJECT IS NOT READY TO BE CONSUMED.**
+
+
+
+
+
+
 # oo-learning
 
 OO-Learning is a simple Python machine learning library based on Object Oriented design principles.

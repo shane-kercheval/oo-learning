@@ -72,6 +72,7 @@ class TwoClassEvaluator(ClassificationEvaluator):
         pos_predictions = self._predicted_values.loc[:, self._positive_category]
         return np.where(pos_predictions > threshold, self._positive_category, self._negative_category)
 
+    # TODO: cache this value
     def _calculate_fpr_tpr_ideal_threshold(self) -> Tuple[np.ndarray, np.ndarray, float]:
         """
         helper method to calculate false positive and true positive (sensitivity) rates for possible
