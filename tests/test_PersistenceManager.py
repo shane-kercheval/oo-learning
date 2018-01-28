@@ -1,7 +1,7 @@
 import os
 import shutil
 
-from oolearning.persistence.LocalCacheManager import LocalCacheManager
+from oolearning import *
 from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 

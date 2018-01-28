@@ -5,8 +5,7 @@ from os import remove
 
 import matplotlib.pyplot as plt
 
-from oolearning.splitters.ClassificationStratifiedDataSplitter import ClassificationStratifiedDataSplitter
-from oolearning.splitters.RegressionStratifiedDataSplitter import RegressionStratifiedDataSplitter
+from oolearning import *
 from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 

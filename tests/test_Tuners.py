@@ -6,27 +6,8 @@ from os import remove
 import dill as pickle
 import matplotlib.pyplot as plt
 
-from oolearning.persistence.LocalCacheManager import LocalCacheManager
-from oolearning.enums.CategoricalEncoding import CategoricalEncoding
-from oolearning.evaluators.ErrorRateTwoClassEvaluator import ErrorRateTwoClassEvaluator
-from oolearning.evaluators.KappaEvaluator import KappaEvaluator
-from oolearning.evaluators.MaeEvaluator import MaeEvaluator
-from oolearning.evaluators.RmseEvaluator import RmseEvaluator
-from oolearning.evaluators.SensitivityEvaluator import SensitivityEvaluator
-from oolearning.evaluators.SpecificityEvaluator import SpecificityEvaluator
-from oolearning.hyper_params.HyperParamsGrid import HyperParamsGrid
-from oolearning.hyper_params.RandomForestHP import RandomForestHP
-from oolearning.model_processors.ModelTuner import ModelTuner
-from oolearning.model_processors.RepeatedCrossValidationResampler import RepeatedCrossValidationResampler
-from oolearning.model_processors.ResamplerResults import ResamplerResults
-from oolearning.model_wrappers.ModelDefaults import ModelDefaults
-from oolearning.model_wrappers.RandomForestMW import RandomForestMW
-from oolearning.model_wrappers.RegressionMW import RegressionMW
-from oolearning.transformers.CategoricConverterTransformer import CategoricConverterTransformer
-from oolearning.transformers.DummyEncodeTransformer import DummyEncodeTransformer
-from oolearning.transformers.ImputationTransformer import ImputationTransformer
-from oolearning.transformers.RemoveColumnsTransformer import RemoveColumnsTransformer
-from oolearning.transformers.TransformerPipeline import TransformerPipeline
+from oolearning import *
+
 from tests.MockClassificationModelWrapper import MockClassificationModelWrapper
 from tests.MockEvaluator import MockEvaluator
 from tests.MockHyperParams import MockHyperParams

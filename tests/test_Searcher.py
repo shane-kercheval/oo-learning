@@ -3,23 +3,8 @@ import os
 import shutil
 from math import isclose
 
-from oolearning.ModelInfo import ModelInfo
-from oolearning.ModelSearcher import ModelSearcher
-from oolearning.persistence.LocalCacheManager import LocalCacheManager
-from oolearning.enums.CategoricalEncoding import CategoricalEncoding
-from oolearning.evaluators.ErrorRateTwoClassEvaluator import ErrorRateTwoClassEvaluator
-from oolearning.evaluators.KappaEvaluator import KappaEvaluator
-from oolearning.evaluators.SensitivityEvaluator import SensitivityEvaluator
-from oolearning.evaluators.SpecificityEvaluator import SpecificityEvaluator
-from oolearning.hyper_params.HyperParamsGrid import HyperParamsGrid
-from oolearning.model_processors.RepeatedCrossValidationResampler import RepeatedCrossValidationResampler
-from oolearning.splitters.ClassificationStratifiedDataSplitter import ClassificationStratifiedDataSplitter
-from oolearning.transformers.CategoricConverterTransformer import CategoricConverterTransformer
-from oolearning.transformers.CenterScaleTransfomer import CenterScaleTransformer
-from oolearning.transformers.DummyEncodeTransformer import DummyEncodeTransformer
-from oolearning.transformers.ImputationTransformer import ImputationTransformer
-from oolearning.transformers.RemoveColumnsTransformer import RemoveColumnsTransformer
-from oolearning.transformers.RemoveCorrelationsTransformer import RemoveCorrelationsTransformer
+from oolearning import *
+
 from tests.MockClassificationModelWrapper import MockClassificationModelWrapper
 from tests.MockHyperParams import MockHyperParams
 from tests.TestHelper import TestHelper

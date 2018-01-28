@@ -12,29 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from oolearning.persistence.LocalCacheManager import LocalCacheManager
-from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
-from oolearning.enums.CategoricalEncoding import CategoricalEncoding
-from oolearning.enums.Metric import Metric
-from oolearning.evaluators.AucEvaluator import AucEvaluator
-from oolearning.evaluators.KappaEvaluator import KappaEvaluator
-from oolearning.evaluators.MaeEvaluator import MaeEvaluator
-from oolearning.evaluators.RmseEvaluator import RmseEvaluator
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
-from oolearning.hyper_params.RandomForestHP import RandomForestHP
-from oolearning.model_processors.ModelFitter import ModelFitter
-from oolearning.model_wrappers.LogisticMW import LogisticMW
-from oolearning.model_wrappers.ModelDefaults import ModelDefaults
-from oolearning.model_wrappers.ModelExceptions import ModelAlreadyFittedError, ModelNotFittedError, \
-    MissingValueError, ModelCachedAlreadyConfigured
-from oolearning.model_wrappers.RandomForestMW import RandomForestMW
-from oolearning.model_wrappers.RegressionMW import RegressionMW
-from oolearning.splitters.ClassificationStratifiedDataSplitter import ClassificationStratifiedDataSplitter
-from oolearning.splitters.RegressionStratifiedDataSplitter import RegressionStratifiedDataSplitter
-from oolearning.transformers.CategoricConverterTransformer import CategoricConverterTransformer
-from oolearning.transformers.DummyEncodeTransformer import DummyEncodeTransformer
-from oolearning.transformers.ImputationTransformer import ImputationTransformer
-from oolearning.transformers.RemoveColumnsTransformer import RemoveColumnsTransformer
+from oolearning import *
 from tests.MockClassificationModelWrapper import MockClassificationModelWrapper
 from tests.MockRegressionModelWrapper import MockRegressionModelWrapper
 from tests.TestHelper import TestHelper

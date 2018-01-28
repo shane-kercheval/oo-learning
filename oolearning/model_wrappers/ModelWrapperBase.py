@@ -11,6 +11,8 @@ from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
 from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError, ModelAlreadyFittedError,\
     ModelCachedAlreadyConfigured
 
+__all__ = ['ModelWrapperBase']
+
 
 class ModelWrapperBase(metaclass=ABCMeta):
     """

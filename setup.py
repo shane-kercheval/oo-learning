@@ -1,8 +1,9 @@
 from distutils.core import setup
+from setuptools import find_packages
 setup(
     name='oolearning',
-    packages=['oolearning'],  # this must be the same as the name above
-    version='0.1.1',
+    packages=find_packages(),
+    version='0.1.2',
     description='A simple machine learning library based on Object Oriented design principles.',
     author='Shane Kercheval',
     author_email='shane.kercheval@gmail.com',

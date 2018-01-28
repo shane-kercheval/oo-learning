@@ -6,15 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from oolearning.enums.Metric import Metric
-from oolearning.evaluators.AucEvaluator import AucEvaluator
-from oolearning.evaluators.ConfusionMatrix import ConfusionMatrix
-from oolearning.evaluators.KappaEvaluator import KappaEvaluator
-from oolearning.evaluators.MaeEvaluator import MaeEvaluator
-from oolearning.evaluators.RmseEvaluator import RmseEvaluator
-from oolearning.evaluators.SensitivityEvaluator import SensitivityEvaluator
-from oolearning.evaluators.SpecificityEvaluator import SpecificityEvaluator
-from oolearning.evaluators.TwoClassEvaluator import TwoClassEvaluator
+from oolearning import *
 from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 
