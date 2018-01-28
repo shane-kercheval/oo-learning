@@ -3,13 +3,13 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
-from oolearning.model_processors.ResamplerBase import ResamplerBase
-from oolearning.model_processors.ResamplerResults import ResamplerResults
-from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.transformers.TransformerBase import TransformerBase
+from ..persistence.PersistenceManagerBase import PersistenceManagerBase
+from ..evaluators.EvaluatorBase import EvaluatorBase
+from ..hyper_params.HyperParamsBase import HyperParamsBase
+from ..model_processors.ResamplerBase import ResamplerBase
+from ..model_processors.ResamplerResults import ResamplerResults
+from ..model_wrappers.ModelWrapperBase import ModelWrapperBase
+from ..transformers.TransformerBase import TransformerBase
 
 
 class RepeatedCrossValidationResampler(ResamplerBase):

@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from oolearning.transformers.TransformerBase import TransformerBase
+from .TransformerBase import TransformerBase
 
 
 class RemoveCorrelationsTransformer(TransformerBase):

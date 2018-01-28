@@ -5,14 +5,14 @@ import copy
 import pandas as pd
 import numpy as np
 
-from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
-from oolearning.model_processors.ResamplerResults import ResamplerResults
-from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError
-from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.transformers.TransformerBase import TransformerBase
-from oolearning.transformers.TransformerPipeline import TransformerPipeline
+from ..persistence.PersistenceManagerBase import PersistenceManagerBase
+from ..evaluators.EvaluatorBase import EvaluatorBase
+from ..hyper_params.HyperParamsBase import HyperParamsBase
+from ..model_processors.ResamplerResults import ResamplerResults
+from ..model_wrappers.ModelExceptions import ModelNotFittedError
+from ..model_wrappers.ModelWrapperBase import ModelWrapperBase
+from ..transformers.TransformerBase import TransformerBase
+from ..transformers.TransformerPipeline import TransformerPipeline
 
 
 class ResamplerBase(metaclass=ABCMeta):

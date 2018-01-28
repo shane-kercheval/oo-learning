@@ -5,8 +5,8 @@ import math
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score
 
-from oolearning.evaluators.ClassificationEvaluator import ClassificationEvaluator
-from oolearning.evaluators.ConfusionMatrix import ConfusionMatrix
+from .ClassificationEvaluator import ClassificationEvaluator
+from .ConfusionMatrix import ConfusionMatrix
 
 
 # noinspection PyAbstractClass

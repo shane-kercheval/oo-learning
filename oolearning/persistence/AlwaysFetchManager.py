@@ -1,6 +1,6 @@
 from typing import Callable
 
-from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
+from .PersistenceManagerBase import PersistenceManagerBase
 
 
 class AlwaysFetchManager(PersistenceManagerBase):

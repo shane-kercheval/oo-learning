@@ -2,8 +2,8 @@ from typing import Tuple
 
 import numpy as np
 
-from oolearning.enums.Metric import Metric
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase
+from .EvaluatorBase import EvaluatorBase
+from ..enums.Metric import Metric
 
 
 class RmseEvaluator(EvaluatorBase):

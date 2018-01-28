@@ -2,7 +2,7 @@ from typing import List
 
 import pandas as pd
 
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase
+from ..evaluators.EvaluatorBase import EvaluatorBase
 
 
 class ResamplerResults:

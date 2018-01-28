@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from oolearning.splitters.StratifiedDataSplitter import StratifiedDataSplitter
+from .StratifiedDataSplitter import StratifiedDataSplitter
 
 
 class RegressionStratifiedDataSplitter(StratifiedDataSplitter):

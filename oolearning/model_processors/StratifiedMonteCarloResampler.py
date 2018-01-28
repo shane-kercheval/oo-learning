@@ -2,13 +2,13 @@ import numpy as np
 import pandas as pd
 from typing import List
 
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
-from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.model_processors.ResamplerBase import ResamplerBase
-from oolearning.model_processors.ResamplerResults import ResamplerResults
-from oolearning.splitters.StratifiedDataSplitter import StratifiedDataSplitter
-from oolearning.transformers.TransformerBase import TransformerBase
+from ..evaluators.EvaluatorBase import EvaluatorBase
+from ..hyper_params.HyperParamsBase import HyperParamsBase
+from ..model_wrappers.ModelWrapperBase import ModelWrapperBase
+from ..model_processors.ResamplerBase import ResamplerBase
+from ..model_processors.ResamplerResults import ResamplerResults
+from ..splitters.StratifiedDataSplitter import StratifiedDataSplitter
+from ..transformers.TransformerBase import TransformerBase
 
 # TODO: NOT FINISHED, NOT TESTED
 

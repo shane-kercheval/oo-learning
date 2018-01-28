@@ -3,7 +3,7 @@ import pickle
 import string
 from typing import Callable
 
-from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
+from .PersistenceManagerBase import PersistenceManagerBase
 
 
 class LocalCacheManager(PersistenceManagerBase):

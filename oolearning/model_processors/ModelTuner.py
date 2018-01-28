@@ -3,12 +3,12 @@ import time
 import numpy as np
 import pandas as pd
 
-from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
-from oolearning.hyper_params.HyperParamsGrid import HyperParamsGrid
-from oolearning.model_processors.ResamplerBase import ResamplerBase
-from oolearning.model_processors.TunerResults import TunerResults
-from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError
+from ..persistence.PersistenceManagerBase import PersistenceManagerBase
+from ..hyper_params.HyperParamsBase import HyperParamsBase
+from ..hyper_params.HyperParamsGrid import HyperParamsGrid
+from ..model_processors.ResamplerBase import ResamplerBase
+from ..model_processors.TunerResults import TunerResults
+from ..model_wrappers.ModelExceptions import ModelNotFittedError
 
 
 class ModelTuner:

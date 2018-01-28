@@ -1,7 +1,7 @@
 import pandas as pd
-from oolearning.ModelSearcherHelpers import ModelSearcherHelpers
-from oolearning.enums.CategoricalEncoding import CategoricalEncoding
-from oolearning.transformers.TransformerBase import TransformerBase
+from ..ModelSearcherHelpers import ModelSearcherHelpers
+from ..enums.CategoricalEncoding import CategoricalEncoding
+from .TransformerBase import TransformerBase
 
 
 class DummyEncodeTransformer(TransformerBase):

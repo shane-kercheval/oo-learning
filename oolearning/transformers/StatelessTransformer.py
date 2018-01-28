@@ -1,7 +1,7 @@
 from typing import Callable
 import pandas as pd
 
-from oolearning.transformers.TransformerBase import TransformerBase
+from .TransformerBase import TransformerBase
 
 
 class StatelessTransformer(TransformerBase):

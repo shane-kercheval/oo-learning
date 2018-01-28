@@ -1,6 +1,6 @@
 from matplotlib import figure
 
-from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
+from .FittedInfoBase import FittedInfoBase
 
 
 # TODO: NOT FINISHED / TESTED, ONLY COMPLETED ENOUGH TO TEST MODEL TUNER

@@ -1,11 +1,10 @@
 from typing import Callable
-from scipy import stats
 
 import pandas as pd
 import numpy as np
 
-from oolearning.ModelSearcherHelpers import ModelSearcherHelpers
-from oolearning.transformers.TransformerBase import TransformerBase
+from ..ModelSearcherHelpers import ModelSearcherHelpers
+from .TransformerBase import TransformerBase
 
 
 class ImputationTransformer(TransformerBase):

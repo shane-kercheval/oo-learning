@@ -1,5 +1,6 @@
 import numpy as np
-from oolearning.splitters.StratifiedDataSplitter import StratifiedDataSplitter
+
+from .StratifiedDataSplitter import StratifiedDataSplitter
 
 
 class ClassificationStratifiedDataSplitter(StratifiedDataSplitter):

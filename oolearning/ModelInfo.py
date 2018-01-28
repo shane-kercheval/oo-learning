@@ -1,9 +1,9 @@
 from typing import List
 
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
-from oolearning.hyper_params.HyperParamsGrid import HyperParamsGrid
-from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.transformers.TransformerBase import TransformerBase
+from .hyper_params.HyperParamsBase import HyperParamsBase
+from .hyper_params.HyperParamsGrid import HyperParamsGrid
+from .model_wrappers.ModelWrapperBase import ModelWrapperBase
+from .transformers.TransformerBase import TransformerBase
 
 
 class ModelInfo:

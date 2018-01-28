@@ -2,11 +2,11 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
-from oolearning.fitted_info.RandomForestFI import RandomForestFI
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
-from oolearning.hyper_params.RandomForestHP import RandomForestHP
-from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
-from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
+from .ModelWrapperBase import ModelWrapperBase
+from ..fitted_info.RandomForestFI import RandomForestFI
+from ..hyper_params.HyperParamsBase import HyperParamsBase
+from ..hyper_params.RandomForestHP import RandomForestHP
+from ..fitted_info.FittedInfoBase import FittedInfoBase
 
 
 class RandomForestMW(ModelWrapperBase):

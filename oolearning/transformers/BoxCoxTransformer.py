@@ -1,10 +1,9 @@
 import pandas as pd
-
 from scipy import stats
 
-from oolearning.ModelSearcherHelpers import ModelSearcherHelpers
-from oolearning.model_wrappers.ModelExceptions import NegativeValuesFoundError
-from oolearning.transformers.TransformerBase import TransformerBase
+from ..ModelSearcherHelpers import ModelSearcherHelpers
+from ..model_wrappers.ModelExceptions import NegativeValuesFoundError
+from .TransformerBase import TransformerBase
 
 
 # noinspection SpellCheckingInspection

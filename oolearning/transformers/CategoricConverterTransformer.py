@@ -1,7 +1,7 @@
 from typing import List
 import pandas as pd
 
-from oolearning.transformers.TransformerBase import TransformerBase
+from .TransformerBase import TransformerBase
 
 
 class CategoricConverterTransformer(TransformerBase):

@@ -3,8 +3,8 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase
-from oolearning.model_processors.TunerResults import TunerResults
+from .evaluators.EvaluatorBase import EvaluatorBase
+from .model_processors.TunerResults import TunerResults
 
 
 class SearcherResults:

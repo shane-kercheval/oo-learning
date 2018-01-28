@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Tuple, List, Callable
 import numpy as np
 
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase
+from .EvaluatorBase import EvaluatorBase
 
 
 class ClassificationEvaluator(EvaluatorBase):

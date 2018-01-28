@@ -1,7 +1,7 @@
 import pandas as pd
 from typing import List
 
-from oolearning.transformers.TransformerBase import TransformerBase
+from .TransformerBase import TransformerBase
 
 
 class TransformerPipeline:

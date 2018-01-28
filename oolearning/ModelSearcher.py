@@ -3,17 +3,17 @@ from typing import List, Callable
 import numpy as np
 import pandas as pd
 
-from oolearning.ModelInfo import ModelInfo
-from oolearning.SearcherResults import SearcherResults
-from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
-from oolearning.model_processors.ModelFitter import ModelFitter
-from oolearning.model_processors.ModelTuner import ModelTuner
-from oolearning.model_processors.ResamplerBase import ResamplerBase
-from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError
-from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.splitters.DataSplitterBase import DataSplitterBase
-from oolearning.transformers.TransformerBase import TransformerBase
-from oolearning.transformers.TransformerPipeline import TransformerPipeline
+from .ModelInfo import ModelInfo
+from .SearcherResults import SearcherResults
+from .persistence.PersistenceManagerBase import PersistenceManagerBase
+from .model_processors.ModelFitter import ModelFitter
+from .model_processors.ModelTuner import ModelTuner
+from .model_processors.ResamplerBase import ResamplerBase
+from .model_wrappers.ModelExceptions import ModelNotFittedError
+from .model_wrappers.ModelWrapperBase import ModelWrapperBase
+from .splitters.DataSplitterBase import DataSplitterBase
+from .transformers.TransformerBase import TransformerBase
+from .transformers.TransformerPipeline import TransformerPipeline
 
 
 class ModelSearcher:

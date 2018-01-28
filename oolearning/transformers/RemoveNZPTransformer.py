@@ -1,6 +1,6 @@
 import pandas as pd
 
-from oolearning.transformers.TransformerBase import TransformerBase
+from .TransformerBase import TransformerBase
 
 
 class RemoveNZPTransformer(TransformerBase):

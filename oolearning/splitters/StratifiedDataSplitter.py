@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.preprocessing import LabelEncoder
 
-from oolearning.splitters.DataSplitterBase import DataSplitterBase
+from .DataSplitterBase import DataSplitterBase
 
 
 class StratifiedDataSplitter(DataSplitterBase):

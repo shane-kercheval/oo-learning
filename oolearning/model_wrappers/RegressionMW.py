@@ -2,11 +2,11 @@ import pandas as pd
 import numpy as np
 import statsmodels.api as sm
 
-from oolearning.fitted_info.RegressionFI import RegressionFI
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
-from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
-from oolearning.model_wrappers.ModelExceptions import MissingValueError
-from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
+from ..fitted_info.RegressionFI import RegressionFI
+from ..hyper_params.HyperParamsBase import HyperParamsBase
+from ..fitted_info.FittedInfoBase import FittedInfoBase
+from .ModelExceptions import MissingValueError
+from .ModelWrapperBase import ModelWrapperBase
 
 
 class RegressionMW(ModelWrapperBase):

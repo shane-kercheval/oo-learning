@@ -1,7 +1,8 @@
 from typing import Tuple
 import numpy as np
-from oolearning.enums.Metric import Metric
-from oolearning.evaluators.TwoClassEvaluator import TwoClassEvaluator
+
+from .TwoClassEvaluator import TwoClassEvaluator
+from ..enums.Metric import Metric
 
 
 class KappaEvaluator(TwoClassEvaluator):

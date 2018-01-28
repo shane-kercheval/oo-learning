@@ -5,7 +5,7 @@ import pandas as pd
 from matplotlib import figure, pyplot as plt
 from statsmodels import api as sm
 
-from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
+from .FittedInfoBase import FittedInfoBase
 
 
 class RegressionFI(FittedInfoBase):

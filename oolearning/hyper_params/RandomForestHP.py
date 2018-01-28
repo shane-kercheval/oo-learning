@@ -1,6 +1,6 @@
 from typing import Union
 
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
+from .HyperParamsBase import HyperParamsBase
 
 
 class RandomForestHP(HyperParamsBase):

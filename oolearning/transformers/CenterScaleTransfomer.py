@@ -1,7 +1,7 @@
 import pandas as pd
 
-from oolearning.ModelSearcherHelpers import ModelSearcherHelpers
-from oolearning.transformers.TransformerBase import TransformerBase
+from ..ModelSearcherHelpers import ModelSearcherHelpers
+from .TransformerBase import TransformerBase
 
 
 # TODO: document

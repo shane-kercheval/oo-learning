@@ -1,7 +1,7 @@
 import pandas as pd
 from matplotlib import figure
 
-from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
+from .FittedInfoBase import FittedInfoBase
 
 
 class LogisticFI(FittedInfoBase):
