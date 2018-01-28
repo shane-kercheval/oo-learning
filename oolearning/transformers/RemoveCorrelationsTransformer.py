@@ -11,22 +11,22 @@ class RemoveCorrelationsTransformer(TransformerBase):
 
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         # This method is described in APM on pg 47 as the following steps:
-        #   - calculate the correlation matrix of predictors
-        #   - determine the two predictors associated with the largest absolute pairwise correlation
-        #     (call them predictors `A` and `B`)
+        #   - calculate the correlation matrix of features
+        #   - determine the two features associated with the largest absolute pairwise correlation
+        #     (call them features `A` and `B`)
         #   - Determine the average correlation between `A` and the other variables.
         #     - Do the same for `B`
-        #   - If `A` has a larger average correlation, remove it; otherwise, remove predictor `B`
+        #   - If `A` has a larger average correlation, remove it; otherwise, remove feature `B`
         #   - Repeat until no absolute correlations are above the threshold (``r correlation_threshold``)
 
         columns_to_remove = list()
 
         while True:
             # noinspection PyUnresolvedReferences
-            # `corr()` automatically excludes categorical predictors
+            # `corr()` automatically excludes categorical features
             correlation_matrix = data_x.drop(columns=columns_to_remove, axis=1).corr()
 
-            predictors = correlation_matrix.columns.values
+            features = correlation_matrix.columns.values
             correlation_matrix = np.abs(correlation_matrix.as_matrix())
             np.fill_diagonal(correlation_matrix, np.NaN)
 
@@ -42,9 +42,9 @@ class RemoveCorrelationsTransformer(TransformerBase):
                 mean_a_correlation = np.nanmean(correlation_matrix[indexes[0], ])
                 mean_b_correlation = np.nanmean(correlation_matrix[indexes[1], ])
 
-                columns_to_remove.append(predictors[indexes[0]]
+                columns_to_remove.append(features[indexes[0]]
                                          if mean_a_correlation > mean_b_correlation
-                                         else predictors[indexes[1]])
+                                         else features[indexes[1]])
             else:
                 break
 

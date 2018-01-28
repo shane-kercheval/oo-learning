@@ -439,15 +439,15 @@ class TransformerTests(TimerTestCase):
         # training_set.households.hist()
         # training_set.median_income.hist()
 
-        # fail because we are passing in a predictor that doesn't exist
-        transformer = BoxCoxTransformer(predictors=['invalid_predictor', 'total_rooms'])
+        # fail because we are passing in a feature that doesn't exist
+        transformer = BoxCoxTransformer(features=['invalid_feature', 'total_rooms'])
         self.assertRaises(AssertionError, lambda: transformer.fit_transform(data_x=training_set))
-        # fail because we are passing in a predictor that has negative values
-        transformer = BoxCoxTransformer(predictors=['longitude', 'housing_median_age', 'total_rooms'])
+        # fail because we are passing in a feature that has negative values
+        transformer = BoxCoxTransformer(features=['longitude', 'housing_median_age', 'total_rooms'])
         self.assertRaises(NegativeValuesFoundError, lambda: transformer.fit_transform(data_x=training_set))
         # should work
-        transformer = BoxCoxTransformer(predictors=['housing_median_age', 'total_rooms', 'total_bedrooms',
-                                                    'population', 'households', 'median_income'])
+        transformer = BoxCoxTransformer(features=['housing_median_age', 'total_rooms', 'total_bedrooms',
+                                                  'population', 'households', 'median_income'])
         transformed_data = transformer.fit_transform(data_x=training_set)
         # ensure that non-specified columns didnt' change
         assert all(training_set.longitude == transformed_data.longitude)

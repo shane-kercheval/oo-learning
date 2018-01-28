@@ -49,7 +49,7 @@ class RandomForestHP(HyperParamsBase):
         :param num_features: if num_features is set,
             max_features will be set to
                 - the square root of num_features for classification problems, and
-                - 1/3 of the number of predictors for regression problems (APM pg 199)
+                - 1/3 of the number of features for regression problems (APM pg 199)
             Regression vs Classification is determined from the criterion passed in.
         """
         super().__init__()

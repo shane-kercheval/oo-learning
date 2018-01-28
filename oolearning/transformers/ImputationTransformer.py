@@ -3,7 +3,7 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 
-from oolearning.ModelSearcherHelpers import ModelSearcherHelpers
+from oolearning.OOLearningHelpers import OOLearningHelpers
 from oolearning.transformers.TransformerBase import TransformerBase
 
 
@@ -28,15 +28,15 @@ class ImputationTransformer(TransformerBase):
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         imputed_values = dict()
         # make sure the target/response column is ignored
-        numeric_predictors, categoric_predictors = ModelSearcherHelpers.\
+        numeric_features, categoric_features = OOLearningHelpers.\
             get_columns_by_type(data_dtypes=data_x.dtypes, target_variable=None)
 
         if self._numeric_imputation_function is not None:
-            for column in numeric_predictors:
+            for column in numeric_features:
                 imputed_values[column] = self._numeric_imputation_function(data_x[column])
 
         if self._categoric_imputation_function is not None:
-            for column in categoric_predictors:
+            for column in categoric_features:
                 imputed_values[column] = self._categoric_imputation_function(data_x[column])
 
         return imputed_values

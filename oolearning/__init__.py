@@ -1,6 +1,7 @@
 from .ModelInfo import ModelInfo
 from .ModelSearcher import ModelSearcher
 from .SearcherResults import SearcherResults
+from .OOLearningHelpers import OOLearningHelpers
 
 from .enums.CategoricalEncoding import CategoricalEncoding
 from .enums.Imputation import Imputation
@@ -21,6 +22,9 @@ from .evaluators.RmseEvaluator import RmseEvaluator
 from .evaluators.SensitivityEvaluator import SensitivityEvaluator
 from .evaluators.SpecificityEvaluator import SpecificityEvaluator
 from .evaluators.TwoClassEvaluator import TwoClassEvaluator
+
+from .exploratory.ExploreClassificationDataset import ExploreClassificationDataset
+from .exploratory.ExploreRegressionDataset import ExploreRegressionDataset
 
 from .fitted_info.FittedInfoBase import FittedInfoBase
 from .fitted_info.LogisticFI import LogisticFI

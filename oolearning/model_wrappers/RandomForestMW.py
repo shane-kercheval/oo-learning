@@ -12,14 +12,14 @@ from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 class RandomForestMW(ModelWrapperBase):
     """
     Random Forest is a small tweak on Tree Bagging where, "each time a split in a tree is considered, a
-        random sample of m predictors is chosen as split candidates from the full set of p predictors. The
-        split is allowed to use only one of those m predictors... We can think of this process as
+        random sample of m features is chosen as split candidates from the full set of p features. The
+        split is allowed to use only one of those m features... We can think of this process as
         decorrelating the trees, thereby making the average of the resulting trees less variable and hence
         more reliable." (ISLR pg 319-320)
 
-    A typical value is the square root of the number of predictors (p). "If a random Forest is built
+    A typical value is the square root of the number of features (p). "If a random Forest is built
         using m = p, then this amounts simply to bagging... Using a small value of m in building a random
-        forest will typically be helpful when we have a large number of correlated predictors." (ISLR pg
+        forest will typically be helpful when we have a large number of correlated features." (ISLR pg
         319-320)
     """
 

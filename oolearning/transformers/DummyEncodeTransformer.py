@@ -1,5 +1,5 @@
 import pandas as pd
-from oolearning.ModelSearcherHelpers import ModelSearcherHelpers
+from oolearning.OOLearningHelpers import OOLearningHelpers
 from oolearning.enums.CategoricalEncoding import CategoricalEncoding
 from oolearning.transformers.TransformerBase import TransformerBase
 
@@ -25,12 +25,12 @@ class DummyEncodeTransformer(TransformerBase):
         # 2) if one-hot encoding, leave all columns, if `dummy`, then drop the first column/category for each
         # original variable
         ######################################################################################################
-        num, categorical_predictors = ModelSearcherHelpers.get_columns_by_type(data_dtypes=data_x.dtypes,
-                                                                               target_variable=None)
+        num, categorical_features = OOLearningHelpers.get_columns_by_type(data_dtypes=data_x.dtypes,
+                                                                          target_variable=None)
 
         # save the state as columns, so that we can reindex with original columns
         state = {category: sorted(list(data_x[category].dropna().unique()))
-                 for category in categorical_predictors}
+                 for category in categorical_features}
         # save the new dummy columns, so that we can reindex consistently in transform
         starting_index = 1 if self._encoding == CategoricalEncoding.DUMMY else 0  # ignore 1st index if dummy
 
@@ -49,17 +49,17 @@ class DummyEncodeTransformer(TransformerBase):
         # 2) create a new DataFrame with the corresponding dummy columns
         # 4) reindex according to previously defined columns in `fit`
         ######################################################################################################
-        _, categorical_predictors = ModelSearcherHelpers.get_columns_by_type(data_dtypes=data_x.dtypes,
-                                                                             target_variable=None)
+        _, categorical_features = OOLearningHelpers.get_columns_by_type(data_dtypes=data_x.dtypes,
+                                                                        target_variable=None)
         found_state = {category: sorted(list(data_x[category].dropna().unique()))
-                       for category in categorical_predictors}
+                       for category in categorical_features}
 
         # ensure no new values
         assert len(set(found_state.keys()).symmetric_difference(set(state.keys()))) == 0
         assert all([set(value).issubset(set(state[key])) for key, value in found_state.items()])
 
         dummied_data = pd.get_dummies(data=data_x,
-                                      columns=categorical_predictors,
+                                      columns=categorical_features,
                                       prefix_sep='_',
                                       drop_first=False,  # need to do manually
                                       sparse=False)

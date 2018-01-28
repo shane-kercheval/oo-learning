@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from math import isclose
 from oolearning.splitters.RegressionStratifiedDataSplitter import RegressionStratifiedDataSplitter
-from oolearning.ModelSearcherHelpers import ModelSearcherHelpers
+from oolearning.OOLearningHelpers import OOLearningHelpers
 
 
 class TestHelper:
@@ -73,7 +73,7 @@ class TestHelper:
     def ensure_all_values_equal(data_frame1, data_frame2):
         assert all(data_frame1.columns.values == data_frame2.columns.values)
         assert all(data_frame1.index.values == data_frame2.index.values)
-        numeric_col, cat_cols = ModelSearcherHelpers.get_columns_by_type(data_dtypes=data_frame1.dtypes)
+        numeric_col, cat_cols = OOLearningHelpers.get_columns_by_type(data_dtypes=data_frame1.dtypes)
 
         for col in numeric_col:
             assert all([isclose(x, y) for x, y in zip(data_frame1[col].values, data_frame2[col].values)])
