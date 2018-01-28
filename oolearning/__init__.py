@@ -24,6 +24,7 @@ from .evaluators.SpecificityEvaluator import SpecificityEvaluator
 from .evaluators.TwoClassEvaluator import TwoClassEvaluator
 
 from .exploratory.ExploreClassificationDataset import ExploreClassificationDataset
+from .exploratory.ExploreDatasetBase import ExploreDatasetBase
 from .exploratory.ExploreRegressionDataset import ExploreRegressionDataset
 
 from .fitted_info.FittedInfoBase import FittedInfoBase

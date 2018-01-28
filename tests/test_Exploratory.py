@@ -61,7 +61,7 @@ class ExploratoryTests(TimerTestCase):
         assert OOLearningHelpers.is_series_numeric(data.phone) is False
         assert OOLearningHelpers.is_series_numeric(data.default) is False
 
-    def test_ExploreDatasetBase(self):
+    def test_ExploreDatasetBase_summary(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         numeric_columns = ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'age', 'existing_loans_count', 'dependents']  # noqa
         categoric_columns = ['checking_balance', 'credit_history', 'purpose', 'savings_balance', 'employment_duration', 'other_credit', 'housing', 'job', 'phone']  # noqa
@@ -155,3 +155,24 @@ class ExploratoryTests(TimerTestCase):
             expected_summary = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
                                                       data_frame2=explore.categoric_summary)
+
+    def test_ExploreDatasetBase_unique_values(self):
+        credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
+        target_variable = 'default'
+
+        explore = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv,
+                                                        target_variable=target_variable)
+
+        # cannot get unique values on numeric feature
+        self.assertRaises(AssertionError, lambda: explore.unique_values(categoric_feature='amount'))
+
+        unique_values = explore.unique_values('checking_balance')
+        assert sorted(unique_values.index.values) == sorted(explore.dataset.checking_balance.unique())
+        assert all(unique_values.freq.values == [394, 274, 269, 63])
+        assert all(unique_values.perc.values == [0.394, 0.274, 0.269, 0.063])
+
+        # ensure `unique_values()` also works for the target variable since it is categoric as well
+        unique_values = explore.unique_values(target_variable)
+        assert sorted(unique_values.index.values) == sorted(explore.dataset[target_variable].unique())
+        assert all(unique_values.freq.values == [700, 300])
+        assert all(unique_values.perc.values == [0.7, 0.3])
