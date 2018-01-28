@@ -232,10 +232,12 @@ class PersistenceManagerTests(TimerTestCase):
         assert persistence_object._cache_path == os.path.join(expected_directory, key_limit + '.pkl')
 
         # prefix pushes the filename over the limit; however, the key_prefix should never be changed/hashed
-        expected_key = expected_prefix + str(hash(key_limit)) + '.pkl'
+        # noinspection SpellCheckingInspection
+        expected_key = 'invalidprefix_' + str(hash(key_limit)) + '.pkl'  # now a valid prefix
+        # we are passing in an invalid prefix to test that the prefix still gets converted, but not hashed
         persistence_object = LocalCacheManager(cache_directory=expected_directory,
                                                key=key_limit,
-                                               key_prefix=expected_prefix)
+                                               key_prefix=invalid_prefix)
         assert persistence_object._cache_path == os.path.join(expected_directory, expected_key)
 
     def test_LocalCacheObject_invalid_key_prefix_length(self):

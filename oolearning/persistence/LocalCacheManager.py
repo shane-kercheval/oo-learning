@@ -103,7 +103,8 @@ class LocalCacheManager(PersistenceManagerBase):
         cache_path = cache_path + '.pkl'  # if the length isn't too long, this is the final file name
 
         if len(cache_path) > 255:  # 255 is max filename length in most popular systems
-            prefix = '' if self._key_prefix is None else self._key_prefix
+            # noinspection PyTypeChecker
+            prefix = '' if self._key_prefix is None else ''.join(c for c in self._key_prefix if c in valid_chars)  # noqa
             cache_path = prefix + str(hash(key)) + '.pkl'  # only hash the key
 
         cache_path = os.path.join(self._cache_directory, cache_path)
