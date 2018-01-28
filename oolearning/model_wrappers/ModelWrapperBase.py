@@ -5,10 +5,10 @@ import pandas as pd
 from abc import ABCMeta, abstractmethod
 from typing import Union
 
-from ..persistence.AlwaysFetchManager import AlwaysFetchManager
-from ..hyper_params.HyperParamsBase import HyperParamsBase
-from ..fitted_info.FittedInfoBase import FittedInfoBase
-from ..model_wrappers.ModelExceptions import ModelNotFittedError, ModelAlreadyFittedError,\
+from oolearning.persistence.AlwaysFetchManager import AlwaysFetchManager
+from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
+from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
+from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError, ModelAlreadyFittedError,\
     ModelCachedAlreadyConfigured
 
 

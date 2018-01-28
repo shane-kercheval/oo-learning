@@ -12,3 +12,5 @@ class TimerTestCase(unittest.TestCase):
         elapsed = time.time() - self._started_at
         if elapsed > SLOW_TEST_THRESHOLD:
             print('{} ({}s)'.format(self.id(), round(elapsed, 2)))
+        else:
+            print('')
