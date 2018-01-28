@@ -15,8 +15,8 @@ class SearcherResults:
                  holdout_evaluators=List[List[EvaluatorBase]]):
         """
         :param tuner_results: list of TunerResults (one per model)
-        :param holdout_evaluators: list of (list of Evaluators). Each outer list item (one per model), contains
-            a list of Evaluators (same Evaluators as the Tuner)
+        :param holdout_evaluators: list of (list of Evaluators). Each outer list item (one per model),
+            contains a list of Evaluators (same Evaluators as the Tuner)
         """
         self._model_descriptions = model_descriptions
         self._model_names = model_names

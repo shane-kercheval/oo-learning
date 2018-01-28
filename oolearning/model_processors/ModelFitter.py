@@ -37,9 +37,8 @@ class ModelFitter:
         e.g. Regression should impute and create dummy columns).
             Child classes should list recommended transformations as the default value to the constructor
             and callers have the ability to replace with their own list (or None)
-        :param cache_directory: a string containing the name of the DIRECTORY the model should be saved.
-            The model will be saved to a file based on the name of the model (i.e. class name) and
-            hyper-parameters and values used, in order to differentiate each model.
+        :param persistence_manager: a PersistenceManager defining how the underlying models should be cached,
+            optional.
         """
         assert isinstance(model, ModelWrapperBase)
         self._model = model
@@ -170,7 +169,8 @@ class ModelFitter:
         :param holdout_x: holdout dataset with features
         :param holdout_y: holdout target values
         :param evaluators: optional list of Evaluator. If `holdout_evaluators` is None, a clone of the
-            holdout_evaluators that were passed into the constructor is used (i.e. same holdout_evaluators type)
+            holdout_evaluators that were passed into the constructor is used (i.e. same holdout_evaluators
+            type)
         :return: The result of the Evaluators` `evaluate()` function (i.e. "value")
         """
         if self._has_fitted is False:

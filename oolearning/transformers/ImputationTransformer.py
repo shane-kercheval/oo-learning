@@ -1,8 +1,7 @@
 from typing import Callable
-from scipy import stats
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 from oolearning.ModelSearcherHelpers import ModelSearcherHelpers
 from oolearning.transformers.TransformerBase import TransformerBase

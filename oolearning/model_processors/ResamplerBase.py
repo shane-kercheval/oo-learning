@@ -34,7 +34,8 @@ class ResamplerBase(metaclass=ABCMeta):
             interest when resampling, use `holdout_evaluators=[KappaEvaluator, AucEvaluator]`;
             if RMSE is the only metric of interest, use `holdout_evaluators=[RMSE]`
         :param persistence_manager: a PersistenceManager defining how the model should be cached, optional.
-            NOTE: There is currently no enforcement that subclasses of ResamplerBase implement model persistence
+            NOTE: There is currently no enforcement that subclasses of ResamplerBase implement model
+            persistence
         """
         assert isinstance(model, ModelWrapperBase)
         if model_transformations is not None:

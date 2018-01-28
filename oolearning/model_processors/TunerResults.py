@@ -64,7 +64,6 @@ class TunerResults:
 
         num_rows = len(evaluator_values)
         num_cols = len(evaluator_values.columns)
-        import numpy as np
 
         fig, ax = plt.subplots(figsize=(10, 10))
         for i in range(num_cols):

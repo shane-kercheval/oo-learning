@@ -58,12 +58,13 @@ class ResamplerResults:
              e.g. when comparing Kappas the larger number is "better", when comparing RMSE smaller numbers are
                 "better"
         """
-        better_than_function = self._evaluators[0][0].better_than_function  # get the first evaluator's `better_than` function, and utilize compare the means associated with the first evaluator
-        this_mean = self.metric_means[self.metrics[0]]  # get the mean of the first (i.e. main) metric
-        other_mean = other.metric_means[other.metrics[0]]  # get the mean of the first (i.e. main) metric for the other ResamplerResult
+
+        # get the first evaluator's `better_than` function, and utilize compare the means associated with the
+        # first evaluator
+        better_than_function = self._evaluators[0][0].better_than_function
+        # get the mean of the first (i.e. main) metric
+        this_mean = self.metric_means[self.metrics[0]]
+        # get the mean of the first (i.e. main) metric for the other ResamplerResult
+        other_mean = other.metric_means[other.metrics[0]]
 
         return better_than_function(this_mean, other_mean)
-
-# I want ot compare the mean of the current metric to the mean of the other metric,
-# but i need to know if it is a minimizer or maximizer based on he stratety
-# maybe i can refactor to be a strategy, instead of multiple inheritence, return the startegy

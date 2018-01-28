@@ -10,9 +10,8 @@ from oolearning.model_processors.ResamplerResults import ResamplerResults
 from oolearning.splitters.StratifiedDataSplitter import StratifiedDataSplitter
 from oolearning.transformers.TransformerBase import TransformerBase
 
+
 # TODO: NOT FINISHED, NOT TESTED
-
-
 class StratifiedMonteCarloResampler(ResamplerBase):
     def __init__(self,
                  model: ModelWrapperBase,
@@ -41,7 +40,7 @@ class StratifiedMonteCarloResampler(ResamplerBase):
                   data_y: np.ndarray,
                   hyper_params: HyperParamsBase = None) -> ResamplerResults:
 
-        resampler_results = ResamplerResults()
+        result_evaluators = list()
         training_indexes, test_indexes = self._stratified_splitter.split_monte_carlo(target_values=data_y,
                                                                                      samples=self._repeats,
                                                                                      seed=42)
@@ -53,13 +52,12 @@ class StratifiedMonteCarloResampler(ResamplerBase):
                 model_copy.train(data_x=train_x, data_y=train_y, hyper_params=hyper_params)
 
                 # for each evaluator, add the metric name/value to a dict to add to the ResamplerResults
-                results_dict = dict()
+                fold_evaluators = list()
                 for evaluator in self._evaluators:
                     evaluator_copy = evaluator.clone()  # need to reuse this object type for each fold/repeat
                     evaluator_copy.evaluate(actual_values=test_y,
                                             predicted_values=model_copy.predict(data_x=test_x))
-                    results_dict[evaluator_copy.metric_name] = evaluator_copy.value
+                    fold_evaluators.append(evaluator_copy)
+                result_evaluators.append(fold_evaluators)
 
-                resampler_results.add(result=results_dict)
-
-        return resampler_results
+        return ResamplerResults(evaluators=result_evaluators)

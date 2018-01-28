@@ -41,7 +41,8 @@ class RegressionFI(FittedInfoBase):
     @property
     def results_summary(self) -> pd.DataFrame:
         """
-        :return: a traditional view of the regression tune_results (feature coefficient estimates, p-values, etc.)
+        :return: a traditional view of the regression tune_results (feature coefficient estimates, p-values,
+            etc.)
         """
         summary = pd.DataFrame(OrderedDict(zip(['(intercept)'] + self.feature_names,
                                                self._model_object.params.values.tolist())),
