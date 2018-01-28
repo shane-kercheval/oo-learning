@@ -191,9 +191,15 @@ class PersistenceManagerTests(TimerTestCase):
 
         # now try invalid key; make sure it converts to hash
         invalid_key = 'a'*(256 - len('.pkl'))
-        valid_key = str(hash(invalid_key + '.pkl'))
+        valid_key = str(hash(invalid_key)) + '.pkl'
         persistence_object = LocalCacheManager(cache_directory=expected_directory, key=invalid_key)
-        assert persistence_object._cache_path == os.path.join(expected_directory, valid_key + '.pkl')
+        assert persistence_object._cache_path == os.path.join(expected_directory, valid_key)
+
+        # file too long with prefix only converts key, not prefix
+        invalid_key = 'a'*(256 - len('.pkl'))
+        valid_key = str(hash(invalid_key)) + '.pkl'
+        persistence_object = LocalCacheManager(cache_directory=expected_directory, key=invalid_key)
+        assert persistence_object._cache_path == os.path.join(expected_directory, valid_key)
 
     def test_LocalCacheObject_key_prefix(self):
         expected_directory = TestHelper.ensure_test_directory('data/test_Local_CacheObject_directory')
@@ -225,9 +231,24 @@ class PersistenceManagerTests(TimerTestCase):
         persistence_object = LocalCacheManager(cache_directory=expected_directory, key=key_limit)
         assert persistence_object._cache_path == os.path.join(expected_directory, key_limit + '.pkl')
 
-        # the prefix pushes the filename over the limit
-        expected_key = str(hash(expected_prefix + key_limit + '.pkl'))
+        # prefix pushes the filename over the limit; however, the key_prefix should never be changed/hashed
+        expected_key = expected_prefix + str(hash(key_limit)) + '.pkl'
         persistence_object = LocalCacheManager(cache_directory=expected_directory,
                                                key=key_limit,
                                                key_prefix=expected_prefix)
-        assert persistence_object._cache_path == os.path.join(expected_directory, expected_key + '.pkl')
+        assert persistence_object._cache_path == os.path.join(expected_directory, expected_key)
+
+    def test_LocalCacheObject_invalid_key_prefix_length(self):
+        expected_directory = TestHelper.ensure_test_directory('data/test_Local_CacheObject_directory')
+
+        valid_key_prefix = 'a'*100
+
+        persistence_object = LocalCacheManager(cache_directory=expected_directory, key='key', key_prefix=valid_key_prefix)  # noqa
+        assert persistence_object._key_prefix == valid_key_prefix
+        persistence_object.set_key_prefix('b'*100)
+        assert persistence_object._key_prefix == 'b'*100
+
+        invalid_key_prefix = 'a' * 101
+        self.assertRaises(ValueError, lambda: LocalCacheManager(cache_directory=expected_directory, key='key', key_prefix=invalid_key_prefix))  # noqa
+        persistence_object = LocalCacheManager(cache_directory=expected_directory, key='key', key_prefix=valid_key_prefix)  # noqa
+        self.assertRaises(ValueError, lambda: persistence_object.set_key_prefix(prefix=invalid_key_prefix))

@@ -31,6 +31,9 @@ class LocalCacheManager(PersistenceManagerBase):
         if not create_dir_if_not_exist and not os.path.exists(cache_directory):
             raise NotADirectoryError()
 
+        if key_prefix is not None and len(key_prefix) > 100:
+            raise ValueError('prefix must be <= 100')
+
         self._cache_directory = cache_directory
         self._key_prefix = key_prefix
         self._cache_path = None if key is None else self._create_cached_path(key)
@@ -42,8 +45,11 @@ class LocalCacheManager(PersistenceManagerBase):
         """
         NOTE: setting the prefix invalidates the current cache_path, so if the key was previously set, it must
             be reset.
-        :param prefix: all future keys used are prefixed with this string
+        :param prefix: string of max length of 100; all future keys used are prefixed with this string
         """
+        if len(prefix) > 100:
+            raise ValueError('prefix must be <= 100')
+
         self._cache_path = None  # setting the prefix invalidates whatever the current cache_path is
         self._key_prefix = prefix
 
@@ -88,16 +94,17 @@ class LocalCacheManager(PersistenceManagerBase):
         """
         assert key is not None
 
-        key = key if self._key_prefix is None else self._key_prefix + key
+        cache_path = key if self._key_prefix is None else self._key_prefix + key
 
-        # there might be invalid characters in the key i.e. file name
+        # there might be invalid characters in the cache_path i.e. file name
         valid_chars = "-_.()k%s%s" % (string.ascii_letters, string.digits)
-        key = ''.join(c for c in key if c in valid_chars)
+        cache_path = ''.join(c for c in cache_path if c in valid_chars)
 
-        key = key + '.pkl'
+        cache_path = cache_path + '.pkl'  # if the length isn't too long, this is the final file name
 
-        if len(key) > 255:  # 255 is max filename length in most popular systems
-            key = str(hash(key)) + '.pkl'
+        if len(cache_path) > 255:  # 255 is max filename length in most popular systems
+            prefix = '' if self._key_prefix is None else self._key_prefix
+            cache_path = prefix + str(hash(key)) + '.pkl'  # only hash the key
 
-        cache_path = os.path.join(self._cache_directory, key)
+        cache_path = os.path.join(self._cache_directory, cache_path)
         return cache_path if cache_path[0] != '/' else cache_path[1:]

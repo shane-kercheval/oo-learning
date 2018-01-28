@@ -166,7 +166,7 @@ class TunerTests(TimerTestCase):
         ######################################################################################################
         # Test Best Model
         ######################################################################################################
-        # test the correct order of best models (i.e. highest to lowers kappa)
+        # test the correct order of best models (i.e. highest to lowest kappa)
         assert all(tuner.results.sorted_best_models.index.values ==
                    [24, 21, 15, 9, 12, 18, 6, 3, 0, 23, 20, 17, 16, 14, 13, 11, 4, 26, 10, 7, 5, 1, 19, 8, 2,
                     22, 25])
