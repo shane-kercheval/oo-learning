@@ -19,8 +19,8 @@ class ModelFitter:
     Intent of ModelFitter is to abstract away the details of the general process of fitting a model.
         - transform data specific to the model (e.g. regression requires imputing/dummifying
         - train
-        - access training accuracy
-        - access holdout accuracy
+        - access training value
+        - access holdout value
         - predict on future data using same (training) transformations
     """
 
@@ -30,7 +30,7 @@ class ModelFitter:
                  evaluators: List[EvaluatorBase],
                  persistence_manager: PersistenceManagerBase=None):
         """
-        :param evaluators: a list of Evaluator to access training accuracy.
+        :param evaluators: a list of Evaluator to access training value.
             If no evaluator is passed into the `evaluate_holdout()` method, this evaluator is cloned and also
             used to evaluate a holdout dataset
         :param model_transformations: List of Transformer objects to pre-process data (specific to the model,
@@ -75,8 +75,8 @@ class ModelFitter:
         """
         :return: the "accuracies" returned by the 'training_evaluators'
         """
-        assert all([isinstance(x.accuracy, float) for x in self._training_evaluators])
-        return [x.accuracy for x in self._training_evaluators]
+        assert all([isinstance(x.value, float) for x in self._training_evaluators])
+        return [x.value for x in self._training_evaluators]
 
     @property
     def holdout_evaluators(self) -> List[EvaluatorBase]:
@@ -90,8 +90,8 @@ class ModelFitter:
         """
         :return: returns the "accuracies" returned by the 'holdout_evaluators'
         """
-        assert all([isinstance(x.accuracy, float) for x in self._holdout_evaluators])
-        return [x.accuracy for x in self._holdout_evaluators]
+        assert all([isinstance(x.value, float) for x in self._holdout_evaluators])
+        return [x.value for x in self._holdout_evaluators]
 
     def set_persistence_manager(self, persistence_manager: PersistenceManagerBase):
         self._persistence_manager = persistence_manager
@@ -114,7 +114,7 @@ class ModelFitter:
             hyper_params: HyperParamsBase=None):
         """
         `fit` handles the logic of applying the pre-process transformations, as well as fitting the data and
-            evaluating the training accuracy
+            evaluating the training value
         :param data_x: DataFrame to fit the model on
         :param data_y: np.ndarray containing the target values to be trained on
         :param hyper_params: object containing the hyper-parameters to tune
@@ -142,7 +142,7 @@ class ModelFitter:
         self._model_info = self._model.fitted_info
 
         for evaluator in self._training_evaluators:
-            # given the specified **training** metric, which stores the accuracy
+            # given the specified **training** metric, which stores the value
             evaluator.evaluate(actual_values=data_y,
                                predicted_values=self._model.predict(data_x=prepared_training_data))
         self._has_fitted = True
@@ -171,7 +171,7 @@ class ModelFitter:
         :param holdout_y: holdout target values
         :param evaluators: optional list of Evaluator. If `holdout_evaluators` is None, a clone of the
             holdout_evaluators that were passed into the constructor is used (i.e. same holdout_evaluators type)
-        :return: The result of the Evaluators` `evaluate()` function (i.e. "accuracy")
+        :return: The result of the Evaluators` `evaluate()` function (i.e. "value")
         """
         if self._has_fitted is False:
             raise ModelNotFittedError()

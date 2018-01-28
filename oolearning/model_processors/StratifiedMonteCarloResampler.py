@@ -58,7 +58,7 @@ class StratifiedMonteCarloResampler(ResamplerBase):
                     evaluator_copy = evaluator.clone()  # need to reuse this object type for each fold/repeat
                     evaluator_copy.evaluate(actual_values=test_y,
                                             predicted_values=model_copy.predict(data_x=test_x))
-                    results_dict[evaluator_copy.metric_name] = evaluator_copy.accuracy
+                    results_dict[evaluator_copy.metric_name] = evaluator_copy.value
 
                 resampler_results.add(result=results_dict)
 

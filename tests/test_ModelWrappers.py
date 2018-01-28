@@ -469,7 +469,7 @@ class ModelWrapperTests(TimerTestCase):
 
         assert len(fitter.training_evaluators) == 1
         assert len(fitter.training_accuracies) == 1
-        assert isclose(10.353609808895648, fitter.training_evaluators[0].accuracy)
+        assert isclose(10.353609808895648, fitter.training_evaluators[0].value)
         assert isclose(10.353609808895648, fitter.training_accuracies[0])
         assert isclose(10.399142639503246,
                        fitter.model_info.summary_stats['residual standard error (RSE)'])
@@ -502,7 +502,7 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.model_info.graph is not None
 
         ######################################################################################################
-        # same thing, but with MaeEvaluator, which shouldn't change any values except for the accuracy
+        # same thing, but with MaeEvaluator, which shouldn't change any values except for the value
         ######################################################################################################
         fitter = ModelFitter(model=RegressionMW(),
                              model_transformations=ModelDefaults.transformations_regression(),
@@ -514,7 +514,7 @@ class ModelWrapperTests(TimerTestCase):
         # TODO: test feature_importance
 
         assert fitter.model_info.hyper_params is None
-        assert isclose(8.2143437062218183, fitter.training_evaluators[0].accuracy)
+        assert isclose(8.2143437062218183, fitter.training_evaluators[0].value)
         assert isclose(8.2143437062218183, fitter.training_accuracies[0])
         assert isclose(10.399142639503246,
                        fitter.model_info.summary_stats['residual standard error (RSE)'])
@@ -697,7 +697,7 @@ class ModelWrapperTests(TimerTestCase):
             plt.savefig(file)
             assert os.path.isfile(file)
 
-            # Should be the same as the training accuracy
+            # Should be the same as the training value
             accuracy = fitter.evaluate_holdout(holdout_x=train_data, holdout_y=train_data_y,
                                                evaluators=[KappaEvaluator(positive_category=1,
                                                                           negative_category=0,
@@ -784,7 +784,7 @@ class ModelWrapperTests(TimerTestCase):
                                                         threshold=0.5)])
         fitter.fit(data_x=train_data, data_y=train_data_y)
 
-        # should be the same accuracy etc as the previous test (when target values were 0/1)
+        # should be the same value etc as the previous test (when target values were 0/1)
         assert fitter.training_evaluators[0].confusion_matrix.all_quality_metrics == \
             {'Kappa': 0.58877590597123142, 'Two-Class Accuracy': 0.80758426966292129,
              'Error Rate': 0.19241573033707865, 'Sensitivity': 0.7216117216117216,
@@ -793,7 +793,7 @@ class ModelWrapperTests(TimerTestCase):
              'Negative Predictive Value': 0.83259911894273131, 'Prevalence': 0.38342696629213485,
              'No Information Rate': 0.6165730337078652, 'Total Observations': 712}
 
-        # should be the same accuracy etc as the previous test (when target values were 0/1)
+        # should be the same value etc as the previous test (when target values were 0/1)
         accuracy = fitter.evaluate_holdout(holdout_x=test_data, holdout_y=test_data_y)
         assert isclose(accuracy[0], 0.58794854434664856)
 

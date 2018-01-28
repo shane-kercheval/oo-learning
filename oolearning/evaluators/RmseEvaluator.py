@@ -14,6 +14,6 @@ class RmseEvaluator(EvaluatorBase):
     def metric_name(self) -> str:
         return Metric.ROOT_MEAN_SQUARE_ERROR.value
 
-    def _calculate_accuracy(self, actual_values: np.ndarray, predicted_values: np.ndarray) ->\
+    def _evaluate(self, actual_values: np.ndarray, predicted_values: np.ndarray) ->\
             Tuple[float, object]:
         return np.sqrt(np.mean(np.square(predicted_values - actual_values))), None

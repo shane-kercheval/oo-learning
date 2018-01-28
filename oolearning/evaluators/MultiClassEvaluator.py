@@ -10,5 +10,5 @@ class MultiClassEvaluator(EvaluatorBase):
     def metric_name(self) -> str:
         pass
 
-    def _calculate_accuracy(self) -> Tuple[float, object]:
+    def _evaluate(self) -> Tuple[float, object]:
         pass

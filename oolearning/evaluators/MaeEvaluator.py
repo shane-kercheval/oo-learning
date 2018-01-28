@@ -15,6 +15,6 @@ class MaeEvaluator(EvaluatorBase):
         return Metric.MEAN_ABSOLUTE_ERROR.value
 
     # noinspection PyTypeChecker,PyMethodMayBeStatic
-    def _calculate_accuracy(self, actual_values: np.ndarray, predicted_values: np.ndarray) ->\
+    def _evaluate(self, actual_values: np.ndarray, predicted_values: np.ndarray) ->\
             Tuple[float, object]:
         return np.mean(np.abs(predicted_values - actual_values)), None

@@ -28,6 +28,6 @@ class ClassificationEvaluator(EvaluatorBase):
         pass
 
     @abstractmethod
-    def _calculate_accuracy(self, actual_values: np.ndarray, predicted_values: np.ndarray) -> \
+    def _evaluate(self, actual_values: np.ndarray, predicted_values: np.ndarray) -> \
             Tuple[float, object]:
         pass

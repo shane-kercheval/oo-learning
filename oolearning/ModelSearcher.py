@@ -65,8 +65,8 @@ class ModelSearcher:
         # for each model, run a ModelTuner using the resampler_function, creating copies of shit when
         # necessary store each of the TuningResults for each model. Take the best hyper params (if the model
         # has hyper-params), and retrain the model on the entire training set (retrain on entire training set
-        # even if no hyper-params), and then get the holdout set accuracy. We will want to track the
-        # mean/st_dev resampling accuracy vs the holdout accuracy.
+        # even if no hyper-params), and then get the holdout set value. We will want to track the
+        # mean/st_dev resampling value vs the holdout value.
         training_indexes, holdout_indexes = self._splitter.split(target_values=data_y)
 
         # pre-transformed training/holdout sets

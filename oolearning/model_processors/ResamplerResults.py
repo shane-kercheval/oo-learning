@@ -21,7 +21,7 @@ class ResamplerResults:
         for resample_eval_list in evaluators:
             results_dict = dict()
             for temp_eval in resample_eval_list:
-                results_dict[temp_eval.metric_name] = temp_eval.accuracy
+                results_dict[temp_eval.metric_name] = temp_eval.value
 
             self._cross_validation_scores.append(results_dict)
 

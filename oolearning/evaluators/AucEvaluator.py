@@ -22,6 +22,6 @@ class AucEvaluator(TwoClassEvaluator):
     def metric_name(self) -> str:
         return Metric.AREA_UNDER_CURVE.value
 
-    def _calculate_accuracy(self, actual_values: np.ndarray, predicted_values: np.ndarray) ->\
+    def _evaluate(self, actual_values: np.ndarray, predicted_values: np.ndarray) ->\
             Tuple[float, object]:
         return self.auc, self._confusion_matrix

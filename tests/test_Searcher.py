@@ -24,7 +24,7 @@ class TunerTests(TimerTestCase):
                                   CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
                                   ImputationTransformer(),
                                   DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
-        # Evaluators are the metrics we want to use to understand the accuracy of our trained models.
+        # Evaluators are the metrics we want to use to understand the value of our trained models.
         evaluator_list = [KappaEvaluator(positive_category=1, negative_category=0, threshold=0.5),
                           SensitivityEvaluator(positive_category=1, negative_category=0, threshold=0.5),
                           SpecificityEvaluator(positive_category=1, negative_category=0, threshold=0.5),
@@ -152,11 +152,11 @@ class TunerTests(TimerTestCase):
         assert len(searcher.results.holdout_evaluators[1]) == 4  # 4 Evaluators
         assert [x.metric_name for x in searcher.results.holdout_evaluators[0]] == ['kappa', 'sensitivity', 'specificity', 'ErrorRate']  # noqa
         assert [x.metric_name for x in searcher.results.holdout_evaluators[1]] == ['kappa', 'sensitivity', 'specificity', 'ErrorRate']  # noqa
-        assert [x.accuracy for x in searcher.results.holdout_evaluators[0]] == [0.026284246575342427, 0.38372093023255816, 0.64233576642335766, 0.45739910313901344]  # noqa
+        assert [x.value for x in searcher.results.holdout_evaluators[0]] == [0.026284246575342427, 0.38372093023255816, 0.64233576642335766, 0.45739910313901344]  # noqa
 
         assert len(searcher.results.holdout_evaluators) == 2  # 2 models
         assert len(searcher.results.holdout_evaluators[1]) == 4  # 4 Evaluators
-        assert [x.accuracy for x in searcher.results.holdout_evaluators[1]] == [0.026284246575342427, 0.38372093023255816, 0.64233576642335766, 0.45739910313901344]  # noqa
+        assert [x.value for x in searcher.results.holdout_evaluators[1]] == [0.026284246575342427, 0.38372093023255816, 0.64233576642335766, 0.45739910313901344]  # noqa
 
         assert all(searcher.results.holdout_eval_values.index.values == model_descriptions)
         assert all(searcher.results.holdout_eval_values.columns.values == ['kappa', 'sensitivity', 'specificity', 'ErrorRate'])  # noqa

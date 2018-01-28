@@ -20,6 +20,6 @@ class SensitivityEvaluator(TwoClassEvaluator):
     def metric_name(self) -> str:
         return Metric.SENSITIVITY.value
 
-    def _calculate_accuracy(self, actual_values: np.ndarray, predicted_values: np.ndarray) ->\
+    def _evaluate(self, actual_values: np.ndarray, predicted_values: np.ndarray) ->\
             Tuple[float, object]:
         return self.confusion_matrix.sensitivity, self._confusion_matrix

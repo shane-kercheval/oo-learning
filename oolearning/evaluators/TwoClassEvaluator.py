@@ -13,7 +13,7 @@ from oolearning.evaluators.ConfusionMatrix import ConfusionMatrix
 class TwoClassEvaluator(ClassificationEvaluator):
     """
     Generic class to evaluate metrics for two-class (or 2 category) classifiers.
-    `accuracy` prop returns a generic 'accuracy' calculation:
+    `value` prop returns a generic 'value' calculation:
         ((true_negatives + true_positives) / total_observations)
     other Evaluators can inherit and override this functionality and return, e.g. Kappa/AUC calculations
     """
@@ -29,12 +29,12 @@ class TwoClassEvaluator(ClassificationEvaluator):
         :param negative_category: value of the negative category
         :param use_probabilities: rather than an predicted_values as a categorical prediction, we might have
             probabilities that are passed in, in which case we would want to set this value to True
-        :param threshold: if threshold was specified in constructor, that value is used to create the
+        :param threshold: if threshold is specified in constructor, that value is used to create the
             confusion confusion_matrix; only used if use_probabilities is True;
             otherwise, if `use_probabilities` is True and `threshold` is None, the ideal threshold will be
                 calculated based on the the point (and corresponding threshold) that is closest to the upper
                 left corner of the ROC graph.
-        # TODO: performance hit when needed to calculate the ideal threshold
+        # TODO: document performance hit when needed to calculate the ideal threshold (now caching value)
         """
         super().__init__(better_than=better_than,
                          categories=[positive_category, negative_category],
@@ -43,6 +43,9 @@ class TwoClassEvaluator(ClassificationEvaluator):
         self._positive_category = positive_category
         self._negative_category = negative_category
         self._confusion_matrix = None
+        self._fpr = None
+        self._tpr = None
+        self._ideal_threshold = None
 
     @property
     def auc(self) -> float:
@@ -112,28 +115,29 @@ class TwoClassEvaluator(ClassificationEvaluator):
             upper left corner (i.e. a perfect predictor). If a threshold is specified in the
             class constructor, then that threshold is also annotated on the graph.
         """
-        fpr, tpr, ideal_threshold = self._calculate_fpr_tpr_ideal_threshold()
+        if self._fpr is None or self._tpr is None or self._ideal_threshold is None:
+            self._fpr, self._tpr, self._ideal_threshold = self._calculate_fpr_tpr_ideal_threshold()
 
-        index_of_ideal = int(round(ideal_threshold, 2) * 100)
+        index_of_ideal = int(round(self._ideal_threshold, 2) * 100)
 
         fig = plt.figure()
         ax = fig.add_subplot(1, 1, 1)
         ax.axis('square')
         ax.set_xlim(-0.01, 1.01)
         ax.set_ylim(-0.01, 1.01)
-        ax.plot(fpr, tpr)
-        ax.annotate('Closest to Upper Left (threshold=' + str(round(ideal_threshold, 2)) + ')',
-                    xy=(fpr[index_of_ideal], tpr[index_of_ideal] - 0.01),
-                    xytext=(fpr[index_of_ideal], tpr[index_of_ideal] - 0.1),
+        ax.plot(self._fpr, self._tpr)
+        ax.annotate('Closest to Upper Left (threshold=' + str(round(self._ideal_threshold, 2)) + ')',
+                    xy=(self._fpr[index_of_ideal], self._tpr[index_of_ideal] - 0.01),
+                    xytext=(self._fpr[index_of_ideal], self._tpr[index_of_ideal] - 0.1),
                     arrowprops=dict(facecolor='black', headwidth=4, width=2, headlength=4),
                     horizontalalignment='left', verticalalignment='top')
 
         if self._custom_threshold:  # if we are using a custom threshold, then annotate it on the graph
             index_of_custom_threshold = int(round(self._threshold, 2) * 100)
             ax.annotate('Chosen threshold=' + str(round(self._threshold, 2)) + ')',
-                        xy=(fpr[index_of_custom_threshold],
-                            tpr[index_of_custom_threshold] - 0.01), xytext=(
-                    fpr[index_of_custom_threshold], tpr[index_of_custom_threshold] - 0.2),
+                        xy=(self._fpr[index_of_custom_threshold],
+                            self._tpr[index_of_custom_threshold] - 0.01), xytext=(
+                    self._fpr[index_of_custom_threshold], self._tpr[index_of_custom_threshold] - 0.2),
                         arrowprops=dict(facecolor='black', headwidth=4, width=2, headlength=4),
                         horizontalalignment='left', verticalalignment='top')
 
@@ -162,7 +166,8 @@ class TwoClassEvaluator(ClassificationEvaluator):
             assert self._negative_category in predicted_values.columns.values
 
             if self._threshold is None:  # calculate threshold
-                _, _, self._threshold = self._calculate_fpr_tpr_ideal_threshold()
+                self._fpr, self._tpr, self._ideal_threshold = self._calculate_fpr_tpr_ideal_threshold()
+                self._threshold = self._ideal_threshold
 
             # get predicted categories from the predicted probabilities and a specified threshold
             predicted_values = self._get_predicted_categories(threshold=self._threshold)

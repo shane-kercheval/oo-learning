@@ -17,7 +17,7 @@ class MockTwoClassEvaluator(TwoClassEvaluator):
                  negative_category,
                  use_probabilities: bool=True,
                  threshold: float=0.5):
-        super().__init__(better_than=lambda this, other: this > other,  # larger accuracy is better
+        super().__init__(better_than=lambda this, other: this > other,  # larger value is better
                          positive_category=positive_category,
                          negative_category=negative_category,
                          use_probabilities=use_probabilities,
@@ -27,7 +27,7 @@ class MockTwoClassEvaluator(TwoClassEvaluator):
     def metric_name(self) -> str:
         return 'Mock Evaluator'
 
-    def _calculate_accuracy(self, actual_values: np.ndarray, predicted_values: np.ndarray) -> \
+    def _evaluate(self, actual_values: np.ndarray, predicted_values: np.ndarray) -> \
             Tuple[float, object]:
         return self._confusion_matrix.two_class_accuracy, self._confusion_matrix
 
@@ -55,18 +55,18 @@ class EvaluatorTests(TimerTestCase):
         rmse_eval = RmseEvaluator()
         assert rmse_eval.metric_name == Metric.ROOT_MEAN_SQUARE_ERROR.value
         rmse_eval.evaluate(actual_values=actual, predicted_values=predicted)
-        assert isclose(2.91547594742265, rmse_eval.accuracy)
+        assert isclose(2.91547594742265, rmse_eval.value)
 
         ######################################################################################################
         # Test sorting
         ######################################################################################################
         rmse_other = RmseEvaluator()
         rmse_other.evaluate(actual_values=actual - 1, predicted_values=predicted + 1)  # create more spread
-        assert isclose(rmse_other.accuracy, 3.5355339059327378)  # "worse"
+        assert isclose(rmse_other.value, 3.5355339059327378)  # "worse"
 
         eval_list = [rmse_other, rmse_eval]  # "worse, better"
         eval_list.sort()  # "better, worse"
-        assert all([isclose(x, y) for x, y in zip([x.accuracy for x in eval_list],
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [2.9154759474226504, 3.5355339059327378])])
 
     def test_MaeEvaluator(self):
@@ -75,18 +75,18 @@ class EvaluatorTests(TimerTestCase):
         mae_eval = MaeEvaluator()
         assert mae_eval.metric_name == Metric.MEAN_ABSOLUTE_ERROR.value
         mae_eval.evaluate(actual_values=actual, predicted_values=predicted)
-        assert isclose(2.3333333333333335, mae_eval.accuracy)
+        assert isclose(2.3333333333333335, mae_eval.value)
 
         ######################################################################################################
         # Test sorting
         ######################################################################################################
         rmse_other = RmseEvaluator()
         rmse_other.evaluate(actual_values=actual - 1, predicted_values=predicted + 1)  # create more spread
-        assert isclose(rmse_other.accuracy, 3.5355339059327378)  # "worse"
+        assert isclose(rmse_other.value, 3.5355339059327378)  # "worse"
 
         eval_list = [rmse_other, mae_eval]  # "worse, better"
         eval_list.sort()  # "better, worse"
-        assert all([isclose(x, y) for x, y in zip([x.accuracy for x in eval_list],
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [2.3333333333333335, 3.5355339059327378])])
 
     def test_ConfusionMatrix_creations_result_in_same_confusion_matrix(self):
@@ -254,7 +254,7 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator.confusion_matrix is evaluator.details
         assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
         self.check_confusion_matrix(con_matrix=evaluator.confusion_matrix, mock_data=mock_data)
-        assert evaluator.accuracy == evaluator.confusion_matrix.two_class_accuracy
+        assert evaluator.value == evaluator.confusion_matrix.two_class_accuracy
         assert evaluator.threshold is None
 
     def test_TwoClassEvaluator_probabilities_custom_threshold(self):
@@ -269,7 +269,7 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator.confusion_matrix is evaluator.details
         assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
         self.check_confusion_matrix(con_matrix=evaluator.confusion_matrix, mock_data=mock_data)
-        assert evaluator.accuracy == evaluator.confusion_matrix.two_class_accuracy
+        assert evaluator.value == evaluator.confusion_matrix.two_class_accuracy
         assert evaluator.threshold == 0.5
         assert isclose(evaluator.auc, 0.74428675992192583)
 
@@ -298,7 +298,7 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
         assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
         assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
-        assert evaluator.accuracy == evaluator.confusion_matrix.two_class_accuracy
+        assert evaluator.value == evaluator.confusion_matrix.two_class_accuracy
         assert isclose(evaluator.threshold, 0.41)
         assert isclose(evaluator.auc, 0.74428675992192583)
 
@@ -327,7 +327,7 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
         assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
         assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
-        assert evaluator.accuracy == evaluator.auc
+        assert evaluator.value == evaluator.auc
         assert isclose(evaluator.threshold, 0.41)
         assert isclose(evaluator.auc, 0.74428675992192583)
         ######################################################################################################
@@ -336,16 +336,16 @@ class EvaluatorTests(TimerTestCase):
         evaluator_other = AucEvaluator(positive_category=0,
                                        negative_category=1,
                                        use_probabilities=True,
-                                       threshold=0.5)  # creates worse accuracy
+                                       threshold=0.5)  # creates worse value
         accuracy = evaluator_other.evaluate(actual_values=mock_data.actual,
                                             predicted_values=predictions_mock)
-        assert isclose(accuracy, 0.25571324007807417)  # lower number means it is worse than first accuracy
+        assert isclose(accuracy, 0.25571324007807417)  # lower number means it is worse than first value
 
         eval_list = [evaluator_other, evaluator]  # "worse, better"
-        assert all([isclose(x, y) for x, y in zip([x.accuracy for x in eval_list],
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [0.25571324007807417, 0.74428675992192583])])
         eval_list.sort()  # "better, worse"
-        assert all([isclose(x, y) for x, y in zip([x.accuracy for x in eval_list],
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [0.74428675992192583, 0.25571324007807417])])
 
     # noinspection PyTypeChecker
@@ -367,7 +367,7 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
         assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
         assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
-        assert evaluator.accuracy == evaluator.confusion_matrix.kappa
+        assert evaluator.value == evaluator.confusion_matrix.kappa
         assert isclose(evaluator.threshold, 0.41)
         assert isclose(evaluator.auc, 0.74428675992192583)
 
@@ -377,16 +377,16 @@ class EvaluatorTests(TimerTestCase):
         evaluator_other = KappaEvaluator(positive_category=0,
                                          negative_category=1,
                                          use_probabilities=True,
-                                         threshold=0.5)  # creates worse accuracy
+                                         threshold=0.5)  # creates worse value
         accuracy = evaluator_other.evaluate(actual_values=mock_data.actual,
                                             predicted_values=predictions_mock)
-        assert isclose(accuracy, 0.34756903797404387)  # lower number means it is worse than first accuracy
+        assert isclose(accuracy, 0.34756903797404387)  # lower number means it is worse than first value
 
         eval_list = [evaluator_other, evaluator]  # "worse, better"
-        assert all([isclose(x, y) for x, y in zip([x.accuracy for x in eval_list],
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [0.34756903797404387, 0.37990215607221967])])
         eval_list.sort()  # "better, worse"
-        assert all([isclose(x, y) for x, y in zip([x.accuracy for x in eval_list],
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [0.37990215607221967, 0.34756903797404387])])
 
     def test_Misc_evaluators(self):
@@ -402,12 +402,12 @@ class EvaluatorTests(TimerTestCase):
         evaluator = SensitivityEvaluator(positive_category=0,
                                          negative_category=1,
                                          use_probabilities=True,
-                                         threshold=0.5)  # creates worse accuracy
+                                         threshold=0.5)  # creates worse value
         accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isclose(accuracy, 0.81839622641509435)  # lower number means it is worse than first accuracy
+        assert isclose(accuracy, 0.81839622641509435)  # lower number means it is worse than first value
         evaluator = SpecificityEvaluator(positive_category=0,
                                          negative_category=1,
                                          use_probabilities=True,
-                                         threshold=0.5)  # creates worse accuracy
+                                         threshold=0.5)  # creates worse value
         accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isclose(accuracy, 0.51724137931034486)  # lower number means it is worse than first accuracy
+        assert isclose(accuracy, 0.51724137931034486)  # lower number means it is worse than first value

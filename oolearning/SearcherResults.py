@@ -49,7 +49,7 @@ class SearcherResults:
         evaluators = self._holdout_evaluators[0]
         # get all the columns that the tuner_results will have
         evaluator_columns = [x.metric_name for x in evaluators]
-        holdout_accuracies = [[x.accuracy for x in evaluator] for evaluator in self._holdout_evaluators]
+        holdout_accuracies = [[x.value for x in evaluator] for evaluator in self._holdout_evaluators]
 
         return pd.DataFrame(holdout_accuracies, columns=evaluator_columns, index=self._model_descriptions)
 
