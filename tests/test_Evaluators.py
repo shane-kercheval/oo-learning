@@ -251,7 +251,6 @@ class EvaluatorTests(TimerTestCase):
         evaluator = MockTwoClassEvaluator(positive_category=1, negative_category=0, use_probabilities=False)
         accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=mock_data.predictions)
         assert isclose(accuracy, 0.69607843137254899)
-        assert evaluator.confusion_matrix is evaluator.details
         assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
         self.check_confusion_matrix(con_matrix=evaluator.confusion_matrix, mock_data=mock_data)
         assert evaluator.value == evaluator.confusion_matrix.two_class_accuracy
@@ -266,7 +265,6 @@ class EvaluatorTests(TimerTestCase):
         evaluator = MockTwoClassEvaluator(positive_category=1, negative_category=0, use_probabilities=True,
                                           threshold=0.5)
         evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert evaluator.confusion_matrix is evaluator.details
         assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
         self.check_confusion_matrix(con_matrix=evaluator.confusion_matrix, mock_data=mock_data)
         assert evaluator.value == evaluator.confusion_matrix.two_class_accuracy
@@ -293,7 +291,6 @@ class EvaluatorTests(TimerTestCase):
                                           use_probabilities=True,
                                           threshold=None)
         evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert evaluator.confusion_matrix is evaluator.details
         assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
         assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
         assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
@@ -322,7 +319,6 @@ class EvaluatorTests(TimerTestCase):
                                  use_probabilities=True,
                                  threshold=None)
         evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert evaluator.confusion_matrix is evaluator.details
         assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
         assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
         assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
@@ -362,7 +358,6 @@ class EvaluatorTests(TimerTestCase):
         accuracy = evaluator.evaluate(actual_values=mock_data.actual,
                                       predicted_values=predictions_mock)
         assert isclose(accuracy, 0.37990215607221967)
-        assert evaluator.confusion_matrix is evaluator.details
         assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
         assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
         assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]

@@ -50,14 +50,6 @@ class EvaluatorBase(metaclass=ABCMeta):
         assert isinstance(other, EvaluatorBase)
         return self._better_than(self.value, other.value)
 
-    @property
-    def details(self) -> object:
-        """
-        :return: additional information such an object that contains a confusion confusion_matrix and/or other
-            metrics (e.g. true positive rate), defined by the inheriting class
-        """
-        return self._details
-
     def evaluate(self, actual_values: np.ndarray, predicted_values: np.ndarray) -> float:
         """
         given the actual and predicted values, this function calculates the corresponding value, storing
