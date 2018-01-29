@@ -9,6 +9,13 @@ from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 
 
+class MockExploreBase(ExploreDatasetBase):
+    """
+    only used to instantiate an abstract class
+    """
+    pass
+
+
 # noinspection PyMethodMayBeStatic
 class ExploratoryTests(TimerTestCase):
 
@@ -68,8 +75,7 @@ class ExploratoryTests(TimerTestCase):
                              'employment_duration', 'other_credit', 'housing', 'job', 'phone']  # noqa
         target_variable = 'default'
 
-        explore = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv,
-                                                        target_variable=target_variable)
+        explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
         # check all categoric columns are pandas categories
         for feature in categoric_columns:
             assert explore.dataset[feature].dtype.name == 'category'
@@ -83,15 +89,14 @@ class ExploratoryTests(TimerTestCase):
         categoric_columns = ['checking_balance', 'credit_history', 'purpose', 'savings_balance', 'employment_duration', 'other_credit', 'housing', 'job', 'phone']  # noqa
         target_variable = 'default'
 
-        explore_from_csv = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv,
-                                                                 target_variable=target_variable)
+        explore_from_csv = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
         assert explore_from_csv is not None
         assert isinstance(explore_from_csv.dataset, pd.DataFrame)
         assert len(explore_from_csv.dataset) == 1000
         assert explore_from_csv.numeric_features == ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'age', 'existing_loans_count', 'dependents']  # noqa
         assert explore_from_csv.categoric_features == ['checking_balance', 'credit_history', 'purpose', 'savings_balance', 'employment_duration', 'other_credit', 'housing', 'job', 'phone']  # noqa
 
-        explore = ExploreClassificationDataset(dataset=pd.read_csv(credit_csv), target_variable=target_variable)  # noqa
+        explore = MockExploreBase(dataset=pd.read_csv(credit_csv), target_variable=target_variable)  # noqa
         assert explore is not None
         assert isinstance(explore.dataset, pd.DataFrame)
         assert len(explore.dataset) == 1000
@@ -143,9 +148,8 @@ class ExploratoryTests(TimerTestCase):
         ######################################################################################################
         # categoric
         ######################################################################################################
-        explore = ExploreClassificationDataset(dataset=pd.read_csv(credit_csv), target_variable=target_variable)  # noqa
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory(
-            'data/test_Exploratory/test_ExploreDatasetBase_before_mod_categoric.pkl'))  # noqa
+        explore = MockExploreBase(dataset=pd.read_csv(credit_csv), target_variable=target_variable)  # noqa
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_before_mod_categoric.pkl'))  # noqa
         # with open(file, 'wb') as output:
         #     pickle.dump(explore.categoric_summary, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
@@ -183,7 +187,7 @@ class ExploratoryTests(TimerTestCase):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         target_variable = 'default'
 
-        explore = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv, target_variable=target_variable)  # noqa
+        explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)  # noqa
         # cannot get unique values on numeric feature
         self.assertRaises(AssertionError, lambda: explore.unique_values(categoric_feature='amount'))
         self.assertRaises(AssertionError, lambda: explore.unique_values_bar(categoric_feature='amount'))
@@ -224,7 +228,7 @@ class ExploratoryTests(TimerTestCase):
         # `sort_by_features=True`
         ######################################################################################################
         # from_csv SETS COLUMNS TO CATEGORICAL
-        explore = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv, target_variable=target_variable)  # noqa
+        explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)  # noqa
         unique_values = explore.unique_values('checking_balance', sort_by_feature=True)
         assert all(unique_values.index.values == ['1 - 200 DM', '< 0 DM', '> 200 DM', 'unknown'])
         assert all(unique_values.freq.values == [269, 274, 63, 394])
@@ -238,7 +242,7 @@ class ExploratoryTests(TimerTestCase):
         assert all(unique_values.freq.values == [274, 269, 63, 394])
         assert all(unique_values.perc.values == [0.274, 0.269, 0.063, 0.394])
 
-        # not ordered by feature, oredered by frequency
+        # not ordered by feature, ordered by frequency
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/unique_checking_balance_not_sorted.png'))  # noqa
         assert os.path.isfile(file)
         os.remove(file)
@@ -262,8 +266,7 @@ class ExploratoryTests(TimerTestCase):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         target_variable = 'default'
 
-        explore = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv,
-                                                        target_variable=target_variable)
+        explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
 
         # cannot get unique values on numeric feature
         self.assertRaises(AssertionError, lambda: explore.histogram(numeric_feature=target_variable))
@@ -290,8 +293,7 @@ class ExploratoryTests(TimerTestCase):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         target_variable = 'default'
 
-        explore = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv,
-                                                        target_variable=target_variable)
+        explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
 
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/credit_correlation_heatmap.png'))  # noqa
         assert os.path.isfile(file)
