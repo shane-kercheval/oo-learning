@@ -328,6 +328,7 @@ class ModelWrapperTests(TimerTestCase):
         # noinspection PyStatementEffect
         model.fitted_info.graph
         plt.savefig(file)
+        plt.gcf().clear()
         assert os.path.isfile(file)
 
     def test_ModelFitter_transformations(self):
@@ -674,6 +675,7 @@ class ModelWrapperTests(TimerTestCase):
             assert os.path.isfile(file) is False
             fitter.training_evaluators[0].get_roc_curve()
             plt.savefig(file)
+            plt.gcf().clear()
             assert os.path.isfile(file)
 
             assert fitter.training_evaluators[0].confusion_matrix.all_quality_metrics == \
@@ -695,6 +697,7 @@ class ModelWrapperTests(TimerTestCase):
             assert os.path.isfile(file) is False
             fitter.holdout_evaluators[0].get_roc_curve()
             plt.savefig(file)
+            plt.gcf().clear()
             assert os.path.isfile(file)
 
             # Should be the same as the training value
@@ -742,6 +745,7 @@ class ModelWrapperTests(TimerTestCase):
             assert os.path.isfile(file) is False
             fitter.training_evaluators[0].get_roc_curve()
             plt.savefig(file)
+            plt.gcf().clear()
             assert os.path.isfile(file)
 
             assert isclose(fitter.training_accuracies[0], 0.59052420341637712)

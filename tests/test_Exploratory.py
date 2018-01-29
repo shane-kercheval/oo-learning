@@ -1,5 +1,6 @@
 import os
 import pickle
+import matplotlib.pyplot as plt
 
 import pandas as pd
 
@@ -165,6 +166,7 @@ class ExploratoryTests(TimerTestCase):
 
         # cannot get unique values on numeric feature
         self.assertRaises(AssertionError, lambda: explore.unique_values(categoric_feature='amount'))
+        self.assertRaises(AssertionError, lambda: explore.unique_values_bar(categoric_feature='amount'))
 
         unique_values = explore.unique_values('checking_balance')
         assert sorted(unique_values.index.values) == sorted(explore.dataset.checking_balance.unique())
@@ -176,3 +178,49 @@ class ExploratoryTests(TimerTestCase):
         assert sorted(unique_values.index.values) == sorted(explore.dataset[target_variable].unique())
         assert all(unique_values.freq.values == [700, 300])
         assert all(unique_values.perc.values == [0.7, 0.3])
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/unique_purpose.png'))  # noqa
+        assert os.path.isfile(file)
+        os.remove(file)
+        assert os.path.isfile(file) is False
+        explore.unique_values_bar(categoric_feature='purpose')
+        plt.savefig(file)
+        plt.gcf().clear()
+        assert os.path.isfile(file)
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/unique_default.png'))  # noqa
+        assert os.path.isfile(file)
+        os.remove(file)
+        assert os.path.isfile(file) is False
+        explore.unique_values_bar(categoric_feature=target_variable)
+        plt.savefig(file)
+        plt.gcf().clear()
+        assert os.path.isfile(file)
+
+    def test_ExploreDatasetBase_histogram(self):
+        credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
+        target_variable = 'default'
+
+        explore = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv,
+                                                        target_variable=target_variable)
+
+        # cannot get unique values on numeric feature
+        self.assertRaises(AssertionError, lambda: explore.histogram(numeric_feature=target_variable))
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/hist_amount.png'))  # noqa
+        assert os.path.isfile(file)
+        os.remove(file)
+        assert os.path.isfile(file) is False
+        explore.histogram(numeric_feature='amount')
+        plt.savefig(file)
+        plt.gcf().clear()
+        assert os.path.isfile(file)
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/hist_years_at_residence.png'))  # noqa
+        assert os.path.isfile(file)
+        os.remove(file)
+        assert os.path.isfile(file) is False
+        explore.histogram(numeric_feature='years_at_residence')
+        plt.savefig(file)
+        plt.gcf().clear()
+        assert os.path.isfile(file)

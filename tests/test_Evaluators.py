@@ -277,6 +277,7 @@ class EvaluatorTests(TimerTestCase):
         assert os.path.isfile(file) is False
         evaluator.get_roc_curve()
         plt.savefig(file)
+        plt.gcf().clear()
         assert os.path.isfile(file)
 
     def test_TwoClassEvaluator_probabilities_no_threshold(self):
@@ -305,7 +306,9 @@ class EvaluatorTests(TimerTestCase):
         assert os.path.isfile(file) is False
         evaluator.get_roc_curve()
         plt.savefig(file)
+        plt.gcf().clear()
         assert os.path.isfile(file)
+
 
     def test_AucEvaluator(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa

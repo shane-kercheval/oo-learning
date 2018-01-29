@@ -94,9 +94,40 @@ class ExploreDatasetBase(metaclass=ABCMeta):
                             columns=['count', 'nulls', 'perc_nulls', 'top', 'unique', 'perc_unique'])
 
     def unique_values(self, categoric_feature: str):
-        assert (categoric_feature in self._categoric_features) or categoric_feature == self._target_variable
+        # only for categoric features (and the target variable if it is categoric)
+        valid_features = self._categoric_features if self._is_target_numeric else self._categoric_features + \
+                                                                                  [self._target_variable]
+        assert categoric_feature in valid_features
         count_series = self._dataset[categoric_feature].value_counts()
         count_df = pd.DataFrame(count_series)
         count_df['perc'] = (count_series.values / count_series.values.sum()).round(3)
         count_df.columns = ['freq', 'perc']
         return count_df
+
+    def unique_values_bar(self, categoric_feature):
+        unique_values = self.unique_values(categoric_feature=categoric_feature)
+
+        # noinspection PyUnresolvedReferences
+        ax = unique_values.drop(labels='perc', axis=1).plot(kind='bar', rot=10)
+        for idx, label in enumerate(list(unique_values.index)):
+            freq = unique_values.loc[label, 'freq']
+            perc = unique_values.loc[label, 'perc']
+
+            ax.annotate(freq, (idx, freq), xytext=(-8, 2), textcoords='offset points')
+            ax.annotate("{0:.0f}%".format(perc * 100), (idx, 2), xytext=(-8, 0), textcoords='offset points')
+
+        # noinspection PyUnresolvedReferences
+        # ax = unique_values.drop(labels='perc', axis=1).plot(kind='barh')
+        # for idx, label in enumerate(list(unique_values.index)):
+        #     freq = unique_values.loc[label, 'freq']
+        #     perc = unique_values.loc[label, 'perc']
+        #
+        #     ax.annotate(freq, (freq, idx), xytext=(0, 0), textcoords='offset points')
+        #     ax.annotate("{0:.0f}%".format(perc * 100), (0, idx - 0.03), xytext=(0, 0),
+        #                 textcoords='offset points')
+
+    def histogram(self, numeric_feature):
+        # only for numeric features (and the target variable if it is numeric)
+        valid_features = self._numeric_features + [self._target_variable] if self._is_target_numeric else self._numeric_features  # noqa
+        assert numeric_feature in valid_features
+        self._dataset[numeric_feature].hist()

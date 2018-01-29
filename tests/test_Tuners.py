@@ -185,6 +185,7 @@ class TunerTests(TimerTestCase):
         assert os.path.isfile(file) is False
         tuner.results.get_heatmap()
         plt.savefig(file)
+        plt.gcf().clear()
         assert os.path.isfile(file)
 
     def test_tuner_with_no_hyper_params(self):

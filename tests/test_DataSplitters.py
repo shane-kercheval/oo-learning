@@ -47,9 +47,8 @@ class DataSplittersTests(TimerTestCase):
         assert os.path.isfile(file) is False
         data.iloc[training_indexes][target_variable].hist(color='blue', edgecolor='black', grid=None)
         plt.savefig(file)
+        plt.gcf().clear()
         assert os.path.isfile(file)
-
-        plt.clf()
 
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_DataSplitters/test_splitters_RegressionStratifi_distribution_test.png'))  # noqa
         assert os.path.isfile(file)
@@ -57,6 +56,7 @@ class DataSplittersTests(TimerTestCase):
         assert os.path.isfile(file) is False
         data.iloc[test_indexes][target_variable].hist(color='blue', edgecolor='black', grid=None)
         plt.savefig(file)
+        plt.gcf().clear()
         assert os.path.isfile(file)
 
     def test_splitters_ClassificationStratifiedDataSplitter(self):
@@ -123,6 +123,7 @@ class DataSplittersTests(TimerTestCase):
             assert os.path.isfile(file) is False
             data.iloc[train_ind][target_variable].hist(color='blue', edgecolor='black', grid=None)
             plt.savefig(file)
+            plt.gcf().clear()
             assert os.path.isfile(file)
 
             plt.clf()
@@ -133,4 +134,5 @@ class DataSplittersTests(TimerTestCase):
             assert os.path.isfile(file) is False
             data.iloc[test_ind][target_variable].hist(color='blue', edgecolor='black', grid=None)
             plt.savefig(file)
+            plt.gcf().clear()
             assert os.path.isfile(file)
