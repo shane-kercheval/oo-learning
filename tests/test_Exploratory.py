@@ -62,6 +62,21 @@ class ExploratoryTests(TimerTestCase):
         assert OOLearningHelpers.is_series_numeric(data.phone) is False
         assert OOLearningHelpers.is_series_numeric(data.default) is False
 
+    def test_ExploreDatasetBase_Categories(self):
+        credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
+        categoric_columns = ['checking_balance', 'credit_history', 'purpose', 'savings_balance',
+                             'employment_duration', 'other_credit', 'housing', 'job', 'phone']  # noqa
+        target_variable = 'default'
+
+        explore = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv,
+                                                        target_variable=target_variable)
+        # check all categoric columns are pandas categories
+        for feature in categoric_columns:
+            assert explore.dataset[feature].dtype.name == 'category'
+        # check all non-categoric columns are not pandas categories
+        for feature in [x for x in explore.dataset.columns if x not in categoric_columns]:
+            assert explore.dataset[feature].dtype.name != 'category'
+
     def test_ExploreDatasetBase_summary(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         numeric_columns = ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'age', 'existing_loans_count', 'dependents']  # noqa
@@ -137,6 +152,13 @@ class ExploratoryTests(TimerTestCase):
             expected_summary = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
                                                       data_frame2=explore.categoric_summary)
+            # ensure that changing the columns to Categorical (when loading from csv) doesn't affect anything
+            # make sure at least 1 column is a category
+            assert explore_from_csv.dataset['job'].dtype.name == 'category'
+            assert explore_from_csv.dataset['age'].dtype.name != 'category'
+
+            assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
+                                                      data_frame2=explore_from_csv.categoric_summary)
 
         # introduce None's and Zeros into a couple of variable
         explore.dataset.loc[0, 'checking_balance'] = None
@@ -161,13 +183,14 @@ class ExploratoryTests(TimerTestCase):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         target_variable = 'default'
 
-        explore = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv,
-                                                        target_variable=target_variable)
-
+        explore = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv, target_variable=target_variable)  # noqa
         # cannot get unique values on numeric feature
         self.assertRaises(AssertionError, lambda: explore.unique_values(categoric_feature='amount'))
         self.assertRaises(AssertionError, lambda: explore.unique_values_bar(categoric_feature='amount'))
 
+        ######################################################################################################
+        # `sort_by_features=False`
+        ######################################################################################################
         unique_values = explore.unique_values('checking_balance')
         assert sorted(unique_values.index.values) == sorted(explore.dataset.checking_balance.unique())
         assert all(unique_values.freq.values == [394, 274, 269, 63])
@@ -193,6 +216,44 @@ class ExploratoryTests(TimerTestCase):
         os.remove(file)
         assert os.path.isfile(file) is False
         explore.unique_values_bar(categoric_feature=target_variable)
+        plt.savefig(file)
+        plt.gcf().clear()
+        assert os.path.isfile(file)
+
+        ######################################################################################################
+        # `sort_by_features=True`
+        ######################################################################################################
+        # from_csv SETS COLUMNS TO CATEGORICAL
+        explore = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv, target_variable=target_variable)  # noqa
+        unique_values = explore.unique_values('checking_balance', sort_by_feature=True)
+        assert all(unique_values.index.values == ['1 - 200 DM', '< 0 DM', '> 200 DM', 'unknown'])
+        assert all(unique_values.freq.values == [269, 274, 63, 394])
+        assert all(unique_values.perc.values == [0.269, 0.274, 0.063, 0.394])
+
+        # now set the order of categorical
+        explore.set_level_order(categoric_feature='checking_balance',
+                                levels=['< 0 DM', '1 - 200 DM', '> 200 DM', 'unknown'])
+        unique_values = explore.unique_values('checking_balance', sort_by_feature=True)
+        assert all(unique_values.index.values == ['< 0 DM', '1 - 200 DM', '> 200 DM', 'unknown'])
+        assert all(unique_values.freq.values == [274, 269, 63, 394])
+        assert all(unique_values.perc.values == [0.274, 0.269, 0.063, 0.394])
+
+        # not ordered by feature, oredered by frequency
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/unique_checking_balance_not_sorted.png'))  # noqa
+        assert os.path.isfile(file)
+        os.remove(file)
+        assert os.path.isfile(file) is False
+        explore.unique_values_bar(categoric_feature='checking_balance', sort_by_feature=False)
+        plt.savefig(file)
+        plt.gcf().clear()
+        assert os.path.isfile(file)
+
+        # ordered
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/unique_checking_balance_sort.png'))  # noqa
+        assert os.path.isfile(file)
+        os.remove(file)
+        assert os.path.isfile(file) is False
+        explore.unique_values_bar(categoric_feature='checking_balance', sort_by_feature=True)
         plt.savefig(file)
         plt.gcf().clear()
         assert os.path.isfile(file)

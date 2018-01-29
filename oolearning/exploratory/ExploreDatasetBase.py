@@ -1,12 +1,21 @@
 from abc import ABCMeta
+from typing import List
 
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from oolearning import OOLearningHelpers
 
 
 class ExploreDatasetBase(metaclass=ABCMeta):
     def __init__(self, dataset: pd.DataFrame, target_variable: str):
+        """
+        # TODO: DOCUMENT; NOTE: unlike from_csv, THIS METHOD DOES NOT NON-NUMERIC COLUMNS TO pd.Categorical types,
+        # because unlike from_csv which is loading the data directly, we don't know if the user has already
+        # formatted the dataset or not and don't want to undo anything that has been done
+        :param dataset:
+        :param target_variable:
+        """
         self._dataset = dataset
         self._target_variable = target_variable
 
@@ -17,7 +26,20 @@ class ExploreDatasetBase(metaclass=ABCMeta):
 
     @classmethod
     def from_csv(cls, csv_file_path: str, target_variable: str) -> 'ExploreDatasetBase':
-        return cls(dataset=pd.read_csv(csv_file_path), target_variable=target_variable)
+        """
+        # TODO: DOCUMENT; THIS METHOD SETS NON-NUMERIC COLUMNS TO pd.Categorical types
+        :param csv_file_path:
+        :param target_variable:
+        :return:
+        """
+        explore = cls(dataset=pd.read_csv(csv_file_path), target_variable=target_variable)
+
+        _, categoric_features = OOLearningHelpers.get_columns_by_type(data_dtypes=explore.dataset.dtypes,
+                                                                      target_variable=target_variable)
+        for feature in categoric_features:
+            explore.dataset[feature] = explore.dataset[feature].astype('category')
+
+        return explore
 
     @property
     def dataset(self):
@@ -93,22 +115,43 @@ class ExploreDatasetBase(metaclass=ABCMeta):
                             index=columns,
                             columns=['count', 'nulls', 'perc_nulls', 'top', 'unique', 'perc_unique'])
 
-    def unique_values(self, categoric_feature: str):
+    def set_level_order(self, categoric_feature: str, levels: List):
+
+        assert self._dataset[categoric_feature].dtype.name == 'category'  # must be a category
+        self._dataset[categoric_feature].cat.reorder_categories(levels, inplace=True)
+
+    def unique_values(self, categoric_feature: str, sort_by_feature=False):
+        """
+        # TODO: document
+        :param categoric_feature:
+        :param sort_by_feature: if `True`, then if the column is a `pd.Categorical`, then the order of the
+            rows will be based on the order;
+            If `False`, the data will be ordered by frequency
+        :return:
+        """
         # only for categoric features (and the target variable if it is categoric)
         valid_features = self._categoric_features if self._is_target_numeric else self._categoric_features + \
                                                                                   [self._target_variable]
         assert categoric_feature in valid_features
-        count_series = self._dataset[categoric_feature].value_counts()
+        count_series = self._dataset[categoric_feature].value_counts(sort=not sort_by_feature)
         count_df = pd.DataFrame(count_series)
         count_df['perc'] = (count_series.values / count_series.values.sum()).round(3)
         count_df.columns = ['freq', 'perc']
+
         return count_df
 
-    def unique_values_bar(self, categoric_feature):
-        unique_values = self.unique_values(categoric_feature=categoric_feature)
+    def unique_values_bar(self, categoric_feature, sort_by_feature=False):
+        """
+        TODO: Document
+        :param categoric_feature:
+        :param sort_by_feature:
+        :return:
+        """
+        unique_values = self.unique_values(categoric_feature=categoric_feature,
+                                           sort_by_feature=sort_by_feature)
 
         # noinspection PyUnresolvedReferences
-        ax = unique_values.drop(labels='perc', axis=1).plot(kind='bar', rot=10)
+        ax = unique_values.drop(labels='perc', axis=1).plot(kind='bar', rot=10, title=categoric_feature)
         for idx, label in enumerate(list(unique_values.index)):
             freq = unique_values.loc[label, 'freq']
             perc = unique_values.loc[label, 'perc']
@@ -130,4 +173,6 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         # only for numeric features (and the target variable if it is numeric)
         valid_features = self._numeric_features + [self._target_variable] if self._is_target_numeric else self._numeric_features  # noqa
         assert numeric_feature in valid_features
-        self._dataset[numeric_feature].hist()
+        hist_plot = self._dataset[numeric_feature].hist()
+        plt.title(numeric_feature)
+        return hist_plot
