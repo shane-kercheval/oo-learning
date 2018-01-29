@@ -1,8 +1,11 @@
 from abc import ABCMeta
 from typing import List
+from matplotlib import pyplot as pl
 
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
 
 from oolearning import OOLearningHelpers
 
@@ -176,3 +179,13 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         hist_plot = self._dataset[numeric_feature].hist()
         plt.title(numeric_feature)
         return hist_plot
+
+    def correlation_heatmap(self):
+        f, ax = pl.subplots(figsize=(10, 8))
+        corr = self._dataset.corr()
+        sns.heatmap(corr, mask=np.zeros_like(corr, dtype=np.bool),
+                    cmap=sns.diverging_palette(220, 10, as_cmap=True),
+                    square=True, ax=ax,
+                    center=0)
+        plt.xticks(rotation=20)
+        plt.title('correlations')

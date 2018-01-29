@@ -285,3 +285,19 @@ class ExploratoryTests(TimerTestCase):
         plt.savefig(file)
         plt.gcf().clear()
         assert os.path.isfile(file)
+
+    def test_ExploreDatasetBase_correlations(self):
+        credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
+        target_variable = 'default'
+
+        explore = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv,
+                                                        target_variable=target_variable)
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/credit_correlation_heatmap.png'))  # noqa
+        assert os.path.isfile(file)
+        os.remove(file)
+        assert os.path.isfile(file) is False
+        explore.correlation_heatmap()
+        plt.savefig(file)
+        plt.gcf().clear()
+        assert os.path.isfile(file)

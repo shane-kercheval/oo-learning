@@ -19,6 +19,7 @@ setup(
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python :: 3'],
     install_requires=[
+        'seaborn>=0.8.1',
         'scipy>=1.0.0',
         'mock>=2.0.0',
         'dill>=0.2.7.1',
