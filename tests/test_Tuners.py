@@ -73,12 +73,12 @@ class TunerTests(TimerTestCase):
         params_dict = ModelDefaults.hyper_params_random_forest_classification(number_of_features=len(columns))
         grid = HyperParamsGrid(params_dict=params_dict)
 
-        import time
-        t0 = time.time()
+        # import time
+        # t0 = time.time()
         tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
-        t1 = time.time()
-        total_execution_time = t1 - t0
-        print(total_execution_time)
+        # t1 = time.time()
+        # total_execution_time = t1 - t0
+        # print(total_execution_time)
 
         assert len(tuner.results._tune_results_objects) == 27
         assert all([isinstance(x, ResamplerResults)

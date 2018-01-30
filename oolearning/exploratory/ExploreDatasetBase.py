@@ -172,6 +172,19 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         #     ax.annotate("{0:.0f}%".format(perc * 100), (0, idx - 0.03), xytext=(0, 0),
         #                 textcoords='offset points')
 
+    def boxplot(self, numeric_feature):
+        """
+
+        :param numeric_feature:
+        :return:
+        """
+        # TODO:
+        valid_features = self._numeric_features + [self._target_variable] if self._is_target_numeric else self._numeric_features  # noqa
+        assert numeric_feature in valid_features
+        box_plot = self._dataset[numeric_feature].plot(kind='box')
+        plt.title(numeric_feature)
+        return box_plot
+
     def histogram(self, numeric_feature):
         # only for numeric features (and the target variable if it is numeric)
         valid_features = self._numeric_features + [self._target_variable] if self._is_target_numeric else self._numeric_features  # noqa

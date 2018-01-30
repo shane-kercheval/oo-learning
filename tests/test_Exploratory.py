@@ -289,6 +289,33 @@ class ExploratoryTests(TimerTestCase):
         plt.gcf().clear()
         assert os.path.isfile(file)
 
+    def test_ExploreDatasetBase_boxplot(self):
+        credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
+        target_variable = 'default'
+
+        explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
+
+        # cannot get unique values on numeric feature
+        self.assertRaises(AssertionError, lambda: explore.histogram(numeric_feature=target_variable))
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/boxplot_amount.png'))  # noqa
+        assert os.path.isfile(file)
+        os.remove(file)
+        assert os.path.isfile(file) is False
+        explore.boxplot(numeric_feature='amount')
+        plt.savefig(file)
+        plt.gcf().clear()
+        assert os.path.isfile(file)
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/boxplot_years_at_residence.png'))  # noqa
+        assert os.path.isfile(file)
+        os.remove(file)
+        assert os.path.isfile(file) is False
+        explore.boxplot(numeric_feature='years_at_residence')
+        plt.savefig(file)
+        plt.gcf().clear()
+        assert os.path.isfile(file)
+
     def test_ExploreDatasetBase_correlations(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         target_variable = 'default'

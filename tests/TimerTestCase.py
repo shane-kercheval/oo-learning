@@ -11,6 +11,6 @@ class TimerTestCase(unittest.TestCase):
     def tearDown(self):
         elapsed = time.time() - self._started_at
         if elapsed > SLOW_TEST_THRESHOLD:
-            print('{} ({}s)'.format(self.id(), round(elapsed, 2)))
+            print('{} - WARNING: SLOW ({}s)'.format(self.id(), round(elapsed, 2)))
         else:
-            print('')
+            print(self.id())
