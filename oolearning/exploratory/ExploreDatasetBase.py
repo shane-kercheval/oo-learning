@@ -174,11 +174,10 @@ class ExploreDatasetBase(metaclass=ABCMeta):
 
     def boxplot(self, numeric_feature):
         """
-
+        # TODO:
         :param numeric_feature:
         :return:
         """
-        # TODO:
         valid_features = self._numeric_features + [self._target_variable] if self._is_target_numeric else self._numeric_features  # noqa
         assert numeric_feature in valid_features
         box_plot = self._dataset[numeric_feature].plot(kind='box')

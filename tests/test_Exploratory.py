@@ -296,7 +296,7 @@ class ExploratoryTests(TimerTestCase):
         explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
 
         # cannot get unique values on numeric feature
-        self.assertRaises(AssertionError, lambda: explore.histogram(numeric_feature=target_variable))
+        self.assertRaises(AssertionError, lambda: explore.boxplot(numeric_feature=target_variable))
 
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/boxplot_amount.png'))  # noqa
         assert os.path.isfile(file)
@@ -327,6 +327,36 @@ class ExploratoryTests(TimerTestCase):
         os.remove(file)
         assert os.path.isfile(file) is False
         explore.correlation_heatmap()
+        plt.savefig(file)
+        plt.gcf().clear()
+        assert os.path.isfile(file)
+
+    def test_ExploreClassificationDataset_categorical_vs_target(self):
+        credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
+        target_variable = 'default'
+
+        explore = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv, target_variable=target_variable)  # noqa
+        # make sure setting this changes/sorts the order of the bars in the graph (it does)
+        explore.set_level_order(categoric_feature='checking_balance',
+                                levels=['< 0 DM', '1 - 200 DM', '> 200 DM', 'unknown'])
+
+        # cannot get unique values on numeric feature
+        self.assertRaises(AssertionError, lambda: explore.compare_against_target(feature=target_variable))
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/compare_against_target_checking_balance.png'))  # noqa
+        assert os.path.isfile(file)
+        os.remove(file)
+        assert os.path.isfile(file) is False
+        explore.compare_against_target(feature='checking_balance')
+        plt.savefig(file)
+        plt.gcf().clear()
+        assert os.path.isfile(file)
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/compare_against_target_amount.png'))  # noqa
+        assert os.path.isfile(file)
+        os.remove(file)
+        assert os.path.isfile(file) is False
+        explore.compare_against_target(feature='amount')
         plt.savefig(file)
         plt.gcf().clear()
         assert os.path.isfile(file)
