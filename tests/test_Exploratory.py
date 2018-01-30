@@ -331,6 +331,20 @@ class ExploratoryTests(TimerTestCase):
         plt.gcf().clear()
         assert os.path.isfile(file)
 
+    def test_ExploreClassificationDataset(self):
+        self.assertRaises(ValueError, lambda: ExploreClassificationDataset.from_csv(csv_file_path=TestHelper.ensure_test_directory('data/housing.csv'), target_variable='median_house_value'))  # noqa
+
+        credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
+        target_variable = 'default'
+
+        explore = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv, target_variable=target_variable)  # noqa
+
+        assert isinstance(explore, ExploreClassificationDataset)
+        assert explore.target_variable == target_variable
+        assert explore.numeric_features == ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'age', 'existing_loans_count', 'dependents']  # noqa
+        assert explore.categoric_features == ['checking_balance', 'credit_history', 'purpose', 'savings_balance', 'employment_duration', 'other_credit', 'housing', 'job', 'phone']  # noqa
+
+    # noinspection PyUnresolvedReferences
     def test_ExploreClassificationDataset_categorical_vs_target(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         target_variable = 'default'
@@ -357,6 +371,51 @@ class ExploratoryTests(TimerTestCase):
         os.remove(file)
         assert os.path.isfile(file) is False
         explore.compare_against_target(feature='amount')
+        plt.savefig(file)
+        plt.gcf().clear()
+        assert os.path.isfile(file)
+
+    def test_ExploreRegressionDataset(self):
+        self.assertRaises(ValueError, lambda: ExploreRegressionDataset.from_csv(csv_file_path=TestHelper.ensure_test_directory('data/credit.csv'), target_variable='default'))  # noqa
+
+        housing_csv = TestHelper.ensure_test_directory('data/housing.csv')
+        target_variable = 'median_house_value'
+
+        explore = ExploreRegressionDataset.from_csv(csv_file_path=housing_csv, target_variable=target_variable)  # noqa
+
+        assert isinstance(explore, ExploreRegressionDataset)
+        assert explore.target_variable == target_variable
+        assert explore.numeric_features == ['longitude', 'latitude', 'housing_median_age', 'total_rooms', 'total_bedrooms', 'population', 'households', 'median_income']  # noqa
+        assert explore.categoric_features == ['ocean_proximity']
+
+    # noinspection PyUnresolvedReferences
+    def test_ExploreRegressionDataset_categorical_vs_target(self):
+        credit_csv = TestHelper.ensure_test_directory('data/housing.csv')
+        target_variable = 'median_house_value'
+
+        explore = ExploreRegressionDataset.from_csv(csv_file_path=credit_csv, target_variable=target_variable)  # noqa
+        assert isinstance(explore, ExploreRegressionDataset)
+        # make sure setting this changes/sorts the order of the bars in the graph (it does)
+        explore.set_level_order(categoric_feature='ocean_proximity',
+                                levels=['<1H OCEAN', 'INLAND', 'ISLAND', 'NEAR BAY', 'NEAR OCEAN'])
+
+        # cannot get unique values on numeric feature
+        self.assertRaises(AssertionError, lambda: explore.compare_against_target(feature=target_variable))
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/compare_against_target_ocean_proximity.png'))  # noqa
+        assert os.path.isfile(file)
+        os.remove(file)
+        assert os.path.isfile(file) is False
+        explore.compare_against_target(feature='ocean_proximity')
+        plt.savefig(file)
+        plt.gcf().clear()
+        assert os.path.isfile(file)
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/compare_against_target_median_income.png'))  # noqa
+        assert os.path.isfile(file)
+        os.remove(file)
+        assert os.path.isfile(file) is False
+        explore.compare_against_target(feature='median_income')
         plt.savefig(file)
         plt.gcf().clear()
         assert os.path.isfile(file)

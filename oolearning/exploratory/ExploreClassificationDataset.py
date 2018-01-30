@@ -1,10 +1,14 @@
+import pandas as pd
+
 from oolearning.exploratory.ExploreDatasetBase import ExploreDatasetBase
 
 
 class ExploreClassificationDataset(ExploreDatasetBase):
-    # create method that compares the target variable against the feature of interest
-    # for categorical feature, it should return a side by side bar chart
-    # for a numeric feature, side-by-side box plot
+    def __init__(self, dataset: pd.DataFrame, target_variable: str):
+        super().__init__(dataset=dataset, target_variable=target_variable)
+        if self._is_target_numeric:
+            raise ValueError('the target variable cannot be numeric to use ExploreClassificationDataset')
+
     def compare_against_target(self, feature):
         """
         TODO: Document
