@@ -17,7 +17,7 @@ class ExploreRegressionDataset(ExploreDatasetBase):
 
         if feature in self._numeric_features:
             return self._dataset[[feature, self._target_variable]].plot.\
-                scatter(x=feature, y=self._target_variable,
+                scatter(x=feature, y=self._target_variable, alpha=0.1,
                         title='{0} vs. target (`{1}`)'.format(feature, self._target_variable))
         else:
             return self._dataset[[feature, self._target_variable]].boxplot(by=feature)

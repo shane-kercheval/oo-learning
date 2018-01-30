@@ -316,6 +316,22 @@ class ExploratoryTests(TimerTestCase):
         plt.gcf().clear()
         assert os.path.isfile(file)
 
+    def test_ExploreDatasetBase_scatter_plot_numerics(self):
+        credit_csv = TestHelper.ensure_test_directory('data/housing.csv')
+        target_variable = 'median_house_value'
+
+        explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/scatter_plot_numerics_subset.png'))  # noqa
+        assert os.path.isfile(file)
+        os.remove(file)
+        assert os.path.isfile(file) is False
+        explore.scatter_plot_numerics(numeric_columns=['median_house_value', 'median_income', 'total_rooms',
+                                                       'housing_median_age'])
+        plt.savefig(file)
+        plt.gcf().clear()
+        assert os.path.isfile(file)
+
     def test_ExploreDatasetBase_correlations(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         target_variable = 'default'
@@ -419,3 +435,4 @@ class ExploratoryTests(TimerTestCase):
         plt.savefig(file)
         plt.gcf().clear()
         assert os.path.isfile(file)
+

@@ -1,6 +1,7 @@
 from abc import ABCMeta
 from typing import List
 from matplotlib import pyplot as pl
+from pandas.plotting import scatter_matrix
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -8,6 +9,7 @@ import seaborn as sns
 import numpy as np
 
 from oolearning import OOLearningHelpers
+
 
 
 class ExploreDatasetBase(metaclass=ABCMeta):
@@ -191,6 +193,18 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         hist_plot = self._dataset[numeric_feature].hist()
         plt.title(numeric_feature)
         return hist_plot
+
+    def scatter_plot_numerics(self, numeric_columns=None, figure_size=(12, 8)):
+        """
+        TODO document
+        if numeric_columns is none, all numeric columns will be plotted.
+        :param numeric_columns:
+        :param figure_size:
+        :return:
+        """
+        if numeric_columns is None:
+            numeric_columns = self._numeric_features + [self._target_variable] if self._is_target_numeric else self._numeric_features  # noqa
+        return scatter_matrix(self._dataset[numeric_columns], figsize=figure_size)
 
     def correlation_heatmap(self):
         f, ax = pl.subplots(figsize=(10, 8))
