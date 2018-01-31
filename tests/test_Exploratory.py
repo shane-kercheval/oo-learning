@@ -435,4 +435,3 @@ class ExploratoryTests(TimerTestCase):
         plt.savefig(file)
         plt.gcf().clear()
         assert os.path.isfile(file)
-

@@ -25,10 +25,17 @@ After model selection, if implementing the model in a production system, the use
 - `fit` for data (e.g. transformations)
 - `holdout`
 	- (e.g. holdout set) over `test` (e.g. test set)
-	- `test` is too overloaded and causes confusion
+	- `test` is too overloaded and causes confusion in variable/method names
 - `features`
 	- over `predictors`, `independent variables`, etc.
-- `response` ?
+- `target`
+	- over `response`
+- `hyperparameter`
+	- over `tuning parameter`
+
+
+- `utility` function measures how **good** the model is
+- `cost` function measure how **bad** the model is
 
 
 ## Example

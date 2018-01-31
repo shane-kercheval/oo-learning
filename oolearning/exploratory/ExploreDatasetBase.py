@@ -11,7 +11,6 @@ import numpy as np
 from oolearning import OOLearningHelpers
 
 
-
 class ExploreDatasetBase(metaclass=ABCMeta):
     def __init__(self, dataset: pd.DataFrame, target_variable: str):
         """
