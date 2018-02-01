@@ -91,7 +91,7 @@ class TunerTests(TimerTestCase):
                                      repeats=num_repeats),
                                  persistence_manager=LocalCacheManager(cache_directory=cache_directory))
 
-        searcher.search(data_x=data.drop('Survived', axis=1), data_y=data.Survived)
+        searcher.search(data_x=data.drop(columns='Survived'), data_y=data.Survived)
 
         # check persistence
         # first check cache files for tuning

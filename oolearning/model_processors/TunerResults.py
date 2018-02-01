@@ -23,7 +23,7 @@ class TunerResults:
             results_list.append(metric_dictionary)
 
         # noinspection PyUnresolvedReferences
-        self._tune_results_values = pd.concat([tune_results.copy().drop('resampler_object', axis=1),
+        self._tune_results_values = pd.concat([tune_results.copy().drop(columns='resampler_object'),
                                                pd.DataFrame(results_list)], axis=1)
         self._time_results = time_results
         self._hyper_params = hyper_params

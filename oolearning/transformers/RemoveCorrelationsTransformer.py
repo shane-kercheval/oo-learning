@@ -24,7 +24,7 @@ class RemoveCorrelationsTransformer(TransformerBase):
         while True:
             # noinspection PyUnresolvedReferences
             # `corr()` automatically excludes categorical features
-            correlation_matrix = data_x.drop(columns=columns_to_remove, axis=1).corr()
+            correlation_matrix = data_x.drop(columns=columns_to_remove).corr()
 
             features = correlation_matrix.columns.values
             correlation_matrix = np.abs(correlation_matrix.as_matrix())
@@ -52,4 +52,4 @@ class RemoveCorrelationsTransformer(TransformerBase):
 
     def _transform_definition(self, data_x: pd.DataFrame, state: dict) -> pd.DataFrame:
         # noinspection PyTypeChecker
-        return data_x.drop(columns=state['columns_to_remove'], axis=1)
+        return data_x.drop(columns=state['columns_to_remove'])

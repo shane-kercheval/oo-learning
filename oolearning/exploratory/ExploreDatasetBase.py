@@ -155,7 +155,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
                                            sort_by_feature=sort_by_feature)
 
         # noinspection PyUnresolvedReferences
-        ax = unique_values.drop(labels='perc', axis=1).plot(kind='bar', rot=10, title=categoric_feature)
+        ax = unique_values.drop(columns='perc').plot(kind='bar', rot=10, title=categoric_feature)
         for idx, label in enumerate(list(unique_values.index)):
             freq = unique_values.loc[label, 'freq']
             perc = unique_values.loc[label, 'perc']
@@ -164,7 +164,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
             ax.annotate("{0:.0f}%".format(perc * 100), (idx, 2), xytext=(-8, 0), textcoords='offset points')
 
         # noinspection PyUnresolvedReferences
-        # ax = unique_values.drop(labels='perc', axis=1).plot(kind='barh')
+        # ax = unique_values.drop(columns='perc').plot(kind='barh')
         # for idx, label in enumerate(list(unique_values.index)):
         #     freq = unique_values.loc[label, 'freq']
         #     perc = unique_values.loc[label, 'perc']

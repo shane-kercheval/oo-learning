@@ -45,3 +45,12 @@ After model selection, if implementing the model in a production system, the use
 def whatever():
 	pass
 ```
+
+
+# Unit Tests
+
+The unit tests in this project are all found in the tests directory.
+
+In the terminal, run the following in the root project directory:
+
+> python -m unittest discover ./tests

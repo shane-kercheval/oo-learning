@@ -50,7 +50,7 @@ class TunerTests(TimerTestCase):
 
         train_data = data
         train_data_y = train_data.Survived
-        train_data = train_data.drop('Survived', axis=1)
+        train_data = train_data.drop(columns='Survived')
 
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
@@ -120,7 +120,7 @@ class TunerTests(TimerTestCase):
 
         train_data = data
         train_data_y = train_data.Survived
-        train_data = train_data.drop('Survived', axis=1)
+        train_data = train_data.drop(columns='Survived')
 
         evaluators = [MockEvaluator(metric_name='kappa', better_than=lambda x, y: x > y),
                       MockEvaluator(metric_name='sensitivity', better_than=lambda x, y: x > y),
@@ -193,7 +193,7 @@ class TunerTests(TimerTestCase):
 
         train_data = data
         train_data_y = train_data.strength
-        train_data = train_data.drop('strength', axis=1)
+        train_data = train_data.drop(columns='strength')
 
         tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RegressionMW(),
                                                                       model_transformations=ModelDefaults.transformations_regression(),  # noqa

@@ -289,7 +289,7 @@ class ModelWrapperTests(TimerTestCase):
     def test_RegressionMW(self):
         data = TestHelper.get_cement_data()
         target_variable = 'strength'
-        data_x = data.drop(target_variable, axis=1)
+        data_x = data.drop(columns=target_variable)
         data_y = data.strength
 
         model = RegressionMW()
@@ -461,7 +461,7 @@ class ModelWrapperTests(TimerTestCase):
                              model_transformations=ModelDefaults.transformations_regression(),
                              evaluators=[RmseEvaluator()])
 
-        fitter.fit(data_x=data.drop('strength', axis=1), data_y=data['strength'])
+        fitter.fit(data_x=data.drop(columns='strength'), data_y=data['strength'])
 
         # TODO: test warnings
         # TODO: test feature_importance
@@ -490,7 +490,7 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # check prediction values
         ######################################################################################################
-        predictions = fitter.predict(data_x=data.drop('strength', axis=1))
+        predictions = fitter.predict(data_x=data.drop(columns='strength'))
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_RegressionMWTest_expected_predictions.csv'))  # noqa
         # predictions.to_csv(file)
         expected_predictions = pd.read_csv(file)
@@ -509,7 +509,7 @@ class ModelWrapperTests(TimerTestCase):
                              model_transformations=ModelDefaults.transformations_regression(),
                              evaluators=[MaeEvaluator()])
 
-        fitter.fit(data_x=data.drop('strength', axis=1), data_y=data['strength'])
+        fitter.fit(data_x=data.drop(columns='strength'), data_y=data['strength'])
 
         # TODO: test warnings
         # TODO: test feature_importance
@@ -535,7 +535,7 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # check prediction values
         ######################################################################################################
-        predictions = fitter.predict(data_x=data.drop('strength', axis=1))
+        predictions = fitter.predict(data_x=data.drop(columns='strength'))
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_RegressionMWTest_expected_predictions.csv'))  # noqa
         # predictions.to_csv(file)
         expected_predictions = pd.read_csv(file)
@@ -581,7 +581,7 @@ class ModelWrapperTests(TimerTestCase):
         # should raise an error because our transformations didn't impute missing values
         self.assertRaises(MissingValueError,
                           fitter.fit,
-                          data_x=trans_data.drop('strength', axis=1), data_y=trans_data['strength'])
+                          data_x=trans_data.drop(columns='strength'), data_y=trans_data['strength'])
 
         ######################################################################################################
         # check transformations
@@ -649,11 +649,11 @@ class ModelWrapperTests(TimerTestCase):
 
             train_data = data.iloc[training_indexes]
             train_data_y = train_data.Survived
-            train_data = train_data.drop('Survived', axis=1)
+            train_data = train_data.drop(columns='Survived')
 
             test_data = data.iloc[test_indexes]
             test_data_y = test_data.Survived
-            test_data = test_data.drop('Survived', axis=1)
+            test_data = test_data.drop(columns='Survived')
 
             transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
                                CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch'])] + \
@@ -769,11 +769,11 @@ class ModelWrapperTests(TimerTestCase):
 
         train_data = data.iloc[training_indexes]
         train_data_y = train_data.Survived
-        train_data = train_data.drop('Survived', axis=1)
+        train_data = train_data.drop(columns='Survived')
 
         test_data = data.iloc[test_indexes]
         test_data_y = test_data.Survived
-        test_data = test_data.drop('Survived', axis=1)
+        test_data = test_data.drop(columns='Survived')
 
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch'])] + \
@@ -929,11 +929,11 @@ class ModelWrapperTests(TimerTestCase):
 
         train_data = data.iloc[training_indexes]
         train_data_y = train_data.Survived
-        train_data = train_data.drop('Survived', axis=1)
+        train_data = train_data.drop(columns='Survived')
 
         test_data = data.iloc[test_indexes]
         test_data_y = test_data.Survived
-        test_data = test_data.drop('Survived', axis=1)
+        test_data = test_data.drop(columns='Survived')
 
         ######################################################################################################
         # test default hyper-parameters
@@ -1119,11 +1119,11 @@ class ModelWrapperTests(TimerTestCase):
 
         train_data = data.iloc[training_indexes]
         train_data_y = train_data.Survived
-        train_data = train_data.drop('Survived', axis=1)
+        train_data = train_data.drop(columns='Survived')
 
         test_data = data.iloc[test_indexes]
         test_data_y = test_data.Survived
-        test_data = test_data.drop('Survived', axis=1)
+        test_data = test_data.drop(columns='Survived')
 
         ######################################################################################################
         # test default hyper-parameters
@@ -1214,11 +1214,11 @@ class ModelWrapperTests(TimerTestCase):
 
         train_data = data.iloc[training_indexes]
         train_data_y = train_data.strength
-        train_data = train_data.drop('strength', axis=1)
+        train_data = train_data.drop(columns='strength')
 
         test_data = data.iloc[test_indexes]
         test_data_y = test_data.strength
-        test_data = test_data.drop('strength', axis=1)
+        test_data = test_data.drop(columns='strength')
 
         ######################################################################################################
         # test default hyper-parameters

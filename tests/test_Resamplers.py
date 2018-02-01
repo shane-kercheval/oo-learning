@@ -23,11 +23,11 @@ class ResamplerTests(TimerTestCase):
 
         train_data = data
         train_data_y = train_data.strength
-        train_data = train_data.drop('strength', axis=1)
+        train_data = train_data.drop(columns='strength')
 
         # test_data = data.iloc[test_indexes]
         # test_data_y = test_data.strength
-        # test_data = test_data.drop('strength', axis=1)
+        # test_data = test_data.drop(columns='strength')
 
         resampler = RepeatedCrossValidationResampler(
             model=RegressionMW(),
@@ -68,11 +68,11 @@ class ResamplerTests(TimerTestCase):
 
         train_data = data
         train_data_y = train_data.strength
-        train_data = train_data.drop('strength', axis=1)
+        train_data = train_data.drop(columns='strength')
 
         # test_data = data.iloc[test_indexes]
         # test_data_y = test_data.strength
-        # test_data = test_data.drop('strength', axis=1)
+        # test_data = test_data.drop(columns='strength')
 
         resampler = RepeatedCrossValidationResampler(
             model=MockRegressionModelWrapper(data_y=data.strength),
@@ -107,7 +107,7 @@ class ResamplerTests(TimerTestCase):
 
         train_data = data.iloc[training_indexes]
         train_data_y = train_data.Survived
-        train_data = train_data.drop('Survived', axis=1)
+        train_data = train_data.drop(columns='Survived')
 
         evaluator_list = [KappaEvaluator(positive_category=1,
                                          negative_category=0,
@@ -161,7 +161,7 @@ class ResamplerTests(TimerTestCase):
 
         train_data = data.iloc[training_indexes]
         train_data_y = train_data.Survived
-        train_data = train_data.drop('Survived', axis=1)
+        train_data = train_data.drop(columns='Survived')
 
         # noinspection SpellCheckingInspection
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),

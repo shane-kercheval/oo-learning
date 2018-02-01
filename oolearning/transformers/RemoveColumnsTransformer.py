@@ -24,4 +24,4 @@ class RemoveColumnsTransformer(TransformerBase):
 
     # noinspection PyTypeChecker
     def _transform_definition(self, data_x: pd.DataFrame, state: dict) -> pd.DataFrame:
-        return data_x.drop(self._columns_to_remove, axis=1)
+        return data_x.drop(columns=self._columns_to_remove)

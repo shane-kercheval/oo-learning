@@ -259,7 +259,7 @@ class EvaluatorTests(TimerTestCase):
     def test_TwoClassEvaluator_probabilities_custom_threshold(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
 
-        predictions_mock = mock_data.drop(['actual', 'predictions'], axis=1)
+        predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
         predictions_mock.columns = [1, 0]
 
         evaluator = MockTwoClassEvaluator(positive_category=1, negative_category=0, use_probabilities=True,
@@ -283,7 +283,7 @@ class EvaluatorTests(TimerTestCase):
     def test_TwoClassEvaluator_probabilities_no_threshold(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
 
-        predictions_mock = mock_data.drop(['actual', 'predictions'], axis=1)
+        predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
         predictions_mock.columns = [1, 0]
 
         # noinspection PyTypeChecker
@@ -313,7 +313,7 @@ class EvaluatorTests(TimerTestCase):
     def test_AucEvaluator(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
 
-        predictions_mock = mock_data.drop(['actual', 'predictions'], axis=1)
+        predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
         predictions_mock.columns = [1, 0]
 
         # noinspection PyTypeChecker
@@ -351,7 +351,7 @@ class EvaluatorTests(TimerTestCase):
     def test_KappaEvaluator(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
 
-        predictions_mock = mock_data.drop(['actual', 'predictions'], axis=1)
+        predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
         predictions_mock.columns = [1, 0]
 
         evaluator = KappaEvaluator(positive_category=1,
@@ -394,7 +394,7 @@ class EvaluatorTests(TimerTestCase):
         """
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
 
-        predictions_mock = mock_data.drop(['actual', 'predictions'], axis=1)
+        predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
         predictions_mock.columns = [1, 0]
 
         evaluator = SensitivityEvaluator(positive_category=0,

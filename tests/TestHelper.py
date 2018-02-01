@@ -63,9 +63,9 @@ class TestHelper:
 
         # return training data, training target data, test data, test target data
         return \
-            data.iloc[training_indexes].drop(target_variable, axis=1),\
+            data.iloc[training_indexes].drop(columns=target_variable),\
             data.iloc[training_indexes][target_variable].values,\
-            data.iloc[test_indexes].drop(target_variable, axis=1),\
+            data.iloc[test_indexes].drop(columns=target_variable),\
             data.iloc[test_indexes][target_variable].values
 
     # noinspection PyTypeChecker

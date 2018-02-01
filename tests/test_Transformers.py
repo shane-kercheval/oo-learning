@@ -343,7 +343,7 @@ class TransformerTests(TimerTestCase):
 
         def test_remove_columns(columns_to_remove):
             def remove_columns_helper(data_to_transform: pd.DataFrame):
-                return data_to_transform.drop(columns_to_remove, axis=1)
+                return data_to_transform.drop(columns=columns_to_remove)
 
             remove_column_transformer = StatelessTransformer(custom_function=remove_columns_helper)
             new_data = remove_column_transformer.fit_transform(data_x=data)
