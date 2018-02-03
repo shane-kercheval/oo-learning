@@ -41,7 +41,7 @@ class ModelFitter:
             and callers have the ability to replace with their own list (or None)
         :param persistence_manager: a PersistenceManager defining how the underlying models should be cached,
             optional.
-        :param train_callback: a callback that is called before `ModelWrapper.train()` which returns the
+        :param train_callback: a callback that is called before the model is trained, which returns the
             data_x, data_y, and hyper_params that are passed into `ModelWrapper.train()`.
             The primary intent is for unit tests to have the ability to ensure that the data (data_x) is
             being transformed as expected, but it is imaginable to think that users will also benefit

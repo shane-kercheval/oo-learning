@@ -2,6 +2,8 @@ import os
 import pickle
 from math import isclose
 
+import numpy as np
+
 from oolearning import *
 
 from tests.MockClassificationModelWrapper import MockClassificationModelWrapper
@@ -10,6 +12,7 @@ from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 
 
+# noinspection SpellCheckingInspection,PyMethodMayBeStatic
 class ResamplerTests(TimerTestCase):
 
     @classmethod
@@ -150,6 +153,92 @@ class ResamplerTests(TimerTestCase):
         assert isclose(resampler.results.metric_standard_deviations['sensitivity'], 0.036787308260115267)
         assert isclose(resampler.results.metric_standard_deviations['specificity'], 0.019357626459983342)
         assert isclose(resampler.results.metric_standard_deviations['ErrorRate'], 0.025427045943705647)
+
+    def test_Resampler_callback(self):
+        # make sure that the Resampler->train_callback works
+        data = TestHelper.get_cement_data()
+        target_variable = 'strength'
+
+        # noinspection PyUnusedLocal
+        def train_callback(data_x, data_y, hyper_params):
+            raise NotImplementedError()
+
+        evaluators = [RmseEvaluator(), MaeEvaluator()]
+        transformations = [RemoveColumnsTransformer(['coarseagg', 'fineagg']), ImputationTransformer(), DummyEncodeTransformer()]  # noqa
+        resampler = RepeatedCrossValidationResampler(
+            model=RandomForestMW(),
+            model_transformations=transformations,
+            evaluators=evaluators,
+            folds=5,
+            repeats=5,
+            train_callback=train_callback)
+
+        # should raise an error from the callback definition above
+        self.assertRaises(NotImplementedError, lambda: resampler.resample(data_x=data.drop(columns=target_variable), data_y=data[target_variable], hyper_params=None))  # noqa
+
+    def test_Resampler_transformations(self):
+        # intent of this test is to ensure that the data is being transformed according to the
+        # transformations being passed in.
+
+        # make sure that the Resampler->train_callback works
+        data = TestHelper.get_cement_data()
+        target_variable = 'strength'
+
+        # create random missing values and extra field
+        np.random.seed(42)
+        missing_indexes_cement = np.random.randint(low=0, high=len(data), size=int(len(data) * 0.10))
+        data.loc[missing_indexes_cement, 'cement'] = None
+
+        np.random.seed(43)
+        missing_indexes_ash = np.random.randint(low=0, high=len(data), size=int(len(data) * 0.10))
+        data.loc[missing_indexes_ash, 'ash'] = None
+
+        np.random.seed(42)
+        random_codes = np.random.randint(low=0, high=2, size=len(data))
+        data['random'] = ['code0' if random_code == 0 else 'code1' for random_code in random_codes]
+
+        assert data.isna().sum().sum() == 195
+
+        data_x = data.drop(columns=target_variable)
+        data_y = data[target_variable]
+
+        ######################################################################################################
+        # make sure the data that we pass to `train()` in the ModelWrapper is transformed
+        # then make sure what we get in the callback matches the transformed data
+        ######################################################################################################
+        test_pipeline = TransformerPipeline(
+            transformations=[RemoveColumnsTransformer(['coarseagg', 'fineagg']),  # noqa
+                             ImputationTransformer(),
+                             DummyEncodeTransformer()])
+        transformed_data = test_pipeline.fit_transform(data_x=data_x)
+        # make sure our test transformations are transformed as expected (although this should already be
+        # tested in test_Transformations file
+        assert all(transformed_data.columns.values == ['cement', 'slag', 'ash', 'water', 'superplastic', 'age', 'random_code1'])  # noqa
+        assert OOLearningHelpers.is_series_numeric(variable=transformed_data.random_code1)
+        assert transformed_data.isna().sum().sum() == 0
+
+        # this callback will be called by the ModelWrapper before fitting the model
+        # the callback gives us back the data that it will pass to the underlying model
+        # so we can make sure it matches what we expect
+        def train_callback(data_x_test, data_y_test, hyper_params):
+            assert hyper_params is None
+            # noinspection PyTypeChecker
+            assert all(data_y == data_y_test)
+            TestHelper.ensure_all_values_equal(data_frame1=transformed_data, data_frame2=data_x_test)
+
+        evaluators = [RmseEvaluator(), MaeEvaluator()]
+        transformations = [RemoveColumnsTransformer(['coarseagg', 'fineagg']), ImputationTransformer(), DummyEncodeTransformer()]  # noqa
+        resampler = RepeatedCrossValidationResampler(
+            model=MockRegressionModelWrapper(data_y=data_y),
+            model_transformations=transformations,
+            evaluators=evaluators,
+            folds=5,
+            repeats=5,
+            train_callback=train_callback)
+
+        # the train_callback method will be triggered and will cause an assertion error if the data that is
+        # going to be trained does not match the data previously transformed
+        resampler.resample(data_x=data.drop(columns=target_variable), data_y=data[target_variable], hyper_params=None)  # noqa
 
     def test_resamplers_RandomForest_classification(self):
         data = TestHelper.get_titanic_data()

@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import List
+from typing import List, Callable, Union
 
 import copy
 import pandas as pd
@@ -25,7 +25,9 @@ class ResamplerBase(metaclass=ABCMeta):
                  model: ModelWrapperBase,
                  model_transformations: List[TransformerBase],
                  evaluators: List[EvaluatorBase],
-                 persistence_manager: PersistenceManagerBase = None):
+                 persistence_manager: PersistenceManagerBase = None,
+                 train_callback: Callable[[pd.DataFrame, np.ndarray,
+                                           Union[HyperParamsBase, None]], None] = None):
         """
         :param model:
         :param model_transformations:
@@ -36,6 +38,11 @@ class ResamplerBase(metaclass=ABCMeta):
         :param persistence_manager: a PersistenceManager defining how the model should be cached, optional.
             NOTE: There is currently no enforcement that subclasses of ResamplerBase implement model
             persistence
+        :param train_callback: a callback that is called before the model is trained, which returns the
+            data_x, data_y, and hyper_params that are passed into `ModelWrapper.train()`.
+            The primary intent is for unit tests to have the ability to ensure that the data (data_x) is
+            being transformed as expected, but it is imaginable to think that users will also benefit
+            from this capability to also peak at the data that is being trained.
         """
         assert isinstance(model, ModelWrapperBase)
         if model_transformations is not None:
@@ -47,6 +54,7 @@ class ResamplerBase(metaclass=ABCMeta):
         self._evaluators = evaluators
         self._results = None
         self._persistence_manager = persistence_manager
+        self._train_callback = train_callback
 
     def clone(self):
         """
@@ -77,6 +85,9 @@ class ResamplerBase(metaclass=ABCMeta):
         """
         pipeline = TransformerPipeline(transformations=self._model_transformations)
         data_transformed = pipeline.fit_transform(data_x=data_x)
+
+        if self._train_callback is not None:
+            self._train_callback(data_transformed, data_y, hyper_params)
 
         self._results = self._resample(data_x=data_transformed, data_y=data_y, hyper_params=hyper_params)
 

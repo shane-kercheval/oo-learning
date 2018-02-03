@@ -1,12 +1,13 @@
 import numpy as np
 import pandas as pd
-from typing import List
+from typing import List, Callable, Union
 
 from oolearning.evaluators.EvaluatorBase import EvaluatorBase
 from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.model_processors.ResamplerBase import ResamplerBase
 from oolearning.model_processors.ResamplerResults import ResamplerResults
+from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 from oolearning.splitters.StratifiedDataSplitter import StratifiedDataSplitter
 from oolearning.transformers.TransformerBase import TransformerBase
 
@@ -18,6 +19,9 @@ class StratifiedMonteCarloResampler(ResamplerBase):
                  model_transformations: List[TransformerBase],
                  stratified_splitter: StratifiedDataSplitter,
                  evaluators: List[EvaluatorBase],
+                 persistence_manager: PersistenceManagerBase = None,
+                 train_callback: Callable[[pd.DataFrame, np.ndarray,
+                                           Union[HyperParamsBase, None]], None] = None,
                  repeats=30):
         """
         :param model:
@@ -28,7 +32,11 @@ class StratifiedMonteCarloResampler(ResamplerBase):
         :param evaluators:
         :param repeats:
         """
-        super().__init__(model=model, model_transformations=model_transformations, evaluators=evaluators)
+        super().__init__(model=model,
+                         model_transformations=model_transformations,
+                         evaluators=evaluators,
+                         persistence_manager=persistence_manager,
+                         train_callback=train_callback)
 
         assert isinstance(repeats, int)
 

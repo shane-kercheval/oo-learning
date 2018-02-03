@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Callable, Union
 
 import numpy as np
 import pandas as pd
@@ -21,12 +21,15 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                  model_transformations: List[TransformerBase],
                  evaluators: List[EvaluatorBase],
                  persistence_manager: PersistenceManagerBase = None,
+                 train_callback: Callable[[pd.DataFrame, np.ndarray,
+                                           Union[HyperParamsBase, None]], None] = None,
                  folds=5,
                  repeats=5):
         super().__init__(model=model,
                          model_transformations=model_transformations,
                          evaluators=evaluators,
-                         persistence_manager=persistence_manager)
+                         persistence_manager=persistence_manager,
+                         train_callback=train_callback)
 
         assert isinstance(folds, int)
         assert isinstance(repeats, int)

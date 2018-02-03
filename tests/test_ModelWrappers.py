@@ -331,6 +331,25 @@ class ModelWrapperTests(TimerTestCase):
         plt.gcf().clear()
         assert os.path.isfile(file)
 
+    def test_ModelFitter_callback(self):
+        # make sure that the ModelFitter->train_callback works, other tests rely on it to work correctly.
+        data = TestHelper.get_cement_data()
+        target_variable = 'strength'
+
+        def train_callback(data_x, data_y, hyper_params):
+            raise NotImplementedError()
+
+        evaluators = [RmseEvaluator(), MaeEvaluator()]
+        model_fitter = ModelFitter(model=MockRegressionModelWrapper(data_y=data.strength),
+                                   model_transformations=[RemoveColumnsTransformer(['coarseagg', 'fineagg']),
+                                                          ImputationTransformer(),
+                                                          DummyEncodeTransformer()],
+                                   evaluators=evaluators,
+                                   train_callback=train_callback)
+
+        # should raise an error from the callback definition above 
+        self.assertRaises(NotImplementedError, lambda: model_fitter.fit(data_x=data.drop(columns=target_variable), data_y=data[target_variable], hyper_params=None))  # noqa
+
     def test_ModelFitter_transformations(self):
         data = TestHelper.get_cement_data()
         target_variable = 'strength'
@@ -388,7 +407,7 @@ class ModelWrapperTests(TimerTestCase):
         # this callback will be called by the ModelWrapper before fitting the model
         # the callback gives us back the data that it will pass to the underlying model
         # so we can make sure it matches what we expect
-        def fit_callback(data_x, data_y, hyper_params):
+        def train_callback(data_x, data_y, hyper_params):
             assert hyper_params is None
             assert len(data_y) == len(train_y)
             assert all(data_y == train_y)
@@ -404,7 +423,7 @@ class ModelWrapperTests(TimerTestCase):
                                                           ImputationTransformer(),
                                                           DummyEncodeTransformer()],
                                    evaluators=evaluators,
-                                   train_callback=fit_callback)
+                                   train_callback=train_callback)
 
         # should raise an error calling `predict` before `fit`
         self.assertRaises(ModelNotFittedError, lambda: model_fitter.predict(data_x=test_x))
