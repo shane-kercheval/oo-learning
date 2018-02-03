@@ -182,6 +182,18 @@ class TunerTests(TimerTestCase):
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_heatmap.png',  # noqa
                               lambda: tuner.results.get_heatmap())
 
+        ######################################################################################################
+        # Test Box-Plots
+        ######################################################################################################
+        TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_boxplot_kappa.png',
+                              lambda: tuner.results.get_cross_validation_boxplots(metric=Metric.KAPPA))
+        TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_boxplot_sens.png',
+                              lambda: tuner.results.get_cross_validation_boxplots(metric=Metric.SENSITIVITY))
+        TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_boxplot_spec.png',
+                              lambda: tuner.results.get_cross_validation_boxplots(metric=Metric.SPECIFICITY))
+        TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_boxplot_error.png',
+                              lambda: tuner.results.get_cross_validation_boxplots(metric=Metric.ERROR_RATE))
+
     def test_tuner_with_no_hyper_params(self):
         data = TestHelper.get_cement_data()
 

@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from oolearning.enums.Metric import Metric
+
 
 # TODO: update documentation
 class TunerResults:
@@ -105,3 +107,45 @@ class TunerResults:
         return self.columnwise_conditional_format(df=self.tune_results,
                                                   hyper_params=self._hyper_params,
                                                   minimizers=minimizers)
+
+    def get_cross_validation_boxplots(self, metric: Metric):
+        metric_name = metric.value
+        # build the dataframe that will be used to generate the boxplot; 1 column per resampled hyper-params
+        resamples = pd.DataFrame()
+        for index in range(len(self._tune_results_objects)):
+            cross_val_scores = self._tune_results_objects.iloc[index].loc['resampler_object'].\
+                cross_validation_scores[metric_name]
+            # column name should be the hyper_params & values
+            column_name_dict = dict()
+            for hyper_param in self._hyper_params:
+                column_name_dict[hyper_param] = self._tune_results_objects.iloc[index].loc[hyper_param]
+
+            resamples[str(column_name_dict)] = pd.Series(data=cross_val_scores)
+
+        # ensure correct number of models (columns in `resamples`, and rows in `tune_results`
+        assert resamples.shape[1] == len(self.tune_results)
+        # ensure correct number of resamples (rows in `resamples`, and row in `the underlying cross validation
+        # scores (of resampled hyper-param))
+        assert resamples.shape[0] == len(self._tune_results_objects.iloc[0].loc['resampler_object'].cross_validation_scores)  # noqa
+
+        # get the means to determine the 'best' hyper-param combo
+        resample_means = [resamples[column].mean() for column in resamples.columns.values]
+        assert len(resample_means) == resamples.shape[1]
+
+        # get the current evaluator object so we can determine if it is a minimizer or maximizer
+        evaluator = [x for x in self._tune_results_objects.iloc[0].resampler_object.evaluators[0]
+                     if x.metric_name == metric_name]
+        assert len(evaluator) == 1  # we should just get the current evaluator
+        # if the `better_than` function returns True, 0 is "better than" 1 and we have a minimizer
+        # for minimizers, we want to return the min, which is the best value, otherwise, return the max
+        minimizer = evaluator[0].better_than_function(0, 1)
+        best = min if minimizer else max
+        index_of_best_mean = resample_means.index(best(resample_means))
+
+        resample_boxplot = resamples.boxplot(vert=False, figsize=(10, 10))
+        plt.xlim(0.0, 1.0)
+        plt.title('{0} ({1})'.format('Cross-Validation Scores Per Resampled Hyper-parameter', metric.name),
+                  loc='right')
+        plt.tight_layout()
+        plt.gca().get_yticklabels()[index_of_best_mean].set_color('red')
+        return resample_boxplot

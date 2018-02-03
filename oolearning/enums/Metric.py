@@ -10,3 +10,4 @@ class Metric(Enum):
     KAPPA = 'kappa'
     SPECIFICITY = 'specificity'
     SENSITIVITY = 'sensitivity'
+    ERROR_RATE = 'ErrorRate'
