@@ -39,7 +39,7 @@ class ResamplerBase(metaclass=ABCMeta):
             NOTE: There is currently no enforcement that subclasses of ResamplerBase implement model
             persistence
         :param train_callback: a callback that is called before the model is trained, which returns the
-            data_x, data_y, and hyper_params that are passed into `ModelWrapper.train()`.
+            data_x, data_y, and hyper_params that are passed into the underlying resampler algorithm.
             The primary intent is for unit tests to have the ability to ensure that the data (data_x) is
             being transformed as expected, but it is imaginable to think that users will also benefit
             from this capability to also peak at the data that is being trained.
