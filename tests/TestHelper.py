@@ -1,8 +1,13 @@
+import os
+from math import isclose
+from typing import Callable
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from math import isclose
-from oolearning.splitters.RegressionStratifiedDataSplitter import RegressionStratifiedDataSplitter
+
 from oolearning.OOLearningHelpers import OOLearningHelpers
+from oolearning.splitters.RegressionStratifiedDataSplitter import RegressionStratifiedDataSplitter
 
 
 class TestHelper:
@@ -82,3 +87,14 @@ class TestHelper:
             assert all([x == y for x, y in zip(data_frame1[col].values, data_frame2[col].values)])
 
         return True
+
+    @staticmethod
+    def check_plot(file_name: str, get_plot_function: Callable):
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory(file_name))
+        if os.path.isfile(file):
+            os.remove(file)
+        assert os.path.isfile(file) is False
+        get_plot_function()
+        plt.savefig(file)
+        plt.gcf().clear()
+        assert os.path.isfile(file)

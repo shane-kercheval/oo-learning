@@ -321,15 +321,8 @@ class ModelWrapperTests(TimerTestCase):
                        10.353609808895648)
 
         # test ROC curve
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_RegressionMW_regression_plots.png'))  # noqa
-        assert os.path.isfile(file)
-        remove(file)
-        assert os.path.isfile(file) is False
-        # noinspection PyStatementEffect
-        model.fitted_info.graph
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_ModelWrappers/test_RegressionMW_regression_plots.png',
+                              lambda: model.fitted_info.graph)
 
     def test_ModelFitter_callback(self):
         # make sure that the ModelFitter->train_callback works, other tests rely on it to work correctly.
@@ -734,14 +727,8 @@ class ModelWrapperTests(TimerTestCase):
             assert isclose(accuracy[0], 0.58794854434664856)
 
             # test ROC curve for holdout evaluator
-            file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_LogisticMW_holdout_ROC_custom_threshold.png'))  # noqa
-            assert os.path.isfile(file)
-            remove(file)
-            assert os.path.isfile(file) is False
-            fitter.holdout_evaluators[0].get_roc_curve()
-            plt.savefig(file)
-            plt.gcf().clear()
-            assert os.path.isfile(file)
+            TestHelper.check_plot('data/test_ModelWrappers/test_LogisticMW_holdout_ROC_custom_threshold.png',
+                                  lambda: fitter.holdout_evaluators[0].get_roc_curve())
 
             # Should be the same as the training value
             accuracy = fitter.evaluate_holdout(holdout_x=train_data, holdout_y=train_data_y,
@@ -782,14 +769,8 @@ class ModelWrapperTests(TimerTestCase):
 
             fitter.fit(data_x=train_data, data_y=train_data_y)
 
-            file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_LogisticMW_training_ROC_ideal_threshold.png'))  # noqa
-            assert os.path.isfile(file)
-            remove(file)
-            assert os.path.isfile(file) is False
-            fitter.training_evaluators[0].get_roc_curve()
-            plt.savefig(file)
-            plt.gcf().clear()
-            assert os.path.isfile(file)
+            TestHelper.check_plot('data/test_ModelWrappers/test_LogisticMW_training_ROC_ideal_threshold.png',
+                                  lambda: fitter.training_evaluators[0].get_roc_curve())
 
             assert isclose(fitter.training_accuracies[0], 0.59052420341637712)
             assert fitter.training_evaluators[0].confusion_matrix.all_quality_metrics == \

@@ -3,6 +3,7 @@ import pickle
 from math import isclose
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from oolearning import *
 
@@ -292,6 +293,11 @@ class ResamplerTests(TimerTestCase):
                                                    expected_file.format(fold_index, repeat_index)))
 
         assert resampler.results.metrics == ['kappa', 'sensitivity', 'specificity', 'ErrorRate']
+
+        # make sure the order of the cross_validation_scores is the same order as Evaluators passed in
+        assert all(resampler.results.cross_validation_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'ErrorRate'])  # noqa
+
+        # metric_means and metric_standard_deviations comes from cross_validation_scores, so testing both
         assert isclose(resampler.results.metric_means['kappa'], 0.5871647457625514)
         assert isclose(resampler.results.metric_means['sensitivity'], 0.7225285066820597)
         assert isclose(resampler.results.metric_means['specificity'], 0.86179768930490386)
@@ -301,3 +307,7 @@ class ResamplerTests(TimerTestCase):
         assert isclose(resampler.results.metric_standard_deviations['sensitivity'], 0.065086179854148496)
         assert isclose(resampler.results.metric_standard_deviations['specificity'], 0.035803688812849649)
         assert isclose(resampler.results.metric_standard_deviations['ErrorRate'], 0.029873757630591153)
+
+        plt.gcf().clear()
+        TestHelper.check_plot('data/test_Resamplers/test_resamplers_RandomForest_classification_cv_boxplot.png',  # noqa
+                              lambda: resampler.results.cross_validation_score_boxplot())

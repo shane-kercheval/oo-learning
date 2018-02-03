@@ -271,14 +271,8 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator.threshold == 0.5
         assert isclose(evaluator.auc, 0.74428675992192583)
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_TwoClassEvaluator_probabilities_custom_thr_ROC.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        evaluator.get_roc_curve()
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_probabilities_custom_thr_ROC.png',  # noqa
+                              lambda: evaluator.get_roc_curve())
 
     def test_TwoClassEvaluator_probabilities_no_threshold(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
@@ -300,15 +294,8 @@ class EvaluatorTests(TimerTestCase):
         assert isclose(evaluator.threshold, 0.41)
         assert isclose(evaluator.auc, 0.74428675992192583)
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_TwoClassEvaluator_probabilities_no_thresh_ROC.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        evaluator.get_roc_curve()
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
-
+        TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_probabilities_no_thresh_ROC.png',  # noqa
+                              lambda: evaluator.get_roc_curve())
 
     def test_AucEvaluator(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa

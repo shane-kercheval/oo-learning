@@ -41,23 +41,11 @@ class DataSplittersTests(TimerTestCase):
             assert training_indexes + test_indexes == training_test_indexes
 
         # visualize distribution of the target variable to visually confirm stratification
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_DataSplitters/test_splitters_RegressionStra_distribution_training.png'))  # noqa
-        assert os.path.isfile(file)
-        remove(file)
-        assert os.path.isfile(file) is False
-        data.iloc[training_indexes][target_variable].hist(color='blue', edgecolor='black', grid=None)
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_DataSplitters/test_splitters_RegressionStra_distribution_training.png',  # noqa
+                              lambda: data.iloc[training_indexes][target_variable].hist(color='blue', edgecolor='black', grid=None))  # noqa
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_DataSplitters/test_splitters_RegressionStratifi_distribution_test.png'))  # noqa
-        assert os.path.isfile(file)
-        remove(file)
-        assert os.path.isfile(file) is False
-        data.iloc[test_indexes][target_variable].hist(color='blue', edgecolor='black', grid=None)
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_DataSplitters/test_splitters_RegressionStratifi_distribution_test.png',  # noqa
+                              lambda: data.iloc[test_indexes][target_variable].hist(color='blue', edgecolor='black', grid=None))  # noqa
 
     def test_splitters_ClassificationStratifiedDataSplitter(self):
         test_ratio = 0.20
@@ -117,22 +105,8 @@ class DataSplittersTests(TimerTestCase):
                 assert train_ind + test_ind == training_test_index
 
             # visualize distribution of the target variable to visually confirm stratification
-            file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_DataSplitters/test_splitters_RegressionStra_monte_distribution_training_' + str(index)+'.png'))  # noqa
-            assert os.path.isfile(file)
-            remove(file)
-            assert os.path.isfile(file) is False
-            data.iloc[train_ind][target_variable].hist(color='blue', edgecolor='black', grid=None)
-            plt.savefig(file)
-            plt.gcf().clear()
-            assert os.path.isfile(file)
+            TestHelper.check_plot('data/test_DataSplitters/test_splitters_RegressionStra_monte_distribution_training_' + str(index)+'.png',  # noqa
+                                  lambda: data.iloc[train_ind][target_variable].hist(color='blue', edgecolor='black', grid=None))
 
-            plt.clf()
-
-            file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_DataSplitters/test_splitters_RegressionStratifi_monte_distribution_test_' + str(index) + '.png'))  # noqa
-            assert os.path.isfile(file)
-            remove(file)
-            assert os.path.isfile(file) is False
-            data.iloc[test_ind][target_variable].hist(color='blue', edgecolor='black', grid=None)
-            plt.savefig(file)
-            plt.gcf().clear()
-            assert os.path.isfile(file)
+            TestHelper.check_plot('data/test_DataSplitters/test_splitters_RegressionStratifi_monte_distribution_test_' + str(index) + '.png',  # noqa
+                                  lambda: data.iloc[test_ind][target_variable].hist(color='blue', edgecolor='black', grid=None))

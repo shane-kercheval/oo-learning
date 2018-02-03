@@ -72,7 +72,7 @@ class ExploratoryTests(TimerTestCase):
     def test_ExploreDatasetBase_Categories(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         categoric_columns = ['checking_balance', 'credit_history', 'purpose', 'savings_balance',
-                             'employment_duration', 'other_credit', 'housing', 'job', 'phone']  # noqa
+                             'employment_duration', 'other_credit', 'housing', 'job', 'phone']
         target_variable = 'default'
 
         explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
@@ -96,7 +96,7 @@ class ExploratoryTests(TimerTestCase):
         assert explore_from_csv.numeric_features == ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'age', 'existing_loans_count', 'dependents']  # noqa
         assert explore_from_csv.categoric_features == ['checking_balance', 'credit_history', 'purpose', 'savings_balance', 'employment_duration', 'other_credit', 'housing', 'job', 'phone']  # noqa
 
-        explore = MockExploreBase(dataset=pd.read_csv(credit_csv), target_variable=target_variable)  # noqa
+        explore = MockExploreBase(dataset=pd.read_csv(credit_csv), target_variable=target_variable)
         assert explore is not None
         assert isinstance(explore.dataset, pd.DataFrame)
         assert len(explore.dataset) == 1000
@@ -148,7 +148,7 @@ class ExploratoryTests(TimerTestCase):
         ######################################################################################################
         # categoric
         ######################################################################################################
-        explore = MockExploreBase(dataset=pd.read_csv(credit_csv), target_variable=target_variable)  # noqa
+        explore = MockExploreBase(dataset=pd.read_csv(credit_csv), target_variable=target_variable)
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_before_mod_categoric.pkl'))  # noqa
         # with open(file, 'wb') as output:
         #     pickle.dump(explore.categoric_summary, output, pickle.HIGHEST_PROTOCOL)
@@ -174,8 +174,7 @@ class ExploratoryTests(TimerTestCase):
         explore.dataset.loc[9, 'savings_balance'] = None
         explore.dataset.loc[68, 'savings_balance'] = None
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory(
-            'data/test_Exploratory/test_ExploreDatasetBase_after_mod_categoric.pkl'))  # noqa
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_after_mod_categoric.pkl'))  # noqa
         # with open(file, 'wb') as output:
         #     pickle.dump(explore.categoric_summary, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
@@ -187,7 +186,7 @@ class ExploratoryTests(TimerTestCase):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         target_variable = 'default'
 
-        explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)  # noqa
+        explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
         # cannot get unique values on numeric feature
         self.assertRaises(AssertionError, lambda: explore.unique_values(categoric_feature='amount'))
         self.assertRaises(AssertionError, lambda: explore.unique_values_bar(categoric_feature='amount'))
@@ -206,29 +205,17 @@ class ExploratoryTests(TimerTestCase):
         assert all(unique_values.freq.values == [700, 300])
         assert all(unique_values.perc.values == [0.7, 0.3])
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/unique_purpose.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        explore.unique_values_bar(categoric_feature='purpose')
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_exploratory/unique_purpose.png',  # noqa
+                              lambda: explore.unique_values_bar(categoric_feature='purpose'))
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/unique_default.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        explore.unique_values_bar(categoric_feature=target_variable)
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_exploratory/unique_default.png',  # noqa
+                              lambda: explore.unique_values_bar(categoric_feature=target_variable))
 
         ######################################################################################################
         # `sort_by_features=True`
         ######################################################################################################
         # from_csv SETS COLUMNS TO CATEGORICAL
-        explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)  # noqa
+        explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
         unique_values = explore.unique_values('checking_balance', sort_by_feature=True)
         assert all(unique_values.index.values == ['1 - 200 DM', '< 0 DM', '> 200 DM', 'unknown'])
         assert all(unique_values.freq.values == [269, 274, 63, 394])
@@ -243,24 +230,12 @@ class ExploratoryTests(TimerTestCase):
         assert all(unique_values.perc.values == [0.274, 0.269, 0.063, 0.394])
 
         # not ordered by feature, ordered by frequency
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/unique_checking_balance_not_sorted.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        explore.unique_values_bar(categoric_feature='checking_balance', sort_by_feature=False)
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_exploratory/unique_checking_balance_not_sorted.png',
+                              lambda: explore.unique_values_bar(categoric_feature='checking_balance', sort_by_feature=False))
 
         # ordered
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/unique_checking_balance_sort.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        explore.unique_values_bar(categoric_feature='checking_balance', sort_by_feature=True)
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_exploratory/unique_checking_balance_sort.png',
+                              lambda: explore.unique_values_bar(categoric_feature='checking_balance', sort_by_feature=True))
 
     def test_ExploreDatasetBase_histogram(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
@@ -271,23 +246,11 @@ class ExploratoryTests(TimerTestCase):
         # cannot get unique values on numeric feature
         self.assertRaises(AssertionError, lambda: explore.histogram(numeric_feature=target_variable))
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/hist_amount.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        explore.histogram(numeric_feature='amount')
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_exploratory/hist_amount.png',
+                              lambda: explore.histogram(numeric_feature='amount'))
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/hist_years_at_residence.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        explore.histogram(numeric_feature='years_at_residence')
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_exploratory/hist_years_at_residence.png',
+                              lambda: explore.histogram(numeric_feature='years_at_residence'))
 
     def test_ExploreDatasetBase_boxplot(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
@@ -298,23 +261,11 @@ class ExploratoryTests(TimerTestCase):
         # cannot get unique values on numeric feature
         self.assertRaises(AssertionError, lambda: explore.boxplot(numeric_feature=target_variable))
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/boxplot_amount.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        explore.boxplot(numeric_feature='amount')
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_exploratory/boxplot_amount.png',
+                              lambda: explore.boxplot(numeric_feature='amount'))
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/boxplot_years_at_residence.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        explore.boxplot(numeric_feature='years_at_residence')
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_exploratory/boxplot_years_at_residence.png',
+                              lambda: explore.boxplot(numeric_feature='years_at_residence'))
 
     def test_ExploreDatasetBase_scatter_plot_numerics(self):
         credit_csv = TestHelper.ensure_test_directory('data/housing.csv')
@@ -322,15 +273,8 @@ class ExploratoryTests(TimerTestCase):
 
         explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/scatter_plot_numerics_subset.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        explore.scatter_plot_numerics(numeric_columns=['median_house_value', 'median_income', 'total_rooms',
-                                                       'housing_median_age'])
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_exploratory/scatter_plot_numerics_subset.png',
+                              lambda: explore.scatter_plot_numerics(numeric_columns=['median_house_value', 'median_income', 'total_rooms', 'housing_median_age']))  # noqa
 
     def test_ExploreDatasetBase_correlations(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
@@ -373,23 +317,11 @@ class ExploratoryTests(TimerTestCase):
         # cannot get unique values on numeric feature
         self.assertRaises(AssertionError, lambda: explore.compare_against_target(feature=target_variable))
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/compare_against_target_checking_balance.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        explore.compare_against_target(feature='checking_balance')
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_exploratory/compare_against_target_checking_balance.png',
+                              lambda: explore.compare_against_target(feature='checking_balance'))
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/compare_against_target_amount.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        explore.compare_against_target(feature='amount')
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_exploratory/compare_against_target_amount.png',
+                              lambda: explore.compare_against_target(feature='amount'))
 
     def test_ExploreRegressionDataset(self):
         self.assertRaises(ValueError, lambda: ExploreRegressionDataset.from_csv(csv_file_path=TestHelper.ensure_test_directory('data/credit.csv'), target_variable='default'))  # noqa
@@ -418,20 +350,8 @@ class ExploratoryTests(TimerTestCase):
         # cannot get unique values on numeric feature
         self.assertRaises(AssertionError, lambda: explore.compare_against_target(feature=target_variable))
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/compare_against_target_ocean_proximity.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        explore.compare_against_target(feature='ocean_proximity')
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_exploratory/compare_against_target_ocean_proximity.png',
+                              lambda: explore.compare_against_target(feature='ocean_proximity'))
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/compare_against_target_median_income.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        explore.compare_against_target(feature='median_income')
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_exploratory/compare_against_target_median_income.png',
+                              lambda: explore.compare_against_target(feature='median_income'))

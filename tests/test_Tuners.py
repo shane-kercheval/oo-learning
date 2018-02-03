@@ -179,14 +179,8 @@ class TunerTests(TimerTestCase):
         ######################################################################################################
         # Test Heatmap
         ######################################################################################################
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Tuners/test_ModelTuner_mock_classification_get_heatmap.png'))  # noqa
-        assert os.path.isfile(file)
-        remove(file)
-        assert os.path.isfile(file) is False
-        tuner.results.get_heatmap()
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+        TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_heatmap.png',  # noqa
+                              lambda: tuner.results.get_heatmap())
 
     def test_tuner_with_no_hyper_params(self):
         data = TestHelper.get_cement_data()
