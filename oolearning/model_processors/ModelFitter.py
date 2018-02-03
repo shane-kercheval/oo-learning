@@ -1,5 +1,5 @@
 import copy
-from typing import List
+from typing import List, Callable, Union
 
 import numpy as np
 import pandas as pd
@@ -28,7 +28,9 @@ class ModelFitter:
                  model: ModelWrapperBase,
                  model_transformations: List[TransformerBase],
                  evaluators: List[EvaluatorBase],
-                 persistence_manager: PersistenceManagerBase=None):
+                 persistence_manager: PersistenceManagerBase=None,
+                 train_callback: Callable[[pd.DataFrame, np.ndarray,
+                                           Union[HyperParamsBase, None]], None] = None):
         """
         :param evaluators: a list of Evaluator to access training value.
             If no evaluator is passed into the `evaluate_holdout()` method, this evaluator is cloned and also
@@ -39,6 +41,11 @@ class ModelFitter:
             and callers have the ability to replace with their own list (or None)
         :param persistence_manager: a PersistenceManager defining how the underlying models should be cached,
             optional.
+        :param train_callback: a callback that is called before `ModelWrapper.train()` which returns the
+            data_x, data_y, and hyper_params that are passed into `ModelWrapper.train()`.
+            The primary intent is for unit tests to have the ability to ensure that the data (data_x) is
+            being transformed as expected, but it is imaginable to think that users will also benefit
+            from this capability to also peak at the data that is being trained.
         """
         assert isinstance(model, ModelWrapperBase)
         self._model = model
@@ -48,6 +55,7 @@ class ModelFitter:
         self._has_fitted = False
         self._model_info = None
         self._persistence_manager = persistence_manager
+        self._train_callback = train_callback
 
         if model_transformations is not None:
             assert isinstance(model_transformations, list)
@@ -133,11 +141,11 @@ class ModelFitter:
             self._persistence_manager.set_key(key=cache_key)
             self._model.set_persistence_manager(persistence_manager=self._persistence_manager)
 
-        # fit the model with the transformed training data
-        self._model.train(data_x=prepared_training_data,
-                          data_y=data_y,
-                          hyper_params=hyper_params)
+        if self._train_callback is not None:
+            self._train_callback(prepared_training_data, data_y, hyper_params)
 
+        # fit the model with the transformed training data
+        self._model.train(data_x=prepared_training_data, data_y=data_y, hyper_params=hyper_params)
         self._model_info = self._model.fitted_info
 
         for evaluator in self._training_evaluators:

@@ -120,7 +120,6 @@ class ExploreDatasetBase(metaclass=ABCMeta):
                             columns=['count', 'nulls', 'perc_nulls', 'top', 'unique', 'perc_unique'])
 
     def set_level_order(self, categoric_feature: str, levels: List):
-
         assert self._dataset[categoric_feature].dtype.name == 'category'  # must be a category
         self._dataset[categoric_feature].cat.reorder_categories(levels, inplace=True)
 

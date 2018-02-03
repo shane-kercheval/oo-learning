@@ -27,7 +27,6 @@ class ImputationTransformer(TransformerBase):
 
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         imputed_values = dict()
-        # make sure the target/response column is ignored
         numeric_features, categoric_features = OOLearningHelpers.\
             get_columns_by_type(data_dtypes=data_x.dtypes, target_variable=None)
 

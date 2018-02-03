@@ -372,6 +372,29 @@ class ModelWrapperTests(TimerTestCase):
         assert all(test_x.loc[index_missing_test_ash]['ash'].isnull())
 
         ######################################################################################################
+        # make sure the data that we pass to `train()` in the ModelWrapper is transformed
+        # then make sure what we get in the callback matches the transformed data
+        ######################################################################################################
+        test_pipeline = TransformerPipeline(transformations=[RemoveColumnsTransformer(['coarseagg', 'fineagg']),  # noqa
+                                                             ImputationTransformer(),
+                                                             DummyEncodeTransformer()])
+        transformed_data = test_pipeline.fit_transform(data_x=train_x)
+        # make sure our test transformations are transformed as expected (although this should already be
+        # tested in test_Transformations file
+        assert all(transformed_data.columns.values == ['cement', 'slag', 'ash', 'water', 'superplastic', 'age', 'random_code1'])  # noqa
+        assert OOLearningHelpers.is_series_numeric(variable=transformed_data.random_code1)
+        assert transformed_data.isna().sum().sum() == 0
+
+        # this callback will be called by the ModelWrapper before fitting the model
+        # the callback gives us back the data that it will pass to the underlying model
+        # so we can make sure it matches what we expect
+        def fit_callback(data_x, data_y, hyper_params):
+            assert hyper_params is None
+            assert len(data_y) == len(train_y)
+            assert all(data_y == train_y)
+            TestHelper.ensure_all_values_equal(data_frame1=transformed_data, data_frame2=data_x)
+
+        ######################################################################################################
         # fit/predict the model using the Mock object, which stores the transformed training/test data
         # so we can validate the expected transformations took place across both datasets
         ######################################################################################################
@@ -380,7 +403,8 @@ class ModelWrapperTests(TimerTestCase):
                                    model_transformations=[RemoveColumnsTransformer(['coarseagg', 'fineagg']),
                                                           ImputationTransformer(),
                                                           DummyEncodeTransformer()],
-                                   evaluators=evaluators)
+                                   evaluators=evaluators,
+                                   train_callback=fit_callback)
 
         # should raise an error calling `predict` before `fit`
         self.assertRaises(ModelNotFittedError, lambda: model_fitter.predict(data_x=test_x))

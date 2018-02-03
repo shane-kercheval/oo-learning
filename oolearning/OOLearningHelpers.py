@@ -6,7 +6,7 @@ import pandas as pd
 
 class OOLearningHelpers:
 
-    _numeric_dtypes = [np.dtype('float64'), np.dtype('int64')]
+    _numeric_dtypes = [np.dtype('float64'), np.dtype('int64'), np.dtype('uint8')]
 
     @staticmethod
     def is_series_numeric(variable: pd.Series):
