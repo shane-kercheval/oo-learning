@@ -1,8 +1,9 @@
-from typing import Tuple, Union, Callable
+import math
+from typing import Tuple, Union
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import math
-import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score
 
 from oolearning.evaluators.ClassificationEvaluator import ClassificationEvaluator
@@ -19,7 +20,6 @@ class TwoClassEvaluator(ClassificationEvaluator):
     """
 
     def __init__(self,
-                 better_than: Callable[[float, float], bool],
                  positive_category,
                  negative_category,
                  use_probabilities: bool=True,
@@ -36,8 +36,7 @@ class TwoClassEvaluator(ClassificationEvaluator):
                 left corner of the ROC graph.
         # TODO: document performance hit when needed to calculate the ideal threshold (now caching value)
         """
-        super().__init__(better_than=better_than,
-                         categories=[positive_category, negative_category],
+        super().__init__(categories=[positive_category, negative_category],
                          use_probabilities=use_probabilities,
                          threshold=threshold)
         self._positive_category = positive_category

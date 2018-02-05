@@ -2,23 +2,23 @@ import os
 from math import isclose
 from typing import Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
 from oolearning import *
+from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
+from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 
 
-class MockTwoClassEvaluator(TwoClassEvaluator):
+class MockTwoClassEvaluator(UtilityFunctionMixin, TwoClassEvaluator):
     def __init__(self,
                  positive_category,
                  negative_category,
                  use_probabilities: bool=True,
                  threshold: float=0.5):
-        super().__init__(better_than=lambda this, other: this > other,  # larger value is better
-                         positive_category=positive_category,
+        super().__init__(positive_category=positive_category,
                          negative_category=negative_category,
                          use_probabilities=use_probabilities,
                          threshold=threshold)
@@ -49,10 +49,14 @@ class EvaluatorTests(TimerTestCase):
         self.assertRaises(AssertionError,
                           lambda: rmse_eval.evaluate(actual_values=actual, predicted_values=predicted))
 
+        assert isinstance(rmse_eval, CostFunctionMixin)
+
     def test_RmseEvaluator(self):
         predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
         actual = np.array([6, 10, 14, 16, 7, 5, 5, 13, 12, 13, 8, 5])
         rmse_eval = RmseEvaluator()
+        assert isinstance(rmse_eval, CostFunctionMixin)
+        assert isinstance(rmse_eval, EvaluatorBase)
         assert rmse_eval.metric_name == Metric.ROOT_MEAN_SQUARE_ERROR.value
         rmse_eval.evaluate(actual_values=actual, predicted_values=predicted)
         assert isclose(2.91547594742265, rmse_eval.value)
@@ -73,6 +77,8 @@ class EvaluatorTests(TimerTestCase):
         predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
         actual = np.array([6, 10, 14, 16, 7, 5, 5, 13, 12, 13, 8, 5])
         mae_eval = MaeEvaluator()
+        assert isinstance(mae_eval, CostFunctionMixin)
+        assert isinstance(mae_eval, EvaluatorBase)
         assert mae_eval.metric_name == Metric.MEAN_ABSOLUTE_ERROR.value
         mae_eval.evaluate(actual_values=actual, predicted_values=predicted)
         assert isclose(2.3333333333333335, mae_eval.value)
@@ -249,6 +255,9 @@ class EvaluatorTests(TimerTestCase):
         assert all(mock_data.predictions == round(mock_data.pos_probabilities))  # ensure correct data
 
         evaluator = MockTwoClassEvaluator(positive_category=1, negative_category=0, use_probabilities=False)
+        assert isinstance(evaluator, UtilityFunctionMixin)
+        assert isinstance(evaluator, EvaluatorBase)
+
         accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=mock_data.predictions)
         assert isclose(accuracy, 0.69607843137254899)
         assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
@@ -264,6 +273,9 @@ class EvaluatorTests(TimerTestCase):
 
         evaluator = MockTwoClassEvaluator(positive_category=1, negative_category=0, use_probabilities=True,
                                           threshold=0.5)
+        assert isinstance(evaluator, UtilityFunctionMixin)
+        assert isinstance(evaluator, EvaluatorBase)
+
         evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
         assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
         self.check_confusion_matrix(con_matrix=evaluator.confusion_matrix, mock_data=mock_data)
@@ -285,6 +297,9 @@ class EvaluatorTests(TimerTestCase):
                                           negative_category=0,
                                           use_probabilities=True,
                                           threshold=None)
+        assert isinstance(evaluator, UtilityFunctionMixin)
+        assert isinstance(evaluator, EvaluatorBase)
+
         evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
         assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
         assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
@@ -308,6 +323,9 @@ class EvaluatorTests(TimerTestCase):
                                  negative_category=0,
                                  use_probabilities=True,
                                  threshold=None)
+        assert isinstance(evaluator, UtilityFunctionMixin)
+        assert isinstance(evaluator, EvaluatorBase)
+
         evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
         assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
         assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
@@ -345,6 +363,9 @@ class EvaluatorTests(TimerTestCase):
                                    negative_category=0,
                                    use_probabilities=True,
                                    threshold=None)
+        assert isinstance(evaluator, UtilityFunctionMixin)
+        assert isinstance(evaluator, EvaluatorBase)
+
         accuracy = evaluator.evaluate(actual_values=mock_data.actual,
                                       predicted_values=predictions_mock)
         assert isclose(accuracy, 0.37990215607221967)
@@ -388,11 +409,15 @@ class EvaluatorTests(TimerTestCase):
                                          negative_category=1,
                                          use_probabilities=True,
                                          threshold=0.5)  # creates worse value
+        assert isinstance(evaluator, UtilityFunctionMixin)
+        assert isinstance(evaluator, EvaluatorBase)
         accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
         assert isclose(accuracy, 0.81839622641509435)  # lower number means it is worse than first value
         evaluator = SpecificityEvaluator(positive_category=0,
                                          negative_category=1,
                                          use_probabilities=True,
                                          threshold=0.5)  # creates worse value
+        assert isinstance(evaluator, UtilityFunctionMixin)
+        assert isinstance(evaluator, EvaluatorBase)
         accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
         assert isclose(accuracy, 0.51724137931034486)  # lower number means it is worse than first value

@@ -3,13 +3,11 @@ from typing import Tuple
 import numpy as np
 
 from oolearning.enums.Metric import Metric
+from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
 from oolearning.evaluators.EvaluatorBase import EvaluatorBase
 
 
-class RmseEvaluator(EvaluatorBase):
-    def __init__(self):
-        super().__init__(better_than=lambda this, other: this < other)  # smaller RMSE is better
-
+class RmseEvaluator(CostFunctionMixin, EvaluatorBase):
     @property
     def metric_name(self) -> str:
         return Metric.ROOT_MEAN_SQUARE_ERROR.value

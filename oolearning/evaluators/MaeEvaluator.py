@@ -3,13 +3,11 @@ from typing import Tuple
 import numpy as np
 
 from oolearning.enums.Metric import Metric
+from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
 from oolearning.evaluators.EvaluatorBase import EvaluatorBase
 
 
-class MaeEvaluator(EvaluatorBase):
-    def __init__(self):
-        super().__init__(better_than=lambda this, other: this < other)  # smaller MAE is better
-
+class MaeEvaluator(CostFunctionMixin, EvaluatorBase):
     @property
     def metric_name(self):
         return Metric.MEAN_ABSOLUTE_ERROR.value

@@ -1,15 +1,13 @@
 import os
 import unittest
 from math import isclose
-from os import remove
 
 import dill as pickle
-import matplotlib.pyplot as plt
+import shutil
 
 from oolearning import *
-
 from tests.MockClassificationModelWrapper import MockClassificationModelWrapper
-from tests.MockEvaluator import MockEvaluator
+from tests.MockEvaluator import MockUtilityEvaluator, MockCostEvaluator
 from tests.MockHyperParams import MockHyperParams
 from tests.MockResampler import MockResampler
 from tests.TestHelper import TestHelper
@@ -107,6 +105,7 @@ class TunerTests(TimerTestCase):
         assert all(tuner.results.sorted_best_models.index.values ==
                    [24, 21, 15, 9, 12, 18, 6, 3, 0, 23, 20, 17, 16, 14, 13, 11, 4, 26, 10, 7, 5, 1, 19, 8, 2,
                     22, 25])
+        shutil.rmtree(cache_directory)
 
     def test_ModelTuner_mock_classification(self):
         """
@@ -122,10 +121,10 @@ class TunerTests(TimerTestCase):
         train_data_y = train_data.Survived
         train_data = train_data.drop(columns='Survived')
 
-        evaluators = [MockEvaluator(metric_name='kappa', better_than=lambda x, y: x > y),
-                      MockEvaluator(metric_name='sensitivity', better_than=lambda x, y: x > y),
-                      MockEvaluator(metric_name='specificity', better_than=lambda x, y: x > y),
-                      MockEvaluator(metric_name='ErrorRate', better_than=lambda x, y: x < y)]
+        evaluators = [MockUtilityEvaluator(metric_name='kappa'),
+                      MockUtilityEvaluator(metric_name='sensitivity'),
+                      MockUtilityEvaluator(metric_name='specificity'),
+                      MockCostEvaluator(metric_name='ErrorRate')]
 
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),

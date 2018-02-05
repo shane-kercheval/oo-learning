@@ -22,6 +22,8 @@ class MockResampler(ResamplerBase):
                  model_transformations: List[TransformerBase],
                  evaluators: List[EvaluatorBase]):
         super().__init__(model=model, model_transformations=model_transformations, evaluators=evaluators)
+        # load actual data from a RandomForest Tuner/Resampler (test_ModelTuner_RandomForest_classification)
+        # so that we can build up the necessary ResamplerResults object based on the saved data.
         file = os.path.join(os.getcwd(), 'tests/data/test_ModelTuner_classification_mock.pkl')
         with open(file, 'rb') as saved_object:
             self._tune_results = pickle.load(saved_object)
@@ -29,9 +31,6 @@ class MockResampler(ResamplerBase):
     # noinspection PyProtectedMember
     def _resample(self, data_x: pd.DataFrame, data_y: np.ndarray,
                   hyper_params: HyperParamsBase = None) -> ResamplerResults:
-
-        # load actual data from a RandomForest Tuner/Resampler (test_ModelTuner_RandomForest_classification)
-        # so that we can build up the necessary ResamplerResults object based on the saved data.
 
         lookup_df = self._tune_results._tune_results_objects  # get the actual tune_results table
         params_dict = hyper_params.params_dict  # get the dictionary associated with the current hyper-params

@@ -1,5 +1,6 @@
 from abc import abstractmethod
-from typing import Tuple, List, Callable
+from typing import Tuple, List
+
 import numpy as np
 
 from oolearning.evaluators.EvaluatorBase import EvaluatorBase
@@ -10,11 +11,10 @@ class ClassificationEvaluator(EvaluatorBase):
     Base class for TwoClassEvaluator & MultiClassEvaluator
     """
     def __init__(self,
-                 better_than: Callable[[float, float], bool],
                  categories: List,
                  use_probabilities: bool=True,
                  threshold: float=0.50):
-        super().__init__(better_than=better_than)
+        super().__init__()
         self._categories = categories
         self._use_probabilities = use_probabilities
         self._threshold = threshold if use_probabilities else None

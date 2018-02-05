@@ -1,6 +1,6 @@
 import copy
 from abc import ABCMeta, abstractmethod
-from typing import Tuple, Callable
+from typing import Tuple
 
 import numpy as np
 
@@ -13,16 +13,9 @@ class EvaluatorBase(metaclass=ABCMeta):
         (e.g. true positive rate), defined by the inheriting class
     """
 
-    def __init__(self, better_than: Callable[[float, float], bool]):
-        """
-        :param better_than: function that takes two floats and, specific to the type of metric, returns True
-            if the first float is "better" than the second float, otherwise False.
-            e.g. when comparing Kappas the larger number is "better", when comparing RMSE smaller numbers are
-                "better"
-        """
+    def __init__(self):
         self._value = None
         self._details = None
-        self._better_than = better_than
 
     def clone(self):
         """
@@ -42,13 +35,13 @@ class EvaluatorBase(metaclass=ABCMeta):
         assert isinstance(self._value, float)
         return self._value
 
-    @property
-    def better_than_function(self):
-        return self._better_than
+    @abstractmethod
+    def _better_than(self, this: float, other: float) -> bool:
+        pass
 
     def better_than(self, other: 'EvaluatorBase') -> bool:
         assert isinstance(other, EvaluatorBase)
-        return self._better_than(self.value, other.value)
+        return self._better_than(this=self.value, other=other.value)
 
     def evaluate(self, actual_values: np.ndarray, predicted_values: np.ndarray) -> float:
         """

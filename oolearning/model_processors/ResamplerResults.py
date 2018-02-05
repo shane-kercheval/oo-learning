@@ -68,10 +68,10 @@ class ResamplerResults:
 
         # get the first evaluator's `better_than` function, and utilize compare the means associated with the
         # first evaluator
-        better_than_function = self._evaluators[0][0].better_than_function
-        # get the mean of the first (i.e. main) metric
+        better_than_function = self._evaluators[0][0]._better_than
+        # get the mean of the first (i.e. main) metric for *this* ResamplerResult
         this_mean = self.metric_means[self.metrics[0]]
-        # get the mean of the first (i.e. main) metric for the other ResamplerResult
+        # get the mean of the first (i.e. main) metric for the *other* ResamplerResult
         other_mean = other.metric_means[other.metrics[0]]
 
         return better_than_function(this_mean, other_mean)

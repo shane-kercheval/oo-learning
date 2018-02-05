@@ -4,20 +4,10 @@ import numpy as np
 
 from oolearning.enums.Metric import Metric
 from oolearning.evaluators.TwoClassEvaluator import TwoClassEvaluator
+from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
 
-class AucEvaluator(TwoClassEvaluator):
-    def __init__(self,
-                 positive_category,
-                 negative_category,
-                 use_probabilities: bool=True,
-                 threshold: float=0.5):
-        super().__init__(better_than=lambda this, other: this > other,  # larger AUC is better
-                         positive_category=positive_category,
-                         negative_category=negative_category,
-                         use_probabilities=use_probabilities,
-                         threshold=threshold)
-
+class AucEvaluator(UtilityFunctionMixin, TwoClassEvaluator):
     @property
     def metric_name(self) -> str:
         return Metric.AREA_UNDER_CURVE.value

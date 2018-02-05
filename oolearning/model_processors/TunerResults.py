@@ -10,6 +10,9 @@ from oolearning.enums.Metric import Metric
 
 
 # TODO: update documentation
+from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
+
+
 class TunerResults:
     def __init__(self, tune_results: pd.DataFrame, time_results: pd.DataFrame, hyper_params: list):
         self._tune_results_objects = tune_results
@@ -101,8 +104,8 @@ class TunerResults:
         if self._hyper_params is None:  # if there are no hyper-params, no need for a heatmap.
             return None
         evaluators = self._tune_results_objects.iloc[0].resampler_object.evaluators[0]
-        # if the `better_than` function returns True, 0 is "better than" 1 and we have a minimizer
-        minimizers = [x.better_than_function(0, 1) for x in evaluators]
+        # if the Evaluator is a Cost Function it is a 'minimizer'
+        minimizers = [isinstance(x, CostFunctionMixin) for x in evaluators]
 
         return self.columnwise_conditional_format(df=self.tune_results,
                                                   hyper_params=self._hyper_params,
@@ -138,7 +141,7 @@ class TunerResults:
         assert len(evaluator) == 1  # we should just get the current evaluator
         # if the `better_than` function returns True, 0 is "better than" 1 and we have a minimizer
         # for minimizers, we want to return the min, which is the best value, otherwise, return the max
-        minimizer = evaluator[0].better_than_function(0, 1)
+        minimizer = isinstance(evaluator[0], CostFunctionMixin)
         best = min if minimizer else max
         index_of_best_mean = resample_means.index(best(resample_means))
 
