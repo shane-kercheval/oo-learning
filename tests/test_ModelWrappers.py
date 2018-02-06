@@ -715,11 +715,12 @@ class ModelWrapperTests(TimerTestCase):
             assert os.path.isfile(file)
 
             assert fitter.training_evaluators[0].confusion_matrix.all_quality_metrics == \
-                {'Kappa': 0.58877590597123142, 'Two-Class Accuracy': 0.80758426966292129,
-                 'Error Rate': 0.19241573033707865, 'Sensitivity': 0.7216117216117216,
-                 'Specificity': 0.86104783599088841, 'False Positive Rate': 0.13895216400911162,
-                 'False Negative Rate': 0.2783882783882784, 'Positive Predictive Value': 0.76356589147286824,
-                 'Negative Predictive Value': 0.83259911894273131, 'Prevalence': 0.38342696629213485,
+                {'Kappa': 0.5887759059712314, 'F1 Score': 0.7419962335216571,
+                 'Two-Class Accuracy': 0.8075842696629213, 'Error Rate': 0.19241573033707865,
+                 'Sensitivity': 0.7216117216117216, 'Specificity': 0.8610478359908884,
+                 'False Positive Rate': 0.13895216400911162, 'False Negative Rate': 0.2783882783882784,
+                 'Positive Predictive Value': 0.7635658914728682,
+                 'Negative Predictive Value': 0.8325991189427313, 'Prevalence': 0.38342696629213485,
                  'No Information Rate': 0.6165730337078652, 'Total Observations': 712}
 
             # fitter.evaluate_holdout(self, holdout_x, holdout_y, evaluator=None)
@@ -774,11 +775,12 @@ class ModelWrapperTests(TimerTestCase):
 
             assert isclose(fitter.training_accuracies[0], 0.59052420341637712)
             assert fitter.training_evaluators[0].confusion_matrix.all_quality_metrics == \
-                {'Kappa': 0.59052420341637712, 'Two-Class Accuracy': 0.8019662921348315,
-                 'Error Rate': 0.19803370786516855, 'Sensitivity': 0.80219780219780223,
-                 'Specificity': 0.80182232346241455, 'False Positive Rate': 0.19817767653758542,
-                 'False Negative Rate': 0.19780219780219779, 'Positive Predictive Value': 0.71568627450980393,
-                 'Negative Predictive Value': 0.86699507389162567, 'Prevalence': 0.38342696629213485,
+                {'Kappa': 0.5905242034163771, 'F1 Score': 0.756476683937824,
+                 'Two-Class Accuracy': 0.8019662921348315, 'Error Rate': 0.19803370786516855,
+                 'Sensitivity': 0.8021978021978022, 'Specificity': 0.8018223234624146,
+                 'False Positive Rate': 0.19817767653758542, 'False Negative Rate': 0.1978021978021978,
+                 'Positive Predictive Value': 0.7156862745098039,
+                 'Negative Predictive Value': 0.8669950738916257, 'Prevalence': 0.38342696629213485,
                  'No Information Rate': 0.6165730337078652, 'Total Observations': 712}
 
     def test_LogisticMW_string_target(self):
@@ -814,11 +816,12 @@ class ModelWrapperTests(TimerTestCase):
 
         # should be the same value etc as the previous test (when target values were 0/1)
         assert fitter.training_evaluators[0].confusion_matrix.all_quality_metrics == \
-            {'Kappa': 0.58877590597123142, 'Two-Class Accuracy': 0.80758426966292129,
-             'Error Rate': 0.19241573033707865, 'Sensitivity': 0.7216117216117216,
-             'Specificity': 0.86104783599088841, 'False Positive Rate': 0.13895216400911162,
-             'False Negative Rate': 0.2783882783882784, 'Positive Predictive Value': 0.76356589147286824,
-             'Negative Predictive Value': 0.83259911894273131, 'Prevalence': 0.38342696629213485,
+            {'Kappa': 0.5887759059712314, 'F1 Score': 0.7419962335216571,
+             'Two-Class Accuracy': 0.8075842696629213, 'Error Rate': 0.19241573033707865,
+             'Sensitivity': 0.7216117216117216, 'Specificity': 0.8610478359908884,
+             'False Positive Rate': 0.13895216400911162, 'False Negative Rate': 0.2783882783882784,
+             'Positive Predictive Value': 0.7635658914728682,
+             'Negative Predictive Value': 0.8325991189427313, 'Prevalence': 0.38342696629213485,
              'No Information Rate': 0.6165730337078652, 'Total Observations': 712}
 
         # should be the same value etc as the previous test (when target values were 0/1)

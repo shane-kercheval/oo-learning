@@ -7,6 +7,7 @@ import pandas as pd
 
 from oolearning import *
 from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
+from oolearning.evaluators.F1Evaluator import F1Evaluator
 from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
@@ -67,8 +68,9 @@ class EvaluatorTests(TimerTestCase):
         rmse_other = RmseEvaluator()
         rmse_other.evaluate(actual_values=actual - 1, predicted_values=predicted + 1)  # create more spread
         assert isclose(rmse_other.value, 3.5355339059327378)  # "worse"
-
         eval_list = [rmse_other, rmse_eval]  # "worse, better"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [3.5355339059327378, 2.9154759474226504])])
         eval_list.sort()  # "better, worse"
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [2.9154759474226504, 3.5355339059327378])])
@@ -91,6 +93,8 @@ class EvaluatorTests(TimerTestCase):
         assert isclose(rmse_other.value, 3.5355339059327378)  # "worse"
 
         eval_list = [rmse_other, mae_eval]  # "worse, better"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [3.5355339059327378, 2.3333333333333335])])
         eval_list.sort()  # "better, worse"
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [2.3333333333333335, 3.5355339059327378])])
@@ -197,6 +201,7 @@ class EvaluatorTests(TimerTestCase):
         assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
         assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
         assert isclose(con_matrix.all_quality_metrics['Kappa'], 0.34756903797404387)
+        assert isclose(con_matrix.all_quality_metrics['F1 Score'], 0.5802707930367504)
         assert isclose(con_matrix.all_quality_metrics['Two-Class Accuracy'], 0.69607843137254899)
         assert isclose(con_matrix.all_quality_metrics['Error Rate'], 0.30392156862745096)
         assert isclose(con_matrix.all_quality_metrics['Sensitivity'], 0.51724137931034486)
@@ -394,6 +399,48 @@ class EvaluatorTests(TimerTestCase):
         eval_list.sort()  # "better, worse"
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [0.37990215607221967, 0.34756903797404387])])
+
+    def test_F1Evaluator(self):
+        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
+
+        predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
+        predictions_mock.columns = [1, 0]
+
+        evaluator = F1Evaluator(positive_category=1,
+                                negative_category=0,
+                                use_probabilities=True,
+                                threshold=None)
+        assert isinstance(evaluator, UtilityFunctionMixin)
+        assert isinstance(evaluator, EvaluatorBase)
+
+        accuracy = evaluator.evaluate(actual_values=mock_data.actual,
+                                      predicted_values=predictions_mock)
+        assert isclose(accuracy, 0.6472491909385113)
+        assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
+        assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
+        assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
+        assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
+        assert evaluator.value == evaluator.confusion_matrix.f1_score
+        assert isclose(evaluator.threshold, 0.41)
+        assert isclose(evaluator.auc, 0.74428675992192583)
+
+        ######################################################################################################
+        # Test sorting
+        ######################################################################################################
+        evaluator_other = F1Evaluator(positive_category=0,
+                                      negative_category=1,
+                                      use_probabilities=True,
+                                      threshold=0.5)  # creates worse value
+        accuracy = evaluator_other.evaluate(actual_values=mock_data.actual,
+                                            predicted_values=predictions_mock)
+        assert isclose(accuracy, 0.7618002195389681)  # lower number means it is worse than first value
+
+        eval_list = [evaluator, evaluator_other]  # "worse, better"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [0.6472491909385113, 0.7618002195389681])])
+        eval_list.sort()  # "better, worse"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [0.7618002195389681, 0.6472491909385113])])
 
     def test_Misc_evaluators(self):
         """

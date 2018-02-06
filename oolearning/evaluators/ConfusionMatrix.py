@@ -178,8 +178,14 @@ class ConfusionMatrix:
         return (pr_a - pr_e) / (1 - pr_e)
 
     @property
+    def f1_score(self) -> float:
+        return 2 * (self.positive_predictive_value * self.sensitivity) / \
+               (self.positive_predictive_value + self.sensitivity)
+
+    @property
     def all_quality_metrics(self) -> dict:
         return {'Kappa': self.kappa,
+                'F1 Score': self.f1_score,
                 'Two-Class Accuracy': self.two_class_accuracy,
                 'Error Rate': self.error_rate,
                 'Sensitivity': self.sensitivity,

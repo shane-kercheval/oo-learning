@@ -8,6 +8,7 @@ class Metric(Enum):
     MEAN_SQUARED_ERROR = 'MSE'
     AREA_UNDER_CURVE = 'AUC'
     KAPPA = 'kappa'
+    F1_SCORE = 'F1'
     SPECIFICITY = 'specificity'
     SENSITIVITY = 'sensitivity'
     ERROR_RATE = 'ErrorRate'
