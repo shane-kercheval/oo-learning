@@ -8,13 +8,16 @@ import pandas as pd
 
 from oolearning.enums.Metric import Metric
 
+from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
+from oolearning.hyper_params import HyperParamsGrid
+
 
 # TODO: update documentation
-from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
-
-
 class TunerResults:
-    def __init__(self, tune_results: pd.DataFrame, time_results: pd.DataFrame, hyper_params: list):
+    def __init__(self,
+                 tune_results: pd.DataFrame,
+                 time_results: pd.DataFrame,
+                 params_grid: HyperParamsGrid):
         self._tune_results_objects = tune_results
 
         results_list = list()
@@ -31,7 +34,7 @@ class TunerResults:
         self._tune_results_values = pd.concat([tune_results.copy().drop(columns='resampler_object'),
                                                pd.DataFrame(results_list)], axis=1)
         self._time_results = time_results
-        self._hyper_params = hyper_params
+        self._params_grid = params_grid
 
     @property
     def tune_results(self) -> pd.DataFrame:
@@ -54,11 +57,11 @@ class TunerResults:
     @property
     def best_hyper_params(self) -> dict:
         return \
-            None if self._hyper_params is None \
-            else self.sorted_best_models.loc[:, self._hyper_params].iloc[0].to_dict()
+            None if self._params_grid is None \
+            else self.sorted_best_models.loc[:, self._params_grid.hyper_params].iloc[0].to_dict()
 
     @staticmethod
-    def columnwise_conditional_format(df, hyper_params, minimizers: List[bool]):
+    def columnwise_conditional_format(df, hyper_params, tuned_hyper_params, minimizers: List[bool]):
         """
         code copied from:
             https://stackoverflow.com/questions/44017205/apply-seaborn-heatmap-columnwise-on-pandas-dataframe
@@ -88,10 +91,10 @@ class TunerResults:
         ax.set_xticks(np.arange(start=0.5, stop=len(evaluator_columns), step=1))
         ax.set_xticklabels(evaluator_columns, rotation=35, ha='right')
 
-        param_combos = df.loc[:, hyper_params]
+        param_combos = df.loc[:, tuned_hyper_params]
         labels = []
         for index in range(len(param_combos)):
-            labels.append(str(dict(zip(hyper_params, param_combos.iloc[index].values.tolist()))))
+            labels.append(str(dict(zip(tuned_hyper_params, param_combos.iloc[index].values.tolist()))))
 
         y_tick_positions = np.arange(start=0, stop=len(param_combos)) + 0.5
         ax.set_yticks(y_tick_positions)
@@ -101,17 +104,30 @@ class TunerResults:
         return plt
 
     def get_heatmap(self):
-        if self._hyper_params is None:  # if there are no hyper-params, no need for a heatmap.
+        """
+        NOTE: only shows the "tuned" hyper-params i.e. hyper-params that were tuned over >1 values.
+        :return:
+        """
+        if self._params_grid is None:  # if there are no hyper-params, no need for a heatmap.
             return None
         evaluators = self._tune_results_objects.iloc[0].resampler_object.evaluators[0]
         # if the Evaluator is a Cost Function it is a 'minimizer'
         minimizers = [isinstance(x, CostFunctionMixin) for x in evaluators]
 
+        # .tuned_hyper_params ensures only hyper-params with >1 values
         return self.columnwise_conditional_format(df=self.tune_results,
-                                                  hyper_params=self._hyper_params,
+                                                  hyper_params=self._params_grid.hyper_params,
+                                                  tuned_hyper_params=self._params_grid.tuned_hyper_params,
                                                   minimizers=minimizers)
 
     def get_cross_validation_boxplots(self, metric: Metric):
+        """
+        NOTE: only shows the "tuned" hyper-params i.e. hyper-params that were tuned over >1 values.
+        :return:
+        """
+        if self._params_grid is None:  # if there are no hyper-params, no need for a heatmap.
+            return None
+
         metric_name = metric.value
         # build the dataframe that will be used to generate the boxplot; 1 column per resampled hyper-params
         resamples = pd.DataFrame()
@@ -120,7 +136,8 @@ class TunerResults:
                 cross_validation_scores[metric_name]
             # column name should be the hyper_params & values
             column_name_dict = dict()
-            for hyper_param in self._hyper_params:
+            # .tuned_hyper_params ensures only hyper-params with >1 values
+            for hyper_param in self._params_grid.tuned_hyper_params:
                 column_name_dict[hyper_param] = self._tune_results_objects.iloc[index].loc[hyper_param]
 
             resamples[str(column_name_dict)] = pd.Series(data=cross_val_scores)

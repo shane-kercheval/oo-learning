@@ -102,4 +102,4 @@ class ModelTuner:
 
         self._results = TunerResults(tune_results=tune_results,
                                      time_results=time_results,
-                                     hyper_params=None if params_grid is None else params_combinations.columns.values.tolist())  # noqa
+                                     params_grid=params_grid)

@@ -23,7 +23,7 @@ class TwoClassEvaluator(ClassificationEvaluator):
                  positive_category,
                  negative_category,
                  use_probabilities: bool=True,
-                 threshold: float=0.5):
+                 threshold: Union[float, None]=0.5):
         """
         :param positive_category: value of the positive category
         :param negative_category: value of the negative category

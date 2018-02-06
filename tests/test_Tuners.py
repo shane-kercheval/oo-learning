@@ -30,12 +30,16 @@ class TunerTests(TimerTestCase):
         assert params_dict == expected_dict
 
         grid = HyperParamsGrid(params_dict=params_dict)
+        assert grid.params_grid.columns.values.tolist() == ['criterion', 'max_features', 'n_estimators', 'min_samples_leaf']  # noqa
         assert grid.params_grid.shape[0] == 3**3
         assert grid.params_grid.shape[1] == len(params_dict)
         assert all(grid.params_grid.criterion == 'gini')
         assert all(grid.params_grid.max_features.unique() == params_dict['max_features'])
         assert all(grid.params_grid.n_estimators.unique() == params_dict['n_estimators'])
         assert all(grid.params_grid.min_samples_leaf.unique() == params_dict['min_samples_leaf'])
+
+        assert grid.hyper_params == ['criterion', 'max_features', 'n_estimators', 'min_samples_leaf']
+        assert grid.tuned_hyper_params == ['max_features', 'n_estimators', 'min_samples_leaf']
 
     @unittest.skip("test takes several minutes")
     def test_ModelTuner_RandomForest_classification(self):
@@ -140,6 +144,7 @@ class TunerTests(TimerTestCase):
         assert len(columns) == 24
         params_dict = ModelDefaults.hyper_params_random_forest_classification(number_of_features=len(columns))
         grid = HyperParamsGrid(params_dict=params_dict)
+
         assert len(grid.params_grid == 27)
         tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
 
@@ -239,9 +244,10 @@ class TunerTests(TimerTestCase):
         ######################################################################################################
         assert all(tuner.results.sorted_best_models.index.values == [0])
         assert isclose(tuner.results.best_model.RMSE_mean, 10.459344010622544)
-        assert tuner.results._hyper_params is None
+        assert tuner.results._params_grid is None
         assert tuner.results.best_hyper_params is None
         ######################################################################################################
         # Test Heatmap
         ######################################################################################################
         assert tuner.results.get_heatmap() is None
+        assert tuner.results.get_cross_validation_boxplots(metric=Metric.KAPPA) is None

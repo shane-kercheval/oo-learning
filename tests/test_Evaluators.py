@@ -357,7 +357,6 @@ class EvaluatorTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [0.74428675992192583, 0.25571324007807417])])
 
-    # noinspection PyTypeChecker
     def test_KappaEvaluator(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
 
