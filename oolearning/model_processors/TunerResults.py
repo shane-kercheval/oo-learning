@@ -45,10 +45,22 @@ class TunerResults:
         return self._time_results
 
     @property
-    def sorted_best_models(self) -> pd.DataFrame:
+    def sorted_best_indexes(self):
         # sort based off of the first Evaluator.. each Resampler will have the same evaluators
-        indexes = np.argsort(self._tune_results_objects.resampler_object.values)
-        return self.tune_results.iloc[indexes]
+        return np.argsort(self._tune_results_objects.resampler_object.values)
+
+    @property
+    def best_index(self):
+        return self.sorted_best_indexes[0]
+
+    @property
+    def sorted_best_models(self) -> pd.DataFrame:
+        return self.tune_results.iloc[self.sorted_best_indexes]
+
+    @property
+    def best_model_resampler_object(self):
+        # get the first index ([0]) of the best indexes, and use that index to get the resampler_object
+        return self._tune_results_objects.resampler_object.values[self.best_index]
 
     @property
     def best_model(self) -> pd.Series:

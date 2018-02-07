@@ -110,6 +110,8 @@ class TunerTests(TimerTestCase):
         assert os.path.isfile(os.path.join(cache_directory, 'holdout_description1_MockClassificationModelWrapper.pkl'))  # noqa
         assert os.path.isfile(os.path.join(cache_directory, 'holdout_description2_MockClassificationModelWrapper_criterion_gini_max_features_a_n_estimators_c_min_samples_leaf_e.pkl'))  # noqa
 
+
+        # TODO, switch to actual models and don't delete
         shutil.rmtree(cache_directory)
 
         assert len(searcher.results.tuner_results) == 2
@@ -181,6 +183,16 @@ class TunerTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.ErrorRate_mean, [0.47136871395048691, 0.47136871395048691])])  # noqa
         assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.ErrorRate_st_dev, [0.052884252590516621, 0.052884252590516621])])  # noqa
 
-        # searcher.search_results.best_model
-        # searcher.get_heatmap()
+        # import numpy as np
+        # np.argsort(searcher.results.tuner_results[1]._tune_results_objects.resampler_object.values)
+        #
+        # searcher.results.tuner_results[0].time_results
+        # searcher.results.tuner_results[1].sorted_best_models
+        #
+        # searcher.results.tuner_results[1].sorted_best_indexes
+        #
+        # assert searcher.results.tuner_results[1]._tune_results_objects.resampler_object.values[0].cross_validation_scores['kappa'].mean() == searcher.results.best_tuned_results.kappa_mean[1]
+        #
+        # searcher.results.holdout_eval_values
+        # # searcher.get_heatmap()
         # searcher.get_graph()

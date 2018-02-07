@@ -65,9 +65,9 @@ class ResamplerResults:
              e.g. when comparing Kappas the larger number is "better", when comparing RMSE smaller numbers are
                 "better"
         """
-
         # get the first evaluator's `better_than` function, and utilize compare the means associated with the
         # first evaluator
+        # noinspection PyProtectedMember
         better_than_function = self._evaluators[0][0]._better_than
         # get the mean of the first (i.e. main) metric for *this* ResamplerResult
         this_mean = self.metric_means[self.metrics[0]]
