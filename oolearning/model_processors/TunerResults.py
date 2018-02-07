@@ -169,3 +169,49 @@ class TunerResults:
         plt.tight_layout()
         plt.gca().get_yticklabels()[index_of_best_mean].set_color('red')
         return resample_boxplot
+
+    def get_profile_hyper_params(self, metric: Metric, x_axis, line=None, grid=None):
+        if grid is not None:
+            assert line is not None  # can't have grid without line
+
+        metric_value = metric.value + '_mean'
+
+        if line is None:  # then we also know grid is None as well
+            hyper_params = [x_axis]
+            df = self.tune_results[hyper_params + [metric_value]]
+            return df.groupby(hyper_params).mean().plot(figsize=(10, 7))
+
+        elif grid is None:  # then we know line is NOT None, but grid is,
+            hyper_params = [x_axis, line]
+            df = self.tune_results[hyper_params + [metric_value]]
+            df_grouped = df.groupby(hyper_params).mean()
+            plot_df = df_grouped.unstack(line).loc[:, metric_value]
+            ax = plot_df.plot(figsize=(10, 7))
+            ax.set_ylabel(metric_value)
+            return plot_df
+
+        else:  # line and grid are not None
+            hyper_params = [grid, line, x_axis]
+            df = self.tune_results
+            df_grouped = df.groupby(hyper_params)[[metric_value]].mean()
+
+            # We can ask for ALL THE AXES and put them into axes
+            num_rows = math.ceil(len(hyper_params) / 2)
+            # noinspection PyTypeChecker
+            fig, axes = plt.subplots(nrows=num_rows, ncols=2, sharex=True, sharey=True, figsize=(10, 8))
+            axes_list = [item for sublist in axes for item in sublist]
+
+            for index in df_grouped.index.levels[0].values:
+                ax = axes_list.pop(0)
+                df_grouped.loc[index].unstack(line).loc[:, metric_value].plot(ax=ax)
+                ax.set_ylabel(metric_value)
+                ax.set_title('{0}={1}'.format(grid, index))
+                # ax.tick_params(axis='both', which='both')
+
+            # Now use the matplotlib .remove() method to
+            # delete anything we didn't use
+            for ax in axes_list:
+                ax.remove()
+
+            plt.tight_layout()
+            return plt

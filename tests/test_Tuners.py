@@ -1,9 +1,9 @@
 import os
+import shutil
 import unittest
 from math import isclose
 
 import dill as pickle
-import shutil
 
 from oolearning import *
 from tests.MockClassificationModelWrapper import MockClassificationModelWrapper
@@ -197,6 +197,23 @@ class TunerTests(TimerTestCase):
                               lambda: tuner.results.get_cross_validation_boxplots(metric=Metric.SPECIFICITY))
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_boxplot_error.png',
                               lambda: tuner.results.get_cross_validation_boxplots(metric=Metric.ERROR_RATE))
+
+        x_axis = 'max_features'
+        line = 'n_estimators'
+        grid = 'min_samples_leaf'
+        metric = Metric.KAPPA
+
+        TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_profile_hyper_params_3.png',  # noqa
+                              lambda: tuner.results.get_profile_hyper_params(metric=metric, x_axis=x_axis, line=line, grid=grid))  # noqa
+        TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_profile_hyper_params_2.png',  # noqa
+                              lambda: tuner.results.get_profile_hyper_params(metric=metric, x_axis=x_axis, line=line, grid=None))  # noqa
+        TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_profile_hyper_params_1.png',  # noqa
+                              lambda: tuner.results.get_profile_hyper_params(metric=metric, x_axis=x_axis, line=None, grid=None))  # noqa
+        TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_profile_hyper_params_1_ne.png',  # noqa
+                              lambda: tuner.results.get_profile_hyper_params(metric=metric, x_axis='n_estimators', line=None, grid=None))  # noqa
+        TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_profile_hyper_params_1_msl.png',  # noqa
+                              lambda: tuner.results.get_profile_hyper_params(metric=metric, x_axis='min_samples_leaf', line=None, grid=None))  # noqa
+        self.assertRaises(AssertionError, lambda: tuner.results.get_profile_hyper_params(metric=metric, x_axis=x_axis, line=None, grid=grid))  # noqa
 
     def test_tuner_with_no_hyper_params(self):
         data = TestHelper.get_cement_data()
