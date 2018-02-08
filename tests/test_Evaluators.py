@@ -6,9 +6,6 @@ import numpy as np
 import pandas as pd
 
 from oolearning import *
-from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
-from oolearning.evaluators.F1Evaluator import F1Evaluator
-from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 

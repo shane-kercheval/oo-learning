@@ -3,8 +3,8 @@ from typing import List, Callable
 import numpy as np
 import pandas as pd
 
-from oolearning.ModelInfo import ModelInfo
-from oolearning.SearcherResults import SearcherResults
+from oolearning.model_processors.ModelInfo import ModelInfo
+from oolearning.model_processors.SearcherResults import SearcherResults
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 from oolearning.model_processors.ModelFitter import ModelFitter
 from oolearning.model_processors.ModelTuner import ModelTuner

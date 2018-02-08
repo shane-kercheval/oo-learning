@@ -1,6 +1,3 @@
-from .ModelInfo import ModelInfo
-from .ModelSearcher import ModelSearcher
-from .SearcherResults import SearcherResults
 from .OOLearningHelpers import OOLearningHelpers
 
 from .enums.CategoricalEncoding import CategoricalEncoding
@@ -13,8 +10,10 @@ from .enums.Skewness import Skewness
 from .evaluators.AucEvaluator import AucEvaluator
 from .evaluators.ClassificationEvaluator import ClassificationEvaluator
 from .evaluators.ConfusionMatrix import ConfusionMatrix
+from .evaluators.CostFunctionMixin import CostFunctionMixin
 from .evaluators.ErrorRateTwoClassEvaluator import ErrorRateTwoClassEvaluator
 from .evaluators.EvaluatorBase import EvaluatorBase
+from .evaluators.F1Evaluator import F1Evaluator
 from .evaluators.KappaEvaluator import KappaEvaluator
 from .evaluators.MaeEvaluator import MaeEvaluator
 from .evaluators.MultiClassEvaluator import MultiClassEvaluator
@@ -22,6 +21,7 @@ from .evaluators.RmseEvaluator import RmseEvaluator
 from .evaluators.SensitivityEvaluator import SensitivityEvaluator
 from .evaluators.SpecificityEvaluator import SpecificityEvaluator
 from .evaluators.TwoClassEvaluator import TwoClassEvaluator
+from .evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
 from .exploratory.ExploreClassificationDataset import ExploreClassificationDataset
 from .exploratory.ExploreDatasetBase import ExploreDatasetBase
@@ -37,10 +37,13 @@ from .hyper_params.HyperParamsGrid import HyperParamsGrid
 from .hyper_params.RandomForestHP import RandomForestHP
 
 from .model_processors.ModelFitter import ModelFitter
+from .model_processors.ModelInfo import ModelInfo
+from .model_processors.ModelSearcher import ModelSearcher
 from .model_processors.ModelTuner import ModelTuner
 from .model_processors.RepeatedCrossValidationResampler import RepeatedCrossValidationResampler
 from .model_processors.ResamplerBase import ResamplerBase
 from .model_processors.ResamplerResults import ResamplerResults
+from .model_processors.SearcherResults import SearcherResults
 from .model_processors.StratifiedMonteCarloResampler import StratifiedMonteCarloResampler
 from .model_processors.TunerResults import TunerResults
 
