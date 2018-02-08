@@ -89,10 +89,12 @@ class TunerTests(TimerTestCase):
         # evaluator columns should be in the same order as specificied in the list
         assert all(tuner.results.tune_results.columns.values == ['criterion', 'max_features', 'n_estimators',
                                                                  'min_samples_leaf', 'kappa_mean',
-                                                                 'kappa_st_dev', 'sensitivity_mean',
-                                                                 'sensitivity_st_dev', 'specificity_mean',
-                                                                 'specificity_st_dev', 'ErrorRate_mean',
-                                                                 'ErrorRate_st_dev'])
+                                                                 'kappa_st_dev', 'kappa_cv',
+                                                                 'sensitivity_mean', 'sensitivity_st_dev',
+                                                                 'sensitivity_cv', 'specificity_mean',
+                                                                 'specificity_st_dev', 'specificity_cv',
+                                                                 'ErrorRate_mean', 'ErrorRate_st_dev',
+                                                                 'ErrorRate_cv'])
 
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelTuner_classification_mock.pkl'))  # noqa
         with open(file, 'wb') as output:
@@ -180,6 +182,35 @@ class TunerTests(TimerTestCase):
                                                    'n_estimators': 500,
                                                    'min_samples_leaf': 1}
 
+        for index in range(len(tuner.results.tune_results)):
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_means['kappa'],  # noqa
+                           tuner.results.tune_results.iloc[index]['kappa_mean'])
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_standard_deviations['kappa'],  # noqa
+                           tuner.results.tune_results.iloc[index]['kappa_st_dev'])
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_coefficient_of_variation['kappa'],  # noqa
+                           tuner.results.tune_results.iloc[index]['kappa_cv'])
+
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_means['sensitivity'],  # noqa
+                           tuner.results.tune_results.iloc[index]['sensitivity_mean'])
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_standard_deviations['sensitivity'],  # noqa
+                           tuner.results.tune_results.iloc[index]['sensitivity_st_dev'])
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_coefficient_of_variation['sensitivity'],  # noqa
+                           tuner.results.tune_results.iloc[index]['sensitivity_cv'])
+
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_means['specificity'],  # noqa
+                           tuner.results.tune_results.iloc[index]['specificity_mean'])
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_standard_deviations['specificity'],  # noqa
+                           tuner.results.tune_results.iloc[index]['specificity_st_dev'])
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_coefficient_of_variation['specificity'],  # noqa
+                           tuner.results.tune_results.iloc[index]['specificity_cv'])
+
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_means['ErrorRate'],  # noqa
+                           tuner.results.tune_results.iloc[index]['ErrorRate_mean'])
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_standard_deviations['ErrorRate'],  # noqa
+                           tuner.results.tune_results.iloc[index]['ErrorRate_st_dev'])
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_coefficient_of_variation['ErrorRate'],  # noqa
+                           tuner.results.tune_results.iloc[index]['ErrorRate_cv'])
+
         ######################################################################################################
         # Test Heatmap
         ######################################################################################################
@@ -202,7 +233,6 @@ class TunerTests(TimerTestCase):
         line = 'n_estimators'
         grid = 'min_samples_leaf'
         metric = Metric.KAPPA
-
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_profile_hyper_params_3.png',  # noqa
                               lambda: tuner.results.get_profile_hyper_params(metric=metric, x_axis=x_axis, line=line, grid=grid))  # noqa
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_profile_hyper_params_2.png',  # noqa

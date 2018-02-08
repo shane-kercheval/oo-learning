@@ -27,7 +27,8 @@ class TunerResults:
             for metric in resampler_result.metrics:
                 metric_dictionary.update(
                     {metric + '_mean': resampler_result.metric_means[metric],
-                     metric + '_st_dev': resampler_result.metric_standard_deviations[metric]})
+                     metric + '_st_dev': resampler_result.metric_standard_deviations[metric],
+                     metric + '_cv': resampler_result.metric_coefficient_of_variation[metric]})
             results_list.append(metric_dictionary)
 
         # noinspection PyUnresolvedReferences
@@ -38,6 +39,19 @@ class TunerResults:
 
     @property
     def tune_results(self) -> pd.DataFrame:
+        """
+        :return: dataframe that has metrics for each tuned model (rows), the means, standard deviations, and
+            coefficient of variations for the corresponding resampler results (e.g. cross validation results),
+            which are represented in the DataFrame columns.
+
+        `_mean`: mean i.e. average of the resampler results
+        `_st_dev`: standard deviation of resampler results
+        `_cv`: coefficient of variation of resampler results
+
+            If `sample A` has a CV of 0.12 and `sample B` has a CV of 0.25, you would say that `sample B` has
+                more  variation, relative to its mean.
+
+        """
         return self._tune_results_values
 
     @property
@@ -85,6 +99,7 @@ class TunerResults:
         num_rows = len(evaluator_values)
         num_cols = len(evaluator_values.columns)
 
+        n = 3  # i.e. number of metrics e.g. _mean, _st_dev, _cv
         fig, ax = plt.subplots(figsize=(10, 10))
         for i in range(num_cols):
             truths = [True] * num_cols
@@ -92,7 +107,7 @@ class TunerResults:
             mask = np.array(num_rows * [truths], dtype=bool)
             color_values = np.ma.masked_where(mask, evaluator_values)
             # "_r" value after color means invert colors (small values are darker)
-            ax.pcolormesh(color_values, cmap='Blues_r' if minimizers[int(math.floor(i/2))] else 'Greens')
+            ax.pcolormesh(color_values, cmap='Blues_r' if minimizers[int(math.floor(i/n))] else 'Greens')
 
         for y in range(evaluator_values.shape[0]):
             for x in range(evaluator_values.shape[1]):

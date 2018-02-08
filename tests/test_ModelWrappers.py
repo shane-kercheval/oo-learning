@@ -4,13 +4,11 @@ import pickle
 import shutil
 import warnings
 from math import isclose
-from os import remove
 from typing import Callable
-from mock import patch
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from mock import patch
 
 from oolearning import *
 from tests.MockClassificationModelWrapper import MockClassificationModelWrapper
@@ -329,6 +327,7 @@ class ModelWrapperTests(TimerTestCase):
         data = TestHelper.get_cement_data()
         target_variable = 'strength'
 
+        # noinspection PyUnusedLocal
         def train_callback(data_x, data_y, hyper_params):
             raise NotImplementedError()
 
@@ -705,23 +704,21 @@ class ModelWrapperTests(TimerTestCase):
             fitter.fit(data_x=train_data, data_y=train_data_y)
 
             # test ROC curve for training evaluator
-            file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_LogisticMW_training_ROC_custom_threshold.png'))  # noqa
-            assert os.path.isfile(file)
-            remove(file)
-            assert os.path.isfile(file) is False
-            fitter.training_evaluators[0].get_roc_curve()
-            plt.savefig(file)
-            plt.gcf().clear()
-            assert os.path.isfile(file)
+            TestHelper.check_plot('data/test_ModelWrappers/test_LogisticMW_training_ROC_custom_threshold.png',
+                                  lambda: fitter.training_evaluators[0].get_roc_curve())
 
-            assert fitter.training_evaluators[0].confusion_matrix.all_quality_metrics == \
-                {'Kappa': 0.5887759059712314, 'F1 Score': 0.7419962335216571,
-                 'Two-Class Accuracy': 0.8075842696629213, 'Error Rate': 0.19241573033707865,
-                 'Sensitivity': 0.7216117216117216, 'Specificity': 0.8610478359908884,
-                 'False Positive Rate': 0.13895216400911162, 'False Negative Rate': 0.2783882783882784,
-                 'Positive Predictive Value': 0.7635658914728682,
-                 'Negative Predictive Value': 0.8325991189427313, 'Prevalence': 0.38342696629213485,
-                 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}
+            actual_metrics = fitter.training_evaluators[0].confusion_matrix.all_quality_metrics
+            expected_metrics = {'Kappa': 0.5887759059712314, 'F1 Score': 0.7419962335216571,
+                                'Two-Class Accuracy': 0.8075842696629213, 'Error Rate': 0.19241573033707865,
+                                'Sensitivity': 0.7216117216117216, 'Specificity': 0.8610478359908884,
+                                'False Positive Rate': 0.13895216400911162,
+                                'False Negative Rate': 0.2783882783882784,
+                                'Positive Predictive Value': 0.7635658914728682,
+                                'Negative Predictive Value': 0.8325991189427313,
+                                'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652,
+                                'Total Observations': 712}
+            assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+            assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
             # fitter.evaluate_holdout(self, holdout_x, holdout_y, evaluator=None)
             accuracy = fitter.evaluate_holdout(holdout_x=test_data, holdout_y=test_data_y)
@@ -737,7 +734,7 @@ class ModelWrapperTests(TimerTestCase):
                                                                           negative_category=0,
                                                                           use_probabilities=True,
                                                                           threshold=0.5)])
-            assert isclose(accuracy[0], 0.58877590597123142)
+            assert isclose(round(accuracy[0], 5), round(0.58877590597123142, 5))
 
             # now assert test set
             accuracy = fitter.evaluate_holdout(holdout_x=test_data,
@@ -746,7 +743,7 @@ class ModelWrapperTests(TimerTestCase):
                                                                         negative_category=0,
                                                                         use_probabilities=True,
                                                                         threshold=0.5)])
-            assert isclose(accuracy[0], 0.85151515151515156)
+            assert isclose(round(accuracy[0], 5), round(0.85151515151515156, 5))
 
             ##################################################################################################
             # check with threshold set to None, so that evaluator will find the "best" threshold.
@@ -774,14 +771,19 @@ class ModelWrapperTests(TimerTestCase):
                                   lambda: fitter.training_evaluators[0].get_roc_curve())
 
             assert isclose(fitter.training_accuracies[0], 0.59052420341637712)
-            assert fitter.training_evaluators[0].confusion_matrix.all_quality_metrics == \
-                {'Kappa': 0.5905242034163771, 'F1 Score': 0.756476683937824,
-                 'Two-Class Accuracy': 0.8019662921348315, 'Error Rate': 0.19803370786516855,
-                 'Sensitivity': 0.8021978021978022, 'Specificity': 0.8018223234624146,
-                 'False Positive Rate': 0.19817767653758542, 'False Negative Rate': 0.1978021978021978,
-                 'Positive Predictive Value': 0.7156862745098039,
-                 'Negative Predictive Value': 0.8669950738916257, 'Prevalence': 0.38342696629213485,
-                 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}
+
+            actual_metrics = fitter.training_evaluators[0].confusion_matrix.all_quality_metrics
+            expected_metrics = {'Kappa': 0.5905242034163771, 'F1 Score': 0.756476683937824,
+                                'Two-Class Accuracy': 0.8019662921348315, 'Error Rate': 0.19803370786516855,
+                                'Sensitivity': 0.8021978021978022, 'Specificity': 0.8018223234624146,
+                                'False Positive Rate': 0.19817767653758542,
+                                'False Negative Rate': 0.1978021978021978,
+                                'Positive Predictive Value': 0.7156862745098039,
+                                'Negative Predictive Value': 0.8669950738916257,
+                                'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652,
+                                'Total Observations': 712}
+            assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+            assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
     def test_LogisticMW_string_target(self):
         data = TestHelper.get_titanic_data()
@@ -815,18 +817,22 @@ class ModelWrapperTests(TimerTestCase):
         fitter.fit(data_x=train_data, data_y=train_data_y)
 
         # should be the same value etc as the previous test (when target values were 0/1)
-        assert fitter.training_evaluators[0].confusion_matrix.all_quality_metrics == \
-            {'Kappa': 0.5887759059712314, 'F1 Score': 0.7419962335216571,
-             'Two-Class Accuracy': 0.8075842696629213, 'Error Rate': 0.19241573033707865,
-             'Sensitivity': 0.7216117216117216, 'Specificity': 0.8610478359908884,
-             'False Positive Rate': 0.13895216400911162, 'False Negative Rate': 0.2783882783882784,
-             'Positive Predictive Value': 0.7635658914728682,
-             'Negative Predictive Value': 0.8325991189427313, 'Prevalence': 0.38342696629213485,
-             'No Information Rate': 0.6165730337078652, 'Total Observations': 712}
+        actual_metrics = fitter.training_evaluators[0].confusion_matrix.all_quality_metrics
+        expected_metrics = {'Kappa': 0.5887759059712314, 'F1 Score': 0.7419962335216571,
+                            'Two-Class Accuracy': 0.8075842696629213, 'Error Rate': 0.19241573033707865,
+                            'Sensitivity': 0.7216117216117216, 'Specificity': 0.8610478359908884,
+                            'False Positive Rate': 0.13895216400911162,
+                            'False Negative Rate': 0.2783882783882784,
+                            'Positive Predictive Value': 0.7635658914728682,
+                            'Negative Predictive Value': 0.8325991189427313,
+                            'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652,
+                            'Total Observations': 712}
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
         # should be the same value etc as the previous test (when target values were 0/1)
         accuracy = fitter.evaluate_holdout(holdout_x=test_data, holdout_y=test_data_y)
-        assert isclose(accuracy[0], 0.58794854434664856)
+        assert isclose(round(accuracy[0], 5), round(0.58794854434664856, 5))
 
         predictions = fitter.predict(data_x=test_data)
         assert 'died' in predictions.columns.values

@@ -27,16 +27,16 @@ class ResamplerResults:
             self._cross_validation_scores.append(results_dict)
 
     @property
-    def metrics(self):
+    def metrics(self) -> List[str]:
         assert self._cross_validation_scores is not None
         return list(self._cross_validation_scores[0].keys())
 
     @property
-    def num_resamples(self):
+    def num_resamples(self) -> int:
         return len(self.cross_validation_scores)
 
     @property
-    def evaluators(self):
+    def evaluators(self) -> List[List[EvaluatorBase]]:
         return self._evaluators
 
     @property
@@ -50,12 +50,30 @@ class ResamplerResults:
         return plot
 
     @property
-    def metric_means(self):
+    def metric_means(self) -> dict:
+        """
+        :return: mean i.e. average for each metric/Evaluator
+        :return:
+        """
         return {metric: self.cross_validation_scores[metric].mean() for metric in self.metrics}
 
     @property
-    def metric_standard_deviations(self):
+    def metric_standard_deviations(self) -> dict:
+        """
+        :return: standard deviation for each metric/Evaluator
+        """
         return {metric: self.cross_validation_scores[metric].std() for metric in self.metrics}
+
+    @property
+    def metric_coefficient_of_variation(self) -> dict:
+        """
+        :return: `coefficient of variation` for each metric/Evaluator
+
+         If `sample A` has a CV of 0.12 and `sample B` has a CV of 0.25, you would say that `sample B` has
+            more  variation, relative to its mean.
+        """
+        return {metric: round((self.cross_validation_scores[metric].std() /
+                               self.cross_validation_scores[metric].mean()), 2) for metric in self.metrics}
 
     def __lt__(self, other):
         """

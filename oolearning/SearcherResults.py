@@ -24,23 +24,28 @@ class SearcherResults:
         self._holdout_evaluators = holdout_evaluators
 
     @property
-    def tuner_results(self):
+    def tuner_results(self) -> List[TunerResults]:
         return self._tuner_results
 
     @property
-    def holdout_evaluators(self):
+    def holdout_evaluators(self) ->List[List[EvaluatorBase]]:
+        """
+        :return: List of Lists of Evaluators. Each item in the outer list corresponds to a specific model/
+            model-description.  Each of those items has a list of Evaluators, corresponding to the
+            Evaluators passed into the Searcher.
+        """
         return self._holdout_evaluators
 
     @property
-    def model_names(self):
+    def model_names(self) -> List[str]:
         return self._model_names
 
     @property
-    def model_descriptions(self):
+    def model_descriptions(self) -> List[str]:
         return self._model_descriptions
 
     @property
-    def holdout_eval_values(self):
+    def holdout_eval_values(self) -> pd.DataFrame:
         """
         Evaluator values for the holdout sets
         # TODO: update documentation
@@ -62,7 +67,8 @@ class SearcherResults:
         # get all the evaluators for each model (each model will have the same Evaluators)
         evaluators = self.holdout_evaluators[0]
         # get all the columns that the tuner_results will have
-        evaluator_columns = [(x.metric_name + '_mean', x.metric_name + '_st_dev') for x in evaluators]
+        evaluator_columns = [(x.metric_name + '_mean', x.metric_name + '_st_dev', x.metric_name + '_cv')
+                             for x in evaluators]
         evaluator_columns = list(sum(evaluator_columns, ()))  # flatten out list
         # get the best resampling results each model that was tuned
         best_model_series = [x.best_model for x in self.tuner_results]
@@ -103,3 +109,10 @@ class SearcherResults:
         # Evaluators gets the indexes of the best sorted
         indexes = np.argsort(evaluator_list)
         return indexes[0]  # return the index of the first i.e. "best" model based on the sorted Evaluators
+
+# RESAMPLED CROSS VALIDATION
+# TODO: add boxplot for tuner result cross validations (pass in metric)
+# TODO: add heatmap: shows each best tune result (rows) for each Evaluator (columns) (means)
+
+# HOLDOUT
+# TODO: add heatmap: shows each best tune result (rows) for each Evaluator (columns)

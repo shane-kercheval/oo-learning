@@ -12,7 +12,7 @@ from tests.TimerTestCase import TimerTestCase
 
 
 # noinspection SpellCheckingInspection
-class TunerTests(TimerTestCase):
+class SearcherTests(TimerTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -110,7 +110,6 @@ class TunerTests(TimerTestCase):
         assert os.path.isfile(os.path.join(cache_directory, 'holdout_description1_MockClassificationModelWrapper.pkl'))  # noqa
         assert os.path.isfile(os.path.join(cache_directory, 'holdout_description2_MockClassificationModelWrapper_criterion_gini_max_features_a_n_estimators_c_min_samples_leaf_e.pkl'))  # noqa
 
-
         # TODO, switch to actual models and don't delete
         shutil.rmtree(cache_directory)
 
@@ -176,13 +175,19 @@ class TunerTests(TimerTestCase):
         assert all(searcher.results.best_tuned_results.hyper_params == [{'hyper_params': 'None'}, {'criterion': 'gini', 'max_features': 'a', 'n_estimators': 'c', 'min_samples_leaf': 'e'}])  # noqa
         assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.kappa_mean, [-0.0024064499043792644, -0.0024064499043792644])])  # noqa
         assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.kappa_st_dev, [0.090452035113464016, 0.090452035113464016])])  # noqa
+        assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.kappa_cv, [-37.59, -37.59])])  # noqa
+
         assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.sensitivity_mean, [0.371085500282958, 0.371085500282958])])  # noqa
         assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.sensitivity_st_dev, [0.061218590474225211, 0.061218590474225211])])  # noqa
+        assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.sensitivity_cv, [0.16, 0.16])])  # noqa
+
         assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.specificity_mean, [0.62814778309576369, 0.62814778309576369])])  # noqa
         assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.specificity_st_dev, [0.031785029143322603, 0.031785029143322603])])  # noqa
+        assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.specificity_cv, [0.05, 0.05])])  # noqa
+
         assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.ErrorRate_mean, [0.47136871395048691, 0.47136871395048691])])  # noqa
         assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.ErrorRate_st_dev, [0.052884252590516621, 0.052884252590516621])])  # noqa
-
+        assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.ErrorRate_cv, [0.11, 0.11])])  # noqa
         # import numpy as np
         # np.argsort(searcher.results.tuner_results[1]._tune_results_objects.resampler_object.values)
         #
@@ -190,8 +195,10 @@ class TunerTests(TimerTestCase):
         # searcher.results.tuner_results[1].sorted_best_models
         #
         # searcher.results.tuner_results[1].sorted_best_indexes
-        #
-        # assert searcher.results.tuner_results[1]._tune_results_objects.resampler_object.values[0].cross_validation_scores['kappa'].mean() == searcher.results.best_tuned_results.kappa_mean[1]
+        # [results.best_index for results in searcher.results.tuner_results]
+        # [results.best_model_resampler_object for results in searcher.results.tuner_results]
+        # assert searcher.results.tuner_results[1]._tune_results_objects.resampler_object.values[0].\
+        # cross_validation_scores['kappa'].mean() == searcher.results.best_tuned_results.kappa_mean[1]
         #
         # searcher.results.holdout_eval_values
         # # searcher.get_heatmap()
