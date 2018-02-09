@@ -18,7 +18,7 @@ class ClassificationEvaluator(EvaluatorBase):
         self._categories = categories
         self._use_probabilities = use_probabilities
         self._threshold = threshold if use_probabilities else None
-        self._custom_threshold = True if threshold is not None else False
+        self._using_threshold_parameter = True if threshold is not None else False
         self._predicted_values = None
         self._actual_values = None
 

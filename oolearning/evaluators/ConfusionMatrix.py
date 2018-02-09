@@ -1,3 +1,5 @@
+from typing import Union
+
 import numpy as np
 import pandas as pd
 
@@ -110,57 +112,65 @@ class ConfusionMatrix:
         return self._confusion_matrix
 
     @property
-    def sensitivity(self) -> float:
+    def sensitivity(self) -> Union[float, None]:
         """
         :return: a.k.a true positive rate
         """
-        return self._true_positives / self._actual_positives
+        return None if self._actual_positives == 0 else self._true_positives / self._actual_positives
 
     @property
-    def specificity(self) -> float:
+    def specificity(self) -> Union[float, None]:
         """
         :return: a.k.a false positive rate
         """
-        return self._true_negatives / self._actual_negatives
+        return None if self._actual_negatives == 0 else self._true_negatives / self._actual_negatives
 
     @property
-    def true_positive_rate(self):
+    def true_positive_rate(self) -> Union[float, None]:
         return self.sensitivity
 
     @property
-    def true_negative_rate(self):
+    def true_negative_rate(self) -> Union[float, None]:
         return self.specificity
 
     @property
-    def false_negative_rate(self) -> float:
-        return self._false_negatives / self._actual_positives
+    def false_negative_rate(self) -> Union[float, None]:
+        return None if self._actual_positives == 0 else self._false_negatives / self._actual_positives
 
     @property
-    def false_positive_rate(self) -> float:
-        return self._false_positives / self._actual_negatives
+    def false_positive_rate(self) -> Union[float, None]:
+        return None if self._actual_negatives == 0 else self._false_positives / self._actual_negatives
 
     @property
-    def two_class_accuracy(self) -> float:
-        return (self._true_negatives + self._true_positives) / self._total_observations
+    def two_class_accuracy(self) -> Union[float, None]:
+        return None if self._total_observations == 0 else \
+            (self._true_negatives + self._true_positives) / self._total_observations
 
     @property
-    def error_rate(self) -> float:
-        return (self._false_positives + self._false_negatives) / self._total_observations
+    def error_rate(self) -> Union[float, None]:
+        return None if self._total_observations == 0 else \
+            (self._false_positives + self._false_negatives) / self._total_observations
 
     @property
-    def positive_predictive_value(self) -> float:
-        return self._true_positives / (self._true_positives + self._false_positives)
+    def positive_predictive_value(self) -> Union[float, None]:
+        return None if (self._true_positives + self._false_positives) == 0 else \
+            self._true_positives / (self._true_positives + self._false_positives)
 
     @property
-    def negative_predictive_value(self) -> float:
-        return self._true_negatives / (self._true_negatives + self._false_negatives)
+    def negative_predictive_value(self) -> Union[float, None]:
+        return None if (self._true_negatives + self._false_negatives) == 0 else \
+            self._true_negatives / (self._true_negatives + self._false_negatives)
 
     @property
-    def prevalence(self) -> float:
-        return (self._true_positives + self._false_negatives) / self._total_observations
+    def prevalence(self) -> Union[float, None]:
+        return None if self._total_observations == 0 else \
+            (self._true_positives + self._false_negatives) / self._total_observations
 
     @property
-    def kappa(self) -> float:
+    def kappa(self) -> Union[float, None]:
+        if self._total_observations == 0 or \
+                ((self._true_negatives + self._false_negatives) / self._total_observations) == 0:
+            return None
         # proportion of the actual agreements
         # add the proportion of all instances where the predicted type and actual type agree
         pr_a = (self._true_negatives + self._true_positives) / self._total_observations

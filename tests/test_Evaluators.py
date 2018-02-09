@@ -2,6 +2,7 @@ import os
 from math import isclose
 from typing import Tuple
 
+import dill as pickle
 import numpy as np
 import pandas as pd
 
@@ -285,8 +286,39 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator.threshold == 0.5
         assert isclose(evaluator.auc, 0.74428675992192583)
 
+        actual_thresholds = evaluator._calculate_fpr_tpr_ideal_threshold()
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/fpr_tpr_threshold_mock.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(actual_thresholds, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            expected_thresholds = pickle.load(saved_object)
+            assert len(expected_thresholds) == 3
+            assert all([isclose(x, y) for x, y in zip(expected_thresholds[0], actual_thresholds[0])])
+            assert all([isclose(x, y) for x, y in zip(expected_thresholds[1], actual_thresholds[1])])
+            assert isclose(expected_thresholds[2], actual_thresholds[2])
+
+        actual_thresholds = evaluator._calculate_ppv_tpr_ideal_threshold()
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/ppv_tpr_threshold_mock.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(actual_thresholds, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            expected_thresholds = pickle.load(saved_object)
+            assert len(expected_thresholds) == 3
+            assert all([isclose(x, y) for x, y in zip(expected_thresholds[0], actual_thresholds[0])])
+            assert all([isclose(x, y) for x, y in zip(expected_thresholds[1], actual_thresholds[1])])
+            assert isclose(expected_thresholds[2], actual_thresholds[2])
+
+        # import time
+        # started_at = time.time()
+        # evaluator._calculate_fpr_tpr_ideal_threshold()
+        # elapsed = time.time() - started_at
+        # assert elapsed < 0.5
+
         TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_probabilities_custom_thr_ROC.png',  # noqa
                               lambda: evaluator.get_roc_curve())
+
+        TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_probabilities_custom_thr_ppv_tpr.png',  # noqa
+                              lambda: evaluator.get_ppv_tpr_curve())
 
     def test_TwoClassEvaluator_probabilities_no_threshold(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
@@ -311,8 +343,33 @@ class EvaluatorTests(TimerTestCase):
         assert isclose(evaluator.threshold, 0.41)
         assert isclose(evaluator.auc, 0.74428675992192583)
 
+        actual_thresholds = evaluator._calculate_fpr_tpr_ideal_threshold()
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/fpr_tpr_threshold_mock.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(actual_thresholds, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            expected_thresholds = pickle.load(saved_object)
+            assert len(expected_thresholds) == 3
+            assert all([isclose(x, y) for x, y in zip(expected_thresholds[0], actual_thresholds[0])])
+            assert all([isclose(x, y) for x, y in zip(expected_thresholds[1], actual_thresholds[1])])
+            assert isclose(expected_thresholds[2], actual_thresholds[2])
+
+        actual_thresholds = evaluator._calculate_ppv_tpr_ideal_threshold()
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/ppv_tpr_threshold_mock.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(actual_thresholds, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            expected_thresholds = pickle.load(saved_object)
+            assert len(expected_thresholds) == 3
+            assert all([isclose(x, y) for x, y in zip(expected_thresholds[0], actual_thresholds[0])])
+            assert all([isclose(x, y) for x, y in zip(expected_thresholds[1], actual_thresholds[1])])
+            assert isclose(expected_thresholds[2], actual_thresholds[2])
+
         TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_probabilities_no_thresh_ROC.png',  # noqa
                               lambda: evaluator.get_roc_curve())
+
+        TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_probabilities_no_thr_ppv_tpr.png',  # noqa
+                              lambda: evaluator.get_ppv_tpr_curve())
 
     def test_AucEvaluator(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
