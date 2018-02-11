@@ -68,7 +68,6 @@ class ExploreDatasetBase(metaclass=ABCMeta):
     def categoric_features(self):
         return self._categoric_features
 
-    @property
     def numeric_summary(self):
         """
         #TODO: document
@@ -109,7 +108,6 @@ class ExploreDatasetBase(metaclass=ABCMeta):
                                      'st_dev', 'coef of var', 'skewness', 'kurtosis', 'min', '10%', '25%',
                                      '50%', '75%', '90%', 'max'])
 
-    @property
     def categoric_summary(self):
         categoric_columns = self.categoric_features if self._is_target_numeric else self._categoric_features + [self._target_variable]  # noqa
 
@@ -158,8 +156,8 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         :return:
         """
         # only for categoric features (and the target variable if it is categoric)
-        valid_features = self._categoric_features if self._is_target_numeric else self._categoric_features + \
-                                                                                  [self._target_variable]
+        valid_features = self._categoric_features \
+            if self._is_target_numeric else self._categoric_features + [self._target_variable]
         assert categoric_feature in valid_features
         count_series = self._dataset[categoric_feature].value_counts(sort=not sort_by_feature)
         count_df = pd.DataFrame(count_series)

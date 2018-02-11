@@ -112,11 +112,11 @@ class ExploratoryTests(TimerTestCase):
         ######################################################################################################
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_before_mod_numeric.pkl'))  # noqa
         # with open(file, 'wb') as output:
-        #     pickle.dump(explore.numeric_summary, output, pickle.HIGHEST_PROTOCOL)
+        #     pickle.dump(explore.numeric_summary(), output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             expected_summary = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
-                                                      data_frame2=explore.numeric_summary)
+                                                      data_frame2=explore.numeric_summary())
 
         # introduce None's and Zeros into a couple of variable
         explore.dataset.loc[0, 'months_loan_duration'] = None
@@ -139,11 +139,11 @@ class ExploratoryTests(TimerTestCase):
 
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_after_mod_numeric.pkl'))  # noqa
         # with open(file, 'wb') as output:
-        #     pickle.dump(explore.numeric_summary, output, pickle.HIGHEST_PROTOCOL)
+        #     pickle.dump(explore.numeric_summary(), output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             expected_summary = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
-                                                      data_frame2=explore.numeric_summary)
+                                                      data_frame2=explore.numeric_summary())
 
         ######################################################################################################
         # categoric
@@ -151,18 +151,18 @@ class ExploratoryTests(TimerTestCase):
         explore = MockExploreBase(dataset=pd.read_csv(credit_csv), target_variable=target_variable)
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_before_mod_categoric.pkl'))  # noqa
         # with open(file, 'wb') as output:
-        #     pickle.dump(explore.categoric_summary, output, pickle.HIGHEST_PROTOCOL)
+        #     pickle.dump(explore.categoric_summary(), output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             expected_summary = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
-                                                      data_frame2=explore.categoric_summary)
+                                                      data_frame2=explore.categoric_summary())
             # ensure that changing the columns to Categorical (when loading from csv) doesn't affect anything
             # make sure at least 1 column is a category
             assert explore_from_csv.dataset['job'].dtype.name == 'category'
             assert explore_from_csv.dataset['age'].dtype.name != 'category'
 
             assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
-                                                      data_frame2=explore_from_csv.categoric_summary)
+                                                      data_frame2=explore_from_csv.categoric_summary())
 
         # introduce None's and Zeros into a couple of variable
         explore.dataset.loc[0, 'checking_balance'] = None
@@ -176,11 +176,11 @@ class ExploratoryTests(TimerTestCase):
 
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_after_mod_categoric.pkl'))  # noqa
         # with open(file, 'wb') as output:
-        #     pickle.dump(explore.categoric_summary, output, pickle.HIGHEST_PROTOCOL)
+        #     pickle.dump(explore.categoric_summary(), output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             expected_summary = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
-                                                      data_frame2=explore.categoric_summary)
+                                                      data_frame2=explore.categoric_summary())
 
     def test_ExploreDatasetBase_unique_values(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
