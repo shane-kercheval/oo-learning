@@ -5,10 +5,42 @@ from oolearning.exploratory.ExploreDatasetBase import ExploreDatasetBase
 
 
 class ExploreClassificationDataset(ExploreDatasetBase):
-    def __init__(self, dataset: pd.DataFrame, target_variable: str):
+    def __init__(self,
+                 dataset: pd.DataFrame,
+                 target_variable: str,
+                 map_numeric_target: dict=None,
+                 ordered: bool=False):
+        """
+        # TODO: explain mapping target variable
+        :param dataset:
+        :param target_variable:
+        :param map_numeric_target:
+        """
         super().__init__(dataset=dataset, target_variable=target_variable)
-        if self._is_target_numeric:
-            raise ValueError('the target variable cannot be numeric to use ExploreClassificationDataset')
+        if self._is_target_numeric and map_numeric_target is not None:
+            self.set_as_categoric(feature=target_variable, mapping=map_numeric_target, ordered=ordered)
+
+    @classmethod
+    def from_csv(cls,
+                 csv_file_path: str,
+                 target_variable: str,
+                 map_numeric_target: dict=None,
+                 ordered: bool=False) -> 'ExploreDatasetBase':
+        """
+        # TODO: DOCUMENT; THIS METHOD SETS NON-NUMERIC COLUMNS TO pd.Categorical types
+        :param ordered:
+        :param map_numeric_target:
+        :param csv_file_path:
+        :param target_variable:
+        :return:
+        """
+        explore = super().from_csv(csv_file_path=csv_file_path, target_variable=target_variable)
+        if explore._is_target_numeric:
+            if map_numeric_target is None:
+                raise ValueError('need to provide `map_numeric_target` for numeric targets')
+            explore.set_as_categoric(feature=target_variable, mapping=map_numeric_target, ordered=ordered)
+
+        return explore
 
     def plot_histogram_against_target(self, numeric_feature):
         # percentiles = (0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100)

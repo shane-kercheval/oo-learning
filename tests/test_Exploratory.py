@@ -239,6 +239,29 @@ class ExploratoryTests(TimerTestCase):
                               lambda: explore.plot_unique_values(categoric_feature='checking_balance',
                                                                  sort_by_feature=True))
 
+    # noinspection SpellCheckingInspection
+    def test_ExploreDatasetBase_set_as_categoric(self):
+        titanic_csv = TestHelper.ensure_test_directory('data/titanic.csv')
+        target_variable = 'Survived'
+
+        explore = MockExploreBase.from_csv(csv_file_path=titanic_csv, target_variable=target_variable)
+        # we want Pclass to be a categoric feature but it is currently numeric
+
+        feature = 'Pclass'
+        assert feature in explore.numeric_features
+        assert feature not in explore.categoric_features
+        assert all(explore.dataset.iloc[0:10][feature] == [3, 1, 3, 1, 3, 3, 1, 3, 3, 2])
+        target_mapping = {1: 'a',
+                          2: 'b',
+                          3: 'c'}
+        explore.set_as_categoric(feature=feature, mapping=target_mapping)
+        assert feature in explore.categoric_features
+        assert feature not in explore.numeric_features
+        # make sure we mapped right values
+        assert all(explore.dataset[feature].values.categories.values == list(target_mapping.values()))
+        # spot check first 10
+        assert all(explore.dataset.iloc[0:10][feature] == ['c', 'a', 'c', 'a', 'c', 'c', 'a', 'c', 'c', 'b'])
+
     def test_ExploreDatasetBase_histogram(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         target_variable = 'default'
@@ -305,6 +328,23 @@ class ExploratoryTests(TimerTestCase):
         assert explore.target_variable == target_variable
         assert explore.numeric_features == ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'age', 'existing_loans_count', 'dependents']  # noqa
         assert explore.categoric_features == ['checking_balance', 'credit_history', 'purpose', 'savings_balance', 'employment_duration', 'other_credit', 'housing', 'job', 'phone']  # noqa
+
+    def test_ExploreClassificationDataset_numeric_target(self):
+        titanic_csv = TestHelper.ensure_test_directory('data/titanic.csv')
+        target_variable = 'Survived'
+        target_mapping = {0: 'died', 1: 'survived'}
+
+        explore = ExploreDatasetBase.from_csv(csv_file_path=titanic_csv, target_variable=target_variable)
+        assert explore._is_target_numeric  # target is numeric, but this could fuck with this
+        numeric_data = explore.dataset[target_variable]
+        expected_categoric_data = numeric_data.map(target_mapping).values
+
+        explore = ExploreClassificationDataset.from_csv(csv_file_path=titanic_csv,
+                                                        target_variable=target_variable,
+                                                        map_numeric_target=target_mapping)
+        assert explore._is_target_numeric is False
+        # noinspection PyTypeChecker
+        assert all(explore.dataset[target_variable] == expected_categoric_data)
 
     # noinspection PyUnresolvedReferences
     def test_ExploreClassificationDataset_categorical_vs_target(self):

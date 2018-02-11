@@ -14,7 +14,8 @@ from oolearning import OOLearningHelpers
 class ExploreDatasetBase(metaclass=ABCMeta):
     def __init__(self, dataset: pd.DataFrame, target_variable: str):
         """
-        # TODO: DOCUMENT; NOTE: unlike from_csv, THIS METHOD DOES NOT NON-NUMERIC COLUMNS TO pd.Categorical types,
+        # TODO: DOCUMENT; NOTE: unlike from_csv, THIS METHOD DOES NOT NON-NUMERIC COLUMNS TO pd.Categorical
+        types,
         # because unlike from_csv which is loading the data directly, we don't know if the user has already
         # formatted the dataset or not and don't want to undo anything that has been done
         :param dataset:
@@ -22,10 +23,16 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         """
         self._dataset = dataset
         self._target_variable = target_variable
+        self._numeric_features = None
+        self._categoric_features = None
+        self._is_target_numeric = None
 
+        self._update_feature_types()
+
+    def _update_feature_types(self):
         self._numeric_features, self._categoric_features = \
-            OOLearningHelpers.get_columns_by_type(data_dtypes=dataset.dtypes, target_variable=target_variable)
-
+            OOLearningHelpers.get_columns_by_type(data_dtypes=self._dataset.dtypes,
+                                                  target_variable=self._target_variable)
         self._is_target_numeric = OOLearningHelpers.is_series_numeric(self._dataset[self._target_variable])
 
     @classmethod
@@ -118,6 +125,24 @@ class ExploreDatasetBase(metaclass=ABCMeta):
                              'perc_unique': [round(len(self._dataset[x].dropna().unique()) / self._dataset[x].count(), 3) for x in categoric_columns]},  # noqa
                             index=columns,
                             columns=['count', 'nulls', 'perc_nulls', 'top', 'unique', 'perc_unique'])
+
+    def set_as_categoric(self, feature: str, mapping: dict, ordered: bool=False):
+        """
+        some features have a numeric type but are logically categorical variables. This method allows the
+            variable to be set as a categoric feature, updating the values
+        :param feature:
+        :param mapping: dictionary containing the unique values of the codes/integers in the current data as
+            the key, and the categoric string as the value.
+        :param ordered:
+        :return:
+        """
+        # pandas expects code to be `0, 1, 2, ...`, which won't always be the case. We need to map the actual
+        # values to what pandas expects.
+        actual_to_expected_mapping = dict(zip(mapping.keys(), np.arange(len(mapping))))
+        self._dataset[feature] = pd.Categorical.from_codes(pd.Series(self._dataset[feature]).map(actual_to_expected_mapping),  # noqa
+                                                           mapping.values(),
+                                                           ordered=ordered)
+        self._update_feature_types()
 
     def set_level_order(self, categoric_feature: str, levels: List):
         assert self._dataset[categoric_feature].dtype.name == 'category'  # must be a category
