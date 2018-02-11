@@ -95,6 +95,8 @@ class TestHelper:
             os.remove(file)
         assert os.path.isfile(file) is False
         get_plot_function()
+        fig = plt.gcf()
+        fig.set_size_inches(11, 7)
         plt.savefig(file)
         plt.gcf().clear()
         assert os.path.isfile(file)

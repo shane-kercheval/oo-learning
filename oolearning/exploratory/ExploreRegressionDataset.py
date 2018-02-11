@@ -9,7 +9,7 @@ class ExploreRegressionDataset(ExploreDatasetBase):
         if self._is_target_numeric is False:
             raise ValueError('the target variable must be numeric to use ExploreRegressionDataset')
 
-    def compare_against_target(self, feature):
+    def plot_against_target(self, feature):
         """
         TODO: Document
         """

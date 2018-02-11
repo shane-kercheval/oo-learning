@@ -143,7 +143,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
 
         return count_df
 
-    def unique_values_bar(self, categoric_feature, sort_by_feature=False):
+    def plot_unique_values(self, categoric_feature, sort_by_feature=False):
         """
         TODO: Document
         :param categoric_feature:
@@ -172,7 +172,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         #     ax.annotate("{0:.0f}%".format(perc * 100), (0, idx - 0.03), xytext=(0, 0),
         #                 textcoords='offset points')
 
-    def boxplot(self, numeric_feature):
+    def plot_boxplot(self, numeric_feature):
         """
         # TODO:
         :param numeric_feature:
@@ -184,7 +184,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         plt.title(numeric_feature)
         return box_plot
 
-    def histogram(self, numeric_feature):
+    def plot_histogram(self, numeric_feature):
         # only for numeric features (and the target variable if it is numeric)
         valid_features = self._numeric_features + [self._target_variable] if self._is_target_numeric else self._numeric_features  # noqa
         assert numeric_feature in valid_features
@@ -192,7 +192,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         plt.title(numeric_feature)
         return hist_plot
 
-    def scatter_plot_numerics(self, numeric_columns=None, figure_size=(12, 8)):
+    def plot_scatterplot_numerics(self, numeric_columns=None, figure_size=(12, 8)):
         """
         TODO document
         if numeric_columns is none, all numeric columns will be plotted.
@@ -204,7 +204,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
             numeric_columns = self._numeric_features + [self._target_variable] if self._is_target_numeric else self._numeric_features  # noqa
         return scatter_matrix(self._dataset[numeric_columns], figsize=figure_size)
 
-    def correlation_heatmap(self):
+    def plot_correlation_heatmap(self):
         f, ax = pl.subplots(figsize=(10, 8))
         corr = self._dataset.corr()
         sns.heatmap(corr, mask=np.zeros_like(corr, dtype=np.bool),
