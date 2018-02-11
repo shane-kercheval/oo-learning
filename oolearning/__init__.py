@@ -7,6 +7,7 @@ from .enums.Normalization import Normalization
 from .enums.ResolveOutliers import ResolveOutliers
 from .enums.Skewness import Skewness
 
+from .evaluators.Accuracy2CEvaluator import Accuracy2CEvaluator
 from .evaluators.AucEvaluator import AucEvaluator
 from .evaluators.ClassificationEvaluator import ClassificationEvaluator
 from .evaluators.ConfusionMatrix import ConfusionMatrix

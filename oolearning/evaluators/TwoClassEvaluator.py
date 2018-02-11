@@ -54,7 +54,7 @@ class TwoClassEvaluator(ClassificationEvaluator):
         return roc_auc_score(y_true=self._actual_values, y_score=pos_predictions)
 
     @property
-    def confusion_matrix(self) -> pd.DataFrame:
+    def confusion_matrix(self) -> ConfusionMatrix:
         return self._confusion_matrix
 
     @property

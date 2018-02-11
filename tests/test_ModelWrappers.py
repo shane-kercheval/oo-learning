@@ -710,7 +710,8 @@ class ModelWrapperTests(TimerTestCase):
             actual_metrics = fitter.training_evaluators[0].confusion_matrix.all_quality_metrics
             expected_metrics = {'Kappa': 0.5887759059712314, 'F1 Score': 0.7419962335216571,
                                 'Two-Class Accuracy': 0.8075842696629213, 'Error Rate': 0.19241573033707865,
-                                'Sensitivity': 0.7216117216117216, 'Specificity': 0.8610478359908884,
+                                'True Positive Rate': 0.7216117216117216,
+                                'True Negative Rate': 0.8610478359908884,
                                 'False Positive Rate': 0.13895216400911162,
                                 'False Negative Rate': 0.2783882783882784,
                                 'Positive Predictive Value': 0.7635658914728682,
@@ -775,7 +776,8 @@ class ModelWrapperTests(TimerTestCase):
             actual_metrics = fitter.training_evaluators[0].confusion_matrix.all_quality_metrics
             expected_metrics = {'Kappa': 0.5905242034163771, 'F1 Score': 0.756476683937824,
                                 'Two-Class Accuracy': 0.8019662921348315, 'Error Rate': 0.19803370786516855,
-                                'Sensitivity': 0.8021978021978022, 'Specificity': 0.8018223234624146,
+                                'True Positive Rate': 0.8021978021978022,
+                                'True Negative Rate': 0.8018223234624146,
                                 'False Positive Rate': 0.19817767653758542,
                                 'False Negative Rate': 0.1978021978021978,
                                 'Positive Predictive Value': 0.7156862745098039,
@@ -820,7 +822,8 @@ class ModelWrapperTests(TimerTestCase):
         actual_metrics = fitter.training_evaluators[0].confusion_matrix.all_quality_metrics
         expected_metrics = {'Kappa': 0.5887759059712314, 'F1 Score': 0.7419962335216571,
                             'Two-Class Accuracy': 0.8075842696629213, 'Error Rate': 0.19241573033707865,
-                            'Sensitivity': 0.7216117216117216, 'Specificity': 0.8610478359908884,
+                            'True Positive Rate': 0.7216117216117216,
+                            'True Negative Rate': 0.8610478359908884,
                             'False Positive Rate': 0.13895216400911162,
                             'False Negative Rate': 0.2783882783882784,
                             'Positive Predictive Value': 0.7635658914728682,

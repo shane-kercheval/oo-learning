@@ -1,5 +1,7 @@
 import os
 from math import isclose
+from sklearn.metrics import accuracy_score, recall_score, f1_score, precision_score, cohen_kappa_score, \
+    mean_squared_error, mean_absolute_error, roc_auc_score
 from typing import Tuple
 
 import dill as pickle
@@ -58,7 +60,7 @@ class EvaluatorTests(TimerTestCase):
         assert isinstance(rmse_eval, EvaluatorBase)
         assert rmse_eval.metric_name == Metric.ROOT_MEAN_SQUARE_ERROR.value
         rmse_eval.evaluate(actual_values=actual, predicted_values=predicted)
-        assert isclose(2.91547594742265, rmse_eval.value)
+        assert isclose(np.sqrt(mean_squared_error(y_true=actual, y_pred=predicted)), rmse_eval.value)
 
         ######################################################################################################
         # Test sorting
@@ -81,7 +83,7 @@ class EvaluatorTests(TimerTestCase):
         assert isinstance(mae_eval, EvaluatorBase)
         assert mae_eval.metric_name == Metric.MEAN_ABSOLUTE_ERROR.value
         mae_eval.evaluate(actual_values=actual, predicted_values=predicted)
-        assert isclose(2.3333333333333335, mae_eval.value)
+        assert isclose(mean_absolute_error(y_true=actual, y_pred=predicted), mae_eval.value)
 
         ######################################################################################################
         # Test sorting
@@ -198,16 +200,16 @@ class EvaluatorTests(TimerTestCase):
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
         assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
         assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(con_matrix.all_quality_metrics['Kappa'], 0.34756903797404387)
-        assert isclose(con_matrix.all_quality_metrics['F1 Score'], 0.5802707930367504)
-        assert isclose(con_matrix.all_quality_metrics['Two-Class Accuracy'], 0.69607843137254899)
-        assert isclose(con_matrix.all_quality_metrics['Error Rate'], 0.30392156862745096)
-        assert isclose(con_matrix.all_quality_metrics['Sensitivity'], 0.51724137931034486)
-        assert isclose(con_matrix.all_quality_metrics['Specificity'], 0.81839622641509435)
+        assert isclose(con_matrix.all_quality_metrics['Kappa'], cohen_kappa_score(y1=mock_data.actual, y2=mock_data.predictions))  # noqa
+        assert isclose(con_matrix.all_quality_metrics['F1 Score'], f1_score(y_true=mock_data.actual, y_pred=mock_data.predictions))  # noqa
+        assert isclose(con_matrix.all_quality_metrics['Two-Class Accuracy'], accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))  # noqa
+        assert isclose(con_matrix.all_quality_metrics['Error Rate'], 1 - accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))  # noqa
+        assert isclose(con_matrix.all_quality_metrics['True Positive Rate'], recall_score(y_true=mock_data.actual, y_pred=mock_data.predictions))  # noqa
+        assert isclose(con_matrix.all_quality_metrics['True Negative Rate'], recall_score(y_true=mock_data.actual, y_pred=mock_data.predictions, pos_label=0))  # noqa
         assert isclose(con_matrix.all_quality_metrics['False Positive Rate'], 1 - con_matrix.specificity)
         assert isclose(con_matrix.all_quality_metrics['False Negative Rate'], 1 - con_matrix.sensitivity)
-        assert isclose(con_matrix.all_quality_metrics['Positive Predictive Value'], 0.66079295154185025)
-        assert isclose(con_matrix.all_quality_metrics['Negative Predictive Value'], 0.71252566735112932)
+        assert isclose(con_matrix.all_quality_metrics['Positive Predictive Value'], precision_score(y_true=mock_data.actual, y_pred=mock_data.predictions))  # noqa
+        assert isclose(con_matrix.all_quality_metrics['Negative Predictive Value'], precision_score(y_true=mock_data.actual, y_pred=mock_data.predictions, pos_label=0))  # noqa
         assert isclose(con_matrix.all_quality_metrics['Prevalence'], 0.4061624649859944)
         assert isclose(con_matrix.all_quality_metrics['No Information Rate'], 0.5938375350140056)
         assert isclose(con_matrix.all_quality_metrics['Total Observations'], len(mock_data))
@@ -225,7 +227,7 @@ class EvaluatorTests(TimerTestCase):
         self.check_confusion_matrix(con_matrix, mock_data)
 
         ######################################################################################################
-        # `from_predictions` check calculations SWAPPED
+        # `from_predictions` check calculations *******SWAPPED********
         ######################################################################################################
         con_matrix = ConfusionMatrix.from_predictions(actual_values=mock_data.actual,
                                                       predicted_values=mock_data.predictions,
@@ -238,15 +240,16 @@ class EvaluatorTests(TimerTestCase):
         assert con_matrix.matrix.index.values.tolist() == [1, 0, 'Total']
         assert con_matrix.matrix.columns.values.tolist() == [1, 0, 'Total']
 
-        assert isclose(con_matrix.all_quality_metrics['Kappa'], 0.34756903797404387)
-        assert isclose(con_matrix.all_quality_metrics['Two-Class Accuracy'], 0.69607843137254899)
-        assert isclose(con_matrix.all_quality_metrics['Error Rate'], 0.30392156862745096)
-        assert isclose(con_matrix.all_quality_metrics['Sensitivity'], 0.81839622641509435)
-        assert isclose(con_matrix.all_quality_metrics['Specificity'], 0.51724137931034486)
+        assert isclose(con_matrix.all_quality_metrics['Kappa'], cohen_kappa_score(y1=mock_data.actual, y2=mock_data.predictions))  # noqa
+        assert isclose(con_matrix.all_quality_metrics['F1 Score'], f1_score(y_true=mock_data.actual, y_pred=mock_data.predictions, pos_label=0))  # noqa
+        assert isclose(con_matrix.all_quality_metrics['Two-Class Accuracy'], accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))  # noqa
+        assert isclose(con_matrix.all_quality_metrics['Error Rate'], 1 - accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))  # noqa
+        assert isclose(con_matrix.all_quality_metrics['True Positive Rate'], recall_score(y_true=mock_data.actual, y_pred=mock_data.predictions, pos_label=0))  # noqa
+        assert isclose(con_matrix.all_quality_metrics['True Negative Rate'], recall_score(y_true=mock_data.actual, y_pred=mock_data.predictions, pos_label=1))  # noqa
         assert isclose(con_matrix.all_quality_metrics['False Positive Rate'], 1 - con_matrix.specificity)
         assert isclose(con_matrix.all_quality_metrics['False Negative Rate'], 1 - con_matrix.sensitivity)
-        assert isclose(con_matrix.all_quality_metrics['Positive Predictive Value'], 0.71252566735112932)
-        assert isclose(con_matrix.all_quality_metrics['Negative Predictive Value'], 0.66079295154185025)
+        assert isclose(con_matrix.all_quality_metrics['Positive Predictive Value'], precision_score(y_true=mock_data.actual, y_pred=mock_data.predictions, pos_label=0))  # noqa
+        assert isclose(con_matrix.all_quality_metrics['Negative Predictive Value'], precision_score(y_true=mock_data.actual, y_pred=mock_data.predictions, pos_label=1))  # noqa
         assert isclose(con_matrix.all_quality_metrics['Prevalence'], 1 - 0.4061624649859944)
         assert isclose(con_matrix.all_quality_metrics['No Information Rate'], 1 - 0.5938375350140056)
         assert isclose(con_matrix.all_quality_metrics['Total Observations'], len(mock_data))
@@ -262,7 +265,7 @@ class EvaluatorTests(TimerTestCase):
         assert isinstance(evaluator, EvaluatorBase)
 
         accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=mock_data.predictions)
-        assert isclose(accuracy, 0.69607843137254899)
+        assert isclose(accuracy, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
         assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
         self.check_confusion_matrix(con_matrix=evaluator.confusion_matrix, mock_data=mock_data)
         assert evaluator.value == evaluator.confusion_matrix.two_class_accuracy
@@ -284,7 +287,7 @@ class EvaluatorTests(TimerTestCase):
         self.check_confusion_matrix(con_matrix=evaluator.confusion_matrix, mock_data=mock_data)
         assert evaluator.value == evaluator.confusion_matrix.two_class_accuracy
         assert evaluator.threshold == 0.5
-        assert isclose(evaluator.auc, 0.74428675992192583)
+        assert isclose(evaluator.auc, roc_auc_score(y_true=mock_data.actual, y_score=mock_data.pos_probabilities))  # noqa
 
         actual_thresholds = evaluator._calculate_fpr_tpr_ideal_threshold()
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/fpr_tpr_threshold_mock.pkl'))  # noqa
@@ -341,7 +344,7 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
         assert evaluator.value == evaluator.confusion_matrix.two_class_accuracy
         assert isclose(evaluator.threshold, 0.41)
-        assert isclose(evaluator.auc, 0.74428675992192583)
+        assert isclose(evaluator.auc, roc_auc_score(y_true=mock_data.actual, y_score=mock_data.pos_probabilities))  # noqa
 
         actual_thresholds = evaluator._calculate_fpr_tpr_ideal_threshold()
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/fpr_tpr_threshold_mock.pkl'))  # noqa
@@ -392,7 +395,7 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
         assert evaluator.value == evaluator.auc
         assert isclose(evaluator.threshold, 0.41)
-        assert isclose(evaluator.auc, 0.74428675992192583)
+        assert isclose(evaluator.auc, roc_auc_score(y_true=mock_data.actual, y_score=mock_data.pos_probabilities))  # noqa
         ######################################################################################################
         # Test sorting
         ######################################################################################################
@@ -402,7 +405,7 @@ class EvaluatorTests(TimerTestCase):
                                        threshold=0.5)  # creates worse value
         accuracy = evaluator_other.evaluate(actual_values=mock_data.actual,
                                             predicted_values=predictions_mock)
-        assert isclose(accuracy, 0.25571324007807417)  # lower number means it is worse than first value
+        assert isclose(accuracy, roc_auc_score(y_true=mock_data.actual, y_score=mock_data.neg_probabilities))
 
         eval_list = [evaluator_other, evaluator]  # "worse, better"
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
@@ -416,7 +419,11 @@ class EvaluatorTests(TimerTestCase):
 
         predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
         predictions_mock.columns = [1, 0]
-
+        ######################################################################################################
+        # NOTE: because we are setting `threshold=None`, it means the threshold will be calculated, which
+        # will change the values of the kappa/f1/etc. from the default threshold of 0.5; but, e.g. the AUC
+        # will not change
+        ######################################################################################################
         evaluator = KappaEvaluator(positive_category=1,
                                    negative_category=0,
                                    use_probabilities=True,
@@ -424,16 +431,15 @@ class EvaluatorTests(TimerTestCase):
         assert isinstance(evaluator, UtilityFunctionMixin)
         assert isinstance(evaluator, EvaluatorBase)
 
-        accuracy = evaluator.evaluate(actual_values=mock_data.actual,
-                                      predicted_values=predictions_mock)
-        assert isclose(accuracy, 0.37990215607221967)
+        accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
+        assert isclose(accuracy, 0.37990215607221967)  # will be different Kappa than sklearn, from threshold
         assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
         assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
         assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
         assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
         assert evaluator.value == evaluator.confusion_matrix.kappa
         assert isclose(evaluator.threshold, 0.41)
-        assert isclose(evaluator.auc, 0.74428675992192583)
+        assert isclose(evaluator.auc, roc_auc_score(y_true=mock_data.actual, y_score=mock_data.pos_probabilities))  # noqa
 
         ######################################################################################################
         # Test sorting
@@ -442,9 +448,8 @@ class EvaluatorTests(TimerTestCase):
                                          negative_category=1,
                                          use_probabilities=True,
                                          threshold=0.5)  # creates worse value
-        accuracy = evaluator_other.evaluate(actual_values=mock_data.actual,
-                                            predicted_values=predictions_mock)
-        assert isclose(accuracy, 0.34756903797404387)  # lower number means it is worse than first value
+        accuracy = evaluator_other.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
+        assert isclose(accuracy, cohen_kappa_score(y1=mock_data.actual, y2=mock_data.predictions))
 
         eval_list = [evaluator_other, evaluator]  # "worse, better"
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
@@ -459,6 +464,11 @@ class EvaluatorTests(TimerTestCase):
         predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
         predictions_mock.columns = [1, 0]
 
+        ######################################################################################################
+        # NOTE: because we are setting `threshold=None`, it means the threshold will be calculated, which
+        # will change the values of the kappa/f1/etc. from the default threshold of 0.5; but, e.g. the AUC
+        # will not change
+        ######################################################################################################
         evaluator = F1Evaluator(positive_category=1,
                                 negative_category=0,
                                 use_probabilities=True,
@@ -466,16 +476,15 @@ class EvaluatorTests(TimerTestCase):
         assert isinstance(evaluator, UtilityFunctionMixin)
         assert isinstance(evaluator, EvaluatorBase)
 
-        accuracy = evaluator.evaluate(actual_values=mock_data.actual,
-                                      predicted_values=predictions_mock)
-        assert isclose(accuracy, 0.6472491909385113)
+        accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
+        assert isclose(accuracy, 0.6472491909385113)  # will be different Kappa than sklearn, from threshold
         assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
         assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
         assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
         assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
         assert evaluator.value == evaluator.confusion_matrix.f1_score
         assert isclose(evaluator.threshold, 0.41)
-        assert isclose(evaluator.auc, 0.74428675992192583)
+        assert isclose(evaluator.auc, roc_auc_score(y_true=mock_data.actual, y_score=mock_data.pos_probabilities))  # noqa
 
         ######################################################################################################
         # Test sorting
@@ -484,9 +493,8 @@ class EvaluatorTests(TimerTestCase):
                                       negative_category=1,
                                       use_probabilities=True,
                                       threshold=0.5)  # creates worse value
-        accuracy = evaluator_other.evaluate(actual_values=mock_data.actual,
-                                            predicted_values=predictions_mock)
-        assert isclose(accuracy, 0.7618002195389681)  # lower number means it is worse than first value
+        accuracy = evaluator_other.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
+        assert isclose(accuracy, f1_score(y_true=mock_data.actual, y_pred=mock_data.predictions,  pos_label=0))  # noqa
 
         eval_list = [evaluator, evaluator_other]  # "worse, better"
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
@@ -504,20 +512,33 @@ class EvaluatorTests(TimerTestCase):
 
         predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
         predictions_mock.columns = [1, 0]
-
-        evaluator = SensitivityEvaluator(positive_category=0,
-                                         negative_category=1,
+        ######################################################################################################
+        evaluator = SensitivityEvaluator(positive_category=1,
+                                         negative_category=0,
                                          use_probabilities=True,
                                          threshold=0.5)  # creates worse value
         assert isinstance(evaluator, UtilityFunctionMixin)
         assert isinstance(evaluator, EvaluatorBase)
         accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isclose(accuracy, 0.81839622641509435)  # lower number means it is worse than first value
-        evaluator = SpecificityEvaluator(positive_category=0,
-                                         negative_category=1,
+        assert isclose(accuracy, recall_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
+        assert isclose(evaluator.value, recall_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
+        ######################################################################################################
+        evaluator = SpecificityEvaluator(positive_category=1,
+                                         negative_category=0,
                                          use_probabilities=True,
                                          threshold=0.5)  # creates worse value
         assert isinstance(evaluator, UtilityFunctionMixin)
         assert isinstance(evaluator, EvaluatorBase)
         accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isclose(accuracy, 0.51724137931034486)  # lower number means it is worse than first value
+        assert isclose(accuracy, 1 - evaluator.confusion_matrix.false_positive_rate)
+        assert isclose(evaluator.value, 1 - evaluator.confusion_matrix.false_positive_rate)
+        ######################################################################################################
+        evaluator = Accuracy2CEvaluator(positive_category=1,
+                                        negative_category=0,
+                                        use_probabilities=True,
+                                        threshold=0.5)
+        assert isinstance(evaluator, UtilityFunctionMixin)
+        assert isinstance(evaluator, EvaluatorBase)
+        accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
+        assert isclose(accuracy, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
+        assert isclose(evaluator.value, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
