@@ -238,5 +238,5 @@ class ConfusionMatrix2C:
                 'Positive Predictive Value': self.positive_predictive_value,
                 'Negative Predictive Value': self.negative_predictive_value,
                 'Prevalence': self.prevalence,
-                'No Information Rate': self._actual_negatives / self._total_observations,
+                'No Information Rate': max(self.prevalence, 1-self.prevalence),  # i.e. largest class %
                 'Total Observations': self._total_observations}
