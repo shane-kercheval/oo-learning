@@ -11,7 +11,6 @@ class ConfusionMatrix2C:
 
     def __init__(self, confusion_matrix: pd.DataFrame, positive_category, negative_category):
         category_list = [negative_category, positive_category]
-
         self._confusion_matrix = confusion_matrix
         self._positive_category = positive_category
         self._negative_category = negative_category
@@ -58,11 +57,42 @@ class ConfusionMatrix2C:
                    negative_category=negative_category)
 
     @classmethod
-    def from_predictions(cls,
-                         actual_classes: np.ndarray,
-                         predicted_classes: np.ndarray,
-                         positive_category,
-                         negative_category) -> \
+    def from_probabilities(cls,
+                           actual_classes,
+                           predicted_probabilities: pd.DataFrame,
+                           positive_category,
+                           negative_category,
+                           threshold: float=None):
+        """
+        # TODO: document... DataFrame is probabilities with columns for each class with class name as
+        column name
+
+        :param actual_classes:
+        :param predicted_probabilities: pd.DataFrame that has the predictioned probabilities for each class
+            (per column), with column names set to the unique class values (NOTE: string if unique class
+            values are string, int if unique class values are int)
+        :param positive_category:
+        :param negative_category:
+        :param threshold:
+        :return:
+        """
+        if threshold is None:
+            predicted_classes = predicted_probabilities.idxmax(axis=1)
+        else:
+            pos_predictions = predicted_probabilities.loc[:, positive_category]
+            predicted_classes = np.where(pos_predictions > threshold, positive_category, negative_category)
+
+        return ConfusionMatrix2C.from_classes(actual_classes=actual_classes,
+                                              predicted_classes=predicted_classes,
+                                              positive_category=positive_category,
+                                              negative_category=negative_category)
+
+    @classmethod
+    def from_classes(cls,
+                     actual_classes: np.ndarray,
+                     predicted_classes: np.ndarray,
+                     positive_category,
+                     negative_category) -> \
             'ConfusionMatrix2C':
         """
         takes the actual/predicted values and creates a confusion confusion_matrix
@@ -188,9 +218,14 @@ class ConfusionMatrix2C:
         return (pr_a - pr_e) / (1 - pr_e)
 
     @property
-    def f1_score(self) -> float:
+    def f1_score(self) -> Union[float, None]:
+        if self.positive_predictive_value is None or \
+                self.sensitivity is None or \
+                (self.positive_predictive_value + self.sensitivity) == 0:
+            return None
+
         return 2 * (self.positive_predictive_value * self.sensitivity) / \
-               (self.positive_predictive_value + self.sensitivity)
+            (self.positive_predictive_value + self.sensitivity)
 
     @property
     def all_quality_metrics(self) -> dict:

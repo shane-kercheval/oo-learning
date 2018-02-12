@@ -159,7 +159,7 @@ class EvaluatorTests(TimerTestCase):
         assert confusion_matrix.matrix.index.values.tolist() == [1, 0, 'Total']
         assert confusion_matrix.matrix.columns.values.tolist() == [1, 0, 'Total']
         ######################################################################################################
-        # `from_predictions`
+        # `from_classes`
         ######################################################################################################
         np.random.seed(44)
         actual_values = np.random.randint(low=0, high=2, size=100)
@@ -167,10 +167,10 @@ class EvaluatorTests(TimerTestCase):
         predicted_values = np.random.randint(low=0, high=2, size=100)
         positive_category = 1
 
-        confusion_matrix = ConfusionMatrix2C.from_predictions(actual_classes=actual_values,
-                                                              predicted_classes=predicted_values,
-                                                              positive_category=positive_category,
-                                                              negative_category=negative_category)
+        confusion_matrix = ConfusionMatrix2C.from_classes(actual_classes=actual_values,
+                                                          predicted_classes=predicted_values,
+                                                          positive_category=positive_category,
+                                                          negative_category=negative_category)
 
         assert confusion_matrix.matrix.loc[:, 0].values.tolist() == expected_predicted_negatives
         assert confusion_matrix.matrix.loc[:, 1].values.tolist() == expected_predicted_positives
@@ -180,12 +180,12 @@ class EvaluatorTests(TimerTestCase):
         assert confusion_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
 
         ######################################################################################################
-        # `from_predictions` swapped categories
+        # `from_classes` swapped categories
         ######################################################################################################
-        confusion_matrix = ConfusionMatrix2C.from_predictions(actual_classes=actual_values,
-                                                              predicted_classes=predicted_values,
-                                                              positive_category=negative_category,
-                                                              negative_category=positive_category)
+        confusion_matrix = ConfusionMatrix2C.from_classes(actual_classes=actual_values,
+                                                          predicted_classes=predicted_values,
+                                                          positive_category=negative_category,
+                                                          negative_category=positive_category)
 
         assert confusion_matrix.matrix.loc[:, 1].values.tolist() == expected_predicted_negatives_r
         assert confusion_matrix.matrix.loc[:, 0].values.tolist() == expected_predicted_positives_r
@@ -217,22 +217,22 @@ class EvaluatorTests(TimerTestCase):
     def test_ConfusionMatrix_correct_calculations(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
         ######################################################################################################
-        # `from_predictions` check calculations (verified against R's caret.confusionMatrix
+        # `from_classes` check calculations (verified against R's caret.confusionMatrix
         ######################################################################################################
-        con_matrix = ConfusionMatrix2C.from_predictions(actual_classes=mock_data.actual,
-                                                        predicted_classes=mock_data.predictions,
-                                                        positive_category=1,
-                                                        negative_category=0)
+        con_matrix = ConfusionMatrix2C.from_classes(actual_classes=mock_data.actual,
+                                                    predicted_classes=mock_data.predictions,
+                                                    positive_category=1,
+                                                    negative_category=0)
 
         self.check_confusion_matrix(con_matrix, mock_data)
 
         ######################################################################################################
-        # `from_predictions` check calculations *******SWAPPED********
+        # `from_classes` check calculations *******SWAPPED********
         ######################################################################################################
-        con_matrix = ConfusionMatrix2C.from_predictions(actual_classes=mock_data.actual,
-                                                        predicted_classes=mock_data.predictions,
-                                                        positive_category=0,
-                                                        negative_category=1)
+        con_matrix = ConfusionMatrix2C.from_classes(actual_classes=mock_data.actual,
+                                                    predicted_classes=mock_data.predictions,
+                                                    positive_category=0,
+                                                    negative_category=1)
 
         assert con_matrix.matrix.loc[:, 1].values.tolist() == [150, 77, 227]
         assert con_matrix.matrix.loc[:, 0].values.tolist() == [140, 347, 487]
@@ -252,6 +252,48 @@ class EvaluatorTests(TimerTestCase):
         assert isclose(con_matrix.all_quality_metrics['Negative Predictive Value'], precision_score(y_true=mock_data.actual, y_pred=mock_data.predictions, pos_label=1))  # noqa
         assert isclose(con_matrix.all_quality_metrics['Prevalence'], 1 - 0.4061624649859944)
         assert isclose(con_matrix.all_quality_metrics['No Information Rate'], 1 - 0.5938375350140056)
+        assert isclose(con_matrix.all_quality_metrics['Total Observations'], len(mock_data))
+
+    def test_ConfusionMatrix_from_probabilities(self):
+        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
+
+        con_matrix = ConfusionMatrix2C.from_probabilities(actual_classes=mock_data.actual,
+                                                          predicted_probabilities=mock_data[['pos_probabilities', 'neg_probabilities']].rename(columns={'pos_probabilities': 1, 'neg_probabilities': 0}),  # noqa
+                                                          positive_category=1,
+                                                          negative_category=0)
+        self.check_confusion_matrix(con_matrix, mock_data)
+        con_matrix = ConfusionMatrix2C.from_probabilities(actual_classes=mock_data.actual,
+                                                          predicted_probabilities=mock_data[['pos_probabilities', 'neg_probabilities']].rename(columns={'pos_probabilities': 1, 'neg_probabilities': 0}),  # noqa
+                                                          positive_category=1,
+                                                          negative_category=0,
+                                                          threshold=0.5)
+        self.check_confusion_matrix(con_matrix, mock_data)
+
+        ######################################################################################################
+        # try a threshold of 1, which means that 0 positives will be predicted
+        ######################################################################################################
+        con_matrix = ConfusionMatrix2C.from_probabilities(actual_classes=mock_data.actual,
+                                                          predicted_probabilities=mock_data[['pos_probabilities', 'neg_probabilities']].rename(columns={'pos_probabilities': 1, 'neg_probabilities': 0}),  # noqa
+                                                          positive_category=1,
+                                                          negative_category=0,
+                                                          threshold=1)
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [424, 290, 714]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [0, 0, 0]
+        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
+        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
+        assert isclose(con_matrix.all_quality_metrics['Kappa'], 0)
+        assert con_matrix.all_quality_metrics['F1 Score'] is None
+        assert isclose(con_matrix.all_quality_metrics['Two-Class Accuracy'], con_matrix.negative_predictive_value)  # noqa
+        assert isclose(con_matrix.all_quality_metrics['Error Rate'], con_matrix.prevalence)  # noqa
+        assert isclose(con_matrix.all_quality_metrics['True Positive Rate'], 0)
+        assert isclose(con_matrix.all_quality_metrics['True Negative Rate'], 1)
+        assert isclose(con_matrix.all_quality_metrics['False Positive Rate'], 0)
+        assert isclose(con_matrix.all_quality_metrics['False Negative Rate'], 1)
+        assert con_matrix.all_quality_metrics['Positive Predictive Value'] is None
+        assert isclose(con_matrix.all_quality_metrics['Negative Predictive Value'], con_matrix.all_quality_metrics['No Information Rate'])  # noqa
+        assert isclose(con_matrix.all_quality_metrics['Prevalence'], 0.4061624649859944)
+        assert isclose(con_matrix.all_quality_metrics['No Information Rate'], 0.5938375350140056)
         assert isclose(con_matrix.all_quality_metrics['Total Observations'], len(mock_data))
 
     def test_TwoClassEvaluator_predictions(self):
