@@ -73,6 +73,27 @@ class DataSplittersTests(TimerTestCase):
         assert all(abs(data_target_proportions - training_target_proportions) < 0.002)
         assert all(abs(data_target_proportions - test_target_proportions) < 0.002)
 
+    def test_splitters_ClassificationStratifiedDataSplitter_multiclass(self):
+        test_ratio = 0.20
+        data = TestHelper.get_iris_data()
+        data = data.iloc[30:len(data)]  # data is ordered by species, so take out some from first group
+        target_variable = 'species'
+
+        data_target_proportions = dict(data.species.value_counts(normalize=True))
+
+        test_splitter = ClassificationStratifiedDataSplitter(test_ratio=test_ratio)
+        training_indexes, test_indexes = test_splitter.split(target_values=data[target_variable])
+
+        assert isclose(len(training_indexes), len(data) * 0.8)
+        assert isclose(len(test_indexes), len(data) * 0.2)
+        assert set(training_indexes).isdisjoint(test_indexes)  # no overlapping indexes in training/test
+
+        training_target_proportions = dict(data.iloc[training_indexes].species.value_counts(normalize=True))
+        test_target_proportions = dict(data.iloc[test_indexes].species.value_counts(normalize=True))
+
+        assert all([isclose(training_target_proportions[key], value) for key, value in data_target_proportions.items()])  # noqa
+        assert all([isclose(test_target_proportions[key], value) for key, value in data_target_proportions.items()])  # noqa
+
     def test_splitters_RegressionStratifiedDataSplitter_split_monte_carlo(self):
 
         test_ratio = 0.20

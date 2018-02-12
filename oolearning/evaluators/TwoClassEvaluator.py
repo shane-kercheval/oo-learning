@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.metrics import roc_auc_score
 
 from oolearning.evaluators.ClassificationEvaluator import ClassificationEvaluator
-from oolearning.evaluators.ConfusionMatrix import ConfusionMatrix
+from oolearning.evaluators.ConfusionMatrix2C import ConfusionMatrix2C
 
 
 # noinspection PyAbstractClass
@@ -54,7 +54,7 @@ class TwoClassEvaluator(ClassificationEvaluator):
         return roc_auc_score(y_true=self._actual_values, y_score=pos_predictions)
 
     @property
-    def confusion_matrix(self) -> ConfusionMatrix:
+    def confusion_matrix(self) -> ConfusionMatrix2C:
         return self._confusion_matrix
 
     @property
@@ -87,11 +87,11 @@ class TwoClassEvaluator(ClassificationEvaluator):
         """
         def get_ppv_tpr(threshold):
             confusion_matrix = \
-                ConfusionMatrix.from_predictions(actual_values=self._actual_values,
-                                                 predicted_values=self._get_predicted_categories(
+                ConfusionMatrix2C.from_predictions(actual_classes=self._actual_values,
+                                                   predicted_classes=self._get_predicted_categories(
                                                      threshold=threshold),
-                                                 positive_category=self._positive_category,
-                                                 negative_category=self._negative_category)
+                                                   positive_category=self._positive_category,
+                                                   negative_category=self._negative_category)
             return confusion_matrix.positive_predictive_value, confusion_matrix.sensitivity
 
         potential_cutoff_values = np.arange(0.0, 1.01, 0.01)  # all possible cutoffs (precision of 2)
@@ -123,11 +123,11 @@ class TwoClassEvaluator(ClassificationEvaluator):
         """
         def get_fpr_tpr(threshold):
             confusion_matrix = \
-                ConfusionMatrix.from_predictions(actual_values=self._actual_values,
-                                                 predicted_values=self._get_predicted_categories(
+                ConfusionMatrix2C.from_predictions(actual_classes=self._actual_values,
+                                                   predicted_classes=self._get_predicted_categories(
                                                      threshold=threshold),
-                                                 positive_category=self._positive_category,
-                                                 negative_category=self._negative_category)
+                                                   positive_category=self._positive_category,
+                                                   negative_category=self._negative_category)
             return confusion_matrix.false_positive_rate, confusion_matrix.sensitivity
 
         potential_cutoff_values = np.arange(0.0, 1.01, 0.01)  # all possible cutoffs (precision of 2)
@@ -246,11 +246,13 @@ class TwoClassEvaluator(ClassificationEvaluator):
                 self._threshold = self._ideal_threshold_roc
 
             # get predicted categories from the predicted probabilities and a specified threshold
-            predicted_values = self._get_predicted_categories(threshold=self._threshold)
+            predicted_classes = self._get_predicted_categories(threshold=self._threshold)
+        else:
+            predicted_classes = predicted_values
 
-        self._confusion_matrix = ConfusionMatrix.from_predictions(actual_values=actual_values,
-                                                                  predicted_values=predicted_values,
-                                                                  positive_category=self._positive_category,
-                                                                  negative_category=self._negative_category)
+        self._confusion_matrix = ConfusionMatrix2C.from_predictions(actual_classes=actual_values,
+                                                                    predicted_classes=predicted_classes,
+                                                                    positive_category=self._positive_category,
+                                                                    negative_category=self._negative_category)
 
-        return super().evaluate(actual_values=actual_values, predicted_values=predicted_values)
+        return super().evaluate(actual_values=actual_values, predicted_values=predicted_classes)

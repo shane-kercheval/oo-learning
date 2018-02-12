@@ -115,10 +115,10 @@ class EvaluatorTests(TimerTestCase):
         ######################################################################################################
         # `from_values` no categories
         ######################################################################################################
-        confusion_matrix = ConfusionMatrix.from_values(true_positives=true_positives,
-                                                       true_negatives=true_negatives,
-                                                       false_positives=false_positives,
-                                                       false_negatives=false_negatives)
+        confusion_matrix = ConfusionMatrix2C.from_values(true_positives=true_positives,
+                                                         true_negatives=true_negatives,
+                                                         false_positives=false_positives,
+                                                         false_negatives=false_negatives)
         assert confusion_matrix.matrix['neg'].values.tolist() == expected_predicted_negatives
         assert confusion_matrix.matrix['pos'].values.tolist() == expected_predicted_positives
         assert confusion_matrix.matrix['Total'].values.tolist() == expected_totals
@@ -128,12 +128,12 @@ class EvaluatorTests(TimerTestCase):
         ######################################################################################################
         # `from_values` with categories
         ######################################################################################################
-        confusion_matrix = ConfusionMatrix.from_values(true_positives=true_positives,
-                                                       true_negatives=true_negatives,
-                                                       false_positives=false_positives,
-                                                       false_negatives=false_negatives,
-                                                       positive_category=positive_category,
-                                                       negative_category=negative_category)
+        confusion_matrix = ConfusionMatrix2C.from_values(true_positives=true_positives,
+                                                         true_negatives=true_negatives,
+                                                         false_positives=false_positives,
+                                                         false_negatives=false_negatives,
+                                                         positive_category=positive_category,
+                                                         negative_category=negative_category)
         assert confusion_matrix.matrix.loc[:, 0].values.tolist() == expected_predicted_negatives
         assert confusion_matrix.matrix.loc[:, 1].values.tolist() == expected_predicted_positives
         assert confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == expected_totals
@@ -143,12 +143,12 @@ class EvaluatorTests(TimerTestCase):
         ######################################################################################################
         # `from_values` swapped categories
         ######################################################################################################
-        confusion_matrix = ConfusionMatrix.from_values(true_positives=true_negatives,
-                                                       true_negatives=true_positives,
-                                                       false_positives=false_negatives,
-                                                       false_negatives=false_positives,
-                                                       positive_category=negative_category,
-                                                       negative_category=positive_category)
+        confusion_matrix = ConfusionMatrix2C.from_values(true_positives=true_negatives,
+                                                         true_negatives=true_positives,
+                                                         false_positives=false_negatives,
+                                                         false_negatives=false_positives,
+                                                         positive_category=negative_category,
+                                                         negative_category=positive_category)
         expected_predicted_positives_r = [false_negatives, true_negatives, true_negatives + false_negatives]
         expected_predicted_negatives_r = [true_positives, false_positives, true_positives + false_positives]
 
@@ -167,10 +167,10 @@ class EvaluatorTests(TimerTestCase):
         predicted_values = np.random.randint(low=0, high=2, size=100)
         positive_category = 1
 
-        confusion_matrix = ConfusionMatrix.from_predictions(actual_values=actual_values,
-                                                            predicted_values=predicted_values,
-                                                            positive_category=positive_category,
-                                                            negative_category=negative_category)
+        confusion_matrix = ConfusionMatrix2C.from_predictions(actual_classes=actual_values,
+                                                              predicted_classes=predicted_values,
+                                                              positive_category=positive_category,
+                                                              negative_category=negative_category)
 
         assert confusion_matrix.matrix.loc[:, 0].values.tolist() == expected_predicted_negatives
         assert confusion_matrix.matrix.loc[:, 1].values.tolist() == expected_predicted_positives
@@ -182,10 +182,10 @@ class EvaluatorTests(TimerTestCase):
         ######################################################################################################
         # `from_predictions` swapped categories
         ######################################################################################################
-        confusion_matrix = ConfusionMatrix.from_predictions(actual_values=actual_values,
-                                                            predicted_values=predicted_values,
-                                                            positive_category=negative_category,
-                                                            negative_category=positive_category)
+        confusion_matrix = ConfusionMatrix2C.from_predictions(actual_classes=actual_values,
+                                                              predicted_classes=predicted_values,
+                                                              positive_category=negative_category,
+                                                              negative_category=positive_category)
 
         assert confusion_matrix.matrix.loc[:, 1].values.tolist() == expected_predicted_negatives_r
         assert confusion_matrix.matrix.loc[:, 0].values.tolist() == expected_predicted_positives_r
@@ -219,20 +219,20 @@ class EvaluatorTests(TimerTestCase):
         ######################################################################################################
         # `from_predictions` check calculations (verified against R's caret.confusionMatrix
         ######################################################################################################
-        con_matrix = ConfusionMatrix.from_predictions(actual_values=mock_data.actual,
-                                                      predicted_values=mock_data.predictions,
-                                                      positive_category=1,
-                                                      negative_category=0)
+        con_matrix = ConfusionMatrix2C.from_predictions(actual_classes=mock_data.actual,
+                                                        predicted_classes=mock_data.predictions,
+                                                        positive_category=1,
+                                                        negative_category=0)
 
         self.check_confusion_matrix(con_matrix, mock_data)
 
         ######################################################################################################
         # `from_predictions` check calculations *******SWAPPED********
         ######################################################################################################
-        con_matrix = ConfusionMatrix.from_predictions(actual_values=mock_data.actual,
-                                                      predicted_values=mock_data.predictions,
-                                                      positive_category=0,
-                                                      negative_category=1)
+        con_matrix = ConfusionMatrix2C.from_predictions(actual_classes=mock_data.actual,
+                                                        predicted_classes=mock_data.predictions,
+                                                        positive_category=0,
+                                                        negative_category=1)
 
         assert con_matrix.matrix.loc[:, 1].values.tolist() == [150, 77, 227]
         assert con_matrix.matrix.loc[:, 0].values.tolist() == [140, 347, 487]
@@ -266,7 +266,7 @@ class EvaluatorTests(TimerTestCase):
 
         accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=mock_data.predictions)
         assert isclose(accuracy, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
-        assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
+        assert isinstance(evaluator.confusion_matrix, ConfusionMatrix2C)
         self.check_confusion_matrix(con_matrix=evaluator.confusion_matrix, mock_data=mock_data)
         assert evaluator.value == evaluator.confusion_matrix.two_class_accuracy
         assert evaluator.threshold is None
@@ -283,7 +283,7 @@ class EvaluatorTests(TimerTestCase):
         assert isinstance(evaluator, EvaluatorBase)
 
         evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
+        assert isinstance(evaluator.confusion_matrix, ConfusionMatrix2C)
         self.check_confusion_matrix(con_matrix=evaluator.confusion_matrix, mock_data=mock_data)
         assert evaluator.value == evaluator.confusion_matrix.two_class_accuracy
         assert evaluator.threshold == 0.5
@@ -338,7 +338,7 @@ class EvaluatorTests(TimerTestCase):
         assert isinstance(evaluator, EvaluatorBase)
 
         evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
+        assert isinstance(evaluator.confusion_matrix, ConfusionMatrix2C)
         assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
         assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
         assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
@@ -389,7 +389,7 @@ class EvaluatorTests(TimerTestCase):
         assert isinstance(evaluator, EvaluatorBase)
 
         evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
+        assert isinstance(evaluator.confusion_matrix, ConfusionMatrix2C)
         assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
         assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
         assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
@@ -433,7 +433,7 @@ class EvaluatorTests(TimerTestCase):
 
         accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
         assert isclose(accuracy, 0.37990215607221967)  # will be different Kappa than sklearn, from threshold
-        assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
+        assert isinstance(evaluator.confusion_matrix, ConfusionMatrix2C)
         assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
         assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
         assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
@@ -478,7 +478,7 @@ class EvaluatorTests(TimerTestCase):
 
         accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
         assert isclose(accuracy, 0.6472491909385113)  # will be different Kappa than sklearn, from threshold
-        assert isinstance(evaluator.confusion_matrix, ConfusionMatrix)
+        assert isinstance(evaluator.confusion_matrix, ConfusionMatrix2C)
         assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
         assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
         assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
@@ -506,7 +506,7 @@ class EvaluatorTests(TimerTestCase):
     def test_Misc_evaluators(self):
         """
         For example, these holdout_evaluators might be already tested in another class (e.g. Sensitivity is
-            tested via ConfusionMatrix), but we want to verify we can instantiate and use.
+            tested via ConfusionMatrix2C), but we want to verify we can instantiate and use.
         """
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
 

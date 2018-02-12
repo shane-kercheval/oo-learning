@@ -1,6 +1,7 @@
 import os
 from math import isclose
 from typing import Callable
+from sklearn import datasets
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -55,6 +56,17 @@ class TestHelper:
     @staticmethod
     def get_titanic_data():
         return TestHelper.get_data(data_path='data/titanic.csv')
+
+    @staticmethod
+    def get_iris_data():
+        iris = datasets.load_iris()
+        # noinspection SpellCheckingInspection
+        return pd.DataFrame(data=np.c_[iris['data'],
+                                       pd.Categorical.from_codes(iris['target'],
+                                                                 ['setosa', 'versicolor', 'virginica'],
+                                                                 ordered=False)],
+                            columns=[x[0:12].strip().replace(' ', '_') for x in iris['feature_names']] +
+                                    ['species'])
 
     @staticmethod
     def get_insurance_expected_values():

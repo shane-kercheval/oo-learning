@@ -1289,3 +1289,70 @@ class ModelWrapperTests(TimerTestCase):
         fitter.evaluate_holdout(holdout_x=test_data, holdout_y=test_data_y)
         assert fitter.holdout_evaluators[0].metric_name == Metric.ROOT_MEAN_SQUARE_ERROR.value
         assert isclose(fitter.holdout_accuracies[0], 5.3865850590426003)
+
+    def test_RandomForestMW_classification_multiclass(self):
+        pass
+#         data = TestHelper.get_iris_data()
+#         splitter = ClassificationStratifiedDataSplitter(test_ratio=0.25)
+#         training_indexes, test_indexes = splitter.split(target_values=data.species)
+#
+#         train_data_y = data.iloc[training_indexes].species
+#         train_data = data.iloc[training_indexes].drop(columns='species')
+#
+#         test_data_y = data.iloc[test_indexes].species
+#         test_data = data.iloc[test_indexes].drop(columns='species')
+#
+#         model = RandomForestMW()
+#         model.train(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
+#         predictions = model.predict(data_x=test_data)
+#         predicted_classes = predictions.idxmax(axis=1)
+#
+#         pd.crosstab(test_data_y.values, predicted_classes.values, rownames=['actual'], colnames=['preds'])
+#
+#
+# ############# EXAMPLE
+#         from sklearn.datasets import load_iris
+#         from sklearn.ensemble import RandomForestClassifier
+#         import pandas as pd
+#         import numpy as np
+#
+#         iris = load_iris()
+#         df = pd.DataFrame(iris.data, columns=iris.feature_names)
+#         np.random.seed(4)
+#         df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
+#         df['species'] = pd.Categorical.from_codes(iris.target, iris.target_names)
+#         df.head()
+#
+#         train, test = df[df['is_train'] == True], df[df['is_train'] == False]
+#         len(test)
+#
+#         features = df.columns[:4]
+#         clf = RandomForestClassifier(n_jobs=2)
+#         y, _ = pd.factorize(train['species'])
+#         clf.fit(train[features], y)
+#
+#         preds = iris.target_names[clf.predict(test[features])]
+#         pd.crosstab(test['species'], preds, rownames=['actual'], colnames=['preds'])
+# ############################
+#
+#
+#         ######################################################################################################
+#         # test default hyper-parameters
+#         ######################################################################################################
+#         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+#                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+#                            ImputationTransformer(),
+#                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+#
+#         positive_class = 1
+#         negative_class = 0
+#
+#         cache_directory = TestHelper.ensure_test_directory(
+#             'data/test_ModelWrappers/cached_test_models/test_RandomForestMW_classification')  # noqa
+#
+#         fitter = ModelFitter(model=RandomForestMW(),
+#                              model_transformations=transformations,
+#                              evaluators=[KappaEvaluator(positive_category=positive_class,
+#                                                         negative_category=negative_class,
+#                                                         threshold=0.5)],
+#                              persistence_manager=LocalCacheManager(cache_directory=cache_directory))
