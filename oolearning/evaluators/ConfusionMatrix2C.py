@@ -103,9 +103,7 @@ class ConfusionMatrix2C:
         :return: ConfusionMatrix2C object
         """
         assert len(actual_classes) == len(predicted_classes)
-        # ensure that all the unique predicted values are in the actual values (e.g. ensure that we aren't
-        # using predicted probabilities /etc.; this could cause problems if all the actual values are 1 class;
-        # but I would imagine this is an extreme corner case
+        # ensure that all the unique predicted values are in the actual values
         assert all([x in np.unique(actual_classes) for x in np.unique(predicted_classes)])
 
         expected_indexes = [negative_category, positive_category] + ['All']

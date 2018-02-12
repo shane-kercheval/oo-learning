@@ -6,6 +6,7 @@ import pandas as pd
 from oolearning.enums.Metric import Metric
 from oolearning.evaluators.ConfusionMatrix import ConfusionMatrix
 from oolearning.evaluators.EvaluatorBase import EvaluatorBase
+from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
 
 # noinspection PyAbstractClass
@@ -28,7 +29,7 @@ class MultiClassEvaluator(EvaluatorBase):
         return super().evaluate(actual_values=actual_values, predicted_values=predicted_classes)
 
 
-class AccuracyMultiClassEvaluator(MultiClassEvaluator):
+class AccuracyMultiClassEvaluator(UtilityFunctionMixin, MultiClassEvaluator):
     def _better_than(self, this: float, other: float) -> bool:
         pass
 

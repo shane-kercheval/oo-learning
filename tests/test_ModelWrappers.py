@@ -1307,8 +1307,27 @@ class ModelWrapperTests(TimerTestCase):
 #         predictions = model.predict(data_x=test_data)
 #         predicted_classes = predictions.idxmax(axis=1)
 #
-#         pd.crosstab(test_data_y.values, predicted_classes.values, rownames=['actual'], colnames=['preds'])
+#         predictions['actual'] = test_data_y.values
+#         predictions['predicted_classes'] = predicted_classes
 #
+#         predictions.to
+#         predictions.to_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_MultiClass_predictions.csv')))  # noqa
+#
+#
+#         actual
+#         pd.crosstab(test_data_y.values, predicted_classes.values, rownames=['actual'], colnames=['preds'])
+# #
+#
+#         no_setosa = [x if x != 'setosa' else 'versicolor' for x in predicted_classes.values]
+#         len(predicted_classes)
+#         len(no_setosa)
+#         len(test_data_y.values)
+#
+#         actual_classes = test_data_y.values
+#         predicted_classes = np.array(no_setosa)
+#         pd.crosstab(actual_classes, predicted_classes, rownames=['actual'], colnames=['preds'])
+#
+
 #
 # ############# EXAMPLE
 #         from sklearn.datasets import load_iris

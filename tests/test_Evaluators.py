@@ -33,6 +33,16 @@ class MockTwoClassEvaluator(UtilityFunctionMixin, TwoClassEvaluator):
         return self._confusion_matrix.two_class_accuracy, self._confusion_matrix
 
 
+class MockMultiClassEvaluator(UtilityFunctionMixin, MultiClassEvaluator):
+    @property
+    def metric_name(self) -> str:
+        return 'Mock Evaluator'
+
+    def _evaluate(self, actual_values: np.ndarray, predicted_values: np.ndarray) -> \
+            Tuple[float, object]:
+        return self._confusion_matrix.accuracy, self._confusion_matrix
+
+
 # noinspection PyMethodMayBeStatic
 class EvaluatorTests(TimerTestCase):
 
@@ -584,3 +594,29 @@ class EvaluatorTests(TimerTestCase):
         accuracy = evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
         assert isclose(accuracy, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
         assert isclose(evaluator.value, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
+
+    # noinspection SpellCheckingInspection
+    def test_ConfusionMatrix_MultiClass(self):
+        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_MultiClass_predictions.csv')))  # noqa
+        con_matrix = ConfusionMatrix.from_classes(actual_classes=mock_data.actual, predicted_classes=mock_data.predicted_classes)  # noqa
+
+        assert con_matrix.matrix['setosa'].values.tolist() == [12, 0, 0, 12]
+        assert con_matrix.matrix['versicolor'].values.tolist() == [0, 12, 2, 14]
+        assert con_matrix.matrix['virginica'].values.tolist() == [0, 1, 11, 12]
+        assert con_matrix.matrix['Total'].values.tolist() == [12, 13, 13, 38]
+        assert con_matrix.matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+
+        ######################################################################################################
+        # change all setosa predictions to versicolor
+        # i.e. there will be no predictions for a class (setosa), make sure Confusion Matrix can handle that.
+        ######################################################################################################
+        no_setosa = np.array([x if x != 'setosa' else 'versicolor' for x in mock_data.predicted_classes])
+        con_matrix = ConfusionMatrix.from_classes(actual_classes=mock_data.actual, predicted_classes=no_setosa)  # noqa
+
+        assert con_matrix.matrix['setosa'].values.tolist() == [0, 0, 0, 0]
+        assert con_matrix.matrix['versicolor'].values.tolist() == [12, 12, 2, 26]
+        assert con_matrix.matrix['virginica'].values.tolist() == [0, 1, 11, 12]
+        assert con_matrix.matrix['Total'].values.tolist() == [12, 13, 13, 38]
+        assert con_matrix.matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
