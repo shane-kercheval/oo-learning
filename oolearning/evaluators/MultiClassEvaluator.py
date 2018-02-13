@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from oolearning.enums.Metric import Metric
-from oolearning.evaluators.ConfusionMatrix import ConfusionMatrix
+from oolearning.evaluators.ConfusionMatrixMC import ConfusionMatrixMC
 from oolearning.evaluators.EvaluatorBase import EvaluatorBase
 from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
@@ -24,8 +24,8 @@ class MultiClassEvaluator(EvaluatorBase):
         # TODO
         """
         predicted_classes = self._get_predicted_categories(probabilities=predicted_values)
-        self._confusion_matrix = ConfusionMatrix(actual_classes=actual_values,
-                                                 predicted_classes=predicted_classes)
+        self._confusion_matrix = ConfusionMatrixMC(actual_classes=actual_values,
+                                                   predicted_classes=predicted_classes)
         return super().evaluate(actual_values=actual_values, predicted_values=predicted_classes)
 
 

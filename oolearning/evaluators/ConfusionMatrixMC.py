@@ -5,13 +5,13 @@ from sklearn.metrics import accuracy_score, cohen_kappa_score
 from oolearning.evaluators.ConfusionMatrix2C import ConfusionMatrix2C
 
 
-class ConfusionMatrix:
+class ConfusionMatrixMC:
     def __init__(self, actual_classes: np.ndarray, predicted_classes: np.ndarray):
         """
         takes the actual/predicted values and creates a confusion confusion_matrix
         :param actual_classes:
         :param predicted_classes:
-        :return: ConfusionMatrix object
+        :return: ConfusionMatrixMC object
         """
         assert len(actual_classes) == len(predicted_classes)
         # ensure that all the unique predicted values are in the actual values
@@ -72,7 +72,7 @@ class ConfusionMatrix:
         :return:
         """
         predicted_classes = predicted_probabilities.idxmax(axis=1)
-        return ConfusionMatrix(actual_classes=actual_classes, predicted_classes=np.array(predicted_classes))
+        return ConfusionMatrixMC(actual_classes=actual_classes, predicted_classes=np.array(predicted_classes))
 
     @property
     def matrix(self):

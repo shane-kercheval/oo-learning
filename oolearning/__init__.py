@@ -10,7 +10,7 @@ from .enums.Skewness import Skewness
 from .evaluators.Accuracy2CEvaluator import Accuracy2CEvaluator
 from .evaluators.AucEvaluator import AucEvaluator
 from .evaluators.ClassificationEvaluator import ClassificationEvaluator
-from .evaluators.ConfusionMatrix import ConfusionMatrix
+from .evaluators.ConfusionMatrixMC import ConfusionMatrixMC
 from .evaluators.ConfusionMatrix2C import ConfusionMatrix2C
 from .evaluators.CostFunctionMixin import CostFunctionMixin
 from .evaluators.ErrorRateTwoClassEvaluator import ErrorRateTwoClassEvaluator
