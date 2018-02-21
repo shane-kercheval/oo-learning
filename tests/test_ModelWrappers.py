@@ -202,9 +202,7 @@ class ModelWrapperTests(TimerTestCase):
         preds = iris.target_names[clf.predict(test[features])]
         pd.crosstab(test['species'], preds, rownames=['actual'], colnames=['preds'])
 
-        evaluator = MultiClassEvaluator(converter=None,
-                                        actual_classes=test['species'],
-                                        predicted_classes=preds)
+        evaluator = MultiClassEvaluator.from_classes(actual_classes=test['species'], predicted_classes=preds)
         assert evaluator.all_quality_metrics is not None
 
     def test_MockModelWrapper(self):

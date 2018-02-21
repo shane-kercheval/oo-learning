@@ -14,9 +14,6 @@ from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 
 
-
-
-
 # noinspection PyMethodMayBeStatic
 class EvaluatorTests(TimerTestCase):
 
@@ -576,9 +573,7 @@ class EvaluatorTests(TimerTestCase):
     # noinspection PyTypeChecker
     def test_ConfusionMatrix_MultiClass(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_MultiClass_predictions.csv')))  # noqa
-        con_matrix = MultiClassEvaluator(converter=None,
-                                         actual_classes=mock_data.actual,
-                                         predicted_classes=mock_data.predicted_classes)
+        con_matrix = MultiClassEvaluator.from_classes(actual_classes=mock_data.actual, predicted_classes=mock_data.predicted_classes)  # noqa
 
         assert con_matrix.matrix['setosa'].values.tolist() == [12, 0, 0, 12]
         assert con_matrix.matrix['versicolor'].values.tolist() == [0, 12, 2, 14]
@@ -592,9 +587,7 @@ class EvaluatorTests(TimerTestCase):
         # i.e. there will be no predictions for a class (setosa), make sure Confusion Matrix can handle that.
         ######################################################################################################
         no_setosa = np.array([x if x != 'setosa' else 'versicolor' for x in mock_data.predicted_classes])
-        con_matrix = MultiClassEvaluator(converter=None,
-                                         actual_classes=mock_data.actual,
-                                         predicted_classes=no_setosa)  # noqa
+        con_matrix = MultiClassEvaluator.from_classes(actual_classes=mock_data.actual, predicted_classes=no_setosa)
 
         assert con_matrix.matrix['setosa'].values.tolist() == [0, 0, 0, 0]
         assert con_matrix.matrix['versicolor'].values.tolist() == [12, 12, 2, 26]
