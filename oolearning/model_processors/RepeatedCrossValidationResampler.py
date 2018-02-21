@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase
+from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
 from oolearning.model_processors.ResamplerBase import ResamplerBase
 from oolearning.model_processors.ResamplerResults import ResamplerResults
@@ -19,7 +19,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
     def __init__(self,
                  model: ModelWrapperBase,
                  model_transformations: List[TransformerBase],
-                 evaluators: List[EvaluatorBase],
+                 scores: List[ScoreBase],
                  persistence_manager: PersistenceManagerBase = None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None,
@@ -27,7 +27,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                  repeats=5):
         super().__init__(model=model,
                          model_transformations=model_transformations,
-                         evaluators=evaluators,
+                         scores=scores,
                          persistence_manager=persistence_manager,
                          train_callback=train_callback)
 
@@ -49,7 +49,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
             # generate random fold #s that correspond to each index of the data
             random_folds = np.random.randint(low=0, high=self._folds, size=len(data_y))
 
-            for fold_index in range(self._folds):  # for each fold, train and evaluate
+            for fold_index in range(self._folds):  # for each fold, train and calculate
 
                 testing_indexes = random_folds == fold_index  # indexes matching the fold belong to test set
                 training_indexes = ~testing_indexes  # all other indexes belongs to the training set
@@ -70,10 +70,10 @@ class RepeatedCrossValidationResampler(ResamplerBase):
 
                 model_copy.train(data_x=train_x, data_y=train_y, hyper_params=hyper_params)
                 fold_evaluators = list()
-                for evaluator in self._evaluators:
+                for evaluator in self._scores:
                     evaluator_copy = evaluator.clone()  # need to reuse this object type for each fold/repeat
-                    evaluator_copy.evaluate(actual_values=test_y,
-                                            predicted_values=model_copy.predict(data_x=test_x))
+                    evaluator_copy.calculate(actual_values=test_y,
+                                             predicted_values=model_copy.predict(data_x=test_x))
                     fold_evaluators.append(evaluator_copy)
                 result_evaluators.append(fold_evaluators)
         # result_evaluators is a list of list of holdout_evaluators.

@@ -59,15 +59,15 @@ class TunerTests(TimerTestCase):
                            ImputationTransformer(),
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
-        evaluator_list = [KappaEvaluator(positive_category=1, negative_category=0, threshold=0.5),
-                          SensitivityEvaluator(positive_category=1, negative_category=0, threshold=0.5),
-                          SpecificityEvaluator(positive_category=1, negative_category=0, threshold=0.5),
-                          ErrorRateTwoClassEvaluator(positive_category=1, negative_category=0, threshold=0.5)]
+        evaluator_list = [KappaScore(positive_category=1, negative_category=0, threshold=0.5),
+                          SensitivityScore(positive_category=1, negative_category=0, threshold=0.5),
+                          SpecificityScore(positive_category=1, negative_category=0, threshold=0.5),
+                          ErrorRateScore(positive_category=1, negative_category=0, threshold=0.5)]
 
         cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/cached_test_models/test_ModelTuner_RandomForest_classification')  # noqa
         tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RandomForestMW(),
                                                                       model_transformations=transformations,
-                                                                      evaluators=evaluator_list),
+                                                                      scores=evaluator_list),
                            hyper_param_object=RandomForestHP(),
                            persistence_manager=LocalCacheManager(cache_directory=cache_directory))
 
@@ -139,7 +139,7 @@ class TunerTests(TimerTestCase):
 
         tuner = ModelTuner(resampler=MockResampler(model=MockClassificationModelWrapper(data_y=data.Survived),
                                                    model_transformations=transformations,
-                                                   evaluators=evaluators),
+                                                   scores=evaluators),
                            hyper_param_object=MockHyperParams())
 
         columns = TransformerPipeline.get_expected_columns(transformations=transformations, data=train_data)
@@ -252,10 +252,10 @@ class TunerTests(TimerTestCase):
         train_data_y = train_data.strength
         train_data = train_data.drop(columns='strength')
 
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RegressionMW(),
+        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=LinearRegression(),
                                                                       model_transformations=ModelDefaults.transformations_regression(),  # noqa
-                                                                      evaluators=[RmseEvaluator(),
-                                                                                  MaeEvaluator()],
+                                                                      scores=[RmseScore(),
+                                                                              MaeScore()],
                                                                       folds=5,
                                                                       repeats=5),
                            hyper_param_object=None)
@@ -268,8 +268,8 @@ class TunerTests(TimerTestCase):
 
         assert len(tuner.results._tune_results_objects.iloc[0].resampler_object._evaluators) == 25
         assert all([len(x) == 2 and
-                    isinstance(x[0], RmseEvaluator) and
-                    isinstance(x[1], MaeEvaluator)
+                    isinstance(x[0], RmseScore) and
+                    isinstance(x[1], MaeScore)
                     for x in tuner.results._tune_results_objects.iloc[0].resampler_object._evaluators])
         assert tuner.results._tune_results_objects.iloc[0].resampler_object.num_resamples == 25
         assert tuner.results._tune_results_objects.iloc[0].resampler_object.metrics == ['RMSE', 'MAE']

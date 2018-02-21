@@ -9,6 +9,7 @@ import pandas as pd
 
 from oolearning.OOLearningHelpers import OOLearningHelpers
 from oolearning.splitters.RegressionStratifiedDataSplitter import RegressionStratifiedDataSplitter
+from oolearning.splitters.ClassificationStratifiedDataSplitter import ClassificationStratifiedDataSplitter
 
 
 class TestHelper:
@@ -73,17 +74,28 @@ class TestHelper:
         return TestHelper.get_data(data_path='data/insurance_expected_values.csv')
 
     @staticmethod
-    def split_train_test_regression(data,
-                                    target_variable,
-                                    test_splitter=RegressionStratifiedDataSplitter(test_ratio=0.20)):
-        training_indexes, test_indexes = test_splitter.split(target_values=data[target_variable])
-
-        # return training data, training target data, test data, test target data
+    def split_train_holdout_regression(data,
+                                       target_variable,
+                                       splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.20)):
+        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
+        # return training data, training target data, holdout data, holdout target data
         return \
             data.iloc[training_indexes].drop(columns=target_variable),\
             data.iloc[training_indexes][target_variable].values,\
-            data.iloc[test_indexes].drop(columns=target_variable),\
-            data.iloc[test_indexes][target_variable].values
+            data.iloc[holdout_indexes].drop(columns=target_variable),\
+            data.iloc[holdout_indexes][target_variable].values
+
+    @staticmethod
+    def split_train_holdout_class(data,
+                                  target_variable,
+                                  splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.20)):
+        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
+        # return training data, training target data, holdout data, holdout target data
+        return \
+            data.iloc[training_indexes].drop(columns=target_variable),\
+            data.iloc[training_indexes][target_variable].values,\
+            data.iloc[holdout_indexes].drop(columns=target_variable),\
+            data.iloc[holdout_indexes][target_variable].values
 
     # noinspection PyTypeChecker
     @staticmethod

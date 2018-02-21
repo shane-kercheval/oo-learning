@@ -1,0 +1,117 @@
+---
+title: "R Comparison"
+author: "Shane Kercheval"
+output:
+  md_document:
+    variant: markdown_github
+    toc: true
+    toc_depth: 3
+---
+
+```{r setup, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+library(knitr)
+library(tidyverse)
+require(caret)
+options(scipen=999)  # non-scientific notation
+
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+# Function that returns Root Mean Squared Error
+rmse <- function(actual_values, predicted_values)
+{
+    sqrt(mean((predicted_values - actual_values)^2))
+}
+ 
+# Function that returns Mean Absolute Error
+mae <- function(actual_values, predicted_values)
+{
+    mean(abs((predicted_values - actual_values)))
+}
+
+```
+
+# Regression / Cement
+
+```{r}
+cement <- read.csv('cement.csv')
+# 'fake' pre-processing
+cement$fineagg <- NULL
+#cement[404,]  # should match python's 403
+
+training_indexes <- read.csv('cement_training_indexes.csv', header = FALSE)$V2
+training_indexes <- training_indexes + 1  # since python is 0-index based and R is 1-indexed based
+stopifnot(length(training_indexes) == 824)
+
+training_data <- cement[training_indexes, ]
+holdout_data <- cement[-training_indexes, ]
+#sort(c(as.numeric(row.names(training_data)), as.numeric(row.names(holdout_data))))
+```
+
+## Linear Regression
+
+```{r}
+model <- train(strength ~ ., data = training_data, method = "lm")
+model
+summary(model)
+
+rmse(training_data$strength, predict(model, training_data))
+rmse(training_data$strength, predict(model, training_data))^2
+mae(training_data$strength, predict(model, training_data))
+
+rmse(holdout_data$strength, predict(model, holdout_data))
+rmse(holdout_data$strength, predict(model, holdout_data))^2
+mae(holdout_data$strength, predict(model, holdout_data))
+```
+
+# Classification / Titanic
+
+```{r}
+titanic <- read.csv('titanic.csv')
+
+#titanic[404,]  # should match python's 403
+
+# 'fake' pre-processing
+titanic$PassengerId <- NULL
+titanic$Name <- NULL
+titanic$Ticket <- NULL
+titanic$Cabin <- NULL
+
+
+#summary(titanic)
+
+median_age <- median(titanic$Age, na.rm = TRUE)
+titanic$Age[is.na(titanic$Age)] <- median_age
+
+
+titanic$Pclass <- factor(titanic$Pclass)
+titanic$SibSp <- factor(titanic$SibSp)
+titanic$Parch <- factor(titanic$Parch)
+titanic$Survived <- factor(titanic$Survived)
+
+training_indexes <- read.csv('titanic_training_indexes.csv', header = FALSE)$V2
+training_indexes <- training_indexes + 1  # since python is 0-index based and R is 1-indexed based
+stopifnot(length(training_indexes) == 712)
+
+training_data <- titanic[training_indexes, ]
+holdout_data <- titanic[-training_indexes, ]
+#sort(c(as.numeric(row.names(training_data)), as.numeric(row.names(holdout_data))))
+```
+
+
+```{r}
+
+summary(training_data)
+model <- train(	Survived ~ .,
+				data = training_data,
+				method="glm", family="binomial",
+				preProc=c('medianImpute'))
+model
+summary(model)
+
+
+rmse(training_data$strength, predict(model, training_data))
+```

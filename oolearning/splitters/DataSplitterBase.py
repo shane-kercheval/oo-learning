@@ -8,9 +8,9 @@ class DataSplitterBase(metaclass=ABCMeta):
     Class that defines methods to split the data into training/test sets
     """
 
-    def __init__(self, test_ratio: float):
-        assert 0 < test_ratio < 1
-        self._test_ratio = test_ratio
+    def __init__(self, holdout_ratio: float):
+        assert 0 < holdout_ratio < 1
+        self._test_ratio = holdout_ratio
 
     @abstractmethod
     def split(self, target_values: np.ndarray, seed: int=42) -> Tuple[np.ndarray, np.ndarray]:

@@ -34,10 +34,10 @@ class ResamplerTests(TimerTestCase):
         # test_data = test_data.drop(columns='strength')
 
         resampler = RepeatedCrossValidationResampler(
-            model=RegressionMW(),
+            model=LinearRegression(),
             model_transformations=ModelDefaults.transformations_regression(),
-            evaluators=[RmseEvaluator(),
-                        MaeEvaluator()],
+            scores=[RmseScore(),
+                    MaeScore()],
             folds=5,
             repeats=5)
 
@@ -46,8 +46,8 @@ class ResamplerTests(TimerTestCase):
         resampler.resample(data_x=train_data, data_y=train_data_y)
         assert len(resampler.results._evaluators) == 25
         assert all([len(x) == 2 and
-                    isinstance(x[0], RmseEvaluator) and
-                    isinstance(x[1], MaeEvaluator)
+                    isinstance(x[0], RmseScore) and
+                    isinstance(x[1], MaeScore)
                     for x in resampler.results._evaluators])
         assert resampler.results.num_resamples == 25
         assert resampler.results.metrics == ['RMSE', 'MAE']
@@ -83,8 +83,8 @@ class ResamplerTests(TimerTestCase):
         resampler = RepeatedCrossValidationResampler(
             model=MockRegressionModelWrapper(data_y=data.strength),
             model_transformations=ModelDefaults.transformations_regression(),
-            evaluators=[RmseEvaluator(),
-                        MaeEvaluator()],
+            scores=[RmseScore(),
+                    MaeScore()],
             folds=5,
             repeats=5)
 
@@ -93,8 +93,8 @@ class ResamplerTests(TimerTestCase):
         resampler.resample(data_x=train_data, data_y=train_data_y)
         assert len(resampler.results._evaluators) == 25
         assert all([len(x) == 2 and
-                    isinstance(x[0], RmseEvaluator) and
-                    isinstance(x[1], MaeEvaluator)
+                    isinstance(x[0], RmseScore) and
+                    isinstance(x[1], MaeScore)
                     for x in resampler.results._evaluators])
         assert resampler.results.num_resamples == 25
         assert resampler.results.metrics == ['RMSE', 'MAE']
@@ -117,23 +117,23 @@ class ResamplerTests(TimerTestCase):
         train_data_y = train_data.Survived
         train_data = train_data.drop(columns='Survived')
 
-        evaluator_list = [KappaEvaluator(positive_category=1,
+        evaluator_list = [KappaScore(positive_category=1,
+                                     negative_category=0,
+                                     threshold=0.5),
+                          SensitivityScore(positive_category=1,
+                                           negative_category=0,
+                                           threshold=0.5),
+                          SpecificityScore(positive_category=1,
+                                           negative_category=0,
+                                           threshold=0.5),
+                          ErrorRateScore(positive_category=1,
                                          negative_category=0,
-                                         threshold=0.5),
-                          SensitivityEvaluator(positive_category=1,
-                                               negative_category=0,
-                                               threshold=0.5),
-                          SpecificityEvaluator(positive_category=1,
-                                               negative_category=0,
-                                               threshold=0.5),
-                          ErrorRateTwoClassEvaluator(positive_category=1,
-                                                     negative_category=0,
-                                                     threshold=0.5)]
+                                         threshold=0.5)]
 
         resampler = RepeatedCrossValidationResampler(
             model=MockClassificationModelWrapper(data_y=data.Survived),
             model_transformations=ModelDefaults.transformations_random_forest(),
-            evaluators=evaluator_list,
+            scores=evaluator_list,
             folds=5,
             repeats=5)
 
@@ -142,10 +142,10 @@ class ResamplerTests(TimerTestCase):
         resampler.resample(data_x=train_data, data_y=train_data_y)
         assert len(resampler.results._evaluators) == 25
         assert all([len(x) == 4 and
-                    isinstance(x[0], KappaEvaluator) and
-                    isinstance(x[1], SensitivityEvaluator) and
-                    isinstance(x[2], SpecificityEvaluator) and
-                    isinstance(x[3], ErrorRateTwoClassEvaluator)
+                    isinstance(x[0], KappaScore) and
+                    isinstance(x[1], SensitivityScore) and
+                    isinstance(x[2], SpecificityScore) and
+                    isinstance(x[3], ErrorRateScore)
                     for x in resampler.results._evaluators])
         assert resampler.results.num_resamples == 25
         assert resampler.results.metrics == ['kappa', 'sensitivity', 'specificity', 'ErrorRate']
@@ -173,12 +173,12 @@ class ResamplerTests(TimerTestCase):
         def train_callback(data_x, data_y, hyper_params):
             raise NotImplementedError()
 
-        evaluators = [RmseEvaluator(), MaeEvaluator()]
+        evaluators = [RmseScore(), MaeScore()]
         transformations = [RemoveColumnsTransformer(['coarseagg', 'fineagg']), ImputationTransformer(), DummyEncodeTransformer()]  # noqa
         resampler = RepeatedCrossValidationResampler(
             model=RandomForestMW(),
             model_transformations=transformations,
-            evaluators=evaluators,
+            scores=evaluators,
             folds=5,
             repeats=5,
             train_callback=train_callback)
@@ -236,12 +236,12 @@ class ResamplerTests(TimerTestCase):
             assert all(data_y == data_y_test)
             TestHelper.ensure_all_values_equal(data_frame1=transformed_data, data_frame2=data_x_test)
 
-        evaluators = [RmseEvaluator(), MaeEvaluator()]
+        evaluators = [RmseScore(), MaeScore()]
         transformations = [RemoveColumnsTransformer(['coarseagg', 'fineagg']), ImputationTransformer(), DummyEncodeTransformer()]  # noqa
         resampler = RepeatedCrossValidationResampler(
             model=MockRegressionModelWrapper(data_y=data_y),
             model_transformations=transformations,
-            evaluators=evaluators,
+            scores=evaluators,
             folds=5,
             repeats=5,
             train_callback=train_callback)
@@ -268,16 +268,16 @@ class ResamplerTests(TimerTestCase):
                            ImputationTransformer(),
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
-        evaluator_list = [KappaEvaluator(positive_category=1, negative_category=0, threshold=0.5),
-                          SensitivityEvaluator(positive_category=1, negative_category=0, threshold=0.5),
-                          SpecificityEvaluator(positive_category=1, negative_category=0, threshold=0.5),
-                          ErrorRateTwoClassEvaluator(positive_category=1, negative_category=0, threshold=0.5)]
+        evaluator_list = [KappaScore(positive_category=1, negative_category=0, threshold=0.5),
+                          SensitivityScore(positive_category=1, negative_category=0, threshold=0.5),
+                          SpecificityScore(positive_category=1, negative_category=0, threshold=0.5),
+                          ErrorRateScore(positive_category=1, negative_category=0, threshold=0.5)]
 
         cache_directory = TestHelper.ensure_test_directory('data/test_Resamplers/cached_test_models/test_resamplers_RandomForest_classification')  # noqa
         resampler = RepeatedCrossValidationResampler(
             model=RandomForestMW(),
             model_transformations=transformations,
-            evaluators=evaluator_list,
+            scores=evaluator_list,
             persistence_manager=LocalCacheManager(cache_directory=cache_directory),
             folds=5,
             repeats=5)
@@ -287,10 +287,10 @@ class ResamplerTests(TimerTestCase):
         resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
         assert len(resampler.results._evaluators) == 25
         assert all([len(x) == 4 and
-                    isinstance(x[0], KappaEvaluator) and
-                    isinstance(x[1], SensitivityEvaluator) and
-                    isinstance(x[2], SpecificityEvaluator) and
-                    isinstance(x[3], ErrorRateTwoClassEvaluator)
+                    isinstance(x[0], KappaScore) and
+                    isinstance(x[1], SensitivityScore) and
+                    isinstance(x[2], SpecificityScore) and
+                    isinstance(x[3], ErrorRateScore)
                     for x in resampler.results._evaluators])
         assert resampler.results.num_resamples == 25
 

@@ -25,10 +25,10 @@ class SearcherTests(TimerTestCase):
                                   ImputationTransformer(),
                                   DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
         # Evaluators are the metrics we want to use to understand the value of our trained models.
-        evaluator_list = [KappaEvaluator(positive_category=1, negative_category=0, threshold=0.5),
-                          SensitivityEvaluator(positive_category=1, negative_category=0, threshold=0.5),
-                          SpecificityEvaluator(positive_category=1, negative_category=0, threshold=0.5),
-                          ErrorRateTwoClassEvaluator(positive_category=1, negative_category=0, threshold=0.5)]
+        evaluator_list = [KappaScore(positive_class=1),
+                          SensitivityScore(positive_class=1),
+                          SpecificityScore(positive_class=1),
+                          ErrorRateScore(positive_class=1)]
         standard_transformations = [CenterScaleTransformer(),
                                     RemoveCorrelationsTransformer()]
 
@@ -61,7 +61,7 @@ class SearcherTests(TimerTestCase):
                                                 resampler_function=lambda m, mt: RepeatedCrossValidationResampler(  # noqa
                                                     model=m,
                                                     model_transformations=mt,
-                                                    evaluators=evaluator_list,
+                                                    scores=evaluator_list,
                                                     folds=num_folds,
                                                     repeats=num_repeats),
                                                 persistence_manager=LocalCacheManager
@@ -86,7 +86,7 @@ class SearcherTests(TimerTestCase):
                                  resampler_function=lambda m, mt: RepeatedCrossValidationResampler(
                                      model=m,
                                      model_transformations=mt,
-                                     evaluators=evaluator_list,
+                                     scores=evaluator_list,
                                      folds=num_folds,
                                      repeats=num_repeats),
                                  persistence_manager=LocalCacheManager(cache_directory=cache_directory))
@@ -151,8 +151,8 @@ class SearcherTests(TimerTestCase):
         assert len(searcher.results.holdout_evaluators) == 2  # 2 models
         assert len(searcher.results.holdout_evaluators[0]) == 4  # 4 Evaluators
         assert len(searcher.results.holdout_evaluators[1]) == 4  # 4 Evaluators
-        assert [x.metric_name for x in searcher.results.holdout_evaluators[0]] == ['kappa', 'sensitivity', 'specificity', 'ErrorRate']  # noqa
-        assert [x.metric_name for x in searcher.results.holdout_evaluators[1]] == ['kappa', 'sensitivity', 'specificity', 'ErrorRate']  # noqa
+        assert [x.name for x in searcher.results.holdout_evaluators[0]] == ['kappa', 'sensitivity', 'specificity', 'ErrorRate']  # noqa
+        assert [x.name for x in searcher.results.holdout_evaluators[1]] == ['kappa', 'sensitivity', 'specificity', 'ErrorRate']  # noqa
         assert [x.value for x in searcher.results.holdout_evaluators[0]] == [0.026284246575342427, 0.38372093023255816, 0.64233576642335766, 0.45739910313901344]  # noqa
 
         assert len(searcher.results.holdout_evaluators) == 2  # 2 models

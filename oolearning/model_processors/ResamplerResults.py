@@ -3,11 +3,11 @@ from typing import List
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase
+from oolearning.evaluators.ScoreBase import ScoreBase
 
 
 class ResamplerResults:
-    def __init__(self, evaluators: List[List[EvaluatorBase]]):
+    def __init__(self, evaluators: List[List[ScoreBase]]):
         """
         :param evaluators: a list of list of holdout_evaluators.
             each outer list represents a resampling result (e.g. a single fold for a single repeat in repeated
@@ -22,7 +22,7 @@ class ResamplerResults:
         for resample_eval_list in evaluators:
             results_dict = dict()
             for temp_eval in resample_eval_list:
-                results_dict[temp_eval.metric_name] = temp_eval.value
+                results_dict[temp_eval.name] = temp_eval.value
 
             self._cross_validation_scores.append(results_dict)
 
@@ -36,7 +36,7 @@ class ResamplerResults:
         return len(self.cross_validation_scores)
 
     @property
-    def evaluators(self) -> List[List[EvaluatorBase]]:
+    def evaluators(self) -> List[List[ScoreBase]]:
         return self._evaluators
 
     @property

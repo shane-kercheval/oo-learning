@@ -3,7 +3,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase
+from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.model_processors.TunerResults import TunerResults
 
 
@@ -12,7 +12,7 @@ class SearcherResults:
                  model_descriptions: List[str],
                  model_names: List[str],
                  tuner_results: List[TunerResults],
-                 holdout_evaluators=List[List[EvaluatorBase]]):
+                 holdout_evaluators=List[List[ScoreBase]]):
         """
         :param tuner_results: list of TunerResults (one per model)
         :param holdout_evaluators: list of (list of Evaluators). Each outer list item (one per model),
@@ -28,7 +28,7 @@ class SearcherResults:
         return self._tuner_results
 
     @property
-    def holdout_evaluators(self) ->List[List[EvaluatorBase]]:
+    def holdout_evaluators(self) ->List[List[ScoreBase]]:
         """
         :return: List of Lists of Evaluators. Each item in the outer list corresponds to a specific model/
             model-description.  Each of those items has a list of Evaluators, corresponding to the
@@ -53,7 +53,7 @@ class SearcherResults:
         # get all the evaluators for each model (each model will have the same Evaluators)
         evaluators = self._holdout_evaluators[0]
         # get all the columns that the tuner_results will have
-        evaluator_columns = [x.metric_name for x in evaluators]
+        evaluator_columns = [x.name for x in evaluators]
         holdout_accuracies = [[x.value for x in evaluator] for evaluator in self._holdout_evaluators]
 
         return pd.DataFrame(holdout_accuracies, columns=evaluator_columns, index=self._model_descriptions)
@@ -67,7 +67,7 @@ class SearcherResults:
         # get all the evaluators for each model (each model will have the same Evaluators)
         evaluators = self.holdout_evaluators[0]
         # get all the columns that the tuner_results will have
-        evaluator_columns = [(x.metric_name + '_mean', x.metric_name + '_st_dev', x.metric_name + '_cv')
+        evaluator_columns = [(x.name + '_mean', x.name + '_st_dev', x.name + '_cv')
                              for x in evaluators]
         evaluator_columns = list(sum(evaluator_columns, ()))  # flatten out list
         # get the best resampling results each model that was tuned

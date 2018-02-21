@@ -71,7 +71,7 @@ class TransformerTests(TimerTestCase):
         ######################################################################################################
         data = TestHelper.get_housing_data()
         target_variable = 'median_house_value'
-        training_set, _, test_set, _ = TestHelper.split_train_test_regression(data, target_variable)
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_regression(data, target_variable)
 
         imputation_transformer = ImputationTransformer(categoric_imputation_function=None)
         # ensure that we are forced to call `fit` first
@@ -364,7 +364,7 @@ class TransformerTests(TimerTestCase):
     def test_CenterScaleTransformer(self):
         data = TestHelper.get_housing_data()
         target_variable = 'median_house_value'
-        training_set, _, test_set, _ = TestHelper.split_train_test_regression(data, target_variable)
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_regression(data, target_variable)
 
         transformer = CenterScaleTransformer()
 
@@ -430,7 +430,7 @@ class TransformerTests(TimerTestCase):
     def test_BoxCoxTransformer(self):
         data = TestHelper.get_housing_data()
         target_variable = 'median_house_value'
-        training_set, _, test_set, _ = TestHelper.split_train_test_regression(data, target_variable)
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_regression(data, target_variable)
 
         # training_set.housing_median_age.hist()
         # training_set.total_rooms.hist()
@@ -486,7 +486,7 @@ class TransformerTests(TimerTestCase):
     def test_RemoveCorrelationsTransformer(self):
         data = TestHelper.get_housing_data()
         target_variable = 'median_house_value'
-        training_set, _, test_set, _ = TestHelper.split_train_test_regression(data, target_variable)
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_regression(data, target_variable)
 
         # at a threshold of 0.95, only total_bedrooms should be removed
         expected_removed = ['total_bedrooms']

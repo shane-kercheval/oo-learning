@@ -1,5 +1,11 @@
 from .OOLearningHelpers import OOLearningHelpers
 
+from .converters.HighestValueConverter import HighestValueConverter
+from .converters.TwoClassConverterBase import TwoClassConverterBase
+from .converters.TwoClassThresholdConverter import TwoClassThresholdConverter
+from .converters.TwoClassRocOptimizerConverter import TwoClassRocOptimizerConverter
+from .converters.TwoClassPrecisionRecallOptimizerConverter import TwoClassPrecisionRecallOptimizerConverter
+
 from .enums.CategoricalEncoding import CategoricalEncoding
 from .enums.Imputation import Imputation
 from .enums.Metric import Metric
@@ -7,22 +13,23 @@ from .enums.Normalization import Normalization
 from .enums.ResolveOutliers import ResolveOutliers
 from .enums.Skewness import Skewness
 
-from .evaluators.Accuracy2CEvaluator import Accuracy2CEvaluator
-from .evaluators.AucEvaluator import AucEvaluator
-from .evaluators.ClassificationEvaluator import ClassificationEvaluator
-from .evaluators.ConfusionMatrixMC import ConfusionMatrixMC
-from .evaluators.ConfusionMatrix2C import ConfusionMatrix2C
-from .evaluators.CostFunctionMixin import CostFunctionMixin
-from .evaluators.ErrorRateTwoClassEvaluator import ErrorRateTwoClassEvaluator
-from .evaluators.EvaluatorBase import EvaluatorBase
-from .evaluators.F1Evaluator import F1Evaluator
-from .evaluators.KappaEvaluator import KappaEvaluator
-from .evaluators.MaeEvaluator import MaeEvaluator
+from .evaluators.AccuracyScore import AccuracyScore
+from .evaluators.AucScore import AucScore
 from .evaluators.MultiClassEvaluator import MultiClassEvaluator
-from .evaluators.RmseEvaluator import RmseEvaluator
-from .evaluators.SensitivityEvaluator import SensitivityEvaluator
-from .evaluators.SpecificityEvaluator import SpecificityEvaluator
 from .evaluators.TwoClassEvaluator import TwoClassEvaluator
+from .evaluators.CostFunctionMixin import CostFunctionMixin
+from .evaluators.ErrorRateScore import ErrorRateScore
+from .evaluators.ScoreBase import ScoreBase
+from .evaluators.F1Score import F1Score
+from .evaluators.KappaScore import KappaScore
+from .evaluators.MaeScore import MaeScore
+from .evaluators.MultiClassEvaluator import MultiClassEvaluator
+from .evaluators.RegressionEvaluator import RegressionEvaluator
+from .evaluators.RmseScore import RmseScore
+from .evaluators.SensitivityScore import SensitivityScore
+from .evaluators.SpecificityScore import SpecificityScore
+from .evaluators.TwoClassEvaluator import TwoClassEvaluator
+from .evaluators.TwoClassProbabilityEvaluator import TwoClassProbabilityEvaluator
 from .evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
 from .exploratory.ExploreClassificationDataset import ExploreClassificationDataset
@@ -49,7 +56,7 @@ from .model_processors.SearcherResults import SearcherResults
 from .model_processors.StratifiedMonteCarloResampler import StratifiedMonteCarloResampler
 from .model_processors.TunerResults import TunerResults
 
-from .model_wrappers.LogisticMW import LogisticMW
+from .model_wrappers.LogisticRegression import LogisticRegression
 from .model_wrappers.ModelDefaults import ModelDefaults
 from .model_wrappers.ModelExceptions import ModelNotFittedError
 from .model_wrappers.ModelExceptions import ModelAlreadyFittedError
@@ -58,7 +65,7 @@ from .model_wrappers.ModelExceptions import MissingValueError
 from .model_wrappers.ModelExceptions import NegativeValuesFoundError
 from .model_wrappers.ModelWrapperBase import ModelWrapperBase
 from .model_wrappers.RandomForestMW import RandomForestMW
-from .model_wrappers.RegressionMW import RegressionMW
+from .model_wrappers.LinearRegression import LinearRegression
 
 from .persistence.AlwaysFetchManager import AlwaysFetchManager
 from .persistence.LocalCacheManager import LocalCacheManager

@@ -92,7 +92,7 @@ class ModelSearcher:
         tuner_results = list()
         holdout_evaluators = list()
         # for each model: tune; get the best hyper-parameters; fit all the training data on the best
-        # hyper-parameters; then evaluate the final model on the holdout data
+        # hyper-parameters; then calculate the final model on the holdout data
         for index in range(len(self._models)):
             local_model_description = self._model_descriptions[index]
             local_model = self._models[index]

@@ -181,7 +181,7 @@ class TunerResults:
 
         # get the current evaluator object so we can determine if it is a minimizer or maximizer
         evaluator = [x for x in self._tune_results_objects.iloc[0].resampler_object.evaluators[0]
-                     if x.metric_name == metric_name]
+                     if x.name == metric_name]
         assert len(evaluator) == 1  # we should just get the current evaluator
         # if the `better_than` function returns True, 0 is "better than" 1 and we have a minimizer
         # for minimizers, we want to return the min, which is the best value, otherwise, return the max

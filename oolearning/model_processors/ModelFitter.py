@@ -10,31 +10,32 @@ from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import ModelAlreadyFittedError, ModelNotFittedError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
+from oolearning.splitters.DataSplitterBase import DataSplitterBase
 from oolearning.transformers.TransformerBase import TransformerBase
 from oolearning.transformers.TransformerPipeline import TransformerPipeline
 
 
 class ModelFitter:
     """
+    # TODO: update
     Intent of ModelFitter is to abstract away the details of the general process of fitting a model.
         - transform data specific to the model (e.g. regression requires imputing/dummifying
         - train
         - access training value
-        - access holdout value
+        - evaluate on a holdout set
         - predict on future data using same (training) transformations
     """
 
     def __init__(self,
                  model: ModelWrapperBase,
                  model_transformations: List[TransformerBase],
-                 evaluators: List[EvaluatorBase],
+                 splitter: DataSplitterBase,
+                 evaluator: EvaluatorBase,
                  persistence_manager: PersistenceManagerBase=None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None):
         """
-        :param evaluators: a list of Evaluator to access training value.
-            If no evaluator is passed into the `evaluate_holdout()` method, this evaluator is cloned and also
-            used to evaluate a holdout dataset
+        # TODO: update
         :param model_transformations: List of Transformer objects to pre-process data (specific to the model,
         e.g. Regression should impute and create dummy columns).
             Child classes should list recommended transformations as the default value to the constructor
@@ -49,9 +50,10 @@ class ModelFitter:
         """
         assert isinstance(model, ModelWrapperBase)
         self._model = model
-        self._training_evaluators = evaluators
-        # copy so that we can use 'same' evaluator types
-        self._holdout_evaluators = [x.clone() for x in copy.deepcopy(evaluators)]
+        self._splitter = splitter
+        self._training_evaluator = evaluator
+        # copy so that we can use 'same' evaluator type
+        self._holdout_evaluator = copy.deepcopy(evaluator)
         self._has_fitted = False
         self._model_info = None
         self._persistence_manager = persistence_manager
@@ -70,36 +72,6 @@ class ModelFitter:
 
         return self._model_info
 
-    @property
-    def training_evaluators(self) -> List[EvaluatorBase]:
-        """
-        :return: the 'Training Evaluators' passed into the constructor
-        """
-        return self._training_evaluators
-
-    @property
-    def training_accuracies(self) -> List[float]:
-        """
-        :return: the "accuracies" returned by the 'training_evaluators'
-        """
-        assert all([isinstance(x.value, float) for x in self._training_evaluators])
-        return [x.value for x in self._training_evaluators]
-
-    @property
-    def holdout_evaluators(self) -> List[EvaluatorBase]:
-        """
-        :return: the 'Training Evaluators' passed into the constructor
-        """
-        return self._holdout_evaluators
-
-    @property
-    def holdout_accuracies(self) -> List[float]:
-        """
-        :return: returns the "accuracies" returned by the 'holdout_evaluators'
-        """
-        assert all([isinstance(x.value, float) for x in self._holdout_evaluators])
-        return [x.value for x in self._holdout_evaluators]
-
     def set_persistence_manager(self, persistence_manager: PersistenceManagerBase):
         self._persistence_manager = persistence_manager
 
@@ -115,25 +87,21 @@ class ModelFitter:
 
         return key
 
-    def fit(self,
-            data_x: pd.DataFrame,
-            data_y: np.ndarray,
-            hyper_params: HyperParamsBase=None):
-        """
-        `fit` handles the logic of applying the pre-process transformations, as well as fitting the data and
-            evaluating the training value
-        :param data_x: DataFrame to fit the model on
-        :param data_y: np.ndarray containing the target values to be trained on
-        :param hyper_params: object containing the hyper-parameters to tune
-        :return: None
-        """
+    def fit(self, data: pd.DataFrame, target_variable: str, hyper_params: HyperParamsBase=None):
         if self._has_fitted:
             raise ModelAlreadyFittedError()
 
-        assert isinstance(data_x, pd.DataFrame)
-        assert data_y is not None
+        training_indexes, holdout_indexes = self._splitter.split(target_values=data[target_variable])
 
-        prepared_training_data = self._model_transformations.fit_transform(data_x)
+        training_y = data.iloc[training_indexes][target_variable]
+        training_x = data.iloc[training_indexes].drop(columns=target_variable)
+
+        holdout_y = data.iloc[holdout_indexes][target_variable]
+        holdout_x = data.iloc[holdout_indexes].drop(columns=target_variable)
+
+        # transform/fit on training data
+
+        prepared_training_data = self._model_transformations.fit_transform(training_x)
 
         # set up persistence if applicable
         if self._persistence_manager is not None:  # then build the key
@@ -142,17 +110,18 @@ class ModelFitter:
             self._model.set_persistence_manager(persistence_manager=self._persistence_manager)
 
         if self._train_callback is not None:
-            self._train_callback(prepared_training_data, data_y, hyper_params)
+            self._train_callback(prepared_training_data, training_y, hyper_params)
 
         # fit the model with the transformed training data
-        self._model.train(data_x=prepared_training_data, data_y=data_y, hyper_params=hyper_params)
+        self._model.train(data_x=prepared_training_data, data_y=training_y, hyper_params=hyper_params)
         self._model_info = self._model.fitted_info
 
-        for evaluator in self._training_evaluators:
-            # given the specified **training** metric, which stores the value
-            evaluator.evaluate(actual_values=data_y,
-                               predicted_values=self._model.predict(data_x=prepared_training_data))
         self._has_fitted = True
+
+        self._training_evaluator.evaluate(actual_values=training_y,
+                                          predicted_values=self.predict(data_x=training_x))
+        self._holdout_evaluator.evaluate(actual_values=holdout_y,
+                                         predicted_values=self.predict(data_x=holdout_x))
 
     def predict(self, data_x: pd.DataFrame) -> np.ndarray:
         """
@@ -169,28 +138,16 @@ class ModelFitter:
         prepared_prediction_set = self._model_transformations.transform(data_x)
         return self._model.predict(data_x=prepared_prediction_set)
 
-    def evaluate_holdout(self,
-                         holdout_x: pd.DataFrame,
-                         holdout_y: np.ndarray,
-                         evaluators: List[EvaluatorBase]=None) -> List[float]:
-        """
-        :param holdout_x: holdout dataset with features
-        :param holdout_y: holdout target values
-        :param evaluators: optional list of Evaluator. If `holdout_evaluators` is None, a clone of the
-            holdout_evaluators that were passed into the constructor is used (i.e. same holdout_evaluators
-            type)
-        :return: The result of the Evaluators` `evaluate()` function (i.e. "value")
-        """
+    @property
+    def training_evaluator(self):
         if self._has_fitted is False:
             raise ModelNotFittedError()
 
-        if evaluators is not None:  # otherwise, use same evaluator as training set (previously cloned)
-            self._holdout_evaluators = evaluators
-        # the evaluator was cloned before used, so if there is no evaluator passed in, we'll use that
-        accuracies = list()
-        for evaluator in self._holdout_evaluators:
-            accuracy = evaluator.evaluate(actual_values=holdout_y,
-                                          predicted_values=self.predict(data_x=holdout_x))
-            accuracies.append(accuracy)
+        return self._training_evaluator
 
-        return accuracies
+    @property
+    def holdout_evaluator(self):
+        if self._has_fitted is False:
+            raise ModelNotFittedError()
+
+        return self._holdout_evaluator

@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from typing import List, Callable, Union
 
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase
+from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.model_processors.ResamplerBase import ResamplerBase
@@ -18,7 +18,7 @@ class StratifiedMonteCarloResampler(ResamplerBase):
                  model: ModelWrapperBase,
                  model_transformations: List[TransformerBase],
                  stratified_splitter: StratifiedDataSplitter,
-                 evaluators: List[EvaluatorBase],
+                 scores: List[ScoreBase],
                  persistence_manager: PersistenceManagerBase = None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None,
@@ -29,12 +29,12 @@ class StratifiedMonteCarloResampler(ResamplerBase):
         :param stratified_splitter: e.g. ClassificationStratifiedDataSplitter or
             RegressionStratifiedDataSplitter; i.e. this resampler needs to know how to stratify the data
             based off of the target values
-        :param evaluators:
+        :param scores:
         :param repeats:
         """
         super().__init__(model=model,
                          model_transformations=model_transformations,
-                         evaluators=evaluators,
+                         scores=scores,
                          persistence_manager=persistence_manager,
                          train_callback=train_callback)
 
@@ -61,10 +61,10 @@ class StratifiedMonteCarloResampler(ResamplerBase):
 
                 # for each evaluator, add the metric name/value to a dict to add to the ResamplerResults
                 fold_evaluators = list()
-                for evaluator in self._evaluators:
+                for evaluator in self._scores:
                     evaluator_copy = evaluator.clone()  # need to reuse this object type for each fold/repeat
-                    evaluator_copy.evaluate(actual_values=test_y,
-                                            predicted_values=model_copy.predict(data_x=test_x))
+                    evaluator_copy.calculate(actual_values=test_y,
+                                             predicted_values=model_copy.predict(data_x=test_x))
                     fold_evaluators.append(evaluator_copy)
                 result_evaluators.append(fold_evaluators)
 
