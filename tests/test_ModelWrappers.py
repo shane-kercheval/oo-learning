@@ -82,6 +82,7 @@ class ModelWrapperTests(TimerTestCase):
         # training error
         predictions = regr.predict(X=train_x)
 
+        # noinspection PyUnboundLocalVariable
         np.sqrt(mean_squared_error(y_true=train_y, y_pred=predictions))
         assert isclose(mean_squared_error(y_true=train_y, y_pred=predictions), 109.68243774089586)
         assert isclose(mean_absolute_error(y_true=train_y, y_pred=predictions), 8.360259532214116)
@@ -130,6 +131,7 @@ class ModelWrapperTests(TimerTestCase):
 
         from sklearn.metrics import roc_curve
         from sklearn.metrics import roc_auc_score
+        # noinspection PyUnboundLocalVariable
         fpr, tpr, thresholds = roc_curve(y_true=holdout_y, y_score=pd.DataFrame(predicted_probabilities)[1])
         roc_auc = roc_auc_score(y_true=holdout_y, y_score=pd.DataFrame(predicted_probabilities)[1])
 
@@ -157,6 +159,53 @@ class ModelWrapperTests(TimerTestCase):
         plt.ylim([0.0, 1.05])
         plt.xlim([0.0, 1.0])
         plt.title('2-class Precision-Recall')
+
+        ##########################
+        # Multi-Class Random Forest
+        ##########################
+        from sklearn.datasets import load_iris
+        from sklearn.ensemble import RandomForestClassifier
+
+        iris = load_iris()
+        df = pd.DataFrame(iris.data, columns=iris.feature_names)
+
+        test_splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+        training_indexes, test_indexes = test_splitter.split(target_values=pd.Categorical.from_codes(iris.target, iris.target_names).get_values())  # noqa
+
+        # training_y = data.iloc[training_indexes][target_variable]
+        # training_x = data.iloc[training_indexes].drop(columns=target_variable)
+        #
+        # holdout_y = data.iloc[holdout_indexes][target_variable]
+        # holdout_x = data.iloc[holdout_indexes].drop(columns=target_variable)
+
+        df['is_train'] = False
+        df.loc[training_indexes, 'is_train'] = True
+        df['species'] = pd.Categorical.from_codes(iris.target, iris.target_names)
+        df.head()
+
+        train, test = df[df['is_train'] == True], df[df['is_train'] == False]  # noqa
+        len(test)
+
+        features = df.columns[:4]
+        clf = RandomForestClassifier(n_jobs=2, random_state=42)
+        y, _ = pd.factorize(train['species'])
+        clf.fit(train[features], y)
+
+        clf.predict_proba(test[features])
+
+        temp = pd.DataFrame(clf.predict_proba(test[features]))
+        temp.columns = ['setosa', 'versicolor', 'virginica']
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Converters/random_forest_multiclass_output.pkl'))  # noqa
+        with open(file, 'wb') as output:
+            pickle.dump(temp, output, pickle.HIGHEST_PROTOCOL)
+
+        preds = iris.target_names[clf.predict(test[features])]
+        pd.crosstab(test['species'], preds, rownames=['actual'], colnames=['preds'])
+
+        evaluator = MultiClassEvaluator(converter=None,
+                                        actual_classes=test['species'],
+                                        predicted_classes=preds)
+        assert evaluator.all_quality_metrics is not None
 
     def test_MockModelWrapper(self):
         ######################################################################################################
@@ -987,7 +1036,7 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # test default hyper-parameters
         ######################################################################################################
-        fitter.fit(data=data, target_variable='strength', hyper_params=RandomForestHP(criterion='MAE', n_estimators=10))
+        fitter.fit(data=data, target_variable='strength', hyper_params=RandomForestHP(criterion='MAE', n_estimators=10))  # noqa
 
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
@@ -1013,95 +1062,43 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.holdout_evaluator.all_quality_metrics == {'Mean Absolute Error (MAE)': 3.7880849514563115, 'Mean Squared Error (MSE)': 29.015298598300976, 'Root Mean Squared Error (RMSE)': 5.3865850590426, 'RMSE to Standard Deviation of Target': 0.3281385595158624}  # noqa
 
     def test_RandomForestMW_classification_multiclass(self):
-        pass
-#         data = TestHelper.get_iris_data()
-#         splitter = ClassificationStratifiedDataSplitter(test_ratio=0.25)
-#         training_indexes, test_indexes = splitter.split(target_values=data.species)
-#
-#         train_data_y = data.iloc[training_indexes].species
-#         train_data = data.iloc[training_indexes].drop(columns='species')
-#
-#         test_data_y = data.iloc[test_indexes].species
-#         test_data = data.iloc[test_indexes].drop(columns='species')
-#
-#         model = RandomForestMW()
-#         model.train(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
-#         predictions = model.predict(data_x=test_data)
-#         predicted_classes = predictions.idxmax(axis=1)
-#
-#         predictions['actual'] = test_data_y.values
-#         predictions['predicted_classes'] = predicted_classes
-#
-#         predictions.to
-#         predictions.to_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_MultiClass_predictions.csv')))  # noqa
-#
-#
-#         actual
-#         pd.crosstab(test_data_y.values, predicted_classes.values, rownames=['actual'], colnames=['preds'])
-# #
-#
-#         no_setosa = [x if x != 'setosa' else 'versicolor' for x in predicted_classes.values]
-#         len(predicted_classes)
-#         len(no_setosa)
-#         len(test_data_y.values)
-#
-#         actual_classes = test_data_y.values
-#         predicted_classes = np.array(no_setosa)
-#         pd.crosstab(actual_classes, predicted_classes, rownames=['actual'], colnames=['preds'])
-#
 
-#
-# ############# EXAMPLE
-        from sklearn.datasets import load_iris
-        from sklearn.ensemble import RandomForestClassifier
-        import pandas as pd
-        import numpy as np
+        data = TestHelper.get_iris_data()
+        target_variable = 'species'
+        fitter = ModelFitter(model=RandomForestMW(),
+                             model_transformations=None,
+                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
+                             evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
 
-        iris = load_iris()
-        df = pd.DataFrame(iris.data, columns=iris.feature_names)
-        np.random.seed(4)
-        df['is_train'] = np.random.uniform(0, 1, len(df)) <= .75
-        df['species'] = pd.Categorical.from_codes(iris.target, iris.target_names)
-        df.head()
+        fitter.fit(data=data, target_variable=target_variable, hyper_params=RandomForestHP(criterion='gini',
+                                                                                           n_estimators=10,
+                                                                                           max_features='auto'))  # noqa
 
-        train, test = df[df['is_train'] is True], df[df['is_train'] is False]
-        len(test)
+        assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
+        assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
 
-        features = df.columns[:4]
-        clf = RandomForestClassifier(n_jobs=2)
-        y, _ = pd.factorize(train['species'])
-        clf.fit(train[features], y)
+        assert fitter.model_info.feature_names == ['sepal_length', 'sepal_width', 'petal_length', 'petal_width']  # noqa
+        assert fitter.model_info.hyper_params.params_dict == {'n_estimators': 10,
+                                                              'criterion': 'gini',
+                                                              'max_features': 'auto',
+                                                              'max_depth': None,
+                                                              'min_samples_split': 2,
+                                                              'min_samples_leaf': 1,
+                                                              'min_weight_fraction_leaf': 0.0,
+                                                              'max_leaf_nodes': None,
+                                                              'min_impurity_decrease': 0,
+                                                              'bootstrap': True,
+                                                              'oob_score': False,
+                                                              'n_jobs': -1,
+                                                              'random_state': 42}
 
-        clf.predict_proba(test[features])
+        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.841995841995842, 'Accuracy': 0.8947368421052632, 'Error Rate': 0.10526315789473684, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa
 
-        temp = pd.DataFrame(clf.predict_proba(test[features]))
-        temp.columns = ['setosa', 'versicolor', 'virginica']
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Converters/random_forest_multiclass_output.pkl'))  # noqa
-        with open(file, 'wb') as output:
-            pickle.dump(temp, output, pickle.HIGHEST_PROTOCOL)
-
-        preds = iris.target_names[clf.predict(test[features])]
-        pd.crosstab(test['species'], preds, rownames=['actual'], colnames=['preds'])
-# ############################
-#
-#
-#         ######################################################################################################
-#         # test default hyper-parameters
-#         ######################################################################################################
-#         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
-#                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
-#                            ImputationTransformer(),
-#                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
-#
-#         positive_class = 1
-#         negative_class = 0
-#
-#         cache_directory = TestHelper.ensure_test_directory(
-#             'data/test_ModelWrappers/cached_test_models/test_RandomForestMW_classification')  # noqa
-#
-#         fitter = ModelFitter(model=RandomForestMW(),
-#                              model_transformations=transformations,
-#                              evaluators=[KappaScore(positive_category=positive_class,
-#                                                         negative_category=negative_class,
-#                                                         threshold=0.5)],
-#                              persistence_manager=LocalCacheManager(cache_directory=cache_directory))
+        con_matrix = fitter.holdout_evaluator.matrix
+        assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
+        assert con_matrix['versicolor'].values.tolist() == [0, 12, 3, 15]
+        assert con_matrix['virginica'].values.tolist() == [0, 1, 10, 11]
+        assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
+        assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']

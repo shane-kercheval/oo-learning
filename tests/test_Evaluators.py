@@ -573,9 +573,12 @@ class EvaluatorTests(TimerTestCase):
         assert isclose(evaluator.value, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
 
     # noinspection SpellCheckingInspection
+    # noinspection PyTypeChecker
     def test_ConfusionMatrix_MultiClass(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_MultiClass_predictions.csv')))  # noqa
-        con_matrix = MultiClassEvaluator(actual_classes=mock_data.actual, predicted_classes=mock_data.predicted_classes)  # noqa
+        con_matrix = MultiClassEvaluator(converter=None,
+                                         actual_classes=mock_data.actual,
+                                         predicted_classes=mock_data.predicted_classes)
 
         assert con_matrix.matrix['setosa'].values.tolist() == [12, 0, 0, 12]
         assert con_matrix.matrix['versicolor'].values.tolist() == [0, 12, 2, 14]
@@ -589,7 +592,9 @@ class EvaluatorTests(TimerTestCase):
         # i.e. there will be no predictions for a class (setosa), make sure Confusion Matrix can handle that.
         ######################################################################################################
         no_setosa = np.array([x if x != 'setosa' else 'versicolor' for x in mock_data.predicted_classes])
-        con_matrix = MultiClassEvaluator(actual_classes=mock_data.actual, predicted_classes=no_setosa)  # noqa
+        con_matrix = MultiClassEvaluator(converter=None,
+                                         actual_classes=mock_data.actual,
+                                         predicted_classes=no_setosa)  # noqa
 
         assert con_matrix.matrix['setosa'].values.tolist() == [0, 0, 0, 0]
         assert con_matrix.matrix['versicolor'].values.tolist() == [12, 12, 2, 26]
@@ -601,25 +606,30 @@ class EvaluatorTests(TimerTestCase):
         ######################################################################################################
         # test from probabilities
         ######################################################################################################
-        con_matrix = MultiClassEvaluator.from_probabilities(actual_classes=mock_data.actual,
-                                                            predicted_probabilities=mock_data[['setosa', 'versicolor', 'virginica']])  # noqa
-        assert con_matrix.matrix['setosa'].values.tolist() == [12, 0, 0, 12]
-        assert con_matrix.matrix['versicolor'].values.tolist() == [0, 12, 2, 14]
-        assert con_matrix.matrix['virginica'].values.tolist() == [0, 1, 11, 12]
-        assert con_matrix.matrix['Total'].values.tolist() == [12, 13, 13, 38]
-        assert con_matrix.matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        evaluator = MultiClassEvaluator(converter=HighestValueConverter())
+        evaluator.evaluate(actual_values=mock_data.actual,
+                           predicted_values=mock_data[['setosa', 'versicolor', 'virginica']])
+        assert evaluator.matrix['setosa'].values.tolist() == [12, 0, 0, 12]
+        assert evaluator.matrix['versicolor'].values.tolist() == [0, 12, 2, 14]
+        assert evaluator.matrix['virginica'].values.tolist() == [0, 1, 11, 12]
+        assert evaluator.matrix['Total'].values.tolist() == [12, 13, 13, 38]
+        assert evaluator.matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        assert evaluator.matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
 
+    # noinspection SpellCheckingInspection
     def test_ConfusionMatrix_MultiClass_scores(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_MultiClass_predictions.csv')))  # noqa
-        con_matrix = MultiClassEvaluator(actual_classes=mock_data.actual, predicted_classes=mock_data.predicted_classes)  # noqa
-        assert isclose(con_matrix.accuracy, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predicted_classes))  # noqa
+        evaluator = MultiClassEvaluator(converter=HighestValueConverter())
+        evaluator.evaluate(actual_values=mock_data.actual,
+                           predicted_values=mock_data[['setosa', 'versicolor', 'virginica']])
 
-        assert isclose(con_matrix.all_quality_metrics['Kappa'], 0.8814968814968815)
-        assert isclose(con_matrix.all_quality_metrics['Accuracy'], 0.9210526315789473)
-        assert isclose(con_matrix.all_quality_metrics['Error Rate'], 0.07894736842105265)
-        assert isclose(con_matrix.all_quality_metrics['No Information Rate'], 0.34210526315789475)
-        assert isclose(con_matrix.all_quality_metrics['Total Observations'], 38)
+        assert isclose(evaluator.accuracy, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predicted_classes))  # noqa
+
+        assert isclose(evaluator.all_quality_metrics['Kappa'], 0.8814968814968815)
+        assert isclose(evaluator.all_quality_metrics['Accuracy'], 0.9210526315789473)
+        assert isclose(evaluator.all_quality_metrics['Error Rate'], 0.07894736842105265)
+        assert isclose(evaluator.all_quality_metrics['No Information Rate'], 0.34210526315789475)
+        assert isclose(evaluator.all_quality_metrics['Total Observations'], 38)
 
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/mock_metrics_per_class.pkl'))  # noqa
         # with open(file, 'wb') as output:
@@ -627,4 +637,4 @@ class EvaluatorTests(TimerTestCase):
         with open(file, 'rb') as saved_object:
             expected_metrics_per_class = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=expected_metrics_per_class,
-                                                      data_frame2=con_matrix.metrics_per_class)
+                                                      data_frame2=evaluator.metrics_per_class)

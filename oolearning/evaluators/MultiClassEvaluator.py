@@ -2,27 +2,49 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, cohen_kappa_score
 
+from oolearning.converters.ContinuousToClassConverterBase import ContinuousToClassConverterBase
 from oolearning.evaluators.ConfusionMatrix import ConfusionMatrix
 from oolearning.evaluators.EvaluatorBase import EvaluatorBase
 from oolearning.evaluators.TwoClassEvaluator import TwoClassEvaluator
 
 
 class MultiClassEvaluator(EvaluatorBase):
+    def __init__(self,
+                 converter: ContinuousToClassConverterBase,
+                 actual_classes: np.ndarray=None,
+                 predicted_classes: np.ndarray=None):
+        """
+
+        :param converter:
+        # TODO document: can alternatively pass in a values; primarily from `from_classes`
+        """
+        super().__init__()
+        self._converter = converter
+
+        if converter is not None:
+            self._confusion_matrix = None
+            self._total_observations = None
+            self._kappa = None
+            self._accuracy = None
+            self._metrics_per_class = None
+        else:
+            if actual_classes is None or predicted_classes is None:
+                raise ValueError('must pass in both `actual_classes` and `predicted_classes` if no converter')
+            self.set_instance_values_from_values(actual_classes=actual_classes,
+                                                 predicted_classes=predicted_classes)
+
     def evaluate(self, actual_values: np.ndarray, predicted_values: object):
-        pass
 
-    def __init__(self, actual_classes: np.ndarray, predicted_classes: np.ndarray):
-        """
-        takes the actual/predicted values and creates a confusion confusion_matrix
-        :param actual_classes:
-        :param predicted_classes:
-        :return: MultiClassEvaluator object
-        """
+        # noinspection PyTypeChecker
+        predicted_classes = self._converter.convert(values=predicted_values)
+        self.set_instance_values_from_values(actual_classes=actual_values,
+                                             predicted_classes=predicted_classes)
+
+    def set_instance_values_from_values(self, actual_classes: np.ndarray, predicted_classes: np.ndarray):
         self._confusion_matrix = ConfusionMatrix(actual_classes=actual_classes,
-                                                 predicted_classes=predicted_classes,
-                                                 positive_class=None)
+                                                 predicted_classes=predicted_classes)
 
-        self._total_observations = self.matrix.loc['Total', 'Total']
+        self._total_observations = self._confusion_matrix.matrix.loc['Total', 'Total']
         self._kappa = cohen_kappa_score(y1=actual_classes, y2=predicted_classes)
         self._accuracy = accuracy_score(y_true=actual_classes, y_pred=predicted_classes)
         self._metrics_per_class = self.create_metrics_per_class(actual_classes=actual_classes,
@@ -40,9 +62,10 @@ class MultiClassEvaluator(EvaluatorBase):
         for target in unique_classes:
             actual_binary_classes = [pos_label if x == target else neg_label for x in actual_classes]
             predicted_binary_classes = [pos_label if x == target else neg_label for x in predicted_classes]
-            bin_matrix = TwoClassEvaluator(actual_classes=np.array(actual_binary_classes),
-                                           predicted_classes=np.array(predicted_binary_classes),
-                                           positive_class=pos_label)
+            bin_matrix = TwoClassEvaluator(positive_class=pos_label)
+            bin_matrix.evaluate(actual_values=np.array(actual_binary_classes),
+                                predicted_values=np.array(predicted_binary_classes))
+
             if metric_dataframe is None:
                 metric_dataframe = pd.DataFrame(columns=bin_matrix.all_quality_metrics.keys())
 
@@ -51,17 +74,11 @@ class MultiClassEvaluator(EvaluatorBase):
         return metric_dataframe.drop(columns='Total Observations')
 
     @classmethod
-    def from_probabilities(cls, actual_classes, predicted_probabilities: pd.DataFrame):
-        """
-        # TODO document
-        chooses the class with the highest probability
-        :param actual_classes:
-        :param predicted_probabilities:
-        :return:
-        """
-        # TODO: extract 'strategy'?   i.e. predicted_probabilities.idxmax(axis=1)
-        predicted_classes = predicted_probabilities.idxmax(axis=1)
-        return MultiClassEvaluator(actual_classes=actual_classes, predicted_classes=np.array(predicted_classes))
+    def from_classes(cls, actual_classes: np.ndarray, predicted_classes: np.ndarray) -> 'MultiClassEvaluator':
+        # noinspection PyTypeChecker
+        return MultiClassEvaluator(converter=None,
+                                   actual_classes=actual_classes,
+                                   predicted_classes=predicted_classes)
 
     @property
     def matrix(self) -> pd.DataFrame:
@@ -77,7 +94,7 @@ class MultiClassEvaluator(EvaluatorBase):
 
     @property
     def no_information_rate(self):
-        return self.matrix.drop(index='Total')['Total'].max() / self._total_observations
+        return self._confusion_matrix.matrix.drop(index='Total')['Total'].max() / self._total_observations
 
     @property
     def metrics_per_class(self):
