@@ -3,10 +3,10 @@ import numpy as np
 from oolearning.enums.Metric import Metric
 from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
 from oolearning.evaluators.RegressionEvaluator import RegressionEvaluator
-from oolearning.evaluators.ScoreBase import ScoreBase, SupportsRegressionMixin
+from oolearning.evaluators.ScoreBase import ScoreBase
 
 
-class RmseScore(SupportsRegressionMixin, CostFunctionMixin, ScoreBase):
+class RmseScore(CostFunctionMixin, ScoreBase):
     @property
     def name(self) -> str:
         return Metric.ROOT_MEAN_SQUARE_ERROR.value

@@ -55,21 +55,6 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
             upper left corner (i.e. a perfect predictor). If a threshold is specified in the
             class constructor, then that threshold is also annotated on the graph.
         """
-        # from sklearn.metrics import roc_curve
-        # from sklearn.metrics import roc_auc_score
-        # fpr, tpr, thresholds = roc_curve(y_true=self._actual_classes, y_score=self._predicted_probabilities[self._positive_class])
-        # roc_auc = roc_auc_score(y_true=self._actual_classes, y_score=self._predicted_probabilities[self._positive_class])
-        # # Plot ROC curve
-        # import matplotlib.pyplot as plt
-        # plt.plot(fpr, tpr, label='ROC curve (area = %0.3f)' % roc_auc)
-        # plt.plot([0, 1], [0, 1], 'k--')  # random predictions curve
-        # plt.xlim([0.0, 1.0])
-        # plt.ylim([0.0, 1.0])
-        # plt.xlabel('False Positive Rate or (1 - Specifity)')
-        # plt.ylabel('True Positive Rate or (Sensitivity)')
-        # plt.title('Receiver Operating Characteristic')
-        # plt.legend(loc="lower right")
-
         if self._fpr is None or self._tpr is None or self._ideal_threshold_roc is None:
             converter = TwoClassRocOptimizerConverter(actual_classes=self._actual_classes)
             converter.convert(predicted_probabilities=self._predicted_probabilities,

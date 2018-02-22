@@ -30,6 +30,15 @@ class TwoClassEvaluator(EvaluatorBase):
                                                          predicted_classes=predicted_values,
                                                          positive_class=self._positive_class)
 
+    @classmethod
+    def from_classes(cls,
+                     actual_classes: np.ndarray,
+                     predicted_classes: np.ndarray,
+                     positive_class) -> 'TwoClassEvaluator':
+        evaluator = TwoClassEvaluator(positive_class=positive_class)
+        evaluator.evaluate(actual_values=actual_classes, predicted_values=predicted_classes)
+        return evaluator
+
     @property
     def confusion_matrix(self) -> TwoClassConfusionMatrix:
         return self._confusion_matrix.matrix

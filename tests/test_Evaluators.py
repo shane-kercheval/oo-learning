@@ -1,12 +1,11 @@
 import os
 from math import isclose
-from sklearn.metrics import accuracy_score, recall_score, f1_score, precision_score, cohen_kappa_score, \
-    mean_squared_error, mean_absolute_error, roc_auc_score
-from typing import Tuple
 
 import dill as pickle
 import numpy as np
 import pandas as pd
+from sklearn.metrics import accuracy_score, recall_score, f1_score, precision_score, cohen_kappa_score, \
+    mean_squared_error, mean_absolute_error, roc_auc_score
 
 from oolearning import *
 from oolearning.evaluators.TwoClassConfusionMatrix import TwoClassConfusionMatrix
@@ -21,64 +20,6 @@ class EvaluatorTests(TimerTestCase):
     def setUpClass(cls):
         pass
 
-    def test_BaseClass(self):
-        predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
-        actual = np.array([6, 10, 14, 16, 7, 5, 5, 13, 12, 13, 8, 5])
-        rmse_eval = RmseScore()
-        accuracy = rmse_eval.calculate(actual_values=actual, predicted_values=predicted)
-        assert accuracy == 2.9154759474226504
-        # should not be able to call calculate twice on same object (could indicate some sort of reuse error)
-        self.assertRaises(AssertionError,
-                          lambda: rmse_eval.calculate(actual_values=actual, predicted_values=predicted))
-
-        assert isinstance(rmse_eval, CostFunctionMixin)
-
-    def test_RmseEvaluator(self):
-        predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
-        actual = np.array([6, 10, 14, 16, 7, 5, 5, 13, 12, 13, 8, 5])
-        rmse_eval = RmseScore()
-        assert isinstance(rmse_eval, CostFunctionMixin)
-        assert isinstance(rmse_eval, ScoreBase)
-        assert rmse_eval.name == Metric.ROOT_MEAN_SQUARE_ERROR.value
-        rmse_eval.calculate(actual_values=actual, predicted_values=predicted)
-        assert isclose(np.sqrt(mean_squared_error(y_true=actual, y_pred=predicted)), rmse_eval.value)
-
-        ######################################################################################################
-        # Test sorting
-        ######################################################################################################
-        rmse_other = RmseScore()
-        rmse_other.calculate(actual_values=actual - 1, predicted_values=predicted + 1)  # create more spread
-        assert isclose(rmse_other.value, 3.5355339059327378)  # "worse"
-        eval_list = [rmse_other, rmse_eval]  # "worse, better"
-        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
-                                                  [3.5355339059327378, 2.9154759474226504])])
-        eval_list.sort()  # "better, worse"
-        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
-                                                  [2.9154759474226504, 3.5355339059327378])])
-
-    def test_MaeEvaluator(self):
-        predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
-        actual = np.array([6, 10, 14, 16, 7, 5, 5, 13, 12, 13, 8, 5])
-        mae_eval = MaeScore()
-        assert isinstance(mae_eval, CostFunctionMixin)
-        assert isinstance(mae_eval, ScoreBase)
-        assert mae_eval.name == Metric.MEAN_ABSOLUTE_ERROR.value
-        mae_eval.calculate(actual_values=actual, predicted_values=predicted)
-        assert isclose(mean_absolute_error(y_true=actual, y_pred=predicted), mae_eval.value)
-
-        ######################################################################################################
-        # Test sorting
-        ######################################################################################################
-        rmse_other = RmseScore()
-        rmse_other.calculate(actual_values=actual - 1, predicted_values=predicted + 1)  # create more spread
-        assert isclose(rmse_other.value, 3.5355339059327378)  # "worse"
-
-        eval_list = [rmse_other, mae_eval]  # "worse, better"
-        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
-                                                  [3.5355339059327378, 2.3333333333333335])])
-        eval_list.sort()  # "better, worse"
-        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
-                                                  [2.3333333333333335, 3.5355339059327378])])
 
     def test_ConfusionMatrix_creations_result_in_same_confusion_matrix(self):
         true_positives = 21
@@ -297,6 +238,10 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator.value == evaluator.confusion_matrix.accuracy
         assert evaluator.threshold is None
 
+    def test_TwoClassEvaluator_from_classes(self):
+        # TODO:
+        pass
+
     def test_TwoClassEvaluator_probabilities_custom_threshold(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
 
@@ -399,176 +344,6 @@ class EvaluatorTests(TimerTestCase):
 
         TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_probabilities_no_thr_ppv_tpr.png',  # noqa
                               lambda: evaluator.get_ppv_tpr_curve())
-
-    def test_AucEvaluator(self):
-        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
-
-        predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
-        predictions_mock.columns = [1, 0]
-
-        # noinspection PyTypeChecker
-        evaluator = AucScore(positive_category=1,
-                             negative_category=0,
-                             use_probabilities=True,
-                             threshold=None)
-        assert isinstance(evaluator, UtilityFunctionMixin)
-        assert isinstance(evaluator, ScoreBase)
-
-        evaluator.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isinstance(evaluator.confusion_matrix, TwoClassEvaluator)
-        assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
-        assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
-        assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
-        assert evaluator.value == evaluator.auc
-        assert isclose(evaluator.threshold, 0.41)
-        assert isclose(evaluator.auc, roc_auc_score(y_true=mock_data.actual, y_score=mock_data.pos_probabilities))  # noqa
-        ######################################################################################################
-        # Test sorting
-        ######################################################################################################
-        evaluator_other = AucScore(positive_category=0,
-                                   negative_category=1,
-                                   use_probabilities=True,
-                                   threshold=0.5)  # creates worse value
-        accuracy = evaluator_other.calculate(actual_values=mock_data.actual,
-                                             predicted_values=predictions_mock)
-        assert isclose(accuracy, roc_auc_score(y_true=mock_data.actual, y_score=mock_data.neg_probabilities))
-
-        eval_list = [evaluator_other, evaluator]  # "worse, better"
-        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
-                                                  [0.25571324007807417, 0.74428675992192583])])
-        eval_list.sort()  # "better, worse"
-        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
-                                                  [0.74428675992192583, 0.25571324007807417])])
-
-    def test_KappaEvaluator(self):
-        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
-
-        predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
-        predictions_mock.columns = [1, 0]
-        ######################################################################################################
-        # NOTE: because we are setting `threshold=None`, it means the threshold will be calculated, which
-        # will change the values of the kappa/f1/etc. from the default threshold of 0.5; but, e.g. the AUC
-        # will not change
-        ######################################################################################################
-        evaluator = KappaScore(positive_category=1,
-                               negative_category=0,
-                               use_probabilities=True,
-                               threshold=None)
-        assert isinstance(evaluator, UtilityFunctionMixin)
-        assert isinstance(evaluator, ScoreBase)
-
-        accuracy = evaluator.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isclose(accuracy, 0.37990215607221967)  # will be different Kappa than sklearn, from threshold
-        assert isinstance(evaluator.confusion_matrix, TwoClassEvaluator)
-        assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
-        assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
-        assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
-        assert evaluator.value == evaluator.confusion_matrix.kappa
-        assert isclose(evaluator.threshold, 0.41)
-        assert isclose(evaluator.auc, roc_auc_score(y_true=mock_data.actual, y_score=mock_data.pos_probabilities))  # noqa
-
-        ######################################################################################################
-        # Test sorting
-        ######################################################################################################
-        evaluator_other = KappaScore(positive_category=0,
-                                     negative_category=1,
-                                     use_probabilities=True,
-                                     threshold=0.5)  # creates worse value
-        accuracy = evaluator_other.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isclose(accuracy, cohen_kappa_score(y1=mock_data.actual, y2=mock_data.predictions))
-
-        eval_list = [evaluator_other, evaluator]  # "worse, better"
-        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
-                                                  [0.34756903797404387, 0.37990215607221967])])
-        eval_list.sort()  # "better, worse"
-        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
-                                                  [0.37990215607221967, 0.34756903797404387])])
-
-    def test_F1Evaluator(self):
-        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
-
-        predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
-        predictions_mock.columns = [1, 0]
-
-        ######################################################################################################
-        # NOTE: because we are setting `threshold=None`, it means the threshold will be calculated, which
-        # will change the values of the kappa/f1/etc. from the default threshold of 0.5; but, e.g. the AUC
-        # will not change
-        ######################################################################################################
-        evaluator = F1Score(positive_category=1,
-                            negative_category=0,
-                            use_probabilities=True,
-                            threshold=None)
-        assert isinstance(evaluator, UtilityFunctionMixin)
-        assert isinstance(evaluator, ScoreBase)
-
-        accuracy = evaluator.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isclose(accuracy, 0.6472491909385113)  # will be different Kappa than sklearn, from threshold
-        assert isinstance(evaluator.confusion_matrix, TwoClassEvaluator)
-        assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
-        assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
-        assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
-        assert evaluator.value == evaluator.confusion_matrix.f1_score
-        assert isclose(evaluator.threshold, 0.41)
-        assert isclose(evaluator.auc, roc_auc_score(y_true=mock_data.actual, y_score=mock_data.pos_probabilities))  # noqa
-
-        ######################################################################################################
-        # Test sorting
-        ######################################################################################################
-        evaluator_other = F1Score(positive_category=0,
-                                  negative_category=1,
-                                  use_probabilities=True,
-                                  threshold=0.5)  # creates worse value
-        accuracy = evaluator_other.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isclose(accuracy, f1_score(y_true=mock_data.actual, y_pred=mock_data.predictions,  pos_label=0))  # noqa
-
-        eval_list = [evaluator, evaluator_other]  # "worse, better"
-        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
-                                                  [0.6472491909385113, 0.7618002195389681])])
-        eval_list.sort()  # "better, worse"
-        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
-                                                  [0.7618002195389681, 0.6472491909385113])])
-
-    def test_Misc_evaluators(self):
-        """
-        For example, these holdout_evaluators might be already tested in another class (e.g. Sensitivity is
-            tested via TwoClassEvaluator), but we want to verify we can instantiate and use.
-        """
-        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
-
-        predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
-        predictions_mock.columns = [1, 0]
-        ######################################################################################################
-        evaluator = SensitivityScore(positive_category=1,
-                                     negative_category=0,
-                                     use_probabilities=True,
-                                     threshold=0.5)  # creates worse value
-        assert isinstance(evaluator, UtilityFunctionMixin)
-        assert isinstance(evaluator, ScoreBase)
-        accuracy = evaluator.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isclose(accuracy, recall_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
-        assert isclose(evaluator.value, recall_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
-        ######################################################################################################
-        evaluator = SpecificityScore(positive_category=1,
-                                     negative_category=0,
-                                     use_probabilities=True,
-                                     threshold=0.5)  # creates worse value
-        assert isinstance(evaluator, UtilityFunctionMixin)
-        assert isinstance(evaluator, ScoreBase)
-        accuracy = evaluator.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isclose(accuracy, 1 - evaluator.confusion_matrix.false_positive_rate)
-        assert isclose(evaluator.value, 1 - evaluator.confusion_matrix.false_positive_rate)
-        ######################################################################################################
-        evaluator = AccuracyScore(positive_category=1,
-                                  negative_category=0,
-                                  use_probabilities=True,
-                                  threshold=0.5)
-        assert isinstance(evaluator, UtilityFunctionMixin)
-        assert isinstance(evaluator, ScoreBase)
-        accuracy = evaluator.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isclose(accuracy, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
-        assert isclose(evaluator.value, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
-
     # noinspection SpellCheckingInspection
     # noinspection PyTypeChecker
     def test_ConfusionMatrix_MultiClass(self):
