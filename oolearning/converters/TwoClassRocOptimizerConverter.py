@@ -15,7 +15,8 @@ class TwoClassRocOptimizerConverter(TwoClassConverterBase):
         distance to the upper left corner of an ROC curve.
     """
 
-    def __init__(self, actual_classes):
+    def __init__(self, positive_class, actual_classes):
+        super().__init__(positive_class=positive_class)
         self._ideal_threshold = None
         self._false_positive_rates = None
         self._true_positive_rates = None
@@ -33,16 +34,14 @@ class TwoClassRocOptimizerConverter(TwoClassConverterBase):
     def true_positive_rates(self) -> np.ndarray:
         return self._true_positive_rates
 
-    def convert(self,
-                predicted_probabilities: pd.DataFrame,
-                positive_class: object) -> np.ndarray:
+    def convert(self, values: pd.DataFrame) -> np.ndarray:
         self._false_positive_rates, self._true_positive_rates, self._ideal_threshold = \
             self._calculate_fpr_tpr_ideal_threshold(potential_cutoff_values=np.arange(0.0, 1.01, 0.01),
                                                     actual_classes=self._actual_classes,
-                                                    predicted_probabilities=predicted_probabilities,
-                                                    positive_class=positive_class)
-        return TwoClassThresholdConverter(threshold=self._ideal_threshold).convert(predicted_probabilities=predicted_probabilities,  # noqa
-                                                                                   positive_class=positive_class)  # noqa
+                                                    predicted_probabilities=values,
+                                                    positive_class=self.positive_class)
+        return TwoClassThresholdConverter(threshold=self._ideal_threshold,
+                                          positive_class=self.positive_class).convert(values=values)
 
     @staticmethod
     def _calculate_fpr_tpr_ideal_threshold(potential_cutoff_values: np.ndarray,
@@ -57,9 +56,8 @@ class TwoClassRocOptimizerConverter(TwoClassConverterBase):
             upper left point (i.e. a perfect predictor)
         """
         def get_fpr_tpr(threshold):
-            converter = TwoClassThresholdConverter(threshold)
-            converted_classes = converter.convert(predicted_probabilities=predicted_probabilities,
-                                                  positive_class=positive_class)
+            converter = TwoClassThresholdConverter(threshold=threshold, positive_class=positive_class)
+            converted_classes = converter.convert(values=predicted_probabilities)
             matrix = TwoClassConfusionMatrix(actual_classes=actual_classes,
                                              predicted_classes=converted_classes,
                                              positive_class=positive_class)

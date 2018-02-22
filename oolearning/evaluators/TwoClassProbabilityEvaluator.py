@@ -17,9 +17,8 @@ from oolearning.evaluators.TwoClassEvaluator import TwoClassEvaluator
 
 class TwoClassProbabilityEvaluator(TwoClassEvaluator):
     def __init__(self,
-                 converter: TwoClassConverterBase,
-                 positive_class: object):
-        super().__init__(positive_class=positive_class)
+                 converter: TwoClassConverterBase):
+        super().__init__(positive_class=converter.positive_class)
         self._converter = converter
         self._actual_classes = None
         self._predicted_probabilities = None
@@ -44,8 +43,7 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         self._auc = roc_auc_score(y_true=[1 if x == self._positive_class else 0 for x in actual_values],
                                   y_score=predicted_values[self._positive_class])
 
-        predicted_classes = self._converter.convert(predicted_probabilities=predicted_values,
-                                                    positive_class=self._positive_class)
+        predicted_classes = self._converter.convert(values=predicted_values)
 
         super().evaluate(actual_values=actual_values, predicted_values=predicted_classes)
 
@@ -56,9 +54,9 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
             class constructor, then that threshold is also annotated on the graph.
         """
         if self._fpr is None or self._tpr is None or self._ideal_threshold_roc is None:
-            converter = TwoClassRocOptimizerConverter(actual_classes=self._actual_classes)
-            converter.convert(predicted_probabilities=self._predicted_probabilities,
-                              positive_class=self._positive_class)
+            converter = TwoClassRocOptimizerConverter(actual_classes=self._actual_classes,
+                                                      positive_class=self._converter.positive_class)
+            converter.convert(values=self._predicted_probabilities)
             self._fpr = converter.false_positive_rates
             self._tpr = converter.true_positive_rates
             self._ideal_threshold_roc = converter.ideal_threshold
@@ -83,9 +81,9 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         # TODO
         """
         if self._ppv is None or self._tpr is None or self._ideal_threshold_ppv_tpr is None:
-            converter = TwoClassPrecisionRecallOptimizerConverter(actual_classes=self._actual_classes)
-            converter.convert(predicted_probabilities=self._predicted_probabilities,
-                              positive_class=self._positive_class)
+            converter = TwoClassPrecisionRecallOptimizerConverter(actual_classes=self._actual_classes,
+                                                                  positive_class=self._converter.positive_class)  # noqa
+            converter.convert(values=self._predicted_probabilities)
             self._ppv = converter.positive_predictive_values
             self._tpr = converter.true_positive_rates
             self._ideal_threshold_ppv_tpr = converter.ideal_threshold

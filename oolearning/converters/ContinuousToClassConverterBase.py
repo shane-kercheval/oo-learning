@@ -6,5 +6,5 @@ import pandas as pd
 
 class ContinuousToClassConverterBase(metaclass=ABCMeta):
     @abstractmethod
-    def convert(self, values: pd.DataFrame, **kwargs) -> np.ndarray:
+    def convert(self, values: pd.DataFrame) -> np.ndarray:
         pass

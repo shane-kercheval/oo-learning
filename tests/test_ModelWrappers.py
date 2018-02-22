@@ -658,8 +658,7 @@ class ModelWrapperTests(TimerTestCase):
                                  model_transformations=transformations,
                                  splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                                  evaluator=TwoClassProbabilityEvaluator(
-                                     converter=TwoClassThresholdConverter(threshold=0.5),
-                                     positive_class=1))  # noqa
+                                     converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))  # noqa
             fitter.fit(data=data, target_variable='Survived')
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
@@ -714,8 +713,8 @@ class ModelWrapperTests(TimerTestCase):
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=TwoClassProbabilityEvaluator(
-                                 converter=TwoClassThresholdConverter(threshold=0.5),
-                                 positive_class=positive_class))  # noqa
+                                 converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=positive_class)))
         fitter.fit(data=data, target_variable='Survived')
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
@@ -874,8 +873,8 @@ class ModelWrapperTests(TimerTestCase):
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=TwoClassProbabilityEvaluator(
-                                 converter=TwoClassThresholdConverter(threshold=0.5),
-                                 positive_class=1),
+                                 converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=1)),
                              persistence_manager=LocalCacheManager(cache_directory=cache_directory))
 
         assert fitter._persistence_manager._cache_directory == cache_directory
@@ -923,8 +922,8 @@ class ModelWrapperTests(TimerTestCase):
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=TwoClassProbabilityEvaluator(
-                                 converter=TwoClassThresholdConverter(threshold=0.5),
-                                 positive_class=1),
+                                 converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=1)),
                              persistence_manager=LocalCacheManager(cache_directory=cache_directory))
 
         assert fitter._persistence_manager._cache_directory == cache_directory
@@ -978,8 +977,8 @@ class ModelWrapperTests(TimerTestCase):
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=TwoClassProbabilityEvaluator(
-                                 converter=TwoClassThresholdConverter(threshold=0.5),
-                                 positive_class=positive_class))
+                                 converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=positive_class)))
 
         fitter.fit(data=data, target_variable='Survived', hyper_params=RandomForestHP(criterion='gini'))
 

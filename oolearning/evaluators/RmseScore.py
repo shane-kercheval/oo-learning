@@ -12,5 +12,5 @@ class RmseScore(CostFunctionMixin, ScoreBase):
         return Metric.ROOT_MEAN_SQUARE_ERROR.value
 
     def _calculate(self, actual_values: np.ndarray, predicted_values: np.ndarray) -> float:
-        return RegressionEvaluator().evaluate(actual_values=actual_values, predicted_values=predicted_values)\
-            .root_mean_squared_error
+        return RegressionEvaluator().evaluate(actual_values=actual_values,
+                                              predicted_values=predicted_values).root_mean_squared_error

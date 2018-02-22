@@ -11,9 +11,8 @@ from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
 
 class SensitivityScore(UtilityFunctionMixin, ScoreBase):
-    def __init__(self, positive_class: object, converter: TwoClassConverterBase):
+    def __init__(self, converter: TwoClassConverterBase):
         super().__init__()
-        self._positive_class = positive_class
         self._converter = converter
 
     @property
@@ -23,9 +22,9 @@ class SensitivityScore(UtilityFunctionMixin, ScoreBase):
     def _calculate(self,
                    actual_values: np.ndarray,
                    predicted_values: Union[np.ndarray, pd.DataFrame]) -> float:
-        predicted_classes = self._converter.convert(predicted_probabilities=predicted_values,
-                                                    positive_class=self._positive_class)
+        predicted_classes = self._converter.convert(values=predicted_values)
 
         return TwoClassEvaluator.from_classes(actual_classes=actual_values,
                                               predicted_classes=predicted_classes,
-                                              positive_class=self._positive_class).true_positive_rate
+                                              positive_class=self._converter.positive_class).\
+            true_positive_rate

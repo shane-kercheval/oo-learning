@@ -13,5 +13,5 @@ class MaeScore(CostFunctionMixin, ScoreBase):
 
     def _calculate(self, actual_values: np.ndarray, predicted_values: np.ndarray) -> float:
         # noinspection PyTypeChecker
-        return RegressionEvaluator().evaluate(actual_values=actual_values, predicted_values=predicted_values)\
-            .mean_absolute_error
+        return RegressionEvaluator().evaluate(actual_values=actual_values,
+                                              predicted_values=predicted_values).mean_absolute_error

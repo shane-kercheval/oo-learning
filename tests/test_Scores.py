@@ -110,7 +110,7 @@ class EvaluatorTests(TimerTestCase):
         predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
         predictions_mock.columns = [1, 0]
 
-        score = KappaScore(positive_class=1, converter=TwoClassThresholdConverter(threshold=0.41))
+        score = KappaScore(converter=TwoClassThresholdConverter(threshold=0.41, positive_class=1))
         assert isinstance(score, UtilityFunctionMixin)
         assert isinstance(score, ScoreBase)
 
@@ -121,9 +121,9 @@ class EvaluatorTests(TimerTestCase):
         # Test sorting
         ######################################################################################################
         # creates worse value
-        score_other = KappaScore(positive_class=1, converter=TwoClassThresholdConverter(threshold=0.5))
-        score_other.calculate(actual_values=mock_data.actual,
-                              predicted_values=predictions_mock)
+        score_other = KappaScore(converter=HighestValueConverter())  # same as threshold of 0.5
+        # score_other = KappaScore(converter=TwoClassThresholdConverter(threshold=0.5))
+        score_other.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
         assert isclose(score_other.value, cohen_kappa_score(y1=mock_data.actual, y2=mock_data.predictions))
 
         eval_list = [score_other, score]  # "worse, better"
@@ -138,7 +138,7 @@ class EvaluatorTests(TimerTestCase):
         predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
         predictions_mock.columns = [1, 0]
 
-        score = F1Score(positive_class=1, converter=TwoClassThresholdConverter(threshold=0.41))
+        score = F1Score(converter=TwoClassThresholdConverter(threshold=0.41, positive_class=1))
         assert isinstance(score, UtilityFunctionMixin)
         assert isinstance(score, ScoreBase)
         score.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
@@ -147,7 +147,8 @@ class EvaluatorTests(TimerTestCase):
         ######################################################################################################
         # Test sorting
         ######################################################################################################
-        score_other = F1Score(positive_class=1, converter=TwoClassThresholdConverter(threshold=0.5))
+        score_other = F1Score(converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                   positive_class=1))
         score_other.calculate(actual_values=mock_data.actual,
                               predicted_values=predictions_mock)
         assert isclose(score_other.value, f1_score(y_true=mock_data.actual, y_pred=mock_data.predictions,  pos_label=1))  # noqa
@@ -159,6 +160,33 @@ class EvaluatorTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [0.6472491909385113, 0.5802707930367504])])
 
+    def test_ErrorRate(self):
+        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
+        predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
+        predictions_mock.columns = [1, 0]
+
+        score = ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.41, positive_class=1))
+        assert isinstance(score, CostFunctionMixin)
+        assert isinstance(score, ScoreBase)
+        score.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
+        assert isclose(score.value, 0.30532212885154064)
+
+        ######################################################################################################
+        # Test sorting
+        ######################################################################################################
+        score_other = ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                          positive_class=1))
+        score_other.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
+        assert isclose(score_other.value, 1 - 0.696078431372549)
+
+        eval_list = [score, score_other]  # "worse, better"
+        # lower error is better
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [0.30532212885154064, 0.303921568627451])])
+        eval_list.sort()  # "better, worse"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [0.303921568627451, 0.30532212885154064])])
+
     def test_Misc_scores(self):
         """
         For example, these holdout_evaluators might be already tested in another class (e.g. Sensitivity is
@@ -168,31 +196,47 @@ class EvaluatorTests(TimerTestCase):
         predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
         predictions_mock.columns = [1, 0]
         ######################################################################################################
-        score = SensitivityScore(positive_class=1, converter=TwoClassThresholdConverter(threshold=0.5))
+        score = SensitivityScore(converter=TwoClassThresholdConverter(positive_class=1, threshold=0.5))
         assert isinstance(score, UtilityFunctionMixin)
         assert isinstance(score, ScoreBase)
         accuracy = score.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
         assert isclose(accuracy, recall_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
         assert isclose(score.value, recall_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
         ######################################################################################################
-        score = SpecificityScore(positive_class=1, converter=TwoClassThresholdConverter(threshold=0.5))
+        score = SpecificityScore(converter=TwoClassThresholdConverter(positive_class=1, threshold=0.5))
         assert isinstance(score, UtilityFunctionMixin)
         assert isinstance(score, ScoreBase)
         accuracy = score.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
         assert isclose(accuracy, 0.8183962264150944)
         assert isclose(score.value, 0.8183962264150944)
         ######################################################################################################
-        score = AccuracyScore(positive_class=1, converter=TwoClassThresholdConverter(threshold=0.5))
+        score = AccuracyScore(converter=TwoClassThresholdConverter(positive_class=1, threshold=0.5))
         assert isinstance(score, UtilityFunctionMixin)
         assert isinstance(score, ScoreBase)
         accuracy = score.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
         assert isclose(accuracy, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
         assert isclose(score.value, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
 
+    def test_KappaScore_multi_class(self):
+        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_MultiClass_predictions.csv')))  # noqa
 
+        score = KappaScore(converter=HighestValueConverter())
+        assert isinstance(score, UtilityFunctionMixin)
+        assert isinstance(score, ScoreBase)
 
-#### TODO ADD MULT-CLASS SCORES
-# Kappa
-# Accuracy
-# Average Sensitivity?
-# TODO for scores like Kappa, will need to refactor to make it so positive_class is optional, then do check if only two unique classes
+        # noinspection SpellCheckingInspection
+        score.calculate(actual_values=mock_data.actual,
+                        predicted_values=mock_data[['setosa', 'versicolor', 'virginica']])
+        assert isclose(score.value, cohen_kappa_score(y1=mock_data.actual, y2=mock_data.predicted_classes))
+
+    def test_Accuracy_multi_class(self):
+        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_MultiClass_predictions.csv')))  # noqa
+
+        score = AccuracyScore(converter=HighestValueConverter())
+        assert isinstance(score, UtilityFunctionMixin)
+        assert isinstance(score, ScoreBase)
+
+        # noinspection SpellCheckingInspection
+        score.calculate(actual_values=mock_data.actual,
+                        predicted_values=mock_data[['setosa', 'versicolor', 'virginica']])
+        assert isclose(score.value, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predicted_classes))  # noqa

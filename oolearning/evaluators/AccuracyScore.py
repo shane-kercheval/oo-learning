@@ -2,18 +2,17 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
+from sklearn.metrics import accuracy_score
 
-from oolearning.evaluators.ScoreBase import ScoreBase
-from oolearning.converters.TwoClassConverterBase import TwoClassConverterBase
+from oolearning.converters.ContinuousToClassConverterBase import ContinuousToClassConverterBase
 from oolearning.enums.Metric import Metric
-from oolearning.evaluators.TwoClassEvaluator import TwoClassEvaluator
+from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
 
 class AccuracyScore(UtilityFunctionMixin, ScoreBase):
-    def __init__(self, positive_class: object, converter: TwoClassConverterBase):
+    def __init__(self, converter: ContinuousToClassConverterBase):
         super().__init__()
-        self._positive_class = positive_class
         self._converter = converter
 
     @property
@@ -23,9 +22,5 @@ class AccuracyScore(UtilityFunctionMixin, ScoreBase):
     def _calculate(self,
                    actual_values: np.ndarray,
                    predicted_values: Union[np.ndarray, pd.DataFrame]) -> float:
-        predicted_classes = self._converter.convert(predicted_probabilities=predicted_values,
-                                                    positive_class=self._positive_class)
-
-        return TwoClassEvaluator.from_classes(actual_classes=actual_values,
-                                              predicted_classes=predicted_classes,
-                                              positive_class=self._positive_class).accuracy
+        predicted_classes = self._converter.convert(values=predicted_values)
+        return accuracy_score(y_true=actual_values, y_pred=predicted_classes)
