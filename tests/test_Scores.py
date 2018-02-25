@@ -189,7 +189,7 @@ class EvaluatorTests(TimerTestCase):
 
     def test_Misc_scores(self):
         """
-        For example, these holdout_evaluators might be already tested in another class (e.g. Sensitivity is
+        For example, these holdout_scores might be already tested in another class (e.g. Sensitivity is
             tested via TwoClassEvaluator), but we want to verify we can instantiate and use.
         """
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa

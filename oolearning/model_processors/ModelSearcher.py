@@ -58,7 +58,7 @@ class ModelSearcher:
         self._results = None
         self._persistence_manager = persistence_manager
 
-    def search(self, data_x: pd.DataFrame, data_y: np.ndarray):
+    def search(self, data: pd.DataFrame, target_variable: str):
         # split the data into training and holdout data
         # for each model, run a ModelTuner using the resampler_function, creating copies of shit when
         # necessary store each of the TuningResults for each model. Take the best hyper params (if the model
@@ -66,23 +66,21 @@ class ModelSearcher:
         # even if no hyper-params), and then get the holdout set value. We will want to track the
         # mean/st_dev resampling value vs the holdout value.
 
-
         # we don't need the holdout data.. we will send the data to the ModelFitter which will use the same
         # splitter and will use the training/holdout data appropriately
         # so, we will only get the training data, use that with the tuner, then the tuner's best model, refit
         # the entire training set with the specific model/hyper-params (same training set is used under the
         # hood in the ModelFitter because we pass the same splitter), and then will evaluate on holdout set
         # which the tuner did not see
+        data_x = data.drop(columns=target_variable)
+        data_y = data[target_variable]
+
         training_indexes, _ = self._splitter.split(target_values=data_y)
 
         # pre-transformed training/holdout sets
         train_data_x_not_transformed = data_x.iloc[training_indexes]
         train_data_y = data_y[training_indexes]
         assert len(train_data_x_not_transformed) == len(train_data_y)
-
-        #holdout_data_x_not_transformed = data_x.iloc[holdout_indexes]
-        #holdout_data_y = data_y[holdout_indexes]
-        #assert len(holdout_data_x_not_transformed) == len(holdout_data_y)
 
         tuner_results = list()
         holdout_scores = list()
@@ -147,9 +145,9 @@ class ModelSearcher:
                 local_model_params_object.update_dict(tuner.results.best_hyper_params)
 
             # re-fit on entire training set using the best hyper_params.
-            local_model.fit(data_x=train_data_x_not_transformed,
-                            data_y=train_data_y,
-                            hyper_params=local_model_params_object)
+            fitter.fit(data=data,
+                       target_variable=target_variable,
+                       hyper_params=local_model_params_object)
 
             # get the best model
             holdout_scores.append(fitter.holdout_scores)
@@ -157,7 +155,7 @@ class ModelSearcher:
         self._results = SearcherResults(model_descriptions=self._model_descriptions,
                                         model_names=[type(x).__name__ for x in self._models],
                                         tuner_results=tuner_results,
-                                        holdout_evaluators=holdout_scores)
+                                        holdout_scores=holdout_scores)
 
     @property
     def results(self) -> SearcherResults:
