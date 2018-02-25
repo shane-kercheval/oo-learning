@@ -42,7 +42,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                   data_y: np.ndarray,
                   hyper_params: HyperParamsBase = None) -> ResamplerResults:
 
-        result_evaluators = list()  # list of all the `evaluated` holdout_evaluators
+        result_scores = list()  # list of all the `evaluated` holdout scores
         for repeat_index in range(self._repeats):
             # consistent folds per repeat index
             np.random.seed(repeat_index)
@@ -69,17 +69,17 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                     model_copy.set_persistence_manager(persistence_manager=self._persistence_manager)
 
                 model_copy.train(data_x=train_x, data_y=train_y, hyper_params=hyper_params)
-                fold_evaluators = list()
-                for evaluator in self._scores:
-                    evaluator_copy = evaluator.clone()  # need to reuse this object type for each fold/repeat
-                    evaluator_copy.calculate(actual_values=test_y,
-                                             predicted_values=model_copy.predict(data_x=test_x))
-                    fold_evaluators.append(evaluator_copy)
-                result_evaluators.append(fold_evaluators)
-        # result_evaluators is a list of list of holdout_evaluators.
+                fold_scores = list()
+                for score in self._scores:
+                    score_copy = score.clone()  # need to reuse this object type for each fold/repeat
+                    score_copy.calculate(actual_values=test_y,
+                                         predicted_values=model_copy.predict(data_x=test_x))
+                    fold_scores.append(score_copy)
+                result_scores.append(fold_scores)
+        # result_scores is a list of list of holdout scores.
         # Each outer list represents a resampling result
-        # and each element of the inner list represents a specific evaluator.
-        return ResamplerResults(evaluators=result_evaluators)
+        # and each element of the inner list represents a specific score.
+        return ResamplerResults(scores=result_scores)
 
     @staticmethod
     def build_cache_key(model: ModelWrapperBase,

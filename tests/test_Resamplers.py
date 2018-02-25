@@ -44,11 +44,11 @@ class ResamplerTests(TimerTestCase):
         self.assertRaises(ModelNotFittedError, lambda: resampler.results)
 
         resampler.resample(data_x=train_data, data_y=train_data_y)
-        assert len(resampler.results._evaluators) == 25
+        assert len(resampler.results._scores) == 25
         assert all([len(x) == 2 and
                     isinstance(x[0], RmseScore) and
                     isinstance(x[1], MaeScore)
-                    for x in resampler.results._evaluators])
+                    for x in resampler.results._scores])
         assert resampler.results.num_resamples == 25
         assert resampler.results.metrics == ['RMSE', 'MAE']
         assert isclose(resampler.results.metric_means['RMSE'], 10.459344010622544)
@@ -91,11 +91,11 @@ class ResamplerTests(TimerTestCase):
         self.assertRaises(ModelNotFittedError, lambda: resampler.results)
 
         resampler.resample(data_x=train_data, data_y=train_data_y)
-        assert len(resampler.results._evaluators) == 25
+        assert len(resampler.results._scores) == 25
         assert all([len(x) == 2 and
                     isinstance(x[0], RmseScore) and
                     isinstance(x[1], MaeScore)
-                    for x in resampler.results._evaluators])
+                    for x in resampler.results._scores])
         assert resampler.results.num_resamples == 25
         assert resampler.results.metrics == ['RMSE', 'MAE']
         assert isclose(resampler.results.metric_means['RMSE'], 23.776598887994158)
@@ -110,25 +110,17 @@ class ResamplerTests(TimerTestCase):
 
         # main reason we want to split the data is to get the means/st_devs so that we can confirm with
         # e.g. the Searcher
-        splitter = ClassificationStratifiedDataSplitter(test_ratio=0.25)
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
         training_indexes, test_indexes = splitter.split(target_values=data.Survived)
 
         train_data = data.iloc[training_indexes]
         train_data_y = train_data.Survived
         train_data = train_data.drop(columns='Survived')
 
-        evaluator_list = [KappaScore(positive_category=1,
-                                     negative_category=0,
-                                     threshold=0.5),
-                          SensitivityScore(positive_category=1,
-                                           negative_category=0,
-                                           threshold=0.5),
-                          SpecificityScore(positive_category=1,
-                                           negative_category=0,
-                                           threshold=0.5),
-                          ErrorRateScore(positive_category=1,
-                                         negative_category=0,
-                                         threshold=0.5)]
+        evaluator_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                          SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
 
         resampler = RepeatedCrossValidationResampler(
             model=MockClassificationModelWrapper(data_y=data.Survived),
@@ -140,13 +132,13 @@ class ResamplerTests(TimerTestCase):
         self.assertRaises(ModelNotFittedError, lambda: resampler.results)
 
         resampler.resample(data_x=train_data, data_y=train_data_y)
-        assert len(resampler.results._evaluators) == 25
+        assert len(resampler.results._scores) == 25
         assert all([len(x) == 4 and
                     isinstance(x[0], KappaScore) and
                     isinstance(x[1], SensitivityScore) and
                     isinstance(x[2], SpecificityScore) and
                     isinstance(x[3], ErrorRateScore)
-                    for x in resampler.results._evaluators])
+                    for x in resampler.results._scores])
         assert resampler.results.num_resamples == 25
         assert resampler.results.metrics == ['kappa', 'sensitivity', 'specificity', 'ErrorRate']
         assert isclose(resampler.results.metric_means['kappa'], 0.0013793651663756446)
@@ -255,7 +247,7 @@ class ResamplerTests(TimerTestCase):
 
         # main reason we want to split the data is to get the means/st_devs so that we can confirm with
         # e.g. the Searcher
-        splitter = ClassificationStratifiedDataSplitter(test_ratio=0.25)
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
         training_indexes, test_indexes = splitter.split(target_values=data.Survived)
 
         train_data = data.iloc[training_indexes]
@@ -268,10 +260,10 @@ class ResamplerTests(TimerTestCase):
                            ImputationTransformer(),
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
-        evaluator_list = [KappaScore(positive_category=1, negative_category=0, threshold=0.5),
-                          SensitivityScore(positive_category=1, negative_category=0, threshold=0.5),
-                          SpecificityScore(positive_category=1, negative_category=0, threshold=0.5),
-                          ErrorRateScore(positive_category=1, negative_category=0, threshold=0.5)]
+        evaluator_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                          SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
 
         cache_directory = TestHelper.ensure_test_directory('data/test_Resamplers/cached_test_models/test_resamplers_RandomForest_classification')  # noqa
         resampler = RepeatedCrossValidationResampler(
@@ -285,13 +277,13 @@ class ResamplerTests(TimerTestCase):
         self.assertRaises(ModelNotFittedError, lambda: resampler.results)
 
         resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
-        assert len(resampler.results._evaluators) == 25
+        assert len(resampler.results._scores) == 25
         assert all([len(x) == 4 and
                     isinstance(x[0], KappaScore) and
                     isinstance(x[1], SensitivityScore) and
                     isinstance(x[2], SpecificityScore) and
                     isinstance(x[3], ErrorRateScore)
-                    for x in resampler.results._evaluators])
+                    for x in resampler.results._scores])
         assert resampler.results.num_resamples == 25
 
         # noinspection SpellCheckingInspection

@@ -59,10 +59,10 @@ class TunerTests(TimerTestCase):
                            ImputationTransformer(),
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
-        evaluator_list = [KappaScore(positive_category=1, negative_category=0, threshold=0.5),
-                          SensitivityScore(positive_category=1, negative_category=0, threshold=0.5),
-                          SpecificityScore(positive_category=1, negative_category=0, threshold=0.5),
-                          ErrorRateScore(positive_category=1, negative_category=0, threshold=0.5)]
+        evaluator_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                          SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
 
         cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/cached_test_models/test_ModelTuner_RandomForest_classification')  # noqa
         tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RandomForestMW(),

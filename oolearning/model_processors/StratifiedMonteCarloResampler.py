@@ -68,4 +68,4 @@ class StratifiedMonteCarloResampler(ResamplerBase):
                     fold_evaluators.append(evaluator_copy)
                 result_evaluators.append(fold_evaluators)
 
-        return ResamplerResults(evaluators=result_evaluators)
+        return ResamplerResults(scores=result_evaluators)

@@ -50,7 +50,7 @@ class SearcherResults:
         Evaluator values for the holdout sets
         # TODO: update documentation
         """
-        # get all the evaluators for each model (each model will have the same Evaluators)
+        # get all the scores for each model (each model will have the same Evaluators)
         evaluators = self._holdout_evaluators[0]
         # get all the columns that the tuner_results will have
         evaluator_columns = [x.name for x in evaluators]
@@ -64,7 +64,7 @@ class SearcherResults:
         """
         :return: a dataframe with each model + best tuned result as a row
         """
-        # get all the evaluators for each model (each model will have the same Evaluators)
+        # get all the scores for each model (each model will have the same Evaluators)
         evaluators = self.holdout_evaluators[0]
         # get all the columns that the tuner_results will have
         evaluator_columns = [(x.name + '_mean', x.name + '_st_dev', x.name + '_cv')

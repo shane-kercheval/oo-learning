@@ -60,7 +60,7 @@ class TunerResults:
 
     @property
     def sorted_best_indexes(self):
-        # sort based off of the first Evaluator.. each Resampler will have the same evaluators
+        # sort based off of the first score.. each Resampler will have the same scores
         return np.argsort(self._tune_results_objects.resampler_object.values)
 
     @property
@@ -93,11 +93,11 @@ class TunerResults:
             https://stackoverflow.com/questions/44017205/apply-seaborn-heatmap-columnwise-on-pandas-dataframe
         """
 
-        evaluator_columns = [x for x in df.columns.values if x not in hyper_params]
-        evaluator_values = df.loc[:, evaluator_columns]
+        score_columns = [x for x in df.columns.values if x not in hyper_params]
+        score_values = df.loc[:, score_columns]
 
-        num_rows = len(evaluator_values)
-        num_cols = len(evaluator_values.columns)
+        num_rows = len(score_values)
+        num_cols = len(score_values.columns)
 
         n = 3  # i.e. number of metrics e.g. _mean, _st_dev, _cv
         fig, ax = plt.subplots(figsize=(10, 10))
@@ -105,18 +105,18 @@ class TunerResults:
             truths = [True] * num_cols
             truths[i] = False
             mask = np.array(num_rows * [truths], dtype=bool)
-            color_values = np.ma.masked_where(mask, evaluator_values)
+            color_values = np.ma.masked_where(mask, score_values)
             # "_r" value after color means invert colors (small values are darker)
             ax.pcolormesh(color_values, cmap='Blues_r' if minimizers[int(math.floor(i/n))] else 'Greens')
 
-        for y in range(evaluator_values.shape[0]):
-            for x in range(evaluator_values.shape[1]):
-                plt.text(x + .5, y + .5, '%.3f' % evaluator_values.ix[y, x],
+        for y in range(score_values.shape[0]):
+            for x in range(score_values.shape[1]):
+                plt.text(x + .5, y + .5, '%.3f' % score_values.ix[y, x],
                          horizontalalignment='center',
                          verticalalignment='center')
 
-        ax.set_xticks(np.arange(start=0.5, stop=len(evaluator_columns), step=1))
-        ax.set_xticklabels(evaluator_columns, rotation=35, ha='right')
+        ax.set_xticks(np.arange(start=0.5, stop=len(score_columns), step=1))
+        ax.set_xticklabels(score_columns, rotation=35, ha='right')
 
         param_combos = df.loc[:, tuned_hyper_params]
         labels = []
@@ -137,9 +137,9 @@ class TunerResults:
         """
         if self._params_grid is None:  # if there are no hyper-params, no need for a heatmap.
             return None
-        evaluators = self._tune_results_objects.iloc[0].resampler_object.evaluators[0]
-        # if the Evaluator is a Cost Function it is a 'minimizer'
-        minimizers = [isinstance(x, CostFunctionMixin) for x in evaluators]
+        scores = self._tune_results_objects.iloc[0].resampler_object.scores[0]
+        # if the Score is a Cost Function it is a 'minimizer'
+        minimizers = [isinstance(x, CostFunctionMixin) for x in scores]
 
         # .tuned_hyper_params ensures only hyper-params with >1 values
         return self.columnwise_conditional_format(df=self.tune_results,
@@ -179,13 +179,13 @@ class TunerResults:
         resample_means = [resamples[column].mean() for column in resamples.columns.values]
         assert len(resample_means) == resamples.shape[1]
 
-        # get the current evaluator object so we can determine if it is a minimizer or maximizer
-        evaluator = [x for x in self._tune_results_objects.iloc[0].resampler_object.evaluators[0]
+        # get the current score object so we can determine if it is a minimizer or maximizer
+        score = [x for x in self._tune_results_objects.iloc[0].resampler_object.scores[0]
                      if x.name == metric_name]
-        assert len(evaluator) == 1  # we should just get the current evaluator
+        assert len(score) == 1  # we should just get the current score
         # if the `better_than` function returns True, 0 is "better than" 1 and we have a minimizer
         # for minimizers, we want to return the min, which is the best value, otherwise, return the max
-        minimizer = isinstance(evaluator[0], CostFunctionMixin)
+        minimizer = isinstance(score[0], CostFunctionMixin)
         best = min if minimizer else max
         index_of_best_mean = resample_means.index(best(resample_means))
 

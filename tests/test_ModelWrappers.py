@@ -1055,11 +1055,14 @@ class ModelWrapperTests(TimerTestCase):
                                                               'n_jobs': -1,
                                                               'random_state': 42}
 
-        assert fitter.training_evaluator.all_quality_metrics == {'Mean Absolute Error (MAE)': 1.6050794902912628, 'Mean Squared Error (MSE)': 6.946366367415049, 'Root Mean Squared Error (RMSE)': 2.6355960174911193, 'RMSE to Standard Deviation of Target': 0.15718726202422936}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'Mean Absolute Error (MAE)': 3.7880849514563115, 'Mean Squared Error (MSE)': 29.015298598300976, 'Root Mean Squared Error (RMSE)': 5.3865850590426, 'RMSE to Standard Deviation of Target': 0.3281385595158624}  # noqa
+        keys = fitter.training_evaluator.all_quality_metrics.keys()
+        expected_values = {'Mean Absolute Error (MAE)': 1.6050794902912628, 'Mean Squared Error (MSE)': 6.946366367415049, 'Root Mean Squared Error (RMSE)': 2.6355960174911193, 'RMSE to Standard Deviation of Target': 0.15718726202422936}  # noqa
+        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+        expected_values = {'Mean Absolute Error (MAE)': 3.7880849514563115, 'Mean Squared Error (MSE)': 29.015298598300976, 'Root Mean Squared Error (RMSE)': 5.3865850590426, 'RMSE to Standard Deviation of Target': 0.3281385595158624}  # noqa
+        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
     def test_RandomForestMW_classification_multiclass(self):
-
         data = TestHelper.get_iris_data()
         target_variable = 'species'
         fitter = ModelFitter(model=RandomForestMW(),

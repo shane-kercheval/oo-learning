@@ -226,7 +226,7 @@ class TransformerTests(TimerTestCase):
 
     def test_CategoricConverterTransformer(self):
         data = TestHelper.get_titanic_data()
-        test_splitter = ClassificationStratifiedDataSplitter(test_ratio=0.05)
+        test_splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.05)
         training_indexes, test_indexes = test_splitter.split(target_values=data.Survived)
 
         train_data = data.iloc[training_indexes]
@@ -267,7 +267,7 @@ class TransformerTests(TimerTestCase):
         -   test full pipeline
         """
         data = TestHelper.get_titanic_data()
-        test_splitter = ClassificationStratifiedDataSplitter(test_ratio=0.05)
+        test_splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.05)
         training_indexes, test_indexes = test_splitter.split(target_values=data.Survived)
         train_data = data.iloc[training_indexes]
         # the test data contains only a subset of the unique values for SibSp and Parch, so we can test that
