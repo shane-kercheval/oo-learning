@@ -5,7 +5,7 @@ import dill as pickle
 import numpy as np
 import pandas as pd
 
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase
+from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
 from oolearning.model_processors.ResamplerBase import ResamplerBase
 from oolearning.model_processors.ResamplerResults import ResamplerResults
@@ -20,8 +20,8 @@ class MockResampler(ResamplerBase):
     def __init__(self,
                  model: ModelWrapperBase,
                  model_transformations: List[TransformerBase],
-                 evaluators: List[EvaluatorBase]):
-        super().__init__(model=model, model_transformations=model_transformations, evaluators=evaluators)
+                 scores: List[ScoreBase]):
+        super().__init__(model=model, model_transformations=model_transformations, scores=scores)
         # load actual data from a RandomForest Tuner/Resampler (test_ModelTuner_RandomForest_classification)
         # so that we can build up the necessary ResamplerResults object based on the saved data.
         file = os.path.join(os.getcwd(), 'tests/data/test_ModelTuner_classification_mock.pkl')

@@ -6,7 +6,7 @@ import pandas as pd
 import numpy as np
 
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase
+from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
 from oolearning.model_processors.ResamplerResults import ResamplerResults
 from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError
@@ -24,17 +24,17 @@ class ResamplerBase(metaclass=ABCMeta):
     def __init__(self,
                  model: ModelWrapperBase,
                  model_transformations: List[TransformerBase],
-                 evaluators: List[EvaluatorBase],
+                 scores: List[ScoreBase],
                  persistence_manager: PersistenceManagerBase = None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None):
         """
         :param model:
         :param model_transformations:
-        :param evaluators: a `list` of `Evaluator` objects.
+        :param scores: a `list` of `Evaluator` objects.
             For example, if Kappa and AUC are both metrics of
-            interest when resampling, use `holdout_evaluators=[KappaEvaluator, AucEvaluator]`;
-            if RMSE is the only metric of interest, use `holdout_evaluators=[RMSE]`
+            interest when resampling, use `holdout_scores=[KappaScore, AucScore]`;
+            if RMSE is the only metric of interest, use `holdout_scores=[RMSE]`
         :param persistence_manager: a PersistenceManager defining how the model should be cached, optional.
             NOTE: There is currently no enforcement that subclasses of ResamplerBase implement model
             persistence
@@ -47,11 +47,11 @@ class ResamplerBase(metaclass=ABCMeta):
         assert isinstance(model, ModelWrapperBase)
         if model_transformations is not None:
             assert isinstance(model_transformations, list)
-        assert isinstance(evaluators, list)
+        assert isinstance(scores, list)
 
         self._model = model
         self._model_transformations = model_transformations
-        self._evaluators = evaluators
+        self._scores = scores
         self._results = None
         self._persistence_manager = persistence_manager
         self._train_callback = train_callback
@@ -83,13 +83,7 @@ class ResamplerBase(metaclass=ABCMeta):
         :type hyper_params: object containing the hyper-parameters to tune
         :return: None
         """
-        pipeline = TransformerPipeline(transformations=self._model_transformations)
-        data_transformed = pipeline.fit_transform(data_x=data_x)
-
-        if self._train_callback is not None:
-            self._train_callback(data_transformed, data_y, hyper_params)
-
-        self._results = self._resample(data_x=data_transformed, data_y=data_y, hyper_params=hyper_params)
+        self._results = self._resample(data_x=data_x, data_y=data_y, hyper_params=hyper_params)
 
     @abstractmethod
     def _resample(self,

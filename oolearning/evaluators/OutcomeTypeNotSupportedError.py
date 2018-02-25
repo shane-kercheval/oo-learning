@@ -1,0 +1,2 @@
+class OutcomeTypeNotSupportedError(Exception):
+    pass

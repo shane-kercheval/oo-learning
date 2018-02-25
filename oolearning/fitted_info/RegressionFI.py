@@ -77,16 +77,6 @@ class RegressionFI(FittedInfoBase):
                     pd.DataFrame({'1': residuals, '2': residuals.shift(1)}).dropna().corr().iloc[0, 1]}
 
     @property
-    def warnings(self) -> dict:
-        # TODO: finish
-        warnings = dict()
-        if self.summary_stats['model p-value'] > 0.05:
-            warnings['model p-value > 0.05'] = '(' + \
-                                               self.summary_stats['model p-value']\
-                                               + ') Not enough evidence to reject model Null Hypothesis.'
-        return warnings
-
-    @property
     def feature_importance(self) -> dict:
         # TODO: finish
         raise NotImplementedError()
@@ -103,7 +93,7 @@ class RegressionFI(FittedInfoBase):
         # fitted values (need a constant term for intercept)
         model_fitted_y = self._model_object.fittedvalues
         # model residuals
-        model_residuals = self._model_object.resid
+        model_residuals = self._model_object.resid.values
         # normalized residuals
         model_norm_residuals = self._model_object.get_influence().resid_studentized_internal
         # absolute squared normalized residuals

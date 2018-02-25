@@ -3,26 +3,26 @@ from typing import List
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase
+from oolearning.evaluators.ScoreBase import ScoreBase
 
 
 class ResamplerResults:
-    def __init__(self, evaluators: List[List[EvaluatorBase]]):
+    def __init__(self, scores: List[List[ScoreBase]]):
         """
-        :param evaluators: a list of list of holdout_evaluators.
+        :param scores: a list of list of holdout_scores.
             each outer list represents a resampling result (e.g. a single fold for a single repeat in repeated
                 k-fold cross validation);
-            each element of the inner list represents a specific evaluator for the single resampling result
+            each element of the inner list represents a specific score for the single resampling result
         """
-        self._evaluators = evaluators
+        self._scores = scores
 
-        # for each evaluator, add the metric name/value to a dict to add to the ResamplerResults
+        # for each score, add the metric name/value to a dict to add to the ResamplerResults
         self._cross_validation_scores = list()
 
-        for resample_eval_list in evaluators:
+        for resample_eval_list in scores:
             results_dict = dict()
             for temp_eval in resample_eval_list:
-                results_dict[temp_eval.metric_name] = temp_eval.value
+                results_dict[temp_eval.name] = temp_eval.value
 
             self._cross_validation_scores.append(results_dict)
 
@@ -36,8 +36,8 @@ class ResamplerResults:
         return len(self.cross_validation_scores)
 
     @property
-    def evaluators(self) -> List[List[EvaluatorBase]]:
-        return self._evaluators
+    def scores(self) -> List[List[ScoreBase]]:
+        return self._scores
 
     @property
     def cross_validation_scores(self) -> pd.DataFrame:
@@ -83,10 +83,10 @@ class ResamplerResults:
              e.g. when comparing Kappas the larger number is "better", when comparing RMSE smaller numbers are
                 "better"
         """
-        # get the first evaluator's `better_than` function, and utilize compare the means associated with the
-        # first evaluator
+        # get the first score's `better_than` function, and utilize compare the means associated with the
+        # first score
         # noinspection PyProtectedMember
-        better_than_function = self._evaluators[0][0]._better_than
+        better_than_function = self._scores[0][0]._better_than
         # get the mean of the first (i.e. main) metric for *this* ResamplerResult
         this_mean = self.metric_means[self.metrics[0]]
         # get the mean of the first (i.e. main) metric for the *other* ResamplerResult

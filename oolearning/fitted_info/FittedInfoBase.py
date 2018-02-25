@@ -30,22 +30,6 @@ class FittedInfoBase(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def summary_stats(self) -> dict:
-        """
-        :return: for sub-class to define, e.g. Regression could return RSE, adjusted R^2, etc.
-        """
-        pass
-
-    @property
-    @abstractmethod
-    def warnings(self):
-        """
-        :return: for sub-class to define, e.g. any violated assumptions of the model
-        """
-        pass    
-
-    @property
-    @abstractmethod
     def feature_importance(self) -> dict:
         """
         :return: ranking of importance of features the model was trained with

@@ -25,10 +25,10 @@ class SearcherTests(TimerTestCase):
                                   ImputationTransformer(),
                                   DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
         # Evaluators are the metrics we want to use to understand the value of our trained models.
-        evaluator_list = [KappaEvaluator(positive_category=1, negative_category=0, threshold=0.5),
-                          SensitivityEvaluator(positive_category=1, negative_category=0, threshold=0.5),
-                          SpecificityEvaluator(positive_category=1, negative_category=0, threshold=0.5),
-                          ErrorRateTwoClassEvaluator(positive_category=1, negative_category=0, threshold=0.5)]
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                      SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                      SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                      ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
         standard_transformations = [CenterScaleTransformer(),
                                     RemoveCorrelationsTransformer()]
 
@@ -57,11 +57,11 @@ class SearcherTests(TimerTestCase):
         self.assertRaises(AssertionError,
                           lambda: ModelSearcher(global_transformations=global_transformations,
                                                 model_infos=infos,
-                                                splitter=ClassificationStratifiedDataSplitter(test_ratio=0.25),  # noqa
+                                                splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),  # noqa
                                                 resampler_function=lambda m, mt: RepeatedCrossValidationResampler(  # noqa
                                                     model=m,
                                                     model_transformations=mt,
-                                                    evaluators=evaluator_list,
+                                                    scores=score_list,
                                                     folds=num_folds,
                                                     repeats=num_repeats),
                                                 persistence_manager=LocalCacheManager
@@ -82,16 +82,16 @@ class SearcherTests(TimerTestCase):
         model_descriptions = [x.description for x in infos]
         searcher = ModelSearcher(global_transformations=global_transformations,
                                  model_infos=infos,
-                                 splitter=ClassificationStratifiedDataSplitter(test_ratio=0.25),
+                                 splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                                  resampler_function=lambda m, mt: RepeatedCrossValidationResampler(
                                      model=m,
                                      model_transformations=mt,
-                                     evaluators=evaluator_list,
+                                     scores=score_list,
                                      folds=num_folds,
                                      repeats=num_repeats),
                                  persistence_manager=LocalCacheManager(cache_directory=cache_directory))
 
-        searcher.search(data_x=data.drop(columns='Survived'), data_y=data.Survived)
+        searcher.search(data=data, target_variable='Survived')
 
         # check persistence
         # first check cache files for tuning
@@ -114,7 +114,7 @@ class SearcherTests(TimerTestCase):
         shutil.rmtree(cache_directory)
 
         assert len(searcher.results.tuner_results) == 2
-        assert len(searcher.results.holdout_evaluators) == 2
+        assert len(searcher.results.holdout_scores) == 2
 
         # just one Tune result because no hyper_params
         assert len(searcher.results.tuner_results[0].tune_results) == 1
@@ -148,23 +148,23 @@ class SearcherTests(TimerTestCase):
         assert all([isclose(x, 0.031785029143322603) for x in searcher.results.tuner_results[1].tune_results['specificity_st_dev']])  # noqa
         assert all([isclose(x, 0.052884252590516621) for x in searcher.results.tuner_results[1].tune_results['ErrorRate_st_dev']])  # noqa
 
-        assert len(searcher.results.holdout_evaluators) == 2  # 2 models
-        assert len(searcher.results.holdout_evaluators[0]) == 4  # 4 Evaluators
-        assert len(searcher.results.holdout_evaluators[1]) == 4  # 4 Evaluators
-        assert [x.metric_name for x in searcher.results.holdout_evaluators[0]] == ['kappa', 'sensitivity', 'specificity', 'ErrorRate']  # noqa
-        assert [x.metric_name for x in searcher.results.holdout_evaluators[1]] == ['kappa', 'sensitivity', 'specificity', 'ErrorRate']  # noqa
-        assert [x.value for x in searcher.results.holdout_evaluators[0]] == [0.026284246575342427, 0.38372093023255816, 0.64233576642335766, 0.45739910313901344]  # noqa
+        assert len(searcher.results.holdout_scores) == 2  # 2 models
+        assert len(searcher.results.holdout_scores[0]) == 4  # 4 Evaluators
+        assert len(searcher.results.holdout_scores[1]) == 4  # 4 Evaluators
+        assert [x.name for x in searcher.results.holdout_scores[0]] == ['kappa', 'sensitivity', 'specificity', 'ErrorRate']  # noqa
+        assert [x.name for x in searcher.results.holdout_scores[1]] == ['kappa', 'sensitivity', 'specificity', 'ErrorRate']  # noqa
+        assert [x.value for x in searcher.results.holdout_scores[0]] == [0.02628424657534245, 0.38372093023255816, 0.6423357664233577, 0.45739910313901344]  # noqa
 
-        assert len(searcher.results.holdout_evaluators) == 2  # 2 models
-        assert len(searcher.results.holdout_evaluators[1]) == 4  # 4 Evaluators
-        assert [x.value for x in searcher.results.holdout_evaluators[1]] == [0.026284246575342427, 0.38372093023255816, 0.64233576642335766, 0.45739910313901344]  # noqa
+        assert len(searcher.results.holdout_scores) == 2  # 2 models
+        assert len(searcher.results.holdout_scores[1]) == 4  # 4 Evaluators
+        assert [x.value for x in searcher.results.holdout_scores[1]] == [0.02628424657534245, 0.38372093023255816, 0.6423357664233577, 0.45739910313901344]  # noqa
 
-        assert all(searcher.results.holdout_eval_values.index.values == model_descriptions)
-        assert all(searcher.results.holdout_eval_values.columns.values == ['kappa', 'sensitivity', 'specificity', 'ErrorRate'])  # noqa
-        assert all([isclose(x, 0.026284246575342427) for x in searcher.results.holdout_eval_values.kappa])
-        assert all([isclose(x, 0.38372093023255816) for x in searcher.results.holdout_eval_values.sensitivity])  # noqa
-        assert all([isclose(x, 0.64233576642335766) for x in searcher.results.holdout_eval_values.specificity])  # noqa
-        assert all([isclose(x, 0.45739910313901344) for x in searcher.results.holdout_eval_values.ErrorRate])
+        assert all(searcher.results.holdout_score_values.index.values == model_descriptions)
+        assert all(searcher.results.holdout_score_values.columns.values == ['kappa', 'sensitivity', 'specificity', 'ErrorRate'])  # noqa
+        assert all([isclose(x, 0.02628424657534245) for x in searcher.results.holdout_score_values.kappa])
+        assert all([isclose(x, 0.38372093023255816) for x in searcher.results.holdout_score_values.sensitivity])  # noqa
+        assert all([isclose(x, 0.6423357664233577) for x in searcher.results.holdout_score_values.specificity])  # noqa
+        assert all([isclose(x, 0.45739910313901344) for x in searcher.results.holdout_score_values.ErrorRate])
 
         # The mock model wrapper will return the same accuracies for each model so the first model will be
         # selected as the best
@@ -200,6 +200,7 @@ class SearcherTests(TimerTestCase):
         # assert searcher.results.tuner_results[1]._tune_results_objects.resampler_object.values[0].\
         # cross_validation_scores['kappa'].mean() == searcher.results.best_tuned_results.kappa_mean[1]
         #
-        # searcher.results.holdout_eval_values
+        # searcher.results.holdout_score_values
         # # searcher.get_heatmap()
         # searcher.get_graph()
+# TODO

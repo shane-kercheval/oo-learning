@@ -59,15 +59,15 @@ class TunerTests(TimerTestCase):
                            ImputationTransformer(),
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
-        evaluator_list = [KappaEvaluator(positive_category=1, negative_category=0, threshold=0.5),
-                          SensitivityEvaluator(positive_category=1, negative_category=0, threshold=0.5),
-                          SpecificityEvaluator(positive_category=1, negative_category=0, threshold=0.5),
-                          ErrorRateTwoClassEvaluator(positive_category=1, negative_category=0, threshold=0.5)]
+        evaluator_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                          SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
 
         cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/cached_test_models/test_ModelTuner_RandomForest_classification')  # noqa
         tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RandomForestMW(),
                                                                       model_transformations=transformations,
-                                                                      evaluators=evaluator_list),
+                                                                      scores=evaluator_list),
                            hyper_param_object=RandomForestHP(),
                            persistence_manager=LocalCacheManager(cache_directory=cache_directory))
 
@@ -108,9 +108,7 @@ class TunerTests(TimerTestCase):
             assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
                                                       data_frame2=tuner.results.sorted_best_models)
 
-        assert all(tuner.results.sorted_best_models.index.values ==
-                   [24, 21, 15, 9, 12, 18, 6, 3, 0, 23, 20, 17, 16, 14, 13, 11, 4, 26, 10, 7, 5, 1, 19, 8, 2,
-                    22, 25])
+        assert all(tuner.results.sorted_best_models.index.values == [24, 21, 9, 15, 12, 18, 6, 3, 0, 23, 20, 17, 16, 14, 13, 11, 4, 26, 10, 7, 5, 1, 19, 8, 2, 22, 25])  # noqa
         shutil.rmtree(cache_directory)
 
     def test_ModelTuner_mock_classification(self):
@@ -139,7 +137,7 @@ class TunerTests(TimerTestCase):
 
         tuner = ModelTuner(resampler=MockResampler(model=MockClassificationModelWrapper(data_y=data.Survived),
                                                    model_transformations=transformations,
-                                                   evaluators=evaluators),
+                                                   scores=evaluators),
                            hyper_param_object=MockHyperParams())
 
         columns = TransformerPipeline.get_expected_columns(transformations=transformations, data=train_data)
@@ -173,10 +171,8 @@ class TunerTests(TimerTestCase):
         # Test Best Model
         ######################################################################################################
         # test the correct order of best models (i.e. highest to lowest kappa)
-        assert all(tuner.results.sorted_best_models.index.values ==
-                   [24, 21, 15, 9, 12, 18, 6, 3, 0, 23, 20, 17, 16, 14, 13, 11, 4, 26, 10, 7, 5, 1, 19, 8, 2,
-                    22, 25])
-        assert isclose(tuner.results.best_model.kappa_mean, 0.59010255445858673)
+        assert all(tuner.results.sorted_best_models.index.values == [24, 21, 9, 15, 12, 18, 6, 3, 0, 23, 20, 17, 16, 14, 13, 11, 4, 26, 10, 7, 5, 1, 19, 8, 2, 22, 25])  # noqa
+        assert isclose(tuner.results.best_model.kappa_mean, 0.587757500452066)
         assert tuner.results.best_hyper_params == {'criterion': 'gini',
                                                    'max_features': 24,
                                                    'n_estimators': 500,
@@ -252,10 +248,10 @@ class TunerTests(TimerTestCase):
         train_data_y = train_data.strength
         train_data = train_data.drop(columns='strength')
 
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RegressionMW(),
+        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=LinearRegression(),
                                                                       model_transformations=ModelDefaults.transformations_regression(),  # noqa
-                                                                      evaluators=[RmseEvaluator(),
-                                                                                  MaeEvaluator()],
+                                                                      scores=[RmseScore(),
+                                                                              MaeScore()],
                                                                       folds=5,
                                                                       repeats=5),
                            hyper_param_object=None)
@@ -266,11 +262,11 @@ class TunerTests(TimerTestCase):
 
         assert isinstance(tuner.results._tune_results_objects.resampler_object[0], ResamplerResults)
 
-        assert len(tuner.results._tune_results_objects.iloc[0].resampler_object._evaluators) == 25
+        assert len(tuner.results._tune_results_objects.iloc[0].resampler_object._scores) == 25
         assert all([len(x) == 2 and
-                    isinstance(x[0], RmseEvaluator) and
-                    isinstance(x[1], MaeEvaluator)
-                    for x in tuner.results._tune_results_objects.iloc[0].resampler_object._evaluators])
+                    isinstance(x[0], RmseScore) and
+                    isinstance(x[1], MaeScore)
+                    for x in tuner.results._tune_results_objects.iloc[0].resampler_object._scores])
         assert tuner.results._tune_results_objects.iloc[0].resampler_object.num_resamples == 25
         assert tuner.results._tune_results_objects.iloc[0].resampler_object.metrics == ['RMSE', 'MAE']
         assert isclose(tuner.results._tune_results_objects.iloc[0].resampler_object.metric_means['RMSE'], 10.459344010622544)  # noqa

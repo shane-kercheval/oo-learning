@@ -63,8 +63,7 @@ class RandomForestHP(HyperParamsBase):
             self._is_regression = False
         elif criterion == 'mse' or criterion == 'mae':
             self._is_regression = True
-
-        if self._is_regression is None:
+        else:
             raise ValueError('invalid criterion')
 
         if num_features is not None:

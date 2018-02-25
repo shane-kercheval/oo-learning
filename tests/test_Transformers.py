@@ -71,7 +71,7 @@ class TransformerTests(TimerTestCase):
         ######################################################################################################
         data = TestHelper.get_housing_data()
         target_variable = 'median_house_value'
-        training_set, _, test_set, _ = TestHelper.split_train_test_regression(data, target_variable)
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_regression(data, target_variable)
 
         imputation_transformer = ImputationTransformer(categoric_imputation_function=None)
         # ensure that we are forced to call `fit` first
@@ -226,7 +226,7 @@ class TransformerTests(TimerTestCase):
 
     def test_CategoricConverterTransformer(self):
         data = TestHelper.get_titanic_data()
-        test_splitter = ClassificationStratifiedDataSplitter(test_ratio=0.05)
+        test_splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.05)
         training_indexes, test_indexes = test_splitter.split(target_values=data.Survived)
 
         train_data = data.iloc[training_indexes]
@@ -267,7 +267,7 @@ class TransformerTests(TimerTestCase):
         -   test full pipeline
         """
         data = TestHelper.get_titanic_data()
-        test_splitter = ClassificationStratifiedDataSplitter(test_ratio=0.05)
+        test_splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.05)
         training_indexes, test_indexes = test_splitter.split(target_values=data.Survived)
         train_data = data.iloc[training_indexes]
         # the test data contains only a subset of the unique values for SibSp and Parch, so we can test that
@@ -364,7 +364,7 @@ class TransformerTests(TimerTestCase):
     def test_CenterScaleTransformer(self):
         data = TestHelper.get_housing_data()
         target_variable = 'median_house_value'
-        training_set, _, test_set, _ = TestHelper.split_train_test_regression(data, target_variable)
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_regression(data, target_variable)
 
         transformer = CenterScaleTransformer()
 
@@ -430,7 +430,7 @@ class TransformerTests(TimerTestCase):
     def test_BoxCoxTransformer(self):
         data = TestHelper.get_housing_data()
         target_variable = 'median_house_value'
-        training_set, _, test_set, _ = TestHelper.split_train_test_regression(data, target_variable)
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_regression(data, target_variable)
 
         # training_set.housing_median_age.hist()
         # training_set.total_rooms.hist()
@@ -486,7 +486,7 @@ class TransformerTests(TimerTestCase):
     def test_RemoveCorrelationsTransformer(self):
         data = TestHelper.get_housing_data()
         target_variable = 'median_house_value'
-        training_set, _, test_set, _ = TestHelper.split_train_test_regression(data, target_variable)
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_regression(data, target_variable)
 
         # at a threshold of 0.95, only total_bedrooms should be removed
         expected_removed = ['total_bedrooms']
