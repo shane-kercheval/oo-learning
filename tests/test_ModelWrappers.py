@@ -645,8 +645,8 @@ class ModelWrapperTests(TimerTestCase):
         # so we can 'peak' inside and see the transformations
 
         # ensure transformation states are set correctly
-        assert model_fitter._model_transformations.transformations[0].state == {}
-        assert model_fitter._model_transformations.transformations[1].state == \
+        assert model_fitter._model_transformations[0].state == {}
+        assert model_fitter._model_transformations[1].state == \
             {'cement': 266.19999999999999,
              'slag': 26.0,
              'ash': 0.0,
@@ -654,7 +654,7 @@ class ModelWrapperTests(TimerTestCase):
              'superplastic': 6.4000000000000004,
              'age': 28.0,
              'random': 'code1'}
-        assert model_fitter._model_transformations.transformations[2].state == {'random': ['code0', 'code1']}
+        assert model_fitter._model_transformations[2].state == {'random': ['code0', 'code1']}
 
         # ensure the data is updated/imputed correctly
         assert all(model_fitter._model.fitted_train_x.loc[index_missing_train_cement]['cement'] ==
