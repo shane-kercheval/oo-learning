@@ -3,8 +3,10 @@ from typing import List
 import numpy as np
 import pandas as pd
 
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-# TODO TEST
+
 class ConfusionMatrix:
     def __init__(self,
                  actual_classes: np.ndarray,
@@ -42,10 +44,18 @@ class ConfusionMatrix:
     def matrix(self) -> pd.DataFrame:
         return self._confusion_matrix
 
-    # TODO: DO
-    def matrix_normalized(self) -> pd.DataFrame:
-        pass
+    @property
+    def matrix_proportions(self) -> pd.DataFrame:
+        # noinspection PyTypeChecker
+        return self.matrix / self.total_observations
 
-    # TODO: DO
-    def plot_heatmap(self) -> object:
-        pass
+    @property
+    def total_observations(self) -> int:
+        return self.matrix.loc['Total', 'Total']
+
+    def get_heatmap(self, include_totals=False):
+        ax = plt.axes()
+        matrix = self.matrix if include_totals else self.matrix.drop(index='Total', columns='Total')
+        sns.heatmap(ax=ax, data=matrix, annot=True, cmap="Blues")
+        ax.set_title('Predicted vs Actual Classifications')
+        return ax

@@ -51,6 +51,8 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator.matrix.loc[:, 0].values.tolist() == expected_predicted_negatives
         assert evaluator.matrix.loc[:, 1].values.tolist() == expected_predicted_positives
         assert evaluator.matrix.loc[:, 'Total'].values.tolist() == expected_totals
+        assert evaluator.total_observations == 100
+        assert evaluator.confusion_matrix.total_observations == 100
 
         assert evaluator.matrix.index.values.tolist() == [0, 1, 'Total']
         assert evaluator.matrix.columns.values.tolist() == [0, 1, 'Total']
@@ -70,11 +72,19 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator.matrix.columns.values.tolist() == [1, 0, 'Total']
 
     def check_confusion_matrix(self, con_matrix, mock_data):
+        assert con_matrix.total_observations == 714
         assert con_matrix.matrix.loc[:, 0].values.tolist() == [347, 140, 487]
         assert con_matrix.matrix.loc[:, 1].values.tolist() == [77, 150, 227]
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
         assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
         assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
+
+        assert con_matrix.matrix_proportions[0].values.tolist() == [0.48599439775910364, 0.19607843137254902, 0.6820728291316527]  # noqa
+        assert con_matrix.matrix_proportions[1].values.tolist() == [0.10784313725490197, 0.21008403361344538, 0.3179271708683473]  # noqa
+        assert con_matrix.matrix_proportions['Total'].values.tolist() == [0.5938375350140056, 0.4061624649859944, 1.0]  # noqa
+        assert con_matrix.matrix_proportions.index.values.tolist() == [0, 1, 'Total']
+        assert con_matrix.matrix_proportions.columns.values.tolist() == [0, 1, 'Total']
+
         assert isclose(con_matrix.all_quality_metrics['Kappa'], cohen_kappa_score(y1=mock_data.actual, y2=mock_data.predictions))  # noqa
         assert isclose(con_matrix.all_quality_metrics['F1 Score'], f1_score(y_true=mock_data.actual, y_pred=mock_data.predictions))  # noqa
         assert isclose(con_matrix.all_quality_metrics['Two-Class Accuracy'], accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))  # noqa
@@ -235,28 +245,32 @@ class EvaluatorTests(TimerTestCase):
     # noinspection PyTypeChecker
     def test_ConfusionMatrix_MultiClass(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_MultiClass_predictions.csv')))  # noqa
-        con_matrix = MultiClassEvaluator.from_classes(actual_classes=mock_data.actual, predicted_classes=mock_data.predicted_classes)  # noqa
+        evaluator = MultiClassEvaluator.from_classes(actual_classes=mock_data.actual, predicted_classes=mock_data.predicted_classes)  # noqa
 
-        assert con_matrix.matrix['setosa'].values.tolist() == [12, 0, 0, 12]
-        assert con_matrix.matrix['versicolor'].values.tolist() == [0, 12, 2, 14]
-        assert con_matrix.matrix['virginica'].values.tolist() == [0, 1, 11, 12]
-        assert con_matrix.matrix['Total'].values.tolist() == [12, 13, 13, 38]
-        assert con_matrix.matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        assert evaluator.confusion_matrix.total_observations == 38
+        assert evaluator.total_observations == 38
+        assert evaluator.matrix['setosa'].values.tolist() == [12, 0, 0, 12]
+        assert evaluator.matrix['versicolor'].values.tolist() == [0, 12, 2, 14]
+        assert evaluator.matrix['virginica'].values.tolist() == [0, 1, 11, 12]
+        assert evaluator.matrix['Total'].values.tolist() == [12, 13, 13, 38]
+        assert evaluator.matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        assert evaluator.matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
 
         ######################################################################################################
         # change all setosa predictions to versicolor
         # i.e. there will be no predictions for a class (setosa), make sure Confusion Matrix can handle that.
         ######################################################################################################
         no_setosa = np.array([x if x != 'setosa' else 'versicolor' for x in mock_data.predicted_classes])
-        con_matrix = MultiClassEvaluator.from_classes(actual_classes=mock_data.actual, predicted_classes=no_setosa)  # noqa
+        evaluator = MultiClassEvaluator.from_classes(actual_classes=mock_data.actual, predicted_classes=no_setosa)  # noqa
 
-        assert con_matrix.matrix['setosa'].values.tolist() == [0, 0, 0, 0]
-        assert con_matrix.matrix['versicolor'].values.tolist() == [12, 12, 2, 26]
-        assert con_matrix.matrix['virginica'].values.tolist() == [0, 1, 11, 12]
-        assert con_matrix.matrix['Total'].values.tolist() == [12, 13, 13, 38]
-        assert con_matrix.matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        assert evaluator.confusion_matrix.total_observations == 38
+        assert evaluator.total_observations == 38
+        assert evaluator.matrix['setosa'].values.tolist() == [0, 0, 0, 0]
+        assert evaluator.matrix['versicolor'].values.tolist() == [12, 12, 2, 26]
+        assert evaluator.matrix['virginica'].values.tolist() == [0, 1, 11, 12]
+        assert evaluator.matrix['Total'].values.tolist() == [12, 13, 13, 38]
+        assert evaluator.matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        assert evaluator.matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
 
         ######################################################################################################
         # test from probabilities
@@ -271,18 +285,30 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator.matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
         assert evaluator.matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
 
+        assert evaluator.confusion_matrix.matrix_proportions['setosa'].values.tolist() == [0.3157894736842105, 0.0, 0.0, 0.3157894736842105]  # noqa
+        assert evaluator.confusion_matrix.matrix_proportions['versicolor'].values.tolist() == [0.0, 0.3157894736842105, 0.05263157894736842, 0.3684210526315789]  # noqa
+        assert evaluator.confusion_matrix.matrix_proportions['virginica'].values.tolist() == [0.0, 0.02631578947368421, 0.2894736842105263, 0.3157894736842105]  # noqa
+        assert evaluator.confusion_matrix.matrix_proportions['Total'].values.tolist() == [0.3157894736842105, 0.34210526315789475, 0.34210526315789475, 1.0]  # noqa
+        assert evaluator.confusion_matrix.matrix_proportions.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']  # noqa
+        assert evaluator.confusion_matrix.matrix_proportions.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']  # noqa
+
+        TestHelper.check_plot('data/test_Evaluators/test_confusion_matrix_heatmap_no_totals.png',
+                              lambda: evaluator.confusion_matrix.get_heatmap(include_totals=False))
+        TestHelper.check_plot('data/test_Evaluators/test_confusion_matrix_heatmap_with_totals.png',
+                              lambda: evaluator.confusion_matrix.get_heatmap(include_totals=True))
+
     # noinspection SpellCheckingInspection
     def test_ConfusionMatrix_MultiClass_scores(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_MultiClass_predictions.csv')))  # noqa
+
         evaluator = MultiClassEvaluator(converter=HighestValueConverter())
         evaluator.evaluate(actual_values=mock_data.actual,
                            predicted_values=mock_data[['setosa', 'versicolor', 'virginica']])
 
         assert isclose(evaluator.accuracy, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predicted_classes))  # noqa
-
-        assert isclose(evaluator.all_quality_metrics['Kappa'], 0.8814968814968815)
-        assert isclose(evaluator.all_quality_metrics['Accuracy'], 0.9210526315789473)
-        assert isclose(evaluator.all_quality_metrics['Error Rate'], 0.07894736842105265)
+        assert isclose(evaluator.all_quality_metrics['Kappa'], cohen_kappa_score(y1=mock_data.actual, y2=mock_data.predicted_classes))  # noqa
+        assert isclose(evaluator.all_quality_metrics['Accuracy'], accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predicted_classes))  # noqa
+        assert isclose(evaluator.all_quality_metrics['Error Rate'], 1 - accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predicted_classes))  # noqa
         assert isclose(evaluator.all_quality_metrics['No Information Rate'], 0.34210526315789475)
         assert isclose(evaluator.all_quality_metrics['Total Observations'], 38)
 

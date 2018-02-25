@@ -130,6 +130,11 @@ class ModelSearcher:
                 # be the the transformations; but we ensure the model descriptions are unique, so use that
                 self._persistence_manager.set_key_prefix(prefix='holdout_' + local_model_description+'_')
 
+            # verify that the fitter uses the same training data as the Tuner (i.e. the indexes used for the
+            # training data in the fitter match the index used to pass in data to the Tuner)
+            def train_callback(transformed_training_data, _1, _2):
+                assert all(transformed_training_data.index.values == training_indexes)
+
             # do not have to clone these objects again, since they won't be reused after this
             fitter = ModelFitter(model=local_model,
 # TODO document or make note to self that the resampler will transform the data according to each fold (e.g. fit/transform on training folds and transform on holdout fold)
@@ -137,7 +142,8 @@ class ModelSearcher:
 # TODO note (and verify to self) that splitter will split in the same way as above, so we don't really need the holdout data above, Fitter will train on the same dataset that the resampler used, and predict on the holdout set, which the resampler did not see
                                  splitter=self._splitter,
                                  scores=scores,
-                                 persistence_manager=self._persistence_manager)
+                                 persistence_manager=self._persistence_manager,
+                                 train_callback=train_callback)
 
             if local_model_params_object is not None:
                 # if the params object is not None, then we tuned across params and we need to get the best

@@ -8,8 +8,8 @@ from typing import Callable
 
 import numpy as np
 import pandas as pd
-from mock import patch
 
+from mock import patch
 from oolearning import *
 from tests.MockClassificationModelWrapper import MockClassificationModelWrapper
 from tests.MockRegressionModelWrapper import MockRegressionModelWrapper
@@ -693,7 +693,7 @@ class ModelWrapperTests(TimerTestCase):
     def test_Logistic(self):
         warnings.filterwarnings("ignore")
         # noinspection PyUnusedLocal
-        with patch('sys.stdout', new=MockDevice()) as fake_out:  # supress output of logistic model
+        with patch('sys.stdout', new=MockDevice()) as fake_out:  # suppress output of logistic model
             data = TestHelper.get_titanic_data()
             transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
                                CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
@@ -716,7 +716,7 @@ class ModelWrapperTests(TimerTestCase):
             assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
             assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
             assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-            assert isclose(fitter.training_evaluator.auc, 0.860346942351498)
+            assert isclose(round(fitter.training_evaluator.auc, 5), round(0.860346942351498, 5))
             TestHelper.check_plot('data/test_ModelWrappers/test_LogisticMW_training_ROC.png',
                                   lambda: fitter.training_evaluator.get_roc_curve())
             TestHelper.check_plot('data/test_ModelWrappers/test_LogisticMW_training_PrecRecal.png',
@@ -772,7 +772,7 @@ class ModelWrapperTests(TimerTestCase):
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
         assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
         assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
-        assert isclose(fitter.training_evaluator.auc, 0.860346942351498)
+        assert isclose(round(fitter.training_evaluator.auc, 5), round(0.860346942351498, 5))
 
         con_matrix = fitter.holdout_evaluator._confusion_matrix
         assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [98, 22, 120]

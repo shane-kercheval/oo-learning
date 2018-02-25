@@ -426,7 +426,6 @@ class TransformerTests(TimerTestCase):
         assert isclose(round(transformed_test['households'].std(), 1), 1)  # less precision, but ~1
         assert isclose(round(transformed_test['population'].std(), 0), 1)  # less precision, but ~1
 
-    # TODO: generating warning
     def test_BoxCoxTransformer(self):
         data = TestHelper.get_housing_data()
         target_variable = 'median_house_value'

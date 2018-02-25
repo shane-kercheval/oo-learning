@@ -1,12 +1,23 @@
 import os
 import pickle
-import matplotlib.pyplot as plt
+import warnings
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
+from mock import patch
 from oolearning import *
 from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
+
+
+class MockDevice:
+    """
+    A mock device to temporarily suppress output to stdout
+    Similar to UNIX /dev/null.
+    http://keenhenry.me/suppress-stdout-in-unittest/
+    """
+    def write(self, s): pass
 
 
 class MockExploreBase(ExploreDatasetBase):
@@ -302,19 +313,26 @@ class ExploratoryTests(TimerTestCase):
                               lambda: explore.plot_scatterplot_numerics(numeric_columns=['median_house_value', 'median_income', 'total_rooms', 'housing_median_age']))  # noqa
 
     def test_ExploreDatasetBase_correlations(self):
-        credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
-        target_variable = 'default'
+        # generating: DeprecationWarning: object of type <class 'float'> cannot be safely interpreted as an
+        # integer. pal = _ColorPalette(pal(np.linspace(0, 1, n_colors))), in unit test, but cannot replicate
+        # while running manually, let's ignore for now
+        warnings.filterwarnings("ignore")
+        # noinspection PyUnusedLocal
+        with patch('sys.stdout', new=MockDevice()) as fake_out:  # suppress output of logistic model
 
-        explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
+            credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
+            target_variable = 'default'
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/credit_correlation_heatmap.png'))  # noqa
-        assert os.path.isfile(file)
-        os.remove(file)
-        assert os.path.isfile(file) is False
-        explore.plot_correlation_heatmap()
-        plt.savefig(file)
-        plt.gcf().clear()
-        assert os.path.isfile(file)
+            explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
+
+            file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/credit_correlation_heatmap.png'))  # noqa
+            assert os.path.isfile(file)
+            os.remove(file)
+            assert os.path.isfile(file) is False
+            explore.plot_correlation_heatmap()
+            plt.savefig(file)
+            plt.gcf().clear()
+            assert os.path.isfile(file)
 
     def test_ExploreClassificationDataset(self):
         self.assertRaises(ValueError, lambda: ExploreClassificationDataset.from_csv(csv_file_path=TestHelper.ensure_test_directory('data/housing.csv'), target_variable='median_house_value'))  # noqa

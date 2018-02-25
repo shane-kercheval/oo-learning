@@ -1,13 +1,15 @@
 import os
 import pickle
 
+import pandas as pd
+
 from oolearning import *
 from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 
 
 # noinspection SpellCheckingInspection,PyMethodMayBeStatic
-class DataSplittersTests(TimerTestCase):
+class ConverterTests(TimerTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -42,13 +44,9 @@ class DataSplittersTests(TimerTestCase):
         assert all(converted_classes == expected_classes)
 
         # multi-class
-        expected_classes = ['setosa', 'setosa', 'setosa', 'setosa', 'setosa', 'setosa', 'setosa', 'setosa', 'setosa', 'setosa', 'setosa', 'setosa', 'versicolor', 'versicolor', 'versicolor', 'versicolor', 'versicolor', 'versicolor', 'versicolor', 'virginica', 'versicolor', 'versicolor', 'versicolor', 'versicolor', 'versicolor', 'virginica', 'versicolor', 'virginica', 'virginica', 'virginica', 'virginica', 'virginica', 'versicolor', 'versicolor', 'virginica', 'virginica', 'virginica', 'virginica']  # noqa
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Converters/random_forest_multiclass_output.pkl'))  # noqa
-        with open(file, 'rb') as saved_object:
-            predicted_probabilities = pickle.load(saved_object)
-
-        converted_classes = HighestValueConverter().convert(values=predicted_probabilities)
-        assert all(converted_classes == expected_classes)
+        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_MultiClass_predictions.csv')))  # noqa
+        converted_classes = HighestValueConverter().convert(values=mock_data[['setosa', 'versicolor', 'virginica']])  # noqa
+        assert all(converted_classes == mock_data.predicted_classes)
 
     def test_TwoClassRocOptimizerConverter(self):
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Converters/logistic_regression_output.pkl'))  # noqa

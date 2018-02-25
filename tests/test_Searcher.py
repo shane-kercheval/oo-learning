@@ -110,7 +110,6 @@ class SearcherTests(TimerTestCase):
         assert os.path.isfile(os.path.join(cache_directory, 'holdout_description1_MockClassificationModelWrapper.pkl'))  # noqa
         assert os.path.isfile(os.path.join(cache_directory, 'holdout_description2_MockClassificationModelWrapper_criterion_gini_max_features_a_n_estimators_c_min_samples_leaf_e.pkl'))  # noqa
 
-        # TODO, switch to actual models and don't delete
         shutil.rmtree(cache_directory)
 
         assert len(searcher.results.tuner_results) == 2

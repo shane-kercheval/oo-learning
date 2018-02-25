@@ -41,7 +41,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
 
 
 # TODO document that transformations are fit/transformed on the training folds and transformed on the holdout
-    # fold
+    # fold; to avoid 'snooping'
     def _resample(self,
                   data_x: pd.DataFrame,
                   data_y: np.ndarray,
@@ -52,14 +52,14 @@ class RepeatedCrossValidationResampler(ResamplerBase):
         # transform/fit on training data
         if self._model_transformations is not None:
             # before we fit the data, we actually want to 'snoop' at what the expected columns will be with
-            # ALL the data. The reason is that if we so some sort of dummy encoding, but not all the
-            # categories are included in the training set (i.e. maybe only a small number of observations have
-            # the categoric value), then we can still ensure that we will be giving the same expected columns/
-            # encodings to the predict method with the holdout set.
-            # noinspection PyTypeChecker
-            expected_columns = TransformerPipeline.get_expected_columns(
-                data=data_x,  # noqa
-                transformations=self._model_transformations)
+            # ALL the data. The reason is that if we so some sort of encoding (dummy/one-hot), but not all of
+            # the categories are included in the training set (i.e. maybe only a small number of observations
+            # have the categoric value), then we can still ensure that we will be giving the same expected
+            # columns/encodings to the `predict` method with the holdout set.
+            expected_columns = TransformerPipeline.get_expected_columns(data=data_x,
+                                                                        transformations=self._model_transformations)  # noqa
+            # create a transformer that ensures the expected columns exist, and add it as the last
+            # transformation
             transformer = StatelessTransformer(custom_function=lambda x_df: x_df.reindex(columns=expected_columns,  # noqa
                                                                                          fill_value=0))
             self._model_transformations = self._model_transformations + [transformer]
@@ -72,9 +72,10 @@ class RepeatedCrossValidationResampler(ResamplerBase):
 
             for fold_index in range(self._folds):  # for each fold, train and calculate
 
-                holdout_indexes = random_folds == fold_index  # indexes matching the fold belong to test set
-                training_indexes = ~holdout_indexes  # all other indexes belongs to the training set
+                holdout_indexes = random_folds == fold_index  # indexes that match the fold belong to holdout
+                training_indexes = ~holdout_indexes  # all other indexes belong to the training set
 
+                # odd naming serves as distinction between when i'm using transformed/non-transformed data
                 train_x_not_transformed, holdout_x_not_transformed = data_x[training_indexes], data_x[holdout_indexes]  # noqa
                 train_y, holdout_y = data_y[training_indexes], data_y[holdout_indexes]
 

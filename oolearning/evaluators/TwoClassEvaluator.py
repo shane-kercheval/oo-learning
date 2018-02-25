@@ -49,6 +49,10 @@ class TwoClassEvaluator(EvaluatorBase):
         return self._confusion_matrix
 
     @property
+    def total_observations(self) -> int:
+        return self._confusion_matrix.total_observations
+
+    @property
     def sensitivity(self) -> Union[float, None]:
         return self._confusion_matrix.sensitivity
 

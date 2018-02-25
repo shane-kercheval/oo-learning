@@ -85,6 +85,14 @@ class MultiClassEvaluator(EvaluatorBase):
         return self._confusion_matrix.matrix
 
     @property
+    def confusion_matrix(self) -> ConfusionMatrix:
+        return self._confusion_matrix
+
+    @property
+    def total_observations(self) -> int:
+        return self._confusion_matrix.total_observations
+
+    @property
     def accuracy(self):
         return self._accuracy
 
