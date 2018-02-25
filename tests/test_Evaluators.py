@@ -5,7 +5,7 @@ import dill as pickle
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, recall_score, f1_score, precision_score, cohen_kappa_score, \
-    mean_squared_error, mean_absolute_error, roc_auc_score
+    roc_auc_score
 
 from oolearning import *
 from oolearning.evaluators.TwoClassConfusionMatrix import TwoClassConfusionMatrix
