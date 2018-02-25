@@ -1,6 +1,7 @@
 from typing import Union
 
 import numpy as np
+import pandas as pd
 
 from oolearning.evaluators.TwoClassConfusionMatrix import TwoClassConfusionMatrix
 from oolearning.evaluators.EvaluatorBase import EvaluatorBase
@@ -40,8 +41,12 @@ class TwoClassEvaluator(EvaluatorBase):
         return evaluator
 
     @property
-    def confusion_matrix(self) -> TwoClassConfusionMatrix:
+    def matrix(self) -> pd.DataFrame:
         return self._confusion_matrix.matrix
+
+    @property
+    def confusion_matrix(self) -> TwoClassConfusionMatrix:
+        return self._confusion_matrix
 
     @property
     def sensitivity(self) -> Union[float, None]:

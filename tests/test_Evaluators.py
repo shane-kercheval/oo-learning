@@ -20,66 +20,21 @@ class EvaluatorTests(TimerTestCase):
     def setUpClass(cls):
         pass
 
-
-    def test_ConfusionMatrix_creations_result_in_same_confusion_matrix(self):
+    def test_TwoClassEvaluator_ConfusionMatrix(self):
         true_positives = 21
         true_negatives = 25
         false_positives = 20
         false_negatives = 34
         negative_category = 0
-        positive_category = 1
 
         # THESE ARE THE EXPECTED VALUES IN THE CONFUSION MATRIX (COLUMNS) FOR EACH CREATION FUNCTION
         expected_predicted_negatives = [true_negatives, false_negatives, true_negatives + false_negatives]
         expected_predicted_positives = [false_positives, true_positives, true_positives + false_positives]
         expected_totals = [sum(x) for x in zip(expected_predicted_negatives, expected_predicted_positives)]
 
-        ######################################################################################################
-        # `from_values` no categories
-        ######################################################################################################
-        confusion_matrix = TwoClassEvaluator.from_values(true_positives=true_positives,
-                                                         true_negatives=true_negatives,
-                                                         false_positives=false_positives,
-                                                         false_negatives=false_negatives)
-        assert confusion_matrix.matrix['neg'].values.tolist() == expected_predicted_negatives
-        assert confusion_matrix.matrix['pos'].values.tolist() == expected_predicted_positives
-        assert confusion_matrix.matrix['Total'].values.tolist() == expected_totals
-
-        assert confusion_matrix.matrix.index.values.tolist() == ['neg', 'pos', 'Total']
-        assert confusion_matrix.matrix.columns.values.tolist() == ['neg', 'pos', 'Total']
-        ######################################################################################################
-        # `from_values` with categories
-        ######################################################################################################
-        confusion_matrix = TwoClassEvaluator.from_values(true_positives=true_positives,
-                                                         true_negatives=true_negatives,
-                                                         false_positives=false_positives,
-                                                         false_negatives=false_negatives,
-                                                         positive_category=positive_category,
-                                                         negative_category=negative_category)
-        assert confusion_matrix.matrix.loc[:, 0].values.tolist() == expected_predicted_negatives
-        assert confusion_matrix.matrix.loc[:, 1].values.tolist() == expected_predicted_positives
-        assert confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == expected_totals
-
-        assert confusion_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
-        assert confusion_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        ######################################################################################################
-        # `from_values` swapped categories
-        ######################################################################################################
-        confusion_matrix = TwoClassEvaluator.from_values(true_positives=true_negatives,
-                                                         true_negatives=true_positives,
-                                                         false_positives=false_negatives,
-                                                         false_negatives=false_positives,
-                                                         positive_category=negative_category,
-                                                         negative_category=positive_category)
         expected_predicted_positives_r = [false_negatives, true_negatives, true_negatives + false_negatives]
         expected_predicted_negatives_r = [true_positives, false_positives, true_positives + false_positives]
 
-        assert confusion_matrix.matrix.loc[:, 1].values.tolist() == expected_predicted_negatives_r
-        assert confusion_matrix.matrix.loc[:, 0].values.tolist() == expected_predicted_positives_r
-        assert confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [55, 45, 100]
-
-        assert confusion_matrix.matrix.index.values.tolist() == [1, 0, 'Total']
-        assert confusion_matrix.matrix.columns.values.tolist() == [1, 0, 'Total']
         ######################################################################################################
         # `from_classes`
         ######################################################################################################
@@ -89,32 +44,30 @@ class EvaluatorTests(TimerTestCase):
         predicted_values = np.random.randint(low=0, high=2, size=100)
         positive_category = 1
 
-        confusion_matrix = TwoClassEvaluator.from_classes(actual_classes=actual_values,
-                                                          predicted_classes=predicted_values,
-                                                          positive_category=positive_category,
-                                                          negative_category=negative_category)
+        evaluator = TwoClassEvaluator.from_classes(actual_classes=actual_values,
+                                                   predicted_classes=predicted_values,
+                                                   positive_class=positive_category)
 
-        assert confusion_matrix.matrix.loc[:, 0].values.tolist() == expected_predicted_negatives
-        assert confusion_matrix.matrix.loc[:, 1].values.tolist() == expected_predicted_positives
-        assert confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == expected_totals
+        assert evaluator.matrix.loc[:, 0].values.tolist() == expected_predicted_negatives
+        assert evaluator.matrix.loc[:, 1].values.tolist() == expected_predicted_positives
+        assert evaluator.matrix.loc[:, 'Total'].values.tolist() == expected_totals
 
-        assert confusion_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
-        assert confusion_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
+        assert evaluator.matrix.index.values.tolist() == [0, 1, 'Total']
+        assert evaluator.matrix.columns.values.tolist() == [0, 1, 'Total']
 
         ######################################################################################################
         # `from_classes` swapped categories
         ######################################################################################################
-        confusion_matrix = TwoClassEvaluator.from_classes(actual_classes=actual_values,
-                                                          predicted_classes=predicted_values,
-                                                          positive_category=negative_category,
-                                                          negative_category=positive_category)
+        evaluator = TwoClassEvaluator.from_classes(actual_classes=actual_values,
+                                                   predicted_classes=predicted_values,
+                                                   positive_class=negative_category)
 
-        assert confusion_matrix.matrix.loc[:, 1].values.tolist() == expected_predicted_negatives_r
-        assert confusion_matrix.matrix.loc[:, 0].values.tolist() == expected_predicted_positives_r
-        assert confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [55, 45, 100]
+        assert evaluator.matrix.loc[:, 1].values.tolist() == expected_predicted_negatives_r
+        assert evaluator.matrix.loc[:, 0].values.tolist() == expected_predicted_positives_r
+        assert evaluator.matrix.loc[:, 'Total'].values.tolist() == [55, 45, 100]
 
-        assert confusion_matrix.matrix.index.values.tolist() == [1, 0, 'Total']
-        assert confusion_matrix.matrix.columns.values.tolist() == [1, 0, 'Total']
+        assert evaluator.matrix.index.values.tolist() == [1, 0, 'Total']
+        assert evaluator.matrix.columns.values.tolist() == [1, 0, 'Total']
 
     def check_confusion_matrix(self, con_matrix, mock_data):
         assert con_matrix.matrix.loc[:, 0].values.tolist() == [347, 140, 487]
@@ -192,14 +145,14 @@ class EvaluatorTests(TimerTestCase):
     def test_ConfusionMatrix_from_probabilities(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
 
-        evaluator = TwoClassProbabilityEvaluator(converter=TwoClassThresholdConverter(threshold=0.5), positive_class=1)  # noqa
+        evaluator = TwoClassProbabilityEvaluator(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))  # noqa
         evaluator.evaluate(actual_values=mock_data.actual, predicted_values=mock_data[['pos_probabilities', 'neg_probabilities']].rename(columns={'pos_probabilities': 1, 'neg_probabilities': 0}))  # noqa
         self.check_confusion_matrix(con_matrix=evaluator._confusion_matrix, mock_data=mock_data)
 
         ######################################################################################################
         # try a threshold of 1, which means that 0 positives will be predicted
         ######################################################################################################
-        evaluator = TwoClassProbabilityEvaluator(converter=TwoClassThresholdConverter(threshold=1), positive_class=1)  # noqa
+        evaluator = TwoClassProbabilityEvaluator(converter=TwoClassThresholdConverter(threshold=1, positive_class=1))  # noqa
         evaluator.evaluate(actual_values=mock_data.actual, predicted_values=mock_data[['pos_probabilities', 'neg_probabilities']].rename(columns={'pos_probabilities': 1, 'neg_probabilities': 0}))  # noqa
 
         assert evaluator._confusion_matrix.matrix.loc[:, 0].values.tolist() == [424, 290, 714]
@@ -218,29 +171,13 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator._confusion_matrix.all_quality_metrics['Positive Predictive Value'] is None
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['Negative Predictive Value'], evaluator._confusion_matrix.all_quality_metrics['No Information Rate'])  # noqa
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['Prevalence'], 0.4061624649859944)
-        assert isclose(evaluator._confusion_matrix.all_quality_metrics['No Information Rate'], 0.5938375350140056)
+        assert isclose(evaluator._confusion_matrix.all_quality_metrics['No Information Rate'], 0.5938375350140056)  # noqa
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['Total Observations'], len(mock_data))
 
-    def test_TwoClassEvaluator_predictions(self):
-        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
-
-        # since target 'category' is 0/1, round() the probabilities will select the right category
-        assert all(mock_data.predictions == round(mock_data.pos_probabilities))  # ensure correct data
-
-        evaluator = MockTwoClassEvaluator(positive_category=1, negative_category=0, use_probabilities=False)
-        assert isinstance(evaluator, UtilityFunctionMixin)
-        assert isinstance(evaluator, ScoreBase)
-
-        accuracy = evaluator.calculate(actual_values=mock_data.actual, predicted_values=mock_data.predictions)
-        assert isclose(accuracy, accuracy_score(y_true=mock_data.actual, y_pred=mock_data.predictions))
-        assert isinstance(evaluator.confusion_matrix, TwoClassEvaluator)
-        self.check_confusion_matrix(con_matrix=evaluator.confusion_matrix, mock_data=mock_data)
-        assert evaluator.value == evaluator.confusion_matrix.accuracy
-        assert evaluator.threshold is None
-
     def test_TwoClassEvaluator_from_classes(self):
-        # TODO:
-        pass
+        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
+        evaluator = TwoClassEvaluator.from_classes(actual_classes=mock_data.actual, predicted_classes=mock_data.predictions, positive_class=1)  # noqa
+        self.check_confusion_matrix(con_matrix=evaluator._confusion_matrix, mock_data=mock_data)
 
     def test_TwoClassEvaluator_probabilities_custom_threshold(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
@@ -248,19 +185,16 @@ class EvaluatorTests(TimerTestCase):
         predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
         predictions_mock.columns = [1, 0]
 
-        evaluator = MockTwoClassEvaluator(positive_category=1, negative_category=0, use_probabilities=True,
-                                          threshold=0.5)
-        assert isinstance(evaluator, UtilityFunctionMixin)
-        assert isinstance(evaluator, ScoreBase)
-
-        evaluator.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isinstance(evaluator.confusion_matrix, TwoClassEvaluator)
-        self.check_confusion_matrix(con_matrix=evaluator.confusion_matrix, mock_data=mock_data)
-        assert evaluator.value == evaluator.confusion_matrix.accuracy
-        assert evaluator.threshold == 0.5
+        evaluator = TwoClassProbabilityEvaluator(converter=TwoClassThresholdConverter(positive_class=1, threshold=0.5))  # noqa
+        evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
+        assert isclose(evaluator.auc, roc_auc_score(y_true=mock_data.actual, y_score=predictions_mock[1]))
         assert isclose(evaluator.auc, roc_auc_score(y_true=mock_data.actual, y_score=mock_data.pos_probabilities))  # noqa
+        self.check_confusion_matrix(con_matrix=evaluator.confusion_matrix, mock_data=mock_data)
 
-        actual_thresholds = evaluator._calculate_fpr_tpr_ideal_threshold()
+        # test ROC calculations
+        converter = TwoClassRocOptimizerConverter(actual_classes=mock_data.actual, positive_class=1)
+        converter.convert(values=predictions_mock)
+        actual_thresholds = converter.false_positive_rates, converter.true_positive_rates, converter.ideal_threshold  # noqa
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/fpr_tpr_threshold_mock.pkl'))  # noqa
         # with open(file, 'wb') as output:
         #     pickle.dump(actual_thresholds, output, pickle.HIGHEST_PROTOCOL)
@@ -271,7 +205,10 @@ class EvaluatorTests(TimerTestCase):
             assert all([isclose(x, y) for x, y in zip(expected_thresholds[1], actual_thresholds[1])])
             assert isclose(expected_thresholds[2], actual_thresholds[2])
 
-        actual_thresholds = evaluator._calculate_ppv_tpr_ideal_threshold()
+        # test PPV/TPR calculations
+        converter = TwoClassPrecisionRecallOptimizerConverter(actual_classes=mock_data.actual, positive_class=1)  # noqa
+        converter.convert(values=predictions_mock)
+        actual_thresholds = converter.positive_predictive_values, converter.true_positive_rates, converter.ideal_threshold  # noqa
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/ppv_tpr_threshold_mock.pkl'))  # noqa
         # with open(file, 'wb') as output:
         #     pickle.dump(actual_thresholds, output, pickle.HIGHEST_PROTOCOL)
@@ -294,56 +231,6 @@ class EvaluatorTests(TimerTestCase):
         TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_probabilities_custom_thr_ppv_tpr.png',  # noqa
                               lambda: evaluator.get_ppv_tpr_curve())
 
-    def test_TwoClassEvaluator_probabilities_no_threshold(self):
-        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
-
-        predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
-        predictions_mock.columns = [1, 0]
-
-        # noinspection PyTypeChecker
-        evaluator = MockTwoClassEvaluator(positive_category=1,
-                                          negative_category=0,
-                                          use_probabilities=True,
-                                          threshold=None)
-        assert isinstance(evaluator, UtilityFunctionMixin)
-        assert isinstance(evaluator, ScoreBase)
-
-        evaluator.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isinstance(evaluator.confusion_matrix, TwoClassEvaluator)
-        assert evaluator.confusion_matrix.matrix.loc[:, 0].values.tolist() == [296, 90, 386]
-        assert evaluator.confusion_matrix.matrix.loc[:, 1].values.tolist() == [128, 200, 328]
-        assert evaluator.confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
-        assert evaluator.value == evaluator.confusion_matrix.accuracy
-        assert isclose(evaluator.threshold, 0.41)
-        assert isclose(evaluator.auc, roc_auc_score(y_true=mock_data.actual, y_score=mock_data.pos_probabilities))  # noqa
-
-        actual_thresholds = evaluator._calculate_fpr_tpr_ideal_threshold()
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/fpr_tpr_threshold_mock.pkl'))  # noqa
-        # with open(file, 'wb') as output:
-        #     pickle.dump(actual_thresholds, output, pickle.HIGHEST_PROTOCOL)
-        with open(file, 'rb') as saved_object:
-            expected_thresholds = pickle.load(saved_object)
-            assert len(expected_thresholds) == 3
-            assert all([isclose(x, y) for x, y in zip(expected_thresholds[0], actual_thresholds[0])])
-            assert all([isclose(x, y) for x, y in zip(expected_thresholds[1], actual_thresholds[1])])
-            assert isclose(expected_thresholds[2], actual_thresholds[2])
-
-        actual_thresholds = evaluator._calculate_ppv_tpr_ideal_threshold()
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/ppv_tpr_threshold_mock.pkl'))  # noqa
-        # with open(file, 'wb') as output:
-        #     pickle.dump(actual_thresholds, output, pickle.HIGHEST_PROTOCOL)
-        with open(file, 'rb') as saved_object:
-            expected_thresholds = pickle.load(saved_object)
-            assert len(expected_thresholds) == 3
-            assert all([isclose(x, y) for x, y in zip(expected_thresholds[0], actual_thresholds[0])])
-            assert all([isclose(x, y) for x, y in zip(expected_thresholds[1], actual_thresholds[1])])
-            assert isclose(expected_thresholds[2], actual_thresholds[2])
-
-        TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_probabilities_no_thresh_ROC.png',  # noqa
-                              lambda: evaluator.get_roc_curve())
-
-        TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_probabilities_no_thr_ppv_tpr.png',  # noqa
-                              lambda: evaluator.get_ppv_tpr_curve())
     # noinspection SpellCheckingInspection
     # noinspection PyTypeChecker
     def test_ConfusionMatrix_MultiClass(self):
@@ -362,7 +249,7 @@ class EvaluatorTests(TimerTestCase):
         # i.e. there will be no predictions for a class (setosa), make sure Confusion Matrix can handle that.
         ######################################################################################################
         no_setosa = np.array([x if x != 'setosa' else 'versicolor' for x in mock_data.predicted_classes])
-        con_matrix = MultiClassEvaluator.from_classes(actual_classes=mock_data.actual, predicted_classes=no_setosa)
+        con_matrix = MultiClassEvaluator.from_classes(actual_classes=mock_data.actual, predicted_classes=no_setosa)  # noqa
 
         assert con_matrix.matrix['setosa'].values.tolist() == [0, 0, 0, 0]
         assert con_matrix.matrix['versicolor'].values.tolist() == [12, 12, 2, 26]

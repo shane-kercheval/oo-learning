@@ -46,5 +46,6 @@ class ConfusionMatrix:
     def matrix_normalized(self) -> pd.DataFrame:
         pass
 
+    # TODO: DO
     def plot_heatmap(self) -> object:
         pass
