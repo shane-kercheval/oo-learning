@@ -10,6 +10,7 @@ from oolearning.model_processors.ResamplerResults import ResamplerResults
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 from oolearning.splitters.StratifiedDataSplitter import StratifiedDataSplitter
 from oolearning.transformers.TransformerBase import TransformerBase
+from oolearning.transformers.TransformerPipeline import TransformerPipeline
 
 
 # TODO: NOT FINISHED, NOT TESTED
@@ -53,18 +54,25 @@ class StratifiedMonteCarloResampler(ResamplerBase):
                                                                                      samples=self._repeats,
                                                                                      seed=42)
         for train_ind, test_ind in zip(training_indexes, test_indexes):
-                train_x, test_x = data_x[train_ind], data_x[test_ind]
+                train_x_not_transformed, holdout_x_not_transformed = data_x[train_ind], data_x[test_ind]
                 train_y, test_y = data_y[train_ind], data_y[test_ind]
 
+                pipeline = TransformerPipeline(transformations=self._model_transformations)
+                train_x_transformed = pipeline.fit_transform(data_x=train_x_not_transformed)
+                holdout_x_transformed = pipeline.transform(data_x=holdout_x_not_transformed)
+
+                if self._train_callback is not None:
+                    self._train_callback(train_x_transformed, data_y, hyper_params)
+
                 model_copy = self._model.clone()  # need to reuse this object type for each fold/repeat
-                model_copy.train(data_x=train_x, data_y=train_y, hyper_params=hyper_params)
+                model_copy.train(data_x=train_x_not_transformed, data_y=train_y, hyper_params=hyper_params)
 
                 # for each evaluator, add the metric name/value to a dict to add to the ResamplerResults
                 fold_evaluators = list()
                 for evaluator in self._scores:
                     evaluator_copy = evaluator.clone()  # need to reuse this object type for each fold/repeat
                     evaluator_copy.calculate(actual_values=test_y,
-                                             predicted_values=model_copy.predict(data_x=test_x))
+                                             predicted_values=model_copy.predict(data_x=holdout_x_transformed))  # noqa
                     fold_evaluators.append(evaluator_copy)
                 result_evaluators.append(fold_evaluators)
 

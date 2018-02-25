@@ -83,13 +83,7 @@ class ResamplerBase(metaclass=ABCMeta):
         :type hyper_params: object containing the hyper-parameters to tune
         :return: None
         """
-        pipeline = TransformerPipeline(transformations=self._model_transformations)
-        data_transformed = pipeline.fit_transform(data_x=data_x)
-
-        if self._train_callback is not None:
-            self._train_callback(data_transformed, data_y, hyper_params)
-
-        self._results = self._resample(data_x=data_transformed, data_y=data_y, hyper_params=hyper_params)
+        self._results = self._resample(data_x=data_x, data_y=data_y, hyper_params=hyper_params)
 
     @abstractmethod
     def _resample(self,

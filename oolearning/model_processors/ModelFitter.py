@@ -5,12 +5,14 @@ import numpy as np
 import pandas as pd
 
 from oolearning.evaluators.EvaluatorBase import EvaluatorBase
+from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
 from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import ModelAlreadyFittedError, ModelNotFittedError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 from oolearning.splitters.DataSplitterBase import DataSplitterBase
+from oolearning.transformers.StatelessTransformer import StatelessTransformer
 from oolearning.transformers.TransformerBase import TransformerBase
 from oolearning.transformers.TransformerPipeline import TransformerPipeline
 
@@ -30,7 +32,8 @@ class ModelFitter:
                  model: ModelWrapperBase,
                  model_transformations: List[TransformerBase],
                  splitter: DataSplitterBase,
-                 evaluator: EvaluatorBase,
+                 evaluator: Union[EvaluatorBase]=None,
+                 scores: Union[List[ScoreBase]]=None,
                  persistence_manager: PersistenceManagerBase=None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None):
@@ -54,6 +57,8 @@ class ModelFitter:
         self._training_evaluator = evaluator
         # copy so that we can use 'same' evaluator type
         self._holdout_evaluator = copy.deepcopy(evaluator)
+        self._training_scores = scores
+        self._holdout_scores = None if scores is None else [x.clone() for x in scores]
         self._has_fitted = False
         self._model_info = None
         self._persistence_manager = persistence_manager
@@ -63,7 +68,8 @@ class ModelFitter:
             assert isinstance(model_transformations, list)
             assert all([isinstance(x, TransformerBase) for x in model_transformations])
 
-        self._model_transformations = TransformerPipeline(transformations=model_transformations)
+        self._model_transformations = model_transformations
+        self._pipeline = None
 
     @property
     def model_info(self) -> FittedInfoBase:
@@ -100,8 +106,22 @@ class ModelFitter:
         holdout_x = data.iloc[holdout_indexes].drop(columns=target_variable)
 
         # transform/fit on training data
+        if self._model_transformations is not None:
+            # before we fit the data, we actually want to 'snoop' at what the expected columns will be with
+            # ALL the data. The reason is that if we so some sort of dummy encoding, but not all the
+            # categories are included in the training set (i.e. maybe only a small number of observations have
+            # the categoric value), then we can still ensure that we will be giving the same expected columns/
+            # encodings to the predict method with the holdout set.
+            # noinspection PyTypeChecker
+            expected_columns = TransformerPipeline.get_expected_columns(data=data.drop(columns=target_variable),  # noqa
+                                                                        transformations=self._model_transformations)  # noqa
+            transformer = StatelessTransformer(custom_function=
+                                               lambda x_df: x_df.reindex(columns=expected_columns,
+                                                                         fill_value=0))
+            self._model_transformations = self._model_transformations + [transformer]
 
-        prepared_training_data = self._model_transformations.fit_transform(training_x)
+        self._pipeline = TransformerPipeline(transformations=self._model_transformations)
+        transformed_training_data = self._pipeline.fit_transform(training_x)
 
         # set up persistence if applicable
         if self._persistence_manager is not None:  # then build the key
@@ -110,18 +130,31 @@ class ModelFitter:
             self._model.set_persistence_manager(persistence_manager=self._persistence_manager)
 
         if self._train_callback is not None:
-            self._train_callback(prepared_training_data, training_y, hyper_params)
+            self._train_callback(transformed_training_data, training_y, hyper_params)
 
         # fit the model with the transformed training data
-        self._model.train(data_x=prepared_training_data, data_y=training_y, hyper_params=hyper_params)
+        self._model.train(data_x=transformed_training_data, data_y=training_y, hyper_params=hyper_params)
         self._model_info = self._model.fitted_info
 
         self._has_fitted = True
 
-        self._training_evaluator.evaluate(actual_values=training_y,
-                                          predicted_values=self.predict(data_x=training_x))
-        self._holdout_evaluator.evaluate(actual_values=holdout_y,
-                                         predicted_values=self.predict(data_x=holdout_x))
+        # if evaluators, evaluate on both the training and holdout set
+        if self._training_evaluator is not None:
+            # predict will apply the transformations (which are fitted on the training data)
+            self._training_evaluator.evaluate(actual_values=training_y,
+                                              predicted_values=self.predict(data_x=training_x))
+            self._holdout_evaluator.evaluate(actual_values=holdout_y,
+                                             predicted_values=self.predict(data_x=holdout_x))
+
+        # if scores, score on both the training and holdout set
+        if self._training_scores is not None:
+            # predict will apply the transformations (which are fitted on the training data)
+            for score in self._training_scores:
+                score.calculate(actual_values=training_y,
+                                predicted_values=self.predict(data_x=training_x))
+            for score in self._holdout_scores:
+                score.calculate(actual_values=holdout_y,
+                                predicted_values=self.predict(data_x=holdout_x))
 
     def predict(self, data_x: pd.DataFrame) -> np.ndarray:
         """
@@ -135,7 +168,7 @@ class ModelFitter:
         if self._has_fitted is False:
             raise ModelNotFittedError()
 
-        prepared_prediction_set = self._model_transformations.transform(data_x)
+        prepared_prediction_set = self._pipeline.transform(data_x)
         return self._model.predict(data_x=prepared_prediction_set)
 
     @property
@@ -151,3 +184,17 @@ class ModelFitter:
             raise ModelNotFittedError()
 
         return self._holdout_evaluator
+
+    @property
+    def training_scores(self):
+        if self._has_fitted is False:
+            raise ModelNotFittedError()
+
+        return self._training_scores
+
+    @property
+    def holdout_scores(self):
+        if self._has_fitted is False:
+            raise ModelNotFittedError()
+
+        return self._holdout_scores

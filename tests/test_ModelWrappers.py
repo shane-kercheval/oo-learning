@@ -433,6 +433,55 @@ class ModelWrapperTests(TimerTestCase):
         # cannot update non-existant hyper-param (d)
         self.assertRaises(ValueError, lambda: params.update_dict(dict(d='d')))
 
+# TODO test ModelFitter without Evaluators and with Scores
+
+
+    def test_ModelFitter_expected_columns_after_dummy_transform_with_missing_categories(self):
+        # before we fit the data, we actually want to 'snoop' at what the expected columns will be with
+        # ALL the data. The reason is that if we so some sort of dummy encoding, but not all the
+        # categories are included in the training set (i.e. maybe only a small number of observations have
+        # the categoric value), then we can still ensure that we will be giving the same expected columns/
+        # encodings to the predict method with the holdout set.
+        data = TestHelper.get_titanic_data()
+        target_variable = 'Survived'
+
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        # splitting with a very high holdout ratio means we will miss some categories in the training set that
+        # might (in this case, will be) found in the holdout set.
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.9)
+        training_indexes, _ = splitter.split(data[target_variable])
+        training_data = data.iloc[training_indexes].drop(columns=target_variable)
+        training_columns_original = TransformerPipeline.get_expected_columns(data=training_data, transformations=transformations)  # noqa
+        expected_columns = TransformerPipeline.get_expected_columns(data=data.drop(columns=target_variable), transformations=transformations)  # noqa
+        # these are the categories that will not be found in the training set;
+        # therefore, there wouldn't have been any associated columns
+        expected_missing = ['SibSp_5', 'Parch_3', 'Parch_6']
+        assert all([x not in training_columns_original for x in expected_missing])  # not in training set
+        assert all([x in expected_columns for x in expected_missing])  # in expected columns
+
+        # can use the callback which returns the transformed training data
+        # we know that we would have had columns missing, so verify they aren't
+        def train_callback(transformed_training_data, data_y, hyper_params):
+            # verify columns exist and for each (otherwise) missing column, all values are 0
+            assert all(transformed_training_data.columns.values == expected_columns)
+            assert all(transformed_training_data['SibSp_5'] == 0)
+            assert all(transformed_training_data['Parch_3'] == 0)
+            assert all(transformed_training_data['Parch_6'] == 0)
+
+        # same holdout_ratio as above
+        fitter = ModelFitter(model=RandomForestMW(),
+                             model_transformations=transformations,
+                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.9),
+                             evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=1)),
+                             train_callback=train_callback)
+        fitter.fit(data=data, target_variable='Survived', hyper_params=RandomForestHP(criterion='gini'))
+
     def test_Regression(self):
         data = TestHelper.get_cement_data()
         target_variable = 'strength'

@@ -226,7 +226,8 @@ class ResamplerTests(TimerTestCase):
             assert hyper_params is None
             # noinspection PyTypeChecker
             assert all(data_y == data_y_test)
-            TestHelper.ensure_all_values_equal(data_frame1=transformed_data, data_frame2=data_x_test)
+            # make sure transformations happened
+            assert all(data_x_test.columns.values == ['cement', 'slag', 'ash', 'water', 'superplastic', 'age', 'random_code1'])  # noqa
 
         evaluators = [RmseScore(), MaeScore()]
         transformations = [RemoveColumnsTransformer(['coarseagg', 'fineagg']), ImputationTransformer(), DummyEncodeTransformer()]  # noqa
@@ -254,7 +255,6 @@ class ResamplerTests(TimerTestCase):
         train_data_y = train_data.Survived
         train_data = train_data.drop(columns='Survived')
 
-        # noinspection SpellCheckingInspection
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
                            ImputationTransformer(),
@@ -299,20 +299,20 @@ class ResamplerTests(TimerTestCase):
         assert all(resampler.results.cross_validation_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'ErrorRate'])  # noqa
 
         # metric_means and metric_standard_deviations comes from cross_validation_scores, so testing both
-        assert isclose(resampler.results.metric_means['kappa'], 0.5871647457625514)
-        assert isclose(resampler.results.metric_means['sensitivity'], 0.7225285066820597)
-        assert isclose(resampler.results.metric_means['specificity'], 0.86179768930490386)
-        assert isclose(resampler.results.metric_means['ErrorRate'], 0.19173962767419936)
+        assert isclose(resampler.results.metric_means['kappa'], 0.5870121859420598)
+        assert isclose(resampler.results.metric_means['sensitivity'], 0.7216194157729687)
+        assert isclose(resampler.results.metric_means['specificity'], 0.8622628055839736)
+        assert isclose(resampler.results.metric_means['ErrorRate'], 0.19174428967886137)
 
-        assert isclose(resampler.results.metric_standard_deviations['kappa'], 0.065991891925931981)
-        assert isclose(resampler.results.metric_standard_deviations['sensitivity'], 0.065086179854148496)
-        assert isclose(resampler.results.metric_standard_deviations['specificity'], 0.035803688812849649)
-        assert isclose(resampler.results.metric_standard_deviations['ErrorRate'], 0.029873757630591153)
+        assert isclose(resampler.results.metric_standard_deviations['kappa'], 0.0653653528731703)
+        assert isclose(resampler.results.metric_standard_deviations['sensitivity'], 0.06316345649148118)
+        assert isclose(resampler.results.metric_standard_deviations['specificity'], 0.03554555534885417)
+        assert isclose(resampler.results.metric_standard_deviations['ErrorRate'], 0.029647503460148796)
 
-        assert isclose(resampler.results.metric_coefficient_of_variation['kappa'], round(0.065991891925931981 / 0.5871647457625514, 2))  # noqa
-        assert isclose(resampler.results.metric_coefficient_of_variation['sensitivity'], round(0.065086179854148496 / 0.7225285066820597, 2))  # noqa
-        assert isclose(resampler.results.metric_coefficient_of_variation['specificity'], round(0.035803688812849649 / 0.86179768930490386, 2))  # noqa
-        assert isclose(resampler.results.metric_coefficient_of_variation['ErrorRate'], round(0.029873757630591153 / 0.19173962767419936, 2))  # noqa
+        assert isclose(resampler.results.metric_coefficient_of_variation['kappa'], round(0.0653653528731703 / 0.5870121859420598, 2))  # noqa
+        assert isclose(resampler.results.metric_coefficient_of_variation['sensitivity'], round(0.06316345649148118 / 0.7216194157729687, 2))  # noqa
+        assert isclose(resampler.results.metric_coefficient_of_variation['specificity'], round(0.03554555534885417 / 0.8622628055839736, 2))  # noqa
+        assert isclose(resampler.results.metric_coefficient_of_variation['ErrorRate'], round(0.029647503460148796 / 0.19174428967886137, 2))  # noqa
 
         plt.gcf().clear()
         TestHelper.check_plot('data/test_Resamplers/test_resamplers_RandomForest_classification_cv_boxplot.png',  # noqa

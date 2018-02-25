@@ -25,10 +25,10 @@ class SearcherTests(TimerTestCase):
                                   ImputationTransformer(),
                                   DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
         # Evaluators are the metrics we want to use to understand the value of our trained models.
-        evaluator_list = [KappaScore(positive_class=1),
-                          SensitivityScore(positive_class=1),
-                          SpecificityScore(positive_class=1),
-                          ErrorRateScore(positive_class=1)]
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                      SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                      SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                      ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
         standard_transformations = [CenterScaleTransformer(),
                                     RemoveCorrelationsTransformer()]
 
@@ -57,11 +57,11 @@ class SearcherTests(TimerTestCase):
         self.assertRaises(AssertionError,
                           lambda: ModelSearcher(global_transformations=global_transformations,
                                                 model_infos=infos,
-                                                splitter=ClassificationStratifiedDataSplitter(test_ratio=0.25),  # noqa
+                                                splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),  # noqa
                                                 resampler_function=lambda m, mt: RepeatedCrossValidationResampler(  # noqa
                                                     model=m,
                                                     model_transformations=mt,
-                                                    scores=evaluator_list,
+                                                    scores=score_list,
                                                     folds=num_folds,
                                                     repeats=num_repeats),
                                                 persistence_manager=LocalCacheManager
@@ -82,11 +82,11 @@ class SearcherTests(TimerTestCase):
         model_descriptions = [x.description for x in infos]
         searcher = ModelSearcher(global_transformations=global_transformations,
                                  model_infos=infos,
-                                 splitter=ClassificationStratifiedDataSplitter(test_ratio=0.25),
+                                 splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                                  resampler_function=lambda m, mt: RepeatedCrossValidationResampler(
                                      model=m,
                                      model_transformations=mt,
-                                     scores=evaluator_list,
+                                     scores=score_list,
                                      folds=num_folds,
                                      repeats=num_repeats),
                                  persistence_manager=LocalCacheManager(cache_directory=cache_directory))
