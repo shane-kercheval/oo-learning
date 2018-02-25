@@ -433,9 +433,6 @@ class ModelWrapperTests(TimerTestCase):
         # cannot update non-existant hyper-param (d)
         self.assertRaises(ValueError, lambda: params.update_dict(dict(d='d')))
 
-# TODO test ModelFitter without Evaluators and with Scores
-
-
     def test_ModelFitter_expected_columns_after_dummy_transform_with_missing_categories(self):
         # before we fit the data, we actually want to 'snoop' at what the expected columns will be with
         # ALL the data. The reason is that if we so some sort of dummy encoding, but not all the
@@ -465,6 +462,7 @@ class ModelWrapperTests(TimerTestCase):
 
         # can use the callback which returns the transformed training data
         # we know that we would have had columns missing, so verify they aren't
+        # noinspection PyUnusedLocal
         def train_callback(transformed_training_data, data_y, hyper_params):
             # verify columns exist and for each (otherwise) missing column, all values are 0
             assert all(transformed_training_data.columns.values == expected_columns)
@@ -1069,6 +1067,35 @@ class ModelWrapperTests(TimerTestCase):
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
         assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
         assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
+
+    def test_RandomForestMW_classification_scores(self):
+        data = TestHelper.get_titanic_data()
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                          SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
+
+        # test with custom threshold of 0.5
+        fitter = ModelFitter(model=RandomForestMW(),
+                             model_transformations=transformations,
+                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                             scores=score_list)
+
+        fitter.fit(data=data, target_variable='Survived', hyper_params=RandomForestHP(criterion='gini'))
+
+        assert isclose(fitter.training_scores[0].value, 0.9642058165548097)
+        assert isclose(fitter.training_scores[1].value, 0.967032967032967)
+        assert isclose(fitter.training_scores[2].value, 0.9931662870159453)
+        assert isclose(fitter.training_scores[3].value, 0.016853932584269662)
+
+        assert isclose(fitter.holdout_scores[0].value, 0.581636060100167)
+        assert isclose(fitter.holdout_scores[1].value, 0.7101449275362319)
+        assert isclose(fitter.holdout_scores[2].value, 0.8636363636363636)
+        assert isclose(fitter.holdout_scores[3].value, 0.19553072625698323)
 
     def test_RandomForestMW_regression(self):
         data = TestHelper.get_cement_data()

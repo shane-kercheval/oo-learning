@@ -117,7 +117,7 @@ class ResamplerTests(TimerTestCase):
         train_data_y = train_data.Survived
         train_data = train_data.drop(columns='Survived')
 
-        evaluator_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
                           SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
                           SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
                           ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
@@ -125,7 +125,7 @@ class ResamplerTests(TimerTestCase):
         resampler = RepeatedCrossValidationResampler(
             model=MockClassificationModelWrapper(data_y=data.Survived),
             model_transformations=ModelDefaults.transformations_random_forest(),
-            scores=evaluator_list,
+            scores=score_list,
             folds=5,
             repeats=5)
 
@@ -165,12 +165,12 @@ class ResamplerTests(TimerTestCase):
         def train_callback(data_x, data_y, hyper_params):
             raise NotImplementedError()
 
-        evaluators = [RmseScore(), MaeScore()]
+        score_list = [RmseScore(), MaeScore()]
         transformations = [RemoveColumnsTransformer(['coarseagg', 'fineagg']), ImputationTransformer(), DummyEncodeTransformer()]  # noqa
         resampler = RepeatedCrossValidationResampler(
             model=RandomForestMW(),
             model_transformations=transformations,
-            scores=evaluators,
+            scores=score_list,
             folds=5,
             repeats=5,
             train_callback=train_callback)
@@ -229,12 +229,12 @@ class ResamplerTests(TimerTestCase):
             # make sure transformations happened
             assert all(data_x_test.columns.values == ['cement', 'slag', 'ash', 'water', 'superplastic', 'age', 'random_code1'])  # noqa
 
-        evaluators = [RmseScore(), MaeScore()]
+        score_list = [RmseScore(), MaeScore()]
         transformations = [RemoveColumnsTransformer(['coarseagg', 'fineagg']), ImputationTransformer(), DummyEncodeTransformer()]  # noqa
         resampler = RepeatedCrossValidationResampler(
             model=MockRegressionModelWrapper(data_y=data_y),
             model_transformations=transformations,
-            scores=evaluators,
+            scores=score_list,
             folds=5,
             repeats=5,
             train_callback=train_callback)
@@ -260,7 +260,7 @@ class ResamplerTests(TimerTestCase):
                            ImputationTransformer(),
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
-        evaluator_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
                           SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
                           SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
                           ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
@@ -269,7 +269,7 @@ class ResamplerTests(TimerTestCase):
         resampler = RepeatedCrossValidationResampler(
             model=RandomForestMW(),
             model_transformations=transformations,
-            scores=evaluator_list,
+            scores=score_list,
             persistence_manager=LocalCacheManager(cache_directory=cache_directory),
             folds=5,
             repeats=5)
