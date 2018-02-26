@@ -119,6 +119,10 @@ class SearcherTests(TimerTestCase):
         assert len(searcher.results.tuner_results[0].tune_results) == 1
         assert len(searcher.results.tuner_results[0].time_results) == 1
 
+        # each tuner results (grab the best model) should have num_folds * num_repeats resamples
+        for index in range(len(infos)):
+            assert len(searcher.results.tuner_results[index].best_model_resampler_object.cross_validation_scores) == 6  # noqa
+
         # same tuner should have the same results as test_resamplers_Mock_classification because of the
         # mock object
         assert isclose(searcher.results.tuner_results[0].tune_results['kappa_mean'][0], -0.0024064499043792644)  # noqa
@@ -190,32 +194,11 @@ class SearcherTests(TimerTestCase):
 
         TestHelper.check_plot('data/test_Searcher/test_get_holdout_score_heatmap.png',
                               lambda: searcher.results.get_holdout_score_heatmap())
-
-        # searcher.results.tuner_results[1].tune_results
-        # searcher.results.tuner_results[1].sorted_best_indexes
-        # # this gets the ResamplerResults (i.e. cross validation scores) of the best tuned model (i.e. best hyper-param combos of the given "model")
-        # searcher.results.tuner_results[1].best_model_resampler_object
-        # # this gives the actual scores... so I could build a boxplot for each "best" model like https://github.com/shane-kercheval/r-predictive-analysis-template/blob/master/predictive_analysis_regression.md
-        # searcher.results.tuner_results[1].best_model_resampler_object.cross_validation_scores
-        #
-        #
-        #
-        # searcher.results.holdout_score_values
-
-
-        # import numpy as np
-        # np.argsort(searcher.results.tuner_results[1]._tune_results_objects.resampler_object.values)
-        #
-        # searcher.results.tuner_results[0].time_results
-        # searcher.results.tuner_results[1].sorted_best_models
-        #
-        # searcher.results.tuner_results[1].sorted_best_indexes
-        # [results.best_index for results in searcher.results.tuner_results]
-        # [results.best_model_resampler_object for results in searcher.results.tuner_results]
-        # assert searcher.results.tuner_results[1]._tune_results_objects.resampler_object.values[0].\
-        # cross_validation_scores['kappa'].mean() == searcher.results.best_tuned_results.kappa_mean[1]
-        #
-        # searcher.results.holdout_score_values
-        # # searcher.get_heatmap()
-        # searcher.get_graph()
-# TODO
+        TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_KAPPA.png',
+                              lambda: searcher.results.get_resamples_boxplot(Metric.KAPPA))
+        TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_SENSITIVITY.png',
+                              lambda: searcher.results.get_resamples_boxplot(Metric.SENSITIVITY))
+        TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_SPECIFICITY.png',
+                              lambda: searcher.results.get_resamples_boxplot(Metric.SPECIFICITY))
+        TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_ERROR_RATE.png',
+                              lambda: searcher.results.get_resamples_boxplot(Metric.ERROR_RATE))

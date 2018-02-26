@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from oolearning.enums.Metric import Metric
 from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
 from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.model_processors.TunerResults import TunerResults
@@ -112,14 +113,6 @@ class SearcherResults:
         indexes = np.argsort(score_list)
         return indexes[0]  # return the index of the first i.e. "best" model based on the sorted Scores
 
-# RESAMPLED CROSS VALIDATION
-# TODO: add boxplot for tuner result cross validations (pass in metric)
-# TODO: add heatmap: shows each best tune result (rows) for each Score (columns) (means)
-
-# HOLDOUT
-# TODO: add heatmap: shows each best tune result (rows) for each Score (columns)
-
-
 # single item is a model
 # each model has been tuned so it (the ones with hyper-params at least) have multiple sub-models (i.e. 1 for each hyper-param combination)
 # each model has a "best" hyper-params sub-model based on the tuned/resampled results
@@ -128,6 +121,48 @@ class SearcherResults:
         # these holdout scores are found in `holdout_score_values`, these are single values so no mean/standard-dev associated with them
 # each sub-model has been resampled, so the "best model" for the sub-model has associated resampled data (i.e. all the cross validation scores for each score)
     #
+
+    def get_resamples_boxplot(self, metric: Metric):
+        """
+        for each "best" model, show the resamples via boxplot
+        :param metric:
+        :return:
+        """
+        metric_name = metric.value
+        # build the dataframe that will be used to generate the boxplot; 1 column per "best" model
+        resamples = pd.DataFrame()
+        for index in range(len(self.model_names)):
+            cross_val_scores = self.tuner_results[index].best_model_resampler_object.cross_validation_scores[metric_name]
+            column_name = '{0}: {1}'.format(self.model_names[index],
+                                            self.model_descriptions[index])
+            resamples[column_name] = pd.Series(data=cross_val_scores)
+
+        # ensure correct number of models (columns in `resamples`, and rows in `tune_results`
+        assert resamples.shape[1] == len(self.model_names)
+        # ensure correct number of resamples (rows in `resamples`, and row in `the underlying cross validation
+        # scores (of resampled hyper-param))
+        assert resamples.shape[0] == len(self.tuner_results[0].best_model_resampler_object.cross_validation_scores[metric_name])  # noqa
+
+        # get the means to determine the 'best' hyper-param combo
+        resample_means = [resamples[column].mean() for column in resamples.columns.values]
+        assert len(resample_means) == resamples.shape[1]
+
+        # get the current score object so we can determine if it is a minimizer or maximizer
+        score = [x for x in self.holdout_scores[0] if x.name == metric_name]
+        assert len(score) == 1  # we should just get the current score
+        # if the `better_than` function returns True, 0 is "better than" 1 and we have a minimizer
+        # for minimizers, we want to return the min, which is the best value, otherwise, return the max
+        minimizer = isinstance(score[0], CostFunctionMixin)
+        best = min if minimizer else max
+        index_of_best_mean = resample_means.index(best(resample_means))
+
+        resample_boxplot = resamples.boxplot(vert=False, figsize=(10, 10))
+        plt.xlim(0.0, 1.0)
+        plt.title('{0} ({1})'.format('Resampling Scores Per `Best` Models', metric.name), loc='right')
+        plt.tight_layout()
+        plt.gca().get_yticklabels()[index_of_best_mean].set_color('red')
+        plt.gca().invert_yaxis()
+        return resample_boxplot
 
     def get_holdout_score_heatmap(self):
         """
