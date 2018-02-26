@@ -2,7 +2,9 @@ from typing import List
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
+from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
 from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.model_processors.TunerResults import TunerResults
 
@@ -116,3 +118,54 @@ class SearcherResults:
 
 # HOLDOUT
 # TODO: add heatmap: shows each best tune result (rows) for each Score (columns)
+
+
+# single item is a model
+# each model has been tuned so it (the ones with hyper-params at least) have multiple sub-models (i.e. 1 for each hyper-param combination)
+# each model has a "best" hyper-params sub-model based on the tuned/resampled results
+    # found in `best_tuned_results`, which the the best submodel per model, with associated holdout scores
+    # after each "model" has tuned across all sub-model/hyper-param-combos, the best model is chosen, and the model & best hyper-params are refit on all of the training data, and scored on a holdout set
+        # these holdout scores are found in `holdout_score_values`, these are single values so no mean/standard-dev associated with them
+# each sub-model has been resampled, so the "best model" for the sub-model has associated resampled data (i.e. all the cross validation scores for each score)
+    #
+
+    def get_holdout_score_heatmap(self):
+        """
+        NOTE: only shows the "tuned" hyper-params i.e. hyper-params that were tuned over >1 values.
+        :return:
+        """
+        scores = self.holdout_scores[0]
+        # if the Score is a Cost Function it is a 'minimizer'
+        minimizers = [isinstance(x, CostFunctionMixin) for x in scores]
+
+        score_columns = [x.name for x in scores]
+        score_values = self.holdout_score_values.loc[:, score_columns]
+
+        num_rows = len(score_values)
+        num_cols = len(score_values.columns)
+        fig, ax = plt.subplots(figsize=(10, 10))
+        for i in range(num_cols):
+            truths = [True] * num_cols
+            truths[i] = False
+            mask = np.array(num_rows * [truths], dtype=bool)
+            color_values = np.ma.masked_where(mask, score_values)
+            # "_r" value after color means invert colors (small values are darker)
+            ax.pcolormesh(color_values, cmap='Blues_r' if minimizers[i] else 'Greens')
+
+        for y in range(score_values.shape[0]):
+            for x in range(score_values.shape[1]):
+                plt.text(x + .5, y + .5, '%.3f' % score_values.ix[y, x],
+                         horizontalalignment='center',
+                         verticalalignment='center')
+
+        ax.set_xticks(np.arange(start=0.5, stop=len(score_columns), step=1))
+        ax.set_xticklabels(score_columns, rotation=35, ha='right')
+
+        labels = self.holdout_score_values.index.values
+
+        y_tick_positions = np.arange(start=0, stop=len(labels)) + 0.5
+        ax.set_yticks(y_tick_positions)
+        ax.set_yticklabels(labels)
+        ax.invert_yaxis()
+        plt.tight_layout()
+        return plt

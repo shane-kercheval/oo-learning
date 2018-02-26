@@ -89,6 +89,9 @@ class TunerResults:
     @staticmethod
     def columnwise_conditional_format(df, hyper_params, tuned_hyper_params, minimizers: List[bool]):
         """
+        # TODO: document... minimizers i.e. CostFunction are blue ... maximizers i.e. UtilityFunctions
+        # are green..... darker colors are "better".. so for "maximizers" it will be higher numbers
+        # for minimizers it will be lower numbers, except that all st-dev and CV numbers, lower is better
         code copied from:
             https://stackoverflow.com/questions/44017205/apply-seaborn-heatmap-columnwise-on-pandas-dataframe
         """
@@ -106,8 +109,21 @@ class TunerResults:
             truths[i] = False
             mask = np.array(num_rows * [truths], dtype=bool)
             color_values = np.ma.masked_where(mask, score_values)
+            # TODO document this behavior
+            # a smaller number for standard deviation and coefficient of variation is ALWAYS better,
+            # regardless if the associated metric is a minimizer or maximizer (i.e. CostFunction or
+            # UtilityFunction). In other words, smaller variation means more 'confidence' in the metric.
+            # If you have a slightly higher mean, but the numbers are much more variable than another sample
+            # with a slightly lower mean with more less variation, it may be desirable to choose the slightly
+            # lower mean that has less variation.
+            is_minimizer = minimizers[int(math.floor(i/n))]
+            is_std_or_cv = '_st_dev' in score_columns[i] or '_cv' in score_columns[i]
+            colors = 'Blues' if minimizers[int(math.floor(i/n))] else 'Greens'
             # "_r" value after color means invert colors (small values are darker)
-            ax.pcolormesh(color_values, cmap='Blues_r' if minimizers[int(math.floor(i/n))] else 'Greens')
+            # we want small colors for everything except maximizer and if it is not standard deviation
+            # or coefficient of variation
+            colors = colors if not is_minimizer and not is_std_or_cv else colors + '_r'
+            ax.pcolormesh(color_values, cmap=colors)
 
         for y in range(score_values.shape[0]):
             for x in range(score_values.shape[1]):
@@ -126,7 +142,7 @@ class TunerResults:
         y_tick_positions = np.arange(start=0, stop=len(param_combos)) + 0.5
         ax.set_yticks(y_tick_positions)
         ax.set_yticklabels(labels)
-        len(labels)
+        ax.invert_yaxis()
         plt.tight_layout()
         return plt
 
@@ -195,6 +211,7 @@ class TunerResults:
                   loc='right')
         plt.tight_layout()
         plt.gca().get_yticklabels()[index_of_best_mean].set_color('red')
+        plt.gca().invert_yaxis()
         return resample_boxplot
 
     def get_profile_hyper_params(self, metric: Metric, x_axis, line=None, grid=None):

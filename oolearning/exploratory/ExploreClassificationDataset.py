@@ -11,7 +11,7 @@ class ExploreClassificationDataset(ExploreDatasetBase):
                  map_numeric_target: dict=None,
                  ordered: bool=False):
         """
-        # TODO: explain mapping target variable
+        # TODO document: explain mapping target variable
         :param dataset:
         :param target_variable:
         :param map_numeric_target:

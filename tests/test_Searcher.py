@@ -187,6 +187,22 @@ class SearcherTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.ErrorRate_mean, [0.47136871395048691, 0.47136871395048691])])  # noqa
         assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.ErrorRate_st_dev, [0.052884252590516621, 0.052884252590516621])])  # noqa
         assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.ErrorRate_cv, [0.11, 0.11])])  # noqa
+
+        TestHelper.check_plot('data/test_Searcher/test_get_holdout_score_heatmap.png',
+                              lambda: searcher.results.get_holdout_score_heatmap())
+
+        # searcher.results.tuner_results[1].tune_results
+        # searcher.results.tuner_results[1].sorted_best_indexes
+        # # this gets the ResamplerResults (i.e. cross validation scores) of the best tuned model (i.e. best hyper-param combos of the given "model")
+        # searcher.results.tuner_results[1].best_model_resampler_object
+        # # this gives the actual scores... so I could build a boxplot for each "best" model like https://github.com/shane-kercheval/r-predictive-analysis-template/blob/master/predictive_analysis_regression.md
+        # searcher.results.tuner_results[1].best_model_resampler_object.cross_validation_scores
+        #
+        #
+        #
+        # searcher.results.holdout_score_values
+
+
         # import numpy as np
         # np.argsort(searcher.results.tuner_results[1]._tune_results_objects.resampler_object.values)
         #

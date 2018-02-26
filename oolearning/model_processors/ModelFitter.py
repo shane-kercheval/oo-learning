@@ -19,7 +19,7 @@ from oolearning.transformers.TransformerPipeline import TransformerPipeline
 
 class ModelFitter:
     """
-    # TODO: update
+    # TODO document
     Intent of ModelFitter is to abstract away the details of the general process of fitting a model.
         - transform data specific to the model (e.g. regression requires imputing/dummifying
         - train
@@ -38,7 +38,7 @@ class ModelFitter:
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None):
         """
-        # TODO: update
+        # TODO: update documentation
         :param model_transformations: List of Transformer objects to pre-process data (specific to the model,
         e.g. Regression should impute and create dummy columns).
             Child classes should list recommended transformations as the default value to the constructor

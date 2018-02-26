@@ -197,7 +197,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
 
     def plot_boxplot(self, numeric_feature):
         """
-        # TODO:
+        # TODO document
         :param numeric_feature:
         :return:
         """

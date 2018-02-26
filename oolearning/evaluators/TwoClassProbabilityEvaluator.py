@@ -72,13 +72,13 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
 
     def get_precision_recall_curve(self):
         """
-        # TODO
+        # TODO document
         """
         return self.get_ppv_tpr_curve()
 
     def get_ppv_tpr_curve(self):
         """
-        # TODO
+        # TODO document
         """
         if self._ppv is None or self._tpr is None or self._ideal_threshold_ppv_tpr is None:
             converter = TwoClassPrecisionRecallOptimizerConverter(actual_classes=self._actual_classes,
