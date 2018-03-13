@@ -7,6 +7,7 @@ from .converters.TwoClassRocOptimizerConverter import TwoClassRocOptimizerConver
 from .converters.TwoClassPrecisionRecallOptimizerConverter import TwoClassPrecisionRecallOptimizerConverter
 
 from .enums.CategoricalEncoding import CategoricalEncoding
+from .enums.DummyClassifierStrategy import DummyClassifierStrategy
 from .enums.Imputation import Imputation
 from .enums.Metric import Metric
 from .enums.Normalization import Normalization
@@ -36,6 +37,7 @@ from .exploratory.ExploreClassificationDataset import ExploreClassificationDatas
 from .exploratory.ExploreDatasetBase import ExploreDatasetBase
 from .exploratory.ExploreRegressionDataset import ExploreRegressionDataset
 
+from .fitted_info.DummyClassifierFI import DummyClassifierFI
 from .fitted_info.FittedInfoBase import FittedInfoBase
 from .fitted_info.LogisticFI import LogisticFI
 from .fitted_info.RandomForestFI import RandomForestFI
@@ -56,6 +58,7 @@ from .model_processors.SearcherResults import SearcherResults
 from .model_processors.StratifiedMonteCarloResampler import StratifiedMonteCarloResampler
 from .model_processors.TunerResults import TunerResults
 
+from .model_wrappers.DummyClassifier import DummyClassifier
 from .model_wrappers.LogisticRegression import LogisticRegression
 from .model_wrappers.ModelDefaults import ModelDefaults
 from .model_wrappers.ModelExceptions import ModelNotFittedError

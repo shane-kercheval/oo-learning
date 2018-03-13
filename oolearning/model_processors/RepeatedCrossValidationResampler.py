@@ -20,7 +20,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
     """
     def __init__(self,
                  model: ModelWrapperBase,
-                 model_transformations: List[TransformerBase],
+                 model_transformations: Union[List[TransformerBase], None],
                  scores: List[ScoreBase],
                  persistence_manager: PersistenceManagerBase = None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,

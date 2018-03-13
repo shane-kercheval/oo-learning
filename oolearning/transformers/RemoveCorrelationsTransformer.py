@@ -42,8 +42,17 @@ class RemoveCorrelationsTransformer(TransformerBase):
                 mean_a_correlation = np.nanmean(correlation_matrix[indexes[0], ])
                 mean_b_correlation = np.nanmean(correlation_matrix[indexes[1], ])
 
+                # A potential problem is that when we are e.g. resampling, there can be slight variations
+                # depending on the scaling/etc.. and if, for example, the 'RemoveCorrelationsTransformer'
+                # chooses (at "random") different features to remove, this messes with the functionality
+                # that detects which features we should end with (e.g. a resampling training split doesn't
+                # contain an uncommon value for a particular column, and is subsequently encoded
+                # (e.g. one-hot) and then the training dataset does contain that value, and shit either breaks
+                # or becomes inconsistent when predicting on two different transformed dataset
+                # SO: we have to round (arbitrarily to 3) so that slight variations in correlations (e.g.
+                # between the same two features when resampling) are consistent.
                 columns_to_remove.append(features[indexes[0]]
-                                         if mean_a_correlation > mean_b_correlation
+                                         if round(float(mean_a_correlation), 3) > round(float(mean_b_correlation), 3)  # noqa
                                          else features[indexes[1]])
             else:
                 break

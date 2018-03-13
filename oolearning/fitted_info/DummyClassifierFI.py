@@ -1,19 +1,20 @@
-import pandas as pd
 from matplotlib import figure
 
 from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
 
 
-class LogisticFI(FittedInfoBase):
+class DummyClassifierFI(FittedInfoBase):
+
     @property
-    def results_summary(self) -> pd.DataFrame:
-        #return self._model_object.summary()
-        pass
+    def results_summary(self) -> object:
+        return None
 
     @property
     def feature_importance(self) -> dict:
-        pass
+        # noinspection PyTypeChecker
+        return None
 
     @property
     def graph(self) -> figure.Figure:
-        pass
+        # noinspection PyTypeChecker
+        return None

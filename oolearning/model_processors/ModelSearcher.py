@@ -1,6 +1,5 @@
-from typing import List, Callable
+from typing import List, Callable, Union
 
-import numpy as np
 import pandas as pd
 
 from oolearning.model_processors.ModelFitter import ModelFitter
@@ -18,10 +17,10 @@ from oolearning.transformers.TransformerBase import TransformerBase
 class ModelSearcher:
     def __init__(self,
                  # applied to all data (document fit_transform() on training and transform() on test
-                 global_transformations: List[TransformerBase],
                  model_infos: List[ModelInfo],
                  splitter: DataSplitterBase,
                  resampler_function: Callable[[ModelWrapperBase, List[TransformerBase]], ResamplerBase],
+                 global_transformations: Union[List[TransformerBase], None] = None,
                  persistence_manager: PersistenceManagerBase = None):
         """
         # TODO document
@@ -72,6 +71,13 @@ class ModelSearcher:
         # the entire training set with the specific model/hyper-params (same training set is used under the
         # hood in the ModelFitter because we pass the same splitter), and then will evaluate on holdout set
         # which the tuner did not see
+
+        # NOTE: we do NOT need to get the expected columns (like we do for the Resampler and ModelFitter; for
+        # the purposes of ensuring that when we split, uncommon values are missing from being encoded
+        # (dummy/one-hot/etc.) and then appearing in the holdout set). The reason we don't need to is because
+        # A) the resampler only sees the training set and handles this problem itself and B) the fitter
+        # sees ALL the data, but makes the same split on the holdout data, ensuring the holdout data was never
+        # used by the Resampler, and also handles the problem itself.)
         data_x = data.drop(columns=target_variable)
         data_y = data[target_variable]
 
@@ -89,7 +95,16 @@ class ModelSearcher:
         for index in range(len(self._models)):
             local_model_description = self._model_descriptions[index]
             local_model = self._models[index]
-            local_model_trans = self._model_transformations[index]
+            transformations = None
+            if self._global_transformations is not None:
+                transformations = [x.clone() for x in self._global_transformations]
+            if self._model_transformations[index] is not None:
+                # if transformations is not None, then it contains global transformations and those need to
+                # come before the model transformations
+                transformations = self._model_transformations[index] if transformations is None \
+                    else transformations + self._model_transformations[index]
+
+            local_model_trans = transformations
             local_model_params_object = self._model_hyper_params_object[index]
             local_model_params_grid = self._model_hyper_params_grid[index]
 

@@ -11,6 +11,7 @@ import pandas as pd
 
 from mock import patch
 from oolearning import *
+from oolearning import DummyClassifierStrategy
 from tests.MockClassificationModelWrapper import MockClassificationModelWrapper
 from tests.MockRegressionModelWrapper import MockRegressionModelWrapper
 from tests.TestHelper import TestHelper
@@ -1178,3 +1179,105 @@ class ModelWrapperTests(TimerTestCase):
         assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
         assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
         assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+
+    def test_DummyClassifier_most_frequent(self):
+        data = TestHelper.get_titanic_data()
+        target_variable = 'Survived'
+
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+        fitter = ModelFitter(model=DummyClassifier(strategy=DummyClassifierStrategy.MOST_FREQUENT),
+                             model_transformations=transformations,
+                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
+                             evaluator=TwoClassProbabilityEvaluator(converter=TwoClassThresholdConverter(positive_class=1)))  # noqa
+        fitter.fit(data=data, target_variable=target_variable)
+
+        data['Survived'].value_counts(normalize=True)
+
+        assert fitter.model_info.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+
+        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 0.0, 'F1 Score': None,
+                                                                 'Two-Class Accuracy': 0.6167664670658682,
+                                                                 'Error Rate': 0.38323353293413176,
+                                                                 'True Positive Rate': 0.0,
+                                                                 'True Negative Rate': 1.0,
+                                                                 'False Positive Rate': 0.0,
+                                                                 'False Negative Rate': 1.0,
+                                                                 'Positive Predictive Value': None,
+                                                                 'Negative Predictive Value': 0.6167664670658682,  # noqa
+                                                                 'Prevalence': 0.38323353293413176,
+                                                                 'No Information Rate': 0.6167664670658682,
+                                                                 'Total Observations': 668}
+
+        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.0, 'F1 Score': None,
+                                                                'Two-Class Accuracy': 0.6143497757847534,
+                                                                'Error Rate': 0.38565022421524664,
+                                                                'True Positive Rate': 0.0,
+                                                                'True Negative Rate': 1.0,
+                                                                'False Positive Rate': 0.0,
+                                                                'False Negative Rate': 1.0,
+                                                                'Positive Predictive Value': None,
+                                                                'Negative Predictive Value': 0.6143497757847534,  # noqa
+                                                                'Prevalence': 0.38565022421524664,
+                                                                'No Information Rate': 0.6143497757847534,
+                                                                'Total Observations': 223}
+
+        con_matrix = fitter.holdout_evaluator.matrix
+        assert con_matrix[0].values.tolist() == [137, 86, 223]
+        assert con_matrix[1].values.tolist() == [0, 0, 0]
+        assert con_matrix['Total'].values.tolist() == [137, 86, 223]
+        assert con_matrix.index.values.tolist() == [0, 1, 'Total']
+        assert con_matrix.columns.values.tolist() == [0, 1, 'Total']
+
+    def test_DummyClassifier_stratified(self):
+        data = TestHelper.get_titanic_data()
+        target_variable = 'Survived'
+
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+        fitter = ModelFitter(model=DummyClassifier(strategy=DummyClassifierStrategy.STRATIFIED),
+                             model_transformations=transformations,
+                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
+                             evaluator=TwoClassProbabilityEvaluator(converter=TwoClassThresholdConverter(positive_class=1)))  # noqa
+        fitter.fit(data=data, target_variable=target_variable)
+
+        assert fitter.model_info.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+
+        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 0.019767485893891712,
+                                                                 'F1 Score': 0.3968871595330739,
+                                                                 'Two-Class Accuracy': 0.5359281437125748,
+                                                                 'Error Rate': 0.46407185628742514,
+                                                                 'True Positive Rate': 0.3984375,
+                                                                 'True Negative Rate': 0.6213592233009708,
+                                                                 'False Positive Rate': 0.3786407766990291,
+                                                                 'False Negative Rate': 0.6015625,
+                                                                 'Positive Predictive Value': 0.3953488372093023,  # noqa
+                                                                 'Negative Predictive Value': 0.624390243902439,  # noqa
+                                                                 'Prevalence': 0.38323353293413176,
+                                                                 'No Information Rate': 0.6167664670658682,
+                                                                 'Total Observations': 668}
+
+        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.1065552808797204,
+                                                                'F1 Score': 0.4470588235294118,
+                                                                'Two-Class Accuracy': 0.57847533632287,
+                                                                'Error Rate': 0.42152466367713004,
+                                                                'True Positive Rate': 0.4418604651162791,
+                                                                'True Negative Rate': 0.6642335766423357,
+                                                                'False Positive Rate': 0.3357664233576642,
+                                                                'False Negative Rate': 0.5581395348837209,
+                                                                'Positive Predictive Value': 0.4523809523809524,  # noqa
+                                                                'Negative Predictive Value': 0.6546762589928058,  # noqa
+                                                                'Prevalence': 0.38565022421524664,
+                                                                'No Information Rate': 0.6143497757847534,
+                                                                'Total Observations': 223}
+
+        con_matrix = fitter.holdout_evaluator.matrix
+        assert con_matrix[0].values.tolist() == [91, 48, 139]
+        assert con_matrix[1].values.tolist() == [46, 38, 84]
+        assert con_matrix['Total'].values.tolist() == [137, 86, 223]
+        assert con_matrix.index.values.tolist() == [0, 1, 'Total']
+        assert con_matrix.columns.values.tolist() == [0, 1, 'Total']
