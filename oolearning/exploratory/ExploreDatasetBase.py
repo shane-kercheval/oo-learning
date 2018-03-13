@@ -56,6 +56,10 @@ class ExploreDatasetBase(metaclass=ABCMeta):
     def dataset(self):
         return self._dataset
 
+    def drop(self, columns):
+        self._dataset.drop(columns=columns, inplace=True)
+        self._update_feature_types()
+
     @property
     def target_variable(self):
         return self._target_variable
@@ -74,6 +78,10 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         https://www.quora.com/How-can-a-standard-deviation-divided-by-mean-be-useful
         :return:
         """
+        # if there aren't any numeric features and the target variable is not numeric, we don't have anything
+        # to display, return None
+        if len(self._numeric_features) == 0 and not self._is_target_numeric:
+            return None
 
         numeric_columns = self._numeric_features + [self._target_variable] if self._is_target_numeric else self._numeric_features  # noqa
 
@@ -109,6 +117,12 @@ class ExploreDatasetBase(metaclass=ABCMeta):
                                      '50%', '75%', '90%', 'max'])
 
     def categoric_summary(self):
+
+        # if there aren't any categoric features and the target variable is numeric, we don't have anything
+        # to display, return None
+        if len(self.categoric_features) == 0 and self._is_target_numeric:
+            return None
+
         categoric_columns = self.categoric_features if self._is_target_numeric else self._categoric_features + [self._target_variable]  # noqa
 
         # column, number of nulls in column, percent of nulls in column

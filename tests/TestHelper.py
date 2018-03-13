@@ -51,6 +51,10 @@ class TestHelper:
         return TestHelper.get_data(data_path='data/insurance.csv')
 
     @staticmethod
+    def get_credit_data():
+        return TestHelper.get_data(data_path='data/credit.csv')
+
+    @staticmethod
     def get_cement_data():
         return TestHelper.get_data(data_path='data/cement.csv')
 

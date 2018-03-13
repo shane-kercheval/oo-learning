@@ -193,6 +193,46 @@ class ExploratoryTests(TimerTestCase):
             assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
                                                       data_frame2=explore.categoric_summary())
 
+    def test_ExploreDatasetBase_summary_no_features_drop_columns(self):
+        ######################################################################################################
+        # categoric target
+        ######################################################################################################
+        target_variable = 'default'
+        explore = MockExploreBase(dataset=TestHelper.get_credit_data(), target_variable=target_variable)
+        assert explore.dataset.shape == (1000, 17)
+        explore.drop(columns=explore.numeric_features)
+        assert explore.numeric_features == []
+        assert explore.dataset.shape == (1000, 10)
+
+        # no numeric features and target variable is not numeric
+        assert explore.numeric_summary() is None
+        assert explore.categoric_summary().shape == (10, 6)
+        # if we drop all the categoric columns, we should still have the `default` column
+        explore.drop(columns=explore.categoric_features)
+        assert explore.categoric_features == []
+        assert explore.dataset.shape == (1000, 1)
+        assert explore.categoric_summary().shape == (1, 6)
+        assert explore.categoric_summary().index.values[0] == target_variable
+
+        ######################################################################################################
+        # numeric target
+        ######################################################################################################
+        target_variable = 'expenses'
+        explore = MockExploreBase(dataset=TestHelper.get_insurance_data(), target_variable=target_variable)
+        assert explore.dataset.shape == (1338, 7)
+
+        explore.drop(columns=explore.categoric_features)
+        assert explore.categoric_features == []
+        assert explore.dataset.shape == (1338, 4)
+        assert explore.categoric_summary() is None
+        assert explore.numeric_summary().shape == (4, 17)
+
+        explore.drop(columns=explore.numeric_features)
+        assert explore.numeric_features == []
+        assert explore.dataset.shape == (1338, 1)
+        assert explore.numeric_summary().shape == (1, 17)
+        assert explore.numeric_summary().index.values[0] == target_variable
+
     def test_ExploreDatasetBase_unique_values(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         target_variable = 'default'
