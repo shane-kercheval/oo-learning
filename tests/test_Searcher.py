@@ -280,9 +280,6 @@ class SearcherTests(TimerTestCase):
                                      folds=num_folds,
                                      repeats=num_repeats),
                                  persistence_manager=LocalCacheManager(cache_directory=cache_directory))
-# TODO: not using global_transformations... need to append to the local model transformations
-# TODO: add unit test to ensure transformations, both for global and local model
-
         searcher.search(data=data, target_variable='Survived')
 
         # check persistence

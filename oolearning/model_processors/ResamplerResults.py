@@ -2,6 +2,7 @@ from typing import List
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 
 from oolearning.evaluators.ScoreBase import ScoreBase
 
@@ -70,10 +71,13 @@ class ResamplerResults:
         :return: `coefficient of variation` for each metric/Evaluator
 
          If `sample A` has a CV of 0.12 and `sample B` has a CV of 0.25, you would say that `sample B` has
-            more  variation, relative to its mean.
+            more variation, relative to its mean.
         """
-        return {metric: round((self.cross_validation_scores[metric].std() /
-                               self.cross_validation_scores[metric].mean()), 2) for metric in self.metrics}
+        return {metric:
+                np.nan if self.cross_validation_scores[metric].mean() == 0
+                else round((self.cross_validation_scores[metric].std() /
+                            self.cross_validation_scores[metric].mean()), 2)
+                for metric in self.metrics}
 
     def __lt__(self, other):
         """
