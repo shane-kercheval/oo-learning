@@ -39,7 +39,7 @@ class ScoreBase(metaclass=ABCMeta):
 
         assert self._value is None  # we don't want to be able to reuse test_evaluators
         self._value = self._calculate(actual_values, predicted_values)
-        assert isinstance(self._value, float)
+        assert isinstance(self._value, float) or isinstance(self._value, int)
         return self._value
 
     def __lt__(self, other):

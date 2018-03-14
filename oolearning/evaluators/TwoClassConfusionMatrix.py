@@ -1,5 +1,6 @@
 from typing import Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -32,34 +33,34 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
         self._false_negatives = self.matrix.loc[self._positive_class, self._negative_class]
 
     @property
-    def sensitivity(self) -> Union[float, None]:
+    def sensitivity(self) -> float:
         """
         :return: a.k.a true positive rate
         """
-        return None if self._actual_positives == 0 else self._true_positives / self._actual_positives
+        return 0 if self._actual_positives == 0 else self._true_positives / self._actual_positives
 
     @property
-    def specificity(self) -> Union[float, None]:
+    def specificity(self) -> float:
         """
         :return: a.k.a false positive rate
         """
-        return None if self._actual_negatives == 0 else self._true_negatives / self._actual_negatives
+        return 0 if self._actual_negatives == 0 else self._true_negatives / self._actual_negatives
 
     @property
-    def true_positive_rate(self) -> Union[float, None]:
+    def true_positive_rate(self) -> float:
         return self.sensitivity
 
     @property
-    def true_negative_rate(self) -> Union[float, None]:
+    def true_negative_rate(self) -> float:
         return self.specificity
 
     @property
-    def false_negative_rate(self) -> Union[float, None]:
-        return None if self._actual_positives == 0 else self._false_negatives / self._actual_positives
+    def false_negative_rate(self) -> float:
+        return 0 if self._actual_positives == 0 else self._false_negatives / self._actual_positives
 
     @property
-    def false_positive_rate(self) -> Union[float, None]:
-        return None if self._actual_negatives == 0 else self._false_positives / self._actual_negatives
+    def false_positive_rate(self) -> float:
+        return 0 if self._actual_negatives == 0 else self._false_positives / self._actual_negatives
 
     @property
     def accuracy(self) -> Union[float, None]:
@@ -72,13 +73,13 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
             (self._false_positives + self._false_negatives) / self.total_observations
 
     @property
-    def positive_predictive_value(self) -> Union[float, None]:
-        return None if (self._true_positives + self._false_positives) == 0 else \
+    def positive_predictive_value(self) -> float:
+        return 0 if (self._true_positives + self._false_positives) == 0 else \
             self._true_positives / (self._true_positives + self._false_positives)
 
     @property
-    def negative_predictive_value(self) -> Union[float, None]:
-        return None if (self._true_negatives + self._false_negatives) == 0 else \
+    def negative_predictive_value(self) -> float:
+        return 0 if (self._true_negatives + self._false_negatives) == 0 else \
             self._true_negatives / (self._true_negatives + self._false_negatives)
 
     @property
@@ -108,11 +109,11 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
         return (pr_a - pr_e) / (1 - pr_e)
 
     @property
-    def f1_score(self) -> Union[float, None]:
+    def f1_score(self) -> float:
         if self.positive_predictive_value is None or \
                 self.sensitivity is None or \
                 (self.positive_predictive_value + self.sensitivity) == 0:
-            return None
+            return 0
 
         return 2 * (self.positive_predictive_value * self.sensitivity) / \
             (self.positive_predictive_value + self.sensitivity)
@@ -137,8 +138,14 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
         # noinspection PyTypeChecker
         x = pd.DataFrame.from_dict([self.all_quality_metrics])
         x = x[list(self.all_quality_metrics.keys())].drop(columns='Total Observations')
-        return x.plot(kind='box',
-                      rot=20,
-                      title='Quality Scores',
-                      yticks=np.linspace(start=0, stop=1, num=21),
-                      grid=True)
+
+        fig, ax = plt.subplots()
+        p = x.plot(kind='box',
+                   rot=20,
+                   title='Quality Scores',
+                   yticks=np.linspace(start=0, stop=1, num=21),
+                   grid=True,
+                   ax=ax)
+        plt.xticks(ha='right')
+
+        return p

@@ -1198,27 +1198,27 @@ class ModelWrapperTests(TimerTestCase):
 
         assert fitter.model_info.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
 
-        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 0.0, 'F1 Score': None,
+        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 0.0, 'F1 Score': 0,
                                                                  'Two-Class Accuracy': 0.6167664670658682,
                                                                  'Error Rate': 0.38323353293413176,
                                                                  'True Positive Rate': 0.0,
                                                                  'True Negative Rate': 1.0,
                                                                  'False Positive Rate': 0.0,
                                                                  'False Negative Rate': 1.0,
-                                                                 'Positive Predictive Value': None,
+                                                                 'Positive Predictive Value': 0,
                                                                  'Negative Predictive Value': 0.6167664670658682,  # noqa
                                                                  'Prevalence': 0.38323353293413176,
                                                                  'No Information Rate': 0.6167664670658682,
                                                                  'Total Observations': 668}
 
-        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.0, 'F1 Score': None,
+        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.0, 'F1 Score': 0,
                                                                 'Two-Class Accuracy': 0.6143497757847534,
                                                                 'Error Rate': 0.38565022421524664,
                                                                 'True Positive Rate': 0.0,
                                                                 'True Negative Rate': 1.0,
                                                                 'False Positive Rate': 0.0,
                                                                 'False Negative Rate': 1.0,
-                                                                'Positive Predictive Value': None,
+                                                                'Positive Predictive Value': 0,
                                                                 'Negative Predictive Value': 0.6143497757847534,  # noqa
                                                                 'Prevalence': 0.38565022421524664,
                                                                 'No Information Rate': 0.6143497757847534,

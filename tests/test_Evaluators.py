@@ -171,14 +171,14 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator._confusion_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
         assert evaluator._confusion_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['Kappa'], 0)
-        assert evaluator._confusion_matrix.all_quality_metrics['F1 Score'] is None
+        assert evaluator._confusion_matrix.all_quality_metrics['F1 Score'] == 0
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['Two-Class Accuracy'], evaluator._confusion_matrix.negative_predictive_value)  # noqa
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['Error Rate'], evaluator._confusion_matrix.prevalence)  # noqa
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['True Positive Rate'], 0)
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['True Negative Rate'], 1)
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['False Positive Rate'], 0)
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['False Negative Rate'], 1)
-        assert evaluator._confusion_matrix.all_quality_metrics['Positive Predictive Value'] is None
+        assert evaluator._confusion_matrix.all_quality_metrics['Positive Predictive Value'] == 0
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['Negative Predictive Value'], evaluator._confusion_matrix.all_quality_metrics['No Information Rate'])  # noqa
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['Prevalence'], 0.4061624649859944)
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['No Information Rate'], 0.5938375350140056)  # noqa

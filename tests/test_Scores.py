@@ -1,5 +1,6 @@
 import os
 from math import isclose
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -186,6 +187,25 @@ class EvaluatorTests(TimerTestCase):
         eval_list.sort()  # "better, worse"
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [0.303921568627451, 0.30532212885154064])])
+
+    def test_BaseValue_is_int_or_float(self):
+        # bug, where positive predictive value (or any score) returns 0 (e.g. from DummyClassifier)
+        # which is an int (but base class originally checked only for float)
+        class MockScore(ScoreBase):
+            @property
+            def name(self) -> str:
+                return 'test'
+
+            def _better_than(self, this: float, other: float) -> bool:
+                return False
+
+            def _calculate(self, actual_values: np.ndarray, predicted_values: Union[np.ndarray, pd.DataFrame]) -> float:  # noqa
+                return 0
+
+        score = MockScore()
+        # ensure .calculate doesn't explode
+        # noinspection PyTypeChecker
+        score.calculate(actual_values=None, predicted_values=None)
 
     def test_Misc_scores(self):
         """
