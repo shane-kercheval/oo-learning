@@ -16,7 +16,7 @@ class AucPrecisionRecallScore(UtilityFunctionMixin, ScoreBase):
 
     @property
     def name(self) -> str:
-        return Metric.AUC.value
+        return Metric.AUC_PRECISION_RECALL.value
 
     def _calculate(self,
                    actual_values: np.ndarray,

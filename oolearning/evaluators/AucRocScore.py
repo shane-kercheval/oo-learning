@@ -16,7 +16,7 @@ class AucRocScore(UtilityFunctionMixin, ScoreBase):
 
     @property
     def name(self) -> str:
-        return Metric.AUC.value
+        return Metric.AUC_ROC.value
 
     def _calculate(self,
                    actual_values: np.ndarray,
