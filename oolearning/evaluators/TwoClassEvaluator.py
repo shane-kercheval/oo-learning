@@ -107,3 +107,6 @@ class TwoClassEvaluator(EvaluatorBase):
     @property
     def all_quality_metrics(self) -> dict:
         return self._confusion_matrix.all_quality_metrics
+
+    def plot_all_quality_metrics(self):
+        return self._confusion_matrix.plot_all_quality_metrics()

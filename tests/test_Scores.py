@@ -210,6 +210,20 @@ class EvaluatorTests(TimerTestCase):
         assert isclose(accuracy, 0.8183962264150944)
         assert isclose(score.value, 0.8183962264150944)
         ######################################################################################################
+        score = PositivePredictiveValueScore(converter=TwoClassThresholdConverter(positive_class=1, threshold=0.5))  # noqa
+        assert isinstance(score, UtilityFunctionMixin)
+        assert isinstance(score, ScoreBase)
+        accuracy = score.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
+        assert isclose(accuracy, 0.6607929515418502)
+        assert isclose(score.value, 0.6607929515418502)
+        ######################################################################################################
+        score = NegativePredictiveValueScore(converter=TwoClassThresholdConverter(positive_class=1, threshold=0.5))  # noqa
+        assert isinstance(score, UtilityFunctionMixin)
+        assert isinstance(score, ScoreBase)
+        accuracy = score.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
+        assert isclose(accuracy, 0.7125256673511293)
+        assert isclose(score.value, 0.7125256673511293)
+        ######################################################################################################
         score = AccuracyScore(converter=TwoClassThresholdConverter(positive_class=1, threshold=0.5))
         assert isinstance(score, UtilityFunctionMixin)
         assert isinstance(score, ScoreBase)

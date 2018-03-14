@@ -93,8 +93,8 @@ class TunerTests(TimerTestCase):
                                                                  'sensitivity_mean', 'sensitivity_st_dev',
                                                                  'sensitivity_cv', 'specificity_mean',
                                                                  'specificity_st_dev', 'specificity_cv',
-                                                                 'ErrorRate_mean', 'ErrorRate_st_dev',
-                                                                 'ErrorRate_cv'])
+                                                                 'error_rate_mean', 'error_rate_st_dev',
+                                                                 'error_rate_cv'])
 
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelTuner_classification_mock.pkl'))  # noqa
         with open(file, 'wb') as output:
@@ -128,7 +128,7 @@ class TunerTests(TimerTestCase):
         evaluators = [MockUtilityEvaluator(metric_name='kappa'),
                       MockUtilityEvaluator(metric_name='sensitivity'),
                       MockUtilityEvaluator(metric_name='specificity'),
-                      MockCostEvaluator(metric_name='ErrorRate')]
+                      MockCostEvaluator(metric_name='error_rate')]
 
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
@@ -200,12 +200,12 @@ class TunerTests(TimerTestCase):
             assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_coefficient_of_variation['specificity'],  # noqa
                            tuner.results.tune_results.iloc[index]['specificity_cv'])
 
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_means['ErrorRate'],  # noqa
-                           tuner.results.tune_results.iloc[index]['ErrorRate_mean'])
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_standard_deviations['ErrorRate'],  # noqa
-                           tuner.results.tune_results.iloc[index]['ErrorRate_st_dev'])
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_coefficient_of_variation['ErrorRate'],  # noqa
-                           tuner.results.tune_results.iloc[index]['ErrorRate_cv'])
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_means['error_rate'],  # noqa
+                           tuner.results.tune_results.iloc[index]['error_rate_mean'])
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_standard_deviations['error_rate'],  # noqa
+                           tuner.results.tune_results.iloc[index]['error_rate_st_dev'])
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_coefficient_of_variation['error_rate'],  # noqa
+                           tuner.results.tune_results.iloc[index]['error_rate_cv'])
 
         ######################################################################################################
         # Test Heatmap

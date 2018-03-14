@@ -24,7 +24,9 @@ from .evaluators.ScoreBase import ScoreBase
 from .evaluators.F1Score import F1Score
 from .evaluators.KappaScore import KappaScore
 from .evaluators.MaeScore import MaeScore
+from .evaluators.NegativePredictiveValueScore import NegativePredictiveValueScore
 from .evaluators.MultiClassEvaluator import MultiClassEvaluator
+from .evaluators.PositivePredictiveValueScore import PositivePredictiveValueScore
 from .evaluators.RegressionEvaluator import RegressionEvaluator
 from .evaluators.RmseScore import RmseScore
 from .evaluators.SensitivityScore import SensitivityScore

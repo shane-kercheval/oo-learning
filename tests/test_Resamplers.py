@@ -140,21 +140,21 @@ class ResamplerTests(TimerTestCase):
                     isinstance(x[3], ErrorRateScore)
                     for x in resampler.results._scores])
         assert resampler.results.num_resamples == 25
-        assert resampler.results.metrics == ['kappa', 'sensitivity', 'specificity', 'ErrorRate']
+        assert resampler.results.metrics == ['kappa', 'sensitivity', 'specificity', 'error_rate']
         assert isclose(resampler.results.metric_means['kappa'], 0.0013793651663756446)
         assert isclose(resampler.results.metric_means['sensitivity'], 0.34802926509722726)
         assert isclose(resampler.results.metric_means['specificity'], 0.65307336918498493)
-        assert isclose(resampler.results.metric_means['ErrorRate'], 0.46314142734094416)
+        assert isclose(resampler.results.metric_means['error_rate'], 0.46314142734094416)
 
         assert isclose(resampler.results.metric_standard_deviations['kappa'], 0.055624736458973652)
         assert isclose(resampler.results.metric_standard_deviations['sensitivity'], 0.036787308260115267)
         assert isclose(resampler.results.metric_standard_deviations['specificity'], 0.019357626459983342)
-        assert isclose(resampler.results.metric_standard_deviations['ErrorRate'], 0.025427045943705647)
+        assert isclose(resampler.results.metric_standard_deviations['error_rate'], 0.025427045943705647)
 
         assert isclose(resampler.results.metric_coefficient_of_variation['kappa'], round(0.055624736458973652 / 0.0013793651663756446, 2))  # noqa
         assert isclose(resampler.results.metric_coefficient_of_variation['sensitivity'], round(0.036787308260115267 / 0.34802926509722726, 2))  # noqa
         assert isclose(resampler.results.metric_coefficient_of_variation['specificity'], round(0.019357626459983342 / 0.65307336918498493, 2))  # noqa
-        assert isclose(resampler.results.metric_coefficient_of_variation['ErrorRate'], round(0.025427045943705647 / 0.46314142734094416, 2))  # noqa
+        assert isclose(resampler.results.metric_coefficient_of_variation['error_rate'], round(0.025427045943705647 / 0.46314142734094416, 2))  # noqa
 
     def test_Resampler_callback(self):
         # make sure that the Resampler->train_callback works
@@ -293,26 +293,26 @@ class ResamplerTests(TimerTestCase):
                 assert os.path.isfile(os.path.join(cache_directory,
                                                    expected_file.format(fold_index, repeat_index)))
 
-        assert resampler.results.metrics == ['kappa', 'sensitivity', 'specificity', 'ErrorRate']
+        assert resampler.results.metrics == ['kappa', 'sensitivity', 'specificity', 'error_rate']
 
         # make sure the order of the cross_validation_scores is the same order as Evaluators passed in
-        assert all(resampler.results.cross_validation_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'ErrorRate'])  # noqa
+        assert all(resampler.results.cross_validation_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])  # noqa
 
         # metric_means and metric_standard_deviations comes from cross_validation_scores, so testing both
         assert isclose(resampler.results.metric_means['kappa'], 0.5870121859420598)
         assert isclose(resampler.results.metric_means['sensitivity'], 0.7216194157729687)
         assert isclose(resampler.results.metric_means['specificity'], 0.8622628055839736)
-        assert isclose(resampler.results.metric_means['ErrorRate'], 0.19174428967886137)
+        assert isclose(resampler.results.metric_means['error_rate'], 0.19174428967886137)
 
         assert isclose(resampler.results.metric_standard_deviations['kappa'], 0.0653653528731703)
         assert isclose(resampler.results.metric_standard_deviations['sensitivity'], 0.06316345649148118)
         assert isclose(resampler.results.metric_standard_deviations['specificity'], 0.03554555534885417)
-        assert isclose(resampler.results.metric_standard_deviations['ErrorRate'], 0.029647503460148796)
+        assert isclose(resampler.results.metric_standard_deviations['error_rate'], 0.029647503460148796)
 
         assert isclose(resampler.results.metric_coefficient_of_variation['kappa'], round(0.0653653528731703 / 0.5870121859420598, 2))  # noqa
         assert isclose(resampler.results.metric_coefficient_of_variation['sensitivity'], round(0.06316345649148118 / 0.7216194157729687, 2))  # noqa
         assert isclose(resampler.results.metric_coefficient_of_variation['specificity'], round(0.03554555534885417 / 0.8622628055839736, 2))  # noqa
-        assert isclose(resampler.results.metric_coefficient_of_variation['ErrorRate'], round(0.029647503460148796 / 0.19174428967886137, 2))  # noqa
+        assert isclose(resampler.results.metric_coefficient_of_variation['error_rate'], round(0.029647503460148796 / 0.19174428967886137, 2))  # noqa
 
         plt.gcf().clear()
         TestHelper.check_plot('data/test_Resamplers/test_resamplers_RandomForest_classification_cv_boxplot.png',  # noqa

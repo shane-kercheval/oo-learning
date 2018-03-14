@@ -1,6 +1,7 @@
 from typing import Union
 
 import numpy as np
+import pandas as pd
 
 from oolearning.evaluators.ConfusionMatrix import ConfusionMatrix
 
@@ -131,3 +132,13 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
                 'Prevalence': self.prevalence,
                 'No Information Rate': max(self.prevalence, 1-self.prevalence),  # i.e. largest class %
                 'Total Observations': self.total_observations}
+
+    def plot_all_quality_metrics(self):
+        # noinspection PyTypeChecker
+        x = pd.DataFrame.from_dict([self.all_quality_metrics])
+        x = x[list(self.all_quality_metrics.keys())].drop(columns='Total Observations')
+        return x.plot(kind='box',
+                      rot=20,
+                      title='Quality Scores',
+                      yticks=np.linspace(start=0, stop=1, num=21),
+                      grid=True)

@@ -184,10 +184,16 @@ class EvaluatorTests(TimerTestCase):
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['No Information Rate'], 0.5938375350140056)  # noqa
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['Total Observations'], len(mock_data))
 
+        TestHelper.check_plot('data/test_Evaluators/test_confusion_matrix_plot_metrics.png',
+                              lambda: evaluator._confusion_matrix.plot_all_quality_metrics())
+
     def test_TwoClassEvaluator_from_classes(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
         evaluator = TwoClassEvaluator.from_classes(actual_classes=mock_data.actual, predicted_classes=mock_data.predictions, positive_class=1)  # noqa
         self.check_confusion_matrix(con_matrix=evaluator._confusion_matrix, mock_data=mock_data)
+
+        TestHelper.check_plot('data/test_Evaluators/test_evaluator_matrix_plot_metrics.png',
+                              lambda: evaluator.plot_all_quality_metrics())
 
     def test_TwoClassEvaluator_probabilities_custom_threshold(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
@@ -235,7 +241,10 @@ class EvaluatorTests(TimerTestCase):
         # elapsed = time.time() - started_at
         # assert elapsed < 0.5
 
-        TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_probabilities_custom_thr_ROC.png',  # noqa
+        TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_plot_metrics_custom.png',
+                              lambda: evaluator.plot_all_quality_metrics())
+
+        TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_probabilities_custom_thr_ROC.png',
                               lambda: evaluator.get_roc_curve())
 
         TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_probabilities_custom_thr_ppv_tpr.png',  # noqa

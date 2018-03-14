@@ -12,4 +12,6 @@ class Metric(Enum):
     F1_SCORE = 'F1'
     SPECIFICITY = 'specificity'
     SENSITIVITY = 'sensitivity'
-    ERROR_RATE = 'ErrorRate'
+    POSITIVE_PREDICTIVE_VALUE = 'positive_predictive_value'
+    NEGATIVE_PREDICTIVE_VALUE = 'negative_predictive_value'
+    ERROR_RATE = 'error_rate'
