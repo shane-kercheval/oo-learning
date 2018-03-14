@@ -144,6 +144,7 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
                    rot=20,
                    title='Quality Scores',
                    yticks=np.linspace(start=0, stop=1, num=21),
+                   medianprops=dict(linewidth=4),
                    grid=True,
                    ax=ax)
         plt.xticks(ha='right')

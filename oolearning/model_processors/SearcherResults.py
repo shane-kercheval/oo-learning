@@ -203,4 +203,4 @@ class SearcherResults:
         ax.set_yticklabels(labels)
         ax.invert_yaxis()
         plt.tight_layout()
-        return plt
+        return ax
