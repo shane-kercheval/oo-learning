@@ -472,7 +472,7 @@ class ModelWrapperTests(TimerTestCase):
             assert all(transformed_training_data['Parch_6'] == 0)
 
         # same holdout_ratio as above
-        fitter = ModelFitter(model=RandomForestMW(),
+        fitter = ModelFitter(model=RandomForest(),
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.9),
                              evaluator=TwoClassProbabilityEvaluator(
@@ -917,7 +917,7 @@ class ModelWrapperTests(TimerTestCase):
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
         cache_directory = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_RandomForestMW_classification')  # noqa
         # test with custom threshold of 0.5
-        fitter = ModelFitter(model=RandomForestMW(),
+        fitter = ModelFitter(model=RandomForest(),
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=TwoClassProbabilityEvaluator(
@@ -966,7 +966,7 @@ class ModelWrapperTests(TimerTestCase):
         cache_directory = TestHelper.ensure_test_directory(
             'data/test_ModelWrappers/cached_test_models/test_RandomForestMW_classification')  # noqa
         # test with custom threshold of 0.5
-        fitter = ModelFitter(model=RandomForestMW(),
+        fitter = ModelFitter(model=RandomForest(),
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=TwoClassProbabilityEvaluator(
@@ -1021,7 +1021,7 @@ class ModelWrapperTests(TimerTestCase):
                            ImputationTransformer(),
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
         # test with custom threshold of 0.5
-        fitter = ModelFitter(model=RandomForestMW(),
+        fitter = ModelFitter(model=RandomForest(),
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=TwoClassProbabilityEvaluator(
@@ -1081,7 +1081,7 @@ class ModelWrapperTests(TimerTestCase):
                           ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
 
         # test with custom threshold of 0.5
-        fitter = ModelFitter(model=RandomForestMW(),
+        fitter = ModelFitter(model=RandomForest(),
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              scores=score_list)
@@ -1103,7 +1103,7 @@ class ModelWrapperTests(TimerTestCase):
         transformations = [ImputationTransformer(),
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
-        fitter = ModelFitter(model=RandomForestMW(),
+        fitter = ModelFitter(model=RandomForest(),
                              model_transformations=transformations,
                              splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=RegressionEvaluator())
@@ -1142,7 +1142,7 @@ class ModelWrapperTests(TimerTestCase):
     def test_RandomForestMW_classification_multiclass(self):
         data = TestHelper.get_iris_data()
         target_variable = 'species'
-        fitter = ModelFitter(model=RandomForestMW(),
+        fitter = ModelFitter(model=RandomForest(),
                              model_transformations=None,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                              evaluator=MultiClassEvaluator(converter=HighestValueConverter()))

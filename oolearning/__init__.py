@@ -69,7 +69,7 @@ from .model_wrappers.ModelExceptions import ModelCachedAlreadyConfigured
 from .model_wrappers.ModelExceptions import MissingValueError
 from .model_wrappers.ModelExceptions import NegativeValuesFoundError
 from .model_wrappers.ModelWrapperBase import ModelWrapperBase
-from .model_wrappers.RandomForestMW import RandomForestMW
+from .model_wrappers.RandomForest import RandomForest
 from .model_wrappers.LinearRegression import LinearRegression
 
 from .persistence.AlwaysFetchManager import AlwaysFetchManager

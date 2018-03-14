@@ -168,7 +168,7 @@ class ResamplerTests(TimerTestCase):
         score_list = [RmseScore(), MaeScore()]
         transformations = [RemoveColumnsTransformer(['coarseagg', 'fineagg']), ImputationTransformer(), DummyEncodeTransformer()]  # noqa
         resampler = RepeatedCrossValidationResampler(
-            model=RandomForestMW(),
+            model=RandomForest(),
             model_transformations=transformations,
             scores=score_list,
             folds=5,
@@ -267,7 +267,7 @@ class ResamplerTests(TimerTestCase):
 
         cache_directory = TestHelper.ensure_test_directory('data/test_Resamplers/cached_test_models/test_resamplers_RandomForest_classification')  # noqa
         resampler = RepeatedCrossValidationResampler(
-            model=RandomForestMW(),
+            model=RandomForest(),
             model_transformations=transformations,
             scores=score_list,
             persistence_manager=LocalCacheManager(cache_directory=cache_directory),
@@ -287,7 +287,7 @@ class ResamplerTests(TimerTestCase):
         assert resampler.results.num_resamples == 25
 
         # noinspection SpellCheckingInspection
-        expected_file = 'repeat{0}_fold{1}_RandomForestMW_n_estimators500_criteriongini_max_featuresNone_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_min_impurity_decrease0_bootstrapTrue_oob_scoreFalse_n_jobs-1_random_state42.pkl'  # noqa
+        expected_file = 'repeat{0}_fold{1}_RandomForest_n_estimators500_criteriongini_max_featuresNone_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_min_impurity_decrease0_bootstrapTrue_oob_scoreFalse_n_jobs-1_random_state42.pkl'  # noqa
         for fold_index in range(5):
             for repeat_index in range(5):
                 assert os.path.isfile(os.path.join(cache_directory,
@@ -317,3 +317,10 @@ class ResamplerTests(TimerTestCase):
         plt.gcf().clear()
         TestHelper.check_plot('data/test_Resamplers/test_resamplers_RandomForest_classification_cv_boxplot.png',  # noqa
                               lambda: resampler.results.cross_validation_score_boxplot())
+
+#
+#
+# import os
+# direct = "tests/data/test_Resamplers/cached_test_models/test_resamplers_RandomForest_classification"
+# for file in os.listdir(direct):
+#     os.rename(direct + "/" + file, direct + "/" + file.replace('MW', ''))

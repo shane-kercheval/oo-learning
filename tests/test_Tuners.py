@@ -65,7 +65,7 @@ class TunerTests(TimerTestCase):
                           ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
 
         cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/cached_test_models/test_ModelTuner_RandomForest_classification')  # noqa
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RandomForestMW(),
+        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RandomForest(),
                                                                       model_transformations=transformations,
                                                                       scores=evaluator_list),
                            hyper_param_object=RandomForestHP(),

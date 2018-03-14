@@ -9,7 +9,7 @@ from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 
 
-class RandomForestMW(ModelWrapperBase):
+class RandomForest(ModelWrapperBase):
     """
     Random Forest is a small tweak on Tree Bagging where, "each time a split in a tree is considered, a
         random sample of m features is chosen as split candidates from the full set of p features. The
