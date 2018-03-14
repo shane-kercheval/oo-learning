@@ -20,7 +20,6 @@ class ScoreBase(metaclass=ABCMeta):
 
     @property
     def value(self) -> float:
-        assert isinstance(self._value, float)
         return self._value
 
     def better_than(self, other: 'ScoreBase') -> bool:
