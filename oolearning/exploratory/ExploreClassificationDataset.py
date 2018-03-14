@@ -65,17 +65,17 @@ class ExploreClassificationDataset(ExploreDatasetBase):
         else:
             return self._dodged_barchart(dataset=self._dataset,
                                          feature=feature,
-                                         target_variable=self._target_variable)
+                                         target_variable=self._target_variable,
+                                         plot_group_percentages=True)
 
     @staticmethod
-    def _dodged_barchart(dataset: pd.DataFrame, feature, target_variable):
+    def _dodged_barchart(dataset: pd.DataFrame, feature, target_variable, plot_group_percentages=False):
         """
         :param: dataset containing the feature column and target_variable
         :return: bar chart
         """
         grouped_data = dataset.groupby([feature, target_variable]).size()
         labels = [x for x in grouped_data.index.get_level_values(feature).unique()]
-
         number_of_feature_classes = len(labels)
 
         totals = [grouped_data[index].sum() for index in labels]
@@ -90,8 +90,18 @@ class ExploreClassificationDataset(ExploreDatasetBase):
         unique_classes = dataset[target_variable].unique()
         num_of_unique_classes = len(unique_classes)
 
-        ax_totals = ax.bar(group_locations + (width / num_of_unique_classes),
+        bar_midpoints = group_locations + (width / num_of_unique_classes)
+        ax_totals = ax.bar(bar_midpoints,
                            totals, width * num_of_unique_classes, color='black', alpha=0.15)
+        if plot_group_percentages:
+            grouped_data_totals = dataset.groupby([feature]).size()
+            grouped_data_percentages = grouped_data / grouped_data_totals
+            total_bar_labels = ['{0}% | {1}%'.format(round(grouped_data_percentages.loc[x].iloc[0] * 100, 1),
+                                                     round(grouped_data_percentages.loc[x].iloc[1] * 100, 1))
+                                for x in labels]
+            for i, v in enumerate(totals):
+                # noinspection PyUnboundLocalVariable
+                ax.text(bar_midpoints[i], v + 1, total_bar_labels[i], color='black', ha='center')
 
         # from matplotlib.pyplot import cm
         # colors = cm.rainbow(np.linspace(0, 1, 10)[::-1])

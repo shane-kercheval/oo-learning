@@ -418,6 +418,9 @@ class ExploratoryTests(TimerTestCase):
         self.assertRaises(AssertionError, lambda: explore.plot_against_target(feature=target_variable))
 
         TestHelper.check_plot('data/test_exploratory/compare_against_target_checking_balance.png',
+                              lambda: explore.plot_against_target(feature='phone'))
+
+        TestHelper.check_plot('data/test_exploratory/compare_against_target_checking_balance.png',
                               lambda: explore.plot_against_target(feature='checking_balance'))
 
         TestHelper.check_plot('data/test_exploratory/compare_against_target_amount.png',
@@ -458,3 +461,27 @@ class ExploratoryTests(TimerTestCase):
 
         TestHelper.check_plot('data/test_exploratory/compare_against_target_median_income.png',
                               lambda: explore.plot_against_target(feature='median_income'))
+
+    # def test_ExploreRegressionDataset_statistical_tests(self):
+    #     target_variable = 'expenses'
+    #     explore = ExploreRegressionDataset(dataset=TestHelper.get_insurance_data(),
+    # target_variable=target_variable)
+    #     explore.dataset
+    #
+    #     # numeric vs numeric: correlations
+    #     explore.numeric_tests_against_target()
+    #
+    #
+    # def test_ExploreClassificationDataset_statistical_tests(self):
+    #     target_variable = 'default'
+    #     explore = ExploreClassificationDataset(dataset=TestHelper.get_credit_data(), target_variable=target_variable)  # noqa
+    #     explore.dataset
+    #
+    #     # numeric vs numeric: correlations
+    #     explore.numeric_tests_against_target()
+    #
+    #     # categoric vs categoric:
+    #     explore.plot_against_target(feature='phone')
+    #     explore.plot_against_target(feature='housing')
+    #
+    #     explore.plot_against_target(feature='age')
