@@ -5,7 +5,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, recall_score, f1_score, cohen_kappa_score, \
-    mean_squared_error, mean_absolute_error, roc_auc_score
+    mean_squared_error, mean_absolute_error, roc_auc_score, average_precision_score
 
 from oolearning import *
 from tests.TestHelper import TestHelper
@@ -79,12 +79,12 @@ class EvaluatorTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [2.3333333333333335, 3.5355339059327378])])
 
-    def test_AucScore(self):
+    def test_AucROCScore(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
         predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
         predictions_mock.columns = [1, 0]
 
-        score = AucScore(positive_class=1)
+        score = AucRocScore(positive_class=1)
         assert isinstance(score, UtilityFunctionMixin)
         assert isinstance(score, ScoreBase)
 
@@ -94,7 +94,7 @@ class EvaluatorTests(TimerTestCase):
         # Test sorting
         ######################################################################################################
         # makes a 'worse
-        score_other = AucScore(positive_class=0)
+        score_other = AucRocScore(positive_class=0)
         score_other.calculate(actual_values=np.array([1 if x == 0 else 0 for x in mock_data.actual]),
                               predicted_values=predictions_mock)
         assert isclose(score_other.value, roc_auc_score(y_true=mock_data.actual, y_score=mock_data.neg_probabilities))  # noqa
@@ -105,6 +105,33 @@ class EvaluatorTests(TimerTestCase):
         score_list.sort()  # "better, worse"
         assert all([isclose(x, y) for x, y in zip([x.value for x in score_list],
                                                   [0.74428675992192583, 0.25571324007807417])])
+
+    def test_AucPrecisionRecallScore(self):
+        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
+        predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
+        predictions_mock.columns = [1, 0]
+
+        score = AucPrecisionRecallScore(positive_class=1)
+        assert isinstance(score, UtilityFunctionMixin)
+        assert isinstance(score, ScoreBase)
+
+        score.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
+        assert isclose(score.value, average_precision_score(y_true=mock_data.actual, y_score=mock_data.pos_probabilities))  # noqa
+        ######################################################################################################
+        # Test sorting
+        ######################################################################################################
+        # makes a 'worse
+        score_other = AucPrecisionRecallScore(positive_class=0)
+        score_other.calculate(actual_values=np.array([1 if x == 0 else 0 for x in mock_data.actual]),
+                              predicted_values=predictions_mock)
+        assert isclose(score_other.value, average_precision_score(y_true=mock_data.actual, y_score=mock_data.neg_probabilities))  # noqa
+
+        score_list = [score_other, score]  # "worse, better"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in score_list],
+                                                  [0.28581244853623045, 0.6659419996895501])])
+        score_list.sort()  # "better, worse"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in score_list],
+                                                  [0.6659419996895501, 0.28581244853623045])])
 
     def test_KappaScore(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa

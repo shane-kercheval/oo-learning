@@ -1,5 +1,6 @@
 from typing import Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -109,4 +110,18 @@ class TwoClassEvaluator(EvaluatorBase):
         return self._confusion_matrix.all_quality_metrics
 
     def plot_all_quality_metrics(self):
-        return self._confusion_matrix.plot_all_quality_metrics()
+        # noinspection PyTypeChecker
+        x = pd.DataFrame.from_dict([self.all_quality_metrics])
+        x = x[list(self.all_quality_metrics.keys())].drop(columns='Total Observations')
+
+        fig, ax = plt.subplots()
+        p = x.plot(kind='box',
+                   rot=20,
+                   title='Quality Scores',
+                   yticks=np.linspace(start=0, stop=1, num=21),
+                   medianprops=dict(linewidth=4),
+                   grid=True,
+                   ax=ax)
+        plt.xticks(ha='right')
+
+        return p

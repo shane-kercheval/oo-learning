@@ -15,7 +15,8 @@ from .enums.ResolveOutliers import ResolveOutliers
 from .enums.Skewness import Skewness
 
 from .evaluators.AccuracyScore import AccuracyScore
-from .evaluators.AucScore import AucScore
+from .evaluators.AucRocScore import AucRocScore
+from .evaluators.AucPrecisionRecallScore import AucPrecisionRecallScore
 from .evaluators.MultiClassEvaluator import MultiClassEvaluator
 from .evaluators.TwoClassEvaluator import TwoClassEvaluator
 from .evaluators.CostFunctionMixin import CostFunctionMixin

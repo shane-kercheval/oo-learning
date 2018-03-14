@@ -5,7 +5,7 @@ import dill as pickle
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, recall_score, f1_score, precision_score, cohen_kappa_score, \
-    roc_auc_score
+    roc_auc_score, average_precision_score
 
 from oolearning import *
 from oolearning.evaluators.TwoClassConfusionMatrix import TwoClassConfusionMatrix
@@ -170,6 +170,9 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator._confusion_matrix.matrix.loc[:, 'Total'].values.tolist() == [424, 290, 714]
         assert evaluator._confusion_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
         assert evaluator._confusion_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
+
+        assert isclose(evaluator.all_quality_metrics['AUC ROC'], 0.7442867599219258)
+        assert isclose(evaluator.all_quality_metrics['AUC Precision/Recall'], 0.6659419996895501)
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['Kappa'], 0)
         assert evaluator._confusion_matrix.all_quality_metrics['F1 Score'] == 0
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['Two-Class Accuracy'], evaluator._confusion_matrix.negative_predictive_value)  # noqa
@@ -184,6 +187,7 @@ class EvaluatorTests(TimerTestCase):
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['No Information Rate'], 0.5938375350140056)  # noqa
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['Total Observations'], len(mock_data))
 
+        # NOTE: will not have auc's, because this is confusion matrix, not evaluator
         TestHelper.check_plot('data/test_Evaluators/test_confusion_matrix_plot_metrics.png',
                               lambda: evaluator._confusion_matrix.plot_all_quality_metrics())
 
@@ -203,8 +207,10 @@ class EvaluatorTests(TimerTestCase):
 
         evaluator = TwoClassProbabilityEvaluator(converter=TwoClassThresholdConverter(positive_class=1, threshold=0.5))  # noqa
         evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
-        assert isclose(evaluator.auc, roc_auc_score(y_true=mock_data.actual, y_score=predictions_mock[1]))
-        assert isclose(evaluator.auc, roc_auc_score(y_true=mock_data.actual, y_score=mock_data.pos_probabilities))  # noqa
+
+        assert isclose(evaluator.auc_precision_recall, average_precision_score(y_true=mock_data.actual, y_score=predictions_mock[1]))  # noqa
+        assert isclose(evaluator.auc_roc, roc_auc_score(y_true=mock_data.actual, y_score=predictions_mock[1]))
+        assert isclose(evaluator.auc_roc, roc_auc_score(y_true=mock_data.actual, y_score=mock_data.pos_probabilities))  # noqa
         self.check_confusion_matrix(con_matrix=evaluator.confusion_matrix, mock_data=mock_data)
 
         # test ROC calculations

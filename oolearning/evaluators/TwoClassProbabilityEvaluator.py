@@ -6,7 +6,7 @@ Evaluates 2-class classification problems, where "probabilities" are supplied as
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score, average_precision_score
 
 from oolearning.converters.TwoClassConverterBase import TwoClassConverterBase
 from oolearning.converters.TwoClassPrecisionRecallOptimizerConverter import \
@@ -23,7 +23,8 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         self._actual_classes = None
         self._predicted_probabilities = None
 
-        self._auc = None
+        self._auc_roc = None
+        self._auc_precision_recall = None
 
         self._fpr = None
         self._tpr = None
@@ -32,16 +33,24 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         self._ideal_threshold_ppv_tpr = None
 
     @property
-    def auc(self):
-        return self._auc
+    def auc_roc(self):
+        return self._auc_roc
+
+    @property
+    def auc_precision_recall(self):
+        return self._auc_precision_recall
 
     def evaluate(self,
                  actual_values: np.ndarray, predicted_values: pd.DataFrame):
         self._actual_classes = actual_values
         self._predicted_probabilities = predicted_values
 
-        self._auc = roc_auc_score(y_true=[1 if x == self._positive_class else 0 for x in actual_values],
-                                  y_score=predicted_values[self._positive_class])
+        self._auc_roc = roc_auc_score(y_true=[1 if x == self._positive_class else 0 for x in actual_values],
+                                      y_score=predicted_values[self._positive_class])
+        # according to this (), average precision is same as auc of pr curve
+        self._auc_precision_recall = average_precision_score(y_true=[1 if x == self._positive_class else 0
+                                                                     for x in actual_values],
+                                                             y_score=predicted_values[self._positive_class])
 
         predicted_classes = self._converter.convert(values=predicted_values)
 
@@ -65,7 +74,7 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
                                   y_coordinates=self._tpr,
                                   threshold=0.5,
                                   ideal_threshold=self._ideal_threshold_roc,
-                                  title='ROC (AUC={0})'.format(round(self.auc, 3)),
+                                  title='ROC (AUC={0})'.format(round(self.auc_roc, 3)),
                                   x_label='False Positive Rate (1 - True Negative Rate)',
                                   y_label='True Positive Rate',
                                   corner='Left')
@@ -127,3 +136,12 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
                   'xlabel': x_label,
                   'ylabel': y_label})
         return fig
+
+    @property
+    def all_quality_metrics(self) -> dict:
+        metrics = {'AUC ROC': self.auc_roc, 'AUC Precision/Recall': self.auc_precision_recall}
+        metrics.update(super().all_quality_metrics)
+        return metrics
+
+    # def plot_all_quality_metrics(self):
+    #     return self._confusion_matrix.plot_all_quality_metrics()

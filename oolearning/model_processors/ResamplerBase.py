@@ -33,7 +33,7 @@ class ResamplerBase(metaclass=ABCMeta):
         :param model_transformations:
         :param scores: a `list` of `Evaluator` objects.
             For example, if Kappa and AUC are both metrics of
-            interest when resampling, use `holdout_scores=[KappaScore, AucScore]`;
+            interest when resampling, use `holdout_scores=[KappaScore, AucRocScore]`;
             if RMSE is the only metric of interest, use `holdout_scores=[RMSE]`
         :param persistence_manager: a PersistenceManager defining how the model should be cached, optional.
             NOTE: There is currently no enforcement that subclasses of ResamplerBase implement model
