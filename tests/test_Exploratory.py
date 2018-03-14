@@ -417,7 +417,7 @@ class ExploratoryTests(TimerTestCase):
         # cannot get unique values on numeric feature
         self.assertRaises(AssertionError, lambda: explore.plot_against_target(feature=target_variable))
 
-        TestHelper.check_plot('data/test_exploratory/compare_against_target_checking_balance.png',
+        TestHelper.check_plot('data/test_exploratory/compare_against_target_phone.png',
                               lambda: explore.plot_against_target(feature='phone'))
 
         TestHelper.check_plot('data/test_exploratory/compare_against_target_checking_balance.png',

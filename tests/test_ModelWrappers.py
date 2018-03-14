@@ -717,7 +717,7 @@ class ModelWrapperTests(TimerTestCase):
             assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
             assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
             assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-            assert isclose(round(fitter.training_evaluator.auc, 5), round(0.860346942351498, 5))
+            assert isclose(round(fitter.training_evaluator.auc, 4), round(0.860346942351498, 4))
             TestHelper.check_plot('data/test_ModelWrappers/test_LogisticMW_training_ROC.png',
                                   lambda: fitter.training_evaluator.get_roc_curve())
             TestHelper.check_plot('data/test_ModelWrappers/test_LogisticMW_training_PrecRecal.png',
@@ -773,7 +773,7 @@ class ModelWrapperTests(TimerTestCase):
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
         assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
         assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
-        assert isclose(round(fitter.training_evaluator.auc, 5), round(0.860346942351498, 5))
+        assert isclose(round(fitter.training_evaluator.auc, 4), round(0.860346942351498, 4))
 
         con_matrix = fitter.holdout_evaluator._confusion_matrix
         assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [98, 22, 120]
