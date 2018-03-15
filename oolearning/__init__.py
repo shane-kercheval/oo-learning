@@ -50,6 +50,8 @@ from .hyper_params.HyperParamsBase import HyperParamsBase
 from .hyper_params.HyperParamsGrid import HyperParamsGrid
 from .hyper_params.RandomForestHP import RandomForestHP
 
+from .model_processors.DecoratorBase import DecoratorBase
+from .model_processors.TwoClassThresholdDecorator import TwoClassThresholdDecorator
 from .model_processors.ModelFitter import ModelFitter
 from .model_processors.ModelInfo import ModelInfo
 from .model_processors.ModelSearcher import ModelSearcher

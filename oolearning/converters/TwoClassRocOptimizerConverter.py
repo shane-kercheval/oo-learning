@@ -78,4 +78,5 @@ class TwoClassRocOptimizerConverter(TwoClassConverterBase):
         val, index = min((val, index) for (index, val) in enumerate(distances))
         ideal_threshold = potential_cutoff_values[index]
 
-        return false_positive_rates, true_positive_rates, ideal_threshold
+        # round to 2 because sometimes machines fuck up decimal points, but should always be 2
+        return false_positive_rates, true_positive_rates, round(ideal_threshold, 2)

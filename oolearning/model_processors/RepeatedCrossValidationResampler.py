@@ -3,6 +3,7 @@ from typing import List, Callable, Union
 import numpy as np
 import pandas as pd
 
+from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
@@ -18,6 +19,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
     """
     Traditional k-fold repeated cross validation. Does NOT stratify data based on target values.
     """
+
     def __init__(self,
                  model: ModelWrapperBase,
                  model_transformations: Union[List[TransformerBase], None],
@@ -25,8 +27,21 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                  persistence_manager: PersistenceManagerBase = None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None,
-                 folds=5,
-                 repeats=5):
+                 folds: int=5,
+                 repeats: int=5,
+                 fold_decorators: List[DecoratorBase]=None):
+        """
+        :param model:
+        :param model_transformations:
+        :param scores:
+        :param persistence_manager:
+        :param train_callback:
+        :param folds:
+        :param repeats:
+        :param fold_decorators: intent is to add responsibility the Resampler dynamically. This decorator is
+            called at the end of each fold and is passed the `scores`, the holdout actual values, and the
+            holdout predicted values.
+        """
         super().__init__(model=model,
                          model_transformations=model_transformations,
                          scores=scores,
@@ -38,10 +53,12 @@ class RepeatedCrossValidationResampler(ResamplerBase):
 
         self._folds = folds
         self._repeats = repeats
+        self._fold_decorators = fold_decorators
 
 
 # TODO document that transformations are fit/transformed on the training folds and transformed on the holdout
     # fold; to avoid 'snooping'
+    # noinspection PyProtectedMember
     def _resample(self,
                   data_x: pd.DataFrame,
                   data_y: np.ndarray,
@@ -99,13 +116,22 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                     model_copy.set_persistence_manager(persistence_manager=self._persistence_manager)
 
                 model_copy.train(data_x=train_x_transformed, data_y=train_y, hyper_params=hyper_params)
+                predicted_values = model_copy.predict(data_x=holdout_x_transformed)
+
                 fold_scores = list()
                 for score in self._scores:
                     score_copy = score.clone()  # need to reuse this object type for each fold/repeat
                     score_copy.calculate(actual_values=holdout_y,
-                                         predicted_values=model_copy.predict(data_x=holdout_x_transformed))
+                                         predicted_values=predicted_values)
                     fold_scores.append(score_copy)
                 result_scores.append(fold_scores)
+
+                if self._fold_decorators:
+                    for decorator in self._fold_decorators:
+                        decorator.decorate(scores=self._scores,
+                                           holdout_actual_values=holdout_y,
+                                           holdout_predicted_values=predicted_values)
+
         # result_scores is a list of list of holdout scores.
         # Each outer list represents a resampling result
         # and each element of the inner list represents a specific score.

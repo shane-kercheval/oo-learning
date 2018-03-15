@@ -324,3 +324,41 @@ class ResamplerTests(TimerTestCase):
 # direct = "tests/data/test_Resamplers/cached_test_models/test_resamplers_RandomForest_classification"
 # for file in os.listdir(direct):
 #     os.rename(direct + "/" + file, direct + "/" + file.replace('MW', ''))
+
+    # noinspection PyTypeChecker
+    def test_resampling_roc_pr_thresholds(self):
+        decorator = TwoClassThresholdDecorator()
+        # resampler gets the positive class from either the score directly, or the score._converter; test
+        # using both score types (e.g. AucX & Kappa); also check an invalid Score object
+        data = TestHelper.get_titanic_data()
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+        training_indexes, test_indexes = splitter.split(target_values=data.Survived)
+
+        train_data_y = data.iloc[training_indexes].Survived
+        train_data = data.iloc[training_indexes].drop(columns='Survived')
+
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
+        resampler = RepeatedCrossValidationResampler(
+            model=RandomForest(),
+            model_transformations=transformations,
+            scores=score_list,
+            folds=5,
+            repeats=1,
+            fold_decorators=[decorator])
+        resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
+
+        expected_roc_thresholds = [0.43, 0.31, 0.47, 0.59, 0.48]
+        expected_precision_recall_thresholds = [0.43, 0.53, 0.64, 0.59, 0.6]
+        assert decorator.resampled_roc == expected_roc_thresholds
+        assert decorator.resampled_precision_recall == expected_precision_recall_thresholds
+        assert isclose(decorator.resampled_roc_mean, np.mean(expected_roc_thresholds))
+        assert isclose(decorator.resampled_precision_recall_mean, np.mean(expected_precision_recall_thresholds))  # noqa
+        assert isclose(decorator.resampled_roc_st_dev, np.std(expected_roc_thresholds))
+        assert isclose(decorator.resampled_precision_recall_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
+        assert isclose(decorator.resampled_roc_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
+        assert isclose(decorator.resampled_precision_recall_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa

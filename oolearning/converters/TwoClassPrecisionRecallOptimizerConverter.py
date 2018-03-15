@@ -73,4 +73,5 @@ class TwoClassPrecisionRecallOptimizerConverter(TwoClassConverterBase):
         val, index = min((val, index) for (index, val) in enumerate(distances))
         ideal_threshold = potential_cutoff_values[index]
 
-        return positive_predictive_values, true_positive_rates, ideal_threshold
+        # round to 2 because sometimes machines fuck up decimal points, but should always be 2
+        return positive_predictive_values, true_positive_rates, round(ideal_threshold, 2)

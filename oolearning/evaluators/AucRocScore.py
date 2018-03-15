@@ -5,14 +5,11 @@ import pandas as pd
 from sklearn.metrics import roc_auc_score
 
 from oolearning.enums.Metric import Metric
-from oolearning.evaluators.ScoreBase import ScoreBase
+from oolearning.evaluators.TwoClassScoreBase import TwoClassScoreBase
 from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
 
-class AucRocScore(UtilityFunctionMixin, ScoreBase):
-    def __init__(self, positive_class: object):
-        super().__init__()
-        self._positive_class = positive_class
+class AucRocScore(UtilityFunctionMixin, TwoClassScoreBase):
 
     @property
     def name(self) -> str:
