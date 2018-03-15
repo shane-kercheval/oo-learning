@@ -1,4 +1,4 @@
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from typing import List
 from matplotlib import pyplot as pl
 from pandas.plotting import scatter_matrix
@@ -34,6 +34,10 @@ class ExploreDatasetBase(metaclass=ABCMeta):
             OOLearningHelpers.get_columns_by_type(data_dtypes=self._dataset.dtypes,
                                                   target_variable=self._target_variable)
         self._is_target_numeric = OOLearningHelpers.is_series_numeric(self._dataset[self._target_variable])
+
+    @abstractmethod
+    def plot_against_target(self, feature):
+        pass
 
     @classmethod
     def from_csv(cls, csv_file_path: str, target_variable: str) -> 'ExploreDatasetBase':

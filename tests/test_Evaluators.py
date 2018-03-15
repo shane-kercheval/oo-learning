@@ -191,6 +191,18 @@ class EvaluatorTests(TimerTestCase):
         TestHelper.check_plot('data/test_Evaluators/test_confusion_matrix_plot_metrics.png',
                               lambda: evaluator._confusion_matrix.plot_all_quality_metrics())
 
+    def test_TwoClassEvaluator_plot_all_quality_metrics_comparison(self):
+        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
+        # threshold of 0.5
+        evaluator_05 = TwoClassProbabilityEvaluator(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))  # noqa
+        evaluator_05.evaluate(actual_values=mock_data.actual, predicted_values=mock_data[['pos_probabilities', 'neg_probabilities']].rename(columns={'pos_probabilities': 1, 'neg_probabilities': 0}))  # noqa
+        # threshold of 1
+        evaluator = TwoClassProbabilityEvaluator(converter=TwoClassThresholdConverter(threshold=1, positive_class=1))  # noqa
+        evaluator.evaluate(actual_values=mock_data.actual, predicted_values=mock_data[['pos_probabilities', 'neg_probabilities']].rename(columns={'pos_probabilities': 1, 'neg_probabilities': 0}))  # noqa
+
+        TestHelper.check_plot('data/test_Evaluators/test_plot_all_quality_metrics_comparison.png',
+                              lambda: evaluator_05.plot_all_quality_metrics(comparison_evaluator=evaluator))
+
     def test_TwoClassEvaluator_from_classes(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
         evaluator = TwoClassEvaluator.from_classes(actual_classes=mock_data.actual, predicted_classes=mock_data.predictions, positive_class=1)  # noqa

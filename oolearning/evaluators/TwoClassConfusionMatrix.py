@@ -134,19 +134,44 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
                 'No Information Rate': max(self.prevalence, 1-self.prevalence),  # i.e. largest class %
                 'Total Observations': self.total_observations}
 
-    def plot_all_quality_metrics(self):
+    def plot_all_quality_metrics(self, comparison_matrix: "TwoClassConfusionMatrix"=None):
+        # convert diction to dataframe, without "Total Observations" which will fuck up axis
         # noinspection PyTypeChecker
-        x = pd.DataFrame.from_dict([self.all_quality_metrics])
-        x = x[list(self.all_quality_metrics.keys())].drop(columns='Total Observations')
+        metrics_dataframe = pd.DataFrame.from_dict([self.all_quality_metrics])
+        metrics_dataframe = metrics_dataframe[list(self.all_quality_metrics.keys())].\
+            drop(columns='Total Observations')
 
-        fig, ax = plt.subplots()
-        p = x.plot(kind='box',
-                   rot=20,
-                   title='Quality Scores',
-                   yticks=np.linspace(start=0, stop=1, num=21),
-                   medianprops=dict(linewidth=4),
-                   grid=True,
-                   ax=ax)
-        plt.xticks(ha='right')
+        x_values = np.linspace(1, metrics_dataframe.shape[1], metrics_dataframe.shape[1])
+        self_y_values = metrics_dataframe.iloc[0].values
+        ax = plt.gca()
 
-        return p
+        if comparison_matrix is not None:
+            # convert diction to dataframe, without "Total Observations" which will fuck up axis
+            # noinspection PyTypeChecker
+            comparison_metrics_dataframe = pd.DataFrame.from_dict([comparison_matrix.all_quality_metrics])
+            comparison_metrics_dataframe = comparison_metrics_dataframe[
+                list(comparison_matrix.all_quality_metrics.keys())].drop(columns='Total Observations')
+            comparison_y_values = comparison_metrics_dataframe.iloc[0].values
+            plt.scatter(x_values, comparison_y_values, color='r', alpha=0.7, marker='o', s=75)
+            for i, v in enumerate([0] + list(comparison_y_values)):
+                if i != 0:
+                    ax.text(i + 0.1, v - 0.05,
+                            '{0}%'.format(round(v*100, 1)),
+                            color='r',
+                            ha='center')
+
+        plt.scatter(x_values, self_y_values, color='g', alpha=0.7, marker='o', s=75)
+        plt.xticks(np.arange(metrics_dataframe.shape[1]+1),
+                   [''] + list(self.all_quality_metrics.keys()),
+                   rotation=17,
+                   ha='right')
+        plt.yticks(np.linspace(start=0, stop=1, num=21))
+        #        plt.scatter(X, Y2, color='g')
+        for i, v in enumerate([0] + list(self_y_values)):
+            # noinspection PyUnboundLocalVariable
+            if i != 0:
+                ax.text(i + 0.1, v + 0.025, '{0}%'.format(round(v*100, 1)), color='g', ha='center')
+
+        plt.title('Quality Scores')
+        plt.grid()
+        return ax

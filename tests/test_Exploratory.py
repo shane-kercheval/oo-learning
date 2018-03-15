@@ -24,7 +24,8 @@ class MockExploreBase(ExploreDatasetBase):
     """
     only used to instantiate an abstract class
     """
-    pass
+    def plot_against_target(self, feature):
+        pass
 
 
 # noinspection PyMethodMayBeStatic
@@ -392,7 +393,7 @@ class ExploratoryTests(TimerTestCase):
         target_variable = 'Survived'
         target_mapping = {0: 'died', 1: 'survived'}
 
-        explore = ExploreDatasetBase.from_csv(csv_file_path=titanic_csv, target_variable=target_variable)
+        explore = MockExploreBase.from_csv(csv_file_path=titanic_csv, target_variable=target_variable)
         assert explore._is_target_numeric  # target is numeric, but this could fuck with this
         numeric_data = explore.dataset[target_variable]
         expected_categoric_data = numeric_data.map(target_mapping).values
