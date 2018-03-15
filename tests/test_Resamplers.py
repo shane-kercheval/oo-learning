@@ -329,7 +329,7 @@ class ResamplerTests(TimerTestCase):
     def test_resampling_roc_pr_thresholds(self):
         decorator = TwoClassThresholdDecorator()
         # resampler gets the positive class from either the score directly, or the score._converter; test
-        # using both score types (e.g. AucX & Kappa); also check an invalid Score object
+        # using both score types (e.g. AucX & Kappa)
         data = TestHelper.get_titanic_data()
         splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
         training_indexes, test_indexes = splitter.split(target_values=data.Survived)
@@ -362,3 +362,24 @@ class ResamplerTests(TimerTestCase):
         assert isclose(decorator.resampled_precision_recall_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
         assert isclose(decorator.resampled_roc_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
         assert isclose(decorator.resampled_precision_recall_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa
+
+        # Test AucX (just test 2 folds, to make sure it finds `positive_class` (takes too long to test more)
+        decorator = TwoClassThresholdDecorator()
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        score_list = [AucRocScore(positive_class=1)]
+        resampler = RepeatedCrossValidationResampler(
+            model=RandomForest(),
+            model_transformations=transformations,
+            scores=score_list,
+            folds=2,
+            repeats=1,
+            fold_decorators=[decorator])
+        resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
+        expected_roc_thresholds = [0.35, 0.48]
+        expected_precision_recall_thresholds = [0.35, 0.48]
+        assert decorator.resampled_roc == expected_roc_thresholds
+        assert decorator.resampled_precision_recall == expected_precision_recall_thresholds
