@@ -383,3 +383,24 @@ class ResamplerTests(TimerTestCase):
         expected_precision_recall_thresholds = [0.35, 0.48]
         assert decorator.resampled_roc == expected_roc_thresholds
         assert decorator.resampled_precision_recall == expected_precision_recall_thresholds
+
+        # Test DummyClassifier; utilize edge cases
+        decorator = TwoClassThresholdDecorator()
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        score_list = [AucRocScore(positive_class=1)]
+        resampler = RepeatedCrossValidationResampler(
+            model=DummyClassifier(strategy=DummyClassifierStrategy.MOST_FREQUENT),
+            model_transformations=transformations,
+            scores=score_list,
+            folds=2,
+            repeats=1,
+            fold_decorators=[decorator])
+        resampler.resample(data_x=train_data, data_y=train_data_y)
+        expected_roc_thresholds = [0.0, 0.0]
+        expected_precision_recall_thresholds = [0.0, 0.0]
+        assert decorator.resampled_roc == expected_roc_thresholds
+        assert decorator.resampled_precision_recall == expected_precision_recall_thresholds
