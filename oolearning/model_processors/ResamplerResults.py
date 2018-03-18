@@ -1,21 +1,24 @@
-from typing import List
+from typing import List, Union
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
 from oolearning.evaluators.ScoreBase import ScoreBase
+from oolearning.model_processors.DecoratorBase import DecoratorBase
 
 
 class ResamplerResults:
-    def __init__(self, scores: List[List[ScoreBase]]):
+    def __init__(self, scores: List[List[ScoreBase]], decorators: Union[List[DecoratorBase], None]):
         """
         :param scores: a list of list of holdout_scores.
             each outer list represents a resampling result (e.g. a single fold for a single repeat in repeated
                 k-fold cross validation);
             each element of the inner list represents a specific score for the single resampling result
+        #TODO: decorators are a list of decorators passed into the Resampler
         """
         self._scores = scores
+        self._decorators = decorators
 
         # for each score, add the metric name/value to a dict to add to the ResamplerResults
         self._cross_validation_scores = list()
@@ -78,6 +81,10 @@ class ResamplerResults:
                 else round((self.cross_validation_scores[metric].std() /
                             self.cross_validation_scores[metric].mean()), 2)
                 for metric in self.metrics}
+
+    @property
+    def decorators(self) -> List[DecoratorBase]:
+        return self._decorators
 
     def __lt__(self, other):
         """

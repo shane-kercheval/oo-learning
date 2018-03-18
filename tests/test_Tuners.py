@@ -4,6 +4,7 @@ import unittest
 from math import isclose
 
 import dill as pickle
+import numpy as np
 
 from oolearning import *
 from tests.MockClassificationModelWrapper import MockClassificationModelWrapper
@@ -138,7 +139,8 @@ class TunerTests(TimerTestCase):
         tuner = ModelTuner(resampler=MockResampler(model=MockClassificationModelWrapper(data_y=data.Survived),
                                                    model_transformations=transformations,
                                                    scores=evaluators),
-                           hyper_param_object=MockHyperParams())
+                           hyper_param_object=MockHyperParams(),
+                           )
 
         columns = TransformerPipeline.get_expected_columns(transformations=transformations, data=train_data)
         assert len(columns) == 24
@@ -149,6 +151,7 @@ class TunerTests(TimerTestCase):
         tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
 
         assert len(tuner.results._tune_results_objects) == 27
+        assert tuner.results.num_param_combos == 27
         assert all([isinstance(x, ResamplerResults)
                     for x in tuner.results._tune_results_objects.resampler_object])
 
@@ -294,3 +297,63 @@ class TunerTests(TimerTestCase):
         ######################################################################################################
         assert tuner.results.get_heatmap() is None
         assert tuner.results.get_cross_validation_boxplots(metric=Metric.KAPPA) is None
+
+    def test_tuner_resampler_decorators(self):
+        decorator = TwoClassThresholdDecorator()
+        # resampler gets the positive class from either the score directly, or the score._converter; test
+        # using both score types (e.g. AucX & Kappa)
+        data = TestHelper.get_titanic_data()
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+        training_indexes, test_indexes = splitter.split(target_values=data.Survived)
+
+        train_data_y = data.iloc[training_indexes].Survived
+        train_data = data.iloc[training_indexes].drop(columns='Survived')
+
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        score_list = [AucRocScore(positive_class=1)]
+        resampler = RepeatedCrossValidationResampler(model=RandomForest(),
+                                                     model_transformations=transformations,
+                                                     scores=score_list,
+                                                     folds=2,
+                                                     repeats=1,
+                                                     fold_decorators=[decorator])
+        tuner = ModelTuner(resampler=resampler, hyper_param_object=RandomForestHP())
+
+        params_dict = {'criterion': 'gini', 'max_features': [5]}
+        grid = HyperParamsGrid(params_dict=params_dict)
+        assert len(grid.params_grid) == 1  # just need to test 1 hyper-param combination
+        # just need to test the first row
+        tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
+
+        # should have cloned the decorator each time, so it should not have been used
+        assert len(decorator._resampled_roc) == 0
+        assert len(decorator._resampled_precision_recall) == 0
+
+        # resampler_decorators is a list (per hyper-param combo), of lists (multiple decorators)
+        assert len(tuner.results.resampler_decorators) == 1
+        assert len(tuner.results.resampler_decorators[0]) == 1
+        assert isinstance(tuner.results.resampler_decorators[0][0], TwoClassThresholdDecorator)
+
+        assert len(tuner.results.resampler_decorators_first) == 1
+        assert isinstance(tuner.results.resampler_decorators_first[0], TwoClassThresholdDecorator)
+
+        assert tuner.results.resampler_decorators[0][0] is tuner.results.resampler_decorators_first[0]
+
+        decorator = tuner.results.resampler_decorators_first[0]
+
+        expected_roc_thresholds = [0.37, 0.37]
+        expected_precision_recall_thresholds = [0.37, 0.49]
+
+        assert decorator.resampled_roc == expected_roc_thresholds
+        assert decorator.resampled_precision_recall == expected_precision_recall_thresholds
+
+        assert isclose(decorator.resampled_roc_mean, np.mean(expected_roc_thresholds))
+        assert isclose(decorator.resampled_precision_recall_mean, np.mean(expected_precision_recall_thresholds))  # noqa
+        assert isclose(decorator.resampled_roc_st_dev, np.std(expected_roc_thresholds))
+        assert isclose(decorator.resampled_precision_recall_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
+        assert isclose(decorator.resampled_roc_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
+        assert isclose(decorator.resampled_precision_recall_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa

@@ -56,7 +56,9 @@ class ModelWrapperBase(metaclass=ABCMeta):
         # NOTE: cannot pass cache_path in to constructor, in case we want to clone the model.
         :param persistence_manager:
         :param persistence_manager: cache (store/retrieve) the underlying model
-        #TODO: document: so, the workflow is the same whether or not you are retrieving an existing cache or not... i.e. you cannot go from retreiving to predicting without "training", even if the model is cached, before the train function passes important information to the FittedInfo object
+        #TODO: document: so, the workflow is the same whether or not you are retrieving an existing cache or
+        #not... i.e. you cannot go from retreiving to predicting without "training", even if the model is
+        #cached, before the train function passes important information to the FittedInfo object
         """
         if self._fitted_info is not None:  # doesn't make sense to configure the cache after we `train()`
             raise ModelAlreadyFittedError()
@@ -131,7 +133,8 @@ class ModelWrapperBase(metaclass=ABCMeta):
                                    data_x: pd.DataFrame,
                                    data_y: np.ndarray,
                                    hyper_params: HyperParamsBase=None) -> FittedInfoBase:
-        #TODO: add documentation, explain we we need this (i.e. so base classes can save any info they need specifically, while allowing the base class to cache the model_object
+        # TODO: add documentation, explain we we need this (i.e. so base classes can save any info they need
+        # specifically, while allowing the base class to cache the model_object
         pass
 
     @abstractmethod

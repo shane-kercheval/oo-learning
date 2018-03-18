@@ -1,3 +1,5 @@
+import copy
+
 from abc import ABCMeta, abstractmethod
 
 
@@ -10,3 +12,6 @@ class DecoratorBase(metaclass=ABCMeta):
     @abstractmethod
     def decorate(self, **kwargs):
         pass
+
+    def clone(self):
+        return copy.deepcopy(self)

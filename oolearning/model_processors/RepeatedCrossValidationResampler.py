@@ -53,7 +53,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
 
         self._folds = folds
         self._repeats = repeats
-        self._fold_decorators = fold_decorators
+        self._decorators = fold_decorators
 
 
 # TODO document that transformations are fit/transformed on the training folds and transformed on the holdout
@@ -126,8 +126,8 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                     fold_scores.append(score_copy)
                 result_scores.append(fold_scores)
 
-                if self._fold_decorators:
-                    for decorator in self._fold_decorators:
+                if self._decorators:
+                    for decorator in self._decorators:
                         decorator.decorate(scores=self._scores,
                                            holdout_actual_values=holdout_y,
                                            holdout_predicted_values=predicted_values)
@@ -135,7 +135,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
         # result_scores is a list of list of holdout scores.
         # Each outer list represents a resampling result
         # and each element of the inner list represents a specific score.
-        return ResamplerResults(scores=result_scores)
+        return ResamplerResults(scores=result_scores, decorators=self._decorators)
 
     @staticmethod
     def build_cache_key(model: ModelWrapperBase,

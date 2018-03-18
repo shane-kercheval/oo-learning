@@ -1,18 +1,18 @@
+import copy
 from abc import ABCMeta, abstractmethod
 from typing import List, Callable, Union
 
-import copy
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
+from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.model_processors.ResamplerResults import ResamplerResults
 from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
+from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 from oolearning.transformers.TransformerBase import TransformerBase
-from oolearning.transformers.TransformerPipeline import TransformerPipeline
 
 
 class ResamplerBase(metaclass=ABCMeta):
@@ -55,6 +55,7 @@ class ResamplerBase(metaclass=ABCMeta):
         self._results = None
         self._persistence_manager = persistence_manager
         self._train_callback = train_callback
+        self._decorators = None
 
     def clone(self):
         """
@@ -63,6 +64,9 @@ class ResamplerBase(metaclass=ABCMeta):
         """
         assert self._results is None  # only intended on being called before evaluating
         return copy.deepcopy(self)
+
+    def set_decorators(self, decorators: List[DecoratorBase]):
+        self._decorators = decorators
 
     @property
     def results(self) -> ResamplerResults:

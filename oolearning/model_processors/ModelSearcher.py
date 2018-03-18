@@ -2,6 +2,7 @@ from typing import List, Callable, Union
 
 import pandas as pd
 
+from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.model_processors.ModelFitter import ModelFitter
 from oolearning.model_processors.ModelInfo import ModelInfo
 from oolearning.model_processors.ModelTuner import ModelTuner
@@ -21,9 +22,12 @@ class ModelSearcher:
                  splitter: DataSplitterBase,
                  resampler_function: Callable[[ModelWrapperBase, List[TransformerBase]], ResamplerBase],
                  global_transformations: Union[List[TransformerBase], None] = None,
+                 resampler_decorators: List[DecoratorBase] = None,
                  persistence_manager: PersistenceManagerBase = None):
         """
         # TODO document
+        # TODO document: resampler_decordators is a list of decorators, the decorates are cloned for each
+        model i.e. each model uses the same list of decorators
         :param persistence_manager: a PersistenceManager defining how the underlying models should be cached,
             optional.
             NOTE: a unique key is built up by prefixing the key with the model description
@@ -55,6 +59,7 @@ class ModelSearcher:
         self._splitter = splitter
         self._resampler_function = resampler_function
         self._results = None
+        self._resampler_decorators = resampler_decorators
         self._persistence_manager = persistence_manager
 
     def search(self, data: pd.DataFrame, target_variable: str):
@@ -127,6 +132,7 @@ class ModelSearcher:
                                                                   None if local_model_trans is None else
                                                                   [x.clone() for x in local_model_trans]),
                                hyper_param_object=None if local_model_params_object is None else local_model_params_object.clone(),  # noqa
+                               resampler_decorators=self._resampler_decorators,
                                persistence_manager=self._persistence_manager)
 
             # noinspection PyProtectedMember

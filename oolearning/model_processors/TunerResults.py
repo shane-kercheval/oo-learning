@@ -38,6 +38,10 @@ class TunerResults:
         self._params_grid = params_grid
 
     @property
+    def num_param_combos(self) -> int:
+        return self._tune_results_objects.shape[0]
+
+    @property
     def tune_results(self) -> pd.DataFrame:
         """
         :return: dataframe that has metrics for each tuned model (rows), the means, standard deviations, and
@@ -85,6 +89,19 @@ class TunerResults:
         return \
             None if self._params_grid is None \
             else self.sorted_best_models.loc[:, self._params_grid.hyper_params].iloc[0].to_dict()
+
+    @property
+    def resampler_decorators(self):
+        # todo document, for each hyper-param combo that was resampled, return the associated decorats
+        return [self._tune_results_objects.iloc[i].resampler_object.decorators for i in np.arange(0, self.num_param_combos)]  # noqa
+
+    @property
+    def resampler_decorators_first(self):
+        # TODO document, returns the first decorator for each hyper-param combo that was resampled
+        if self.resampler_decorators:
+            return [x[0] for x in self.resampler_decorators]
+        else:
+            return None
 
     @staticmethod
     def columnwise_conditional_format(df, hyper_params, tuned_hyper_params, minimizers: List[bool]):
@@ -174,7 +191,7 @@ class TunerResults:
         metric_name = metric.value
         # build the dataframe that will be used to generate the boxplot; 1 column per resampled hyper-params
         resamples = pd.DataFrame()
-        for index in range(len(self._tune_results_objects)):
+        for index in range(self.num_param_combos):
             cross_val_scores = self._tune_results_objects.iloc[index].loc['resampler_object'].\
                 cross_validation_scores[metric_name]
             # column name should be the hyper_params & values

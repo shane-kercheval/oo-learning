@@ -318,13 +318,6 @@ class ResamplerTests(TimerTestCase):
         TestHelper.check_plot('data/test_Resamplers/test_resamplers_RandomForest_classification_cv_boxplot.png',  # noqa
                               lambda: resampler.results.cross_validation_score_boxplot())
 
-#
-#
-# import os
-# direct = "tests/data/test_Resamplers/cached_test_models/test_resamplers_RandomForest_classification"
-# for file in os.listdir(direct):
-#     os.rename(direct + "/" + file, direct + "/" + file.replace('MW', ''))
-
     # noinspection PyTypeChecker
     def test_resampling_roc_pr_thresholds(self):
         decorator = TwoClassThresholdDecorator()
@@ -363,6 +356,10 @@ class ResamplerTests(TimerTestCase):
         assert isclose(decorator.resampled_roc_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
         assert isclose(decorator.resampled_precision_recall_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa
 
+        # the object should be stored in the results as the first and only decorator element
+        assert len(resampler.results.decorators) == 1
+        assert resampler.results.decorators[0] is decorator  # should be the same objects
+
         # Test AucX (just test 2 folds, to make sure it finds `positive_class` (takes too long to test more)
         decorator = TwoClassThresholdDecorator()
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
@@ -384,6 +381,10 @@ class ResamplerTests(TimerTestCase):
         assert decorator.resampled_roc == expected_roc_thresholds
         assert decorator.resampled_precision_recall == expected_precision_recall_thresholds
 
+        # the object should be stored in the results as the first and only decorator element
+        assert len(resampler.results.decorators) == 1
+        assert resampler.results.decorators[0] is decorator  # should be the same objects
+
         # Test DummyClassifier; utilize edge cases
         decorator = TwoClassThresholdDecorator()
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
@@ -404,3 +405,7 @@ class ResamplerTests(TimerTestCase):
         expected_precision_recall_thresholds = [0.0, 0.0]
         assert decorator.resampled_roc == expected_roc_thresholds
         assert decorator.resampled_precision_recall == expected_precision_recall_thresholds
+
+        # the object should be stored in the results as the first and only decorator element
+        assert len(resampler.results.decorators) == 1
+        assert resampler.results.decorators[0] is decorator  # should be the same objects

@@ -1,8 +1,10 @@
 import time
+from typing import List
 
 import numpy as np
 import pandas as pd
 
+from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
 from oolearning.hyper_params.HyperParamsGrid import HyperParamsGrid
@@ -20,9 +22,9 @@ class ModelTuner:
     def __init__(self,
                  resampler: ResamplerBase,
                  hyper_param_object: HyperParamsBase,
+                 resampler_decorators: List[DecoratorBase] = None,
                  persistence_manager: PersistenceManagerBase = None):
         """
-
         :param resampler:
         :param hyper_param_object: an object containing the default values for the corresponding
             hyper-parameters. Default in this case may be simply the parameterless constructor for the
@@ -33,6 +35,8 @@ class ModelTuner:
             e.g if we are tuning a Random Forest classification model over `max_features`, we might pass in
             `RandomForestHP()` to retain all the defaults, or we could pass in
             `RandomForestHP(n_estimators=20)`, since `n_estimators` is not being tuned (i.e. over-written)
+        #TODO: resampler decorators is a list of decorators that will be passed into the resampler object.
+        # they will be cloned for each resampler object.
         :param persistence_manager: a PersistenceManager defining how the underlying models should be cached,
             optional.
             NOTE: for each resampling (i.e. each set of hyper-params being resampled) the persistence_manager
@@ -45,6 +49,7 @@ class ModelTuner:
         self._hyper_param_object = hyper_param_object
         self._results = None
         self._persistence_manager = persistence_manager
+        self._resampler_decorators = resampler_decorators
 
     @property
     def results(self):
@@ -73,6 +78,10 @@ class ModelTuner:
         for index in range(len(params_combinations)):
             # we are going to reuse the resampler and hyper_params for each combination, so clone first
             resampler_copy = self._resampler.clone()
+
+            if self._resampler_decorators:
+                resampler_copy.set_decorators(decorators=[x.clone() for x in self._resampler_decorators])
+
             if self._persistence_manager is not None:
                 resampler_copy.set_persistence_manager(persistence_manager=self._persistence_manager)
             hyper_params_copy = None if self._hyper_param_object is None else self._hyper_param_object.clone()
