@@ -73,6 +73,9 @@ from .model_wrappers.ModelExceptions import MissingValueError
 from .model_wrappers.ModelExceptions import NegativeValuesFoundError
 from .model_wrappers.ModelWrapperBase import ModelWrapperBase
 from .model_wrappers.RandomForest import RandomForest
+from .model_wrappers.RidgeRegression import RidgeRegression
+from .model_wrappers.RidgeRegression import RidgeRegressionFI
+from .model_wrappers.RidgeRegression import RidgeRegressionHP
 from .model_wrappers.LinearRegression import LinearRegression
 
 from .persistence.AlwaysFetchManager import AlwaysFetchManager

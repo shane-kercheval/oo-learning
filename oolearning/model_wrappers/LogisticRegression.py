@@ -33,8 +33,8 @@ class LogisticRegression(ModelWrapperBase):
 
         np.random.seed(42)
         model_object = linear_model.LogisticRegression(fit_intercept=self._fit_intercept,
-                                                  #     C=1e9,
-                                                      # n_jobs=-1,
+                                                       #     C=1e9,
+                                                       # n_jobs=-1,
                                                        random_state=42)
         model_object.fit(X=data_x, y=data_y)
 
