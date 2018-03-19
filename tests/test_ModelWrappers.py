@@ -525,11 +525,6 @@ class ModelWrapperTests(TimerTestCase):
         data = TestHelper.get_cement_data()
         target_variable = 'strength'
 
-        from sklearn.linear_model import Ridge
-        ridge_reg = Ridge(alpha=0, solver='cholesky')
-        ridge_reg.fit(data.drop(columns=['fineagg', target_variable]), data[target_variable])
-        ridge_reg.predict(data.drop(columns=['fineagg', target_variable]))
-
         fitter = ModelFitter(model=RidgeRegression(),
                              model_transformations=[RemoveColumnsTransformer(columns=['fineagg'])],
                              splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.20),
