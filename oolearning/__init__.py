@@ -64,6 +64,12 @@ from .model_processors.StratifiedMonteCarloResampler import StratifiedMonteCarlo
 from .model_processors.TunerResults import TunerResults
 
 from .model_wrappers.DummyClassifier import DummyClassifier
+from .model_wrappers.ElasticNetRegression import ElasticNetRegression
+from .model_wrappers.ElasticNetRegression import ElasticNetRegressionFI
+from .model_wrappers.ElasticNetRegression import ElasticNetRegressionHP
+from .model_wrappers.LassoRegression import LassoRegression
+from .model_wrappers.LassoRegression import LassoRegressionFI
+from .model_wrappers.LassoRegression import LassoRegressionHP
 from .model_wrappers.LogisticRegression import LogisticRegression
 from .model_wrappers.ModelDefaults import ModelDefaults
 from .model_wrappers.ModelExceptions import ModelNotFittedError

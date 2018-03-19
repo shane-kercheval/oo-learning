@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from matplotlib import figure
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import ElasticNet
 
 from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
 from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
@@ -9,19 +9,19 @@ from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 
 
-class RidgeRegressionHP(HyperParamsBase):
+class ElasticNetRegressionHP(HyperParamsBase):
     """
-    See http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html for more information
+    See http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ElasticNet.html for more information
     on tuning parameters
     """
 
     # noinspection SpellCheckingInspection
-    def __init__(self, alpha: float=0.5, solver: str='cholesky'):
+    def __init__(self, alpha: float=0.5, l1_ratio: float=0.5):
         super().__init__()
-        self._params_dict = dict(alpha=alpha, solver=solver)
+        self._params_dict = dict(alpha=alpha, l1_ratio=l1_ratio)
 
 
-class RidgeRegressionFI(FittedInfoBase):
+class ElasticNetRegressionFI(FittedInfoBase):
     @property
     def results_summary(self) -> object:
         raise NotImplementedError()
@@ -35,7 +35,7 @@ class RidgeRegressionFI(FittedInfoBase):
         raise NotImplementedError()
 
 
-class RidgeRegression(ModelWrapperBase):
+class ElasticNetRegression(ModelWrapperBase):
     """
     fits Linear Regression model on the data
     """
@@ -49,9 +49,9 @@ class RidgeRegression(ModelWrapperBase):
                                    data_x: pd.DataFrame,
                                    data_y: np.ndarray,
                                    hyper_params: HyperParamsBase=None) -> FittedInfoBase:
-        return RidgeRegressionFI(model_object=model_object,
-                                 feature_names=data_x.columns.values.tolist(),
-                                 hyper_params=None)
+        return ElasticNetRegressionFI(model_object=model_object,
+                                      feature_names=data_x.columns.values.tolist(),
+                                      hyper_params=None)
 
     def _train(self,
                data_x: pd.DataFrame,
@@ -68,10 +68,10 @@ class RidgeRegression(ModelWrapperBase):
         if any(np.isnan(data_y)):
             raise MissingValueError()
 
-        ridge_reg = Ridge(alpha=param_dict['alpha'],
-                          solver=param_dict['solver'],
-                          fit_intercept=True,
-                          random_state=42)
+        ridge_reg = ElasticNet(alpha=param_dict['alpha'],
+                               l1_ratio=param_dict['l1_ratio'],
+                               fit_intercept=True,
+                               random_state=42)
         ridge_reg.fit(data_x, data_y)
         return ridge_reg
 

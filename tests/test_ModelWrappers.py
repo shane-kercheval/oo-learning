@@ -532,7 +532,7 @@ class ModelWrapperTests(TimerTestCase):
                              persistence_manager=None,
                              train_callback=None)
 
-        fitter.fit(data=data, target_variable=target_variable, hyper_params=RidgeRegressionHP())
+        fitter.fit(data=data, target_variable=target_variable, hyper_params=RidgeRegressionHP(alpha=0))
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
         # alpha of 0 should be the same as plain Linear Regression (values are copied from above
@@ -551,7 +551,7 @@ class ModelWrapperTests(TimerTestCase):
         train_data = data.drop(columns=target_variable)
         evaluators = [MaeScore(), RmseScore()]
         tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RidgeRegression(),
-                                                                      model_transformations=[RemoveColumnsTransformer(columns=['fineagg']),
+                                                                      model_transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
                                                                                              CenterScaleTransformer()],  # noqa
                                                                       scores=evaluators),
                            hyper_param_object=RidgeRegressionHP())
@@ -560,6 +560,102 @@ class ModelWrapperTests(TimerTestCase):
         assert len(tuner.results._tune_results_objects) == 3
         assert tuner.results.num_param_combos == 3
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Ridge_can_tune.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            tune_results = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.tune_results,
+                                                      data_frame2=tuner.results.tune_results)
+            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
+                                                      data_frame2=tuner.results.sorted_best_models)
+
+    def test_LassoRegression(self):
+        data = TestHelper.get_cement_data()
+        target_variable = 'strength'
+
+        fitter = ModelFitter(model=LassoRegression(),
+                             model_transformations=[RemoveColumnsTransformer(columns=['fineagg'])],
+                             splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.20),
+                             evaluator=RegressionEvaluator(),
+                             persistence_manager=None,
+                             train_callback=None)
+
+        fitter.fit(data=data, target_variable=target_variable, hyper_params=LassoRegressionHP(alpha=0))
+        assert isinstance(fitter.training_evaluator, RegressionEvaluator)
+        assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+        # alpha of 0 should be the same as plain Linear Regression (values are copied from above
+        assert isclose(fitter.training_evaluator.mean_squared_error, 109.68243774089586)
+        assert isclose(fitter.training_evaluator.mean_absolute_error, 8.360259532214116)
+        assert isclose(fitter.holdout_evaluator.mean_squared_error, 100.07028301004217)
+        assert isclose(fitter.holdout_evaluator.mean_absolute_error, 7.99161252047238)
+
+        assert fitter.model_info.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic',
+                                                   'coarseagg', 'age']
+
+        # Test that tuner works with hyper-params
+        # I also ran a Resampler with LinearRegression model and made sure it had the same values as
+        # as the Tuner.Resampler with Alpha == 0
+        train_data_y = data[target_variable]
+        train_data = data.drop(columns=target_variable)
+        evaluators = [MaeScore(), RmseScore()]
+        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=LassoRegression(),
+                                                                      model_transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
+                                                                                             CenterScaleTransformer()],  # noqa
+                                                                      scores=evaluators),
+                           hyper_param_object=LassoRegressionHP())
+        grid = HyperParamsGrid(params_dict={'alpha': [0.1, 0.5, 1]})
+        tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
+        assert len(tuner.results._tune_results_objects) == 3
+        assert tuner.results.num_param_combos == 3
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Lasso_can_tune.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            tune_results = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.tune_results,
+                                                      data_frame2=tuner.results.tune_results)
+            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
+                                                      data_frame2=tuner.results.sorted_best_models)
+
+    def test_ElasticNetRegression(self):
+        data = TestHelper.get_cement_data()
+        target_variable = 'strength'
+
+        fitter = ModelFitter(model=ElasticNetRegression(),
+                             model_transformations=[RemoveColumnsTransformer(columns=['fineagg'])],
+                             splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.20),
+                             evaluator=RegressionEvaluator(),
+                             persistence_manager=None,
+                             train_callback=None)
+
+        fitter.fit(data=data, target_variable=target_variable, hyper_params=ElasticNetRegressionHP(alpha=0))
+        assert isinstance(fitter.training_evaluator, RegressionEvaluator)
+        assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+        # alpha of 0 should be the same as plain Linear Regression (values are copied from above
+        assert isclose(fitter.training_evaluator.mean_squared_error, 109.68243774089586)
+        assert isclose(fitter.training_evaluator.mean_absolute_error, 8.360259532214116)
+        assert isclose(fitter.holdout_evaluator.mean_squared_error, 100.07028301004217)
+        assert isclose(fitter.holdout_evaluator.mean_absolute_error, 7.99161252047238)
+
+        assert fitter.model_info.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic',
+                                                   'coarseagg', 'age']
+
+        # Test that tuner works with hyper-params
+        # I also ran a Resampler with LinearRegression model and made sure it had the same values as
+        # as the Tuner.Resampler with Alpha == 0
+        train_data_y = data[target_variable]
+        train_data = data.drop(columns=target_variable)
+        evaluators = [MaeScore(), RmseScore()]
+        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=ElasticNetRegression(),
+                                                                      model_transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
+                                                                                             CenterScaleTransformer()],  # noqa
+                                                                      scores=evaluators),
+                           hyper_param_object=ElasticNetRegressionHP())
+        grid = HyperParamsGrid(params_dict={'alpha': [0.1, 0.5, 1]})
+        tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
+        assert len(tuner.results._tune_results_objects) == 3
+        assert tuner.results.num_param_combos == 3
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ElasticNet_can_tune.pkl'))  # noqa
         # with open(file, 'wb') as output:
         #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
