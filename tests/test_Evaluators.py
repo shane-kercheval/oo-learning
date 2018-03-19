@@ -346,3 +346,34 @@ class EvaluatorTests(TimerTestCase):
             expected_metrics_per_class = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=expected_metrics_per_class,
                                                       data_frame2=evaluator.metrics_per_class)
+
+    # noinspection SpellCheckingInspection
+    def test_RegressionEvaluator(self):
+        data = TestHelper.get_cement_data()
+        target_variable = 'strength'
+
+        fitter = ModelFitter(model=LinearRegression(),
+                             model_transformations=[RemoveColumnsTransformer(columns=['fineagg'])],
+                             splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.20),
+                             evaluator=RegressionEvaluator(),
+                             persistence_manager=None,
+                             train_callback=None)
+
+        fitter.fit(data=data, target_variable=target_variable, hyper_params=None)
+        assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+        assert isclose(fitter.training_evaluator.mean_squared_error, 109.68243774089586)
+        assert isclose(fitter.training_evaluator.mean_absolute_error, 8.360259532214116)
+        assert isclose(fitter.training_evaluator.root_mean_squared_error, np.sqrt(fitter.training_evaluator.mean_squared_error))  # noqa
+        assert isclose(fitter.training_evaluator.rmse_to_st_dev, 0.6246072972091289)
+
+        assert isclose(fitter.training_evaluator.all_quality_metrics['Mean Absolute Error (MAE)'], 8.360259532214116)  # noqa
+        assert isclose(fitter.training_evaluator.all_quality_metrics['Mean Squared Error (MSE)'], 109.68243774089586)  # noqa
+        assert isclose(fitter.training_evaluator.all_quality_metrics['Root Mean Squared Error (RMSE)'], 10.472938352768809)  # noqa
+        assert isclose(fitter.training_evaluator.all_quality_metrics['RMSE to Standard Deviation of Target'], 0.6246072972091289)  # noqa
+
+        TestHelper.check_plot('data/test_Evaluators/test_RegressionEval_resid_vs_fits.png', lambda: fitter.training_evaluator.plot_residuals_vs_fits())  # noqa
+        TestHelper.check_plot('data/test_Evaluators/test_RegressionEval_pred_vs_act.png', lambda: fitter.training_evaluator.plot_predictions_vs_actuals())  # noqa
+        TestHelper.check_plot('data/test_Evaluators/test_RegressionEval_resid_vs_act.png', lambda: fitter.training_evaluator.plot_residuals_vs_actuals())  # noqa
+        TestHelper.check_plot('data/test_Evaluators/test_RegressionEval_resid_vs_fits_holdout.png', lambda: fitter.holdout_evaluator.plot_residuals_vs_fits())  # noqa
+        TestHelper.check_plot('data/test_Evaluators/test_RegressionEval_pred_vs_act_holdout.png', lambda: fitter.holdout_evaluator.plot_predictions_vs_actuals())  # noqa
+        TestHelper.check_plot('data/test_Evaluators/test_RegressionEval_resid_vs_act_holdout.png', lambda: fitter.holdout_evaluator.plot_residuals_vs_actuals())  # noqa
