@@ -71,6 +71,7 @@ from .model_wrappers.LassoRegression import LassoRegression
 from .model_wrappers.LassoRegression import LassoRegressionFI
 from .model_wrappers.LassoRegression import LassoRegressionHP
 from .model_wrappers.LogisticRegression import LogisticRegression
+from .model_wrappers.LogisticRegression import LogisticRegressionHP
 from .model_wrappers.ModelDefaults import ModelDefaults
 from .model_wrappers.ModelExceptions import ModelNotFittedError
 from .model_wrappers.ModelExceptions import ModelAlreadyFittedError

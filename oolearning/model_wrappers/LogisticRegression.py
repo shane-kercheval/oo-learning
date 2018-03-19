@@ -9,6 +9,18 @@ from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 
 
+class LogisticRegressionHP(HyperParamsBase):
+    """
+    See http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html for more information
+    on tuning parameters
+    """
+
+    # noinspection SpellCheckingInspection
+    def __init__(self, penalty: str='l2', regularization_inverse: float=1.0):
+        super().__init__()
+        self._params_dict = dict(penalty=penalty, regularization_inverse=regularization_inverse)
+
+
 class LogisticRegression(ModelWrapperBase):
     def __init__(self, fit_intercept=True):
         """
@@ -26,14 +38,16 @@ class LogisticRegression(ModelWrapperBase):
 
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray,
                hyper_params: HyperParamsBase = None) -> object:
-        assert hyper_params is None
+        assert hyper_params is not None
+        param_dict = hyper_params.params_dict
 
         if data_x.isnull().sum().sum() > 0:
             raise MissingValueError()
 
         np.random.seed(42)
         model_object = linear_model.LogisticRegression(fit_intercept=self._fit_intercept,
-                                                       #     C=1e9,
+                                                       penalty=param_dict['penalty'],
+                                                       C=param_dict['regularization_inverse'],
                                                        # n_jobs=-1,
                                                        random_state=42)
         model_object.fit(X=data_x, y=data_y)

@@ -851,7 +851,7 @@ class ModelWrapperTests(TimerTestCase):
                                  splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                                  evaluator=TwoClassProbabilityEvaluator(
                                      converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))  # noqa
-            fitter.fit(data=data, target_variable='Survived')
+            fitter.fit(data=data, target_variable='Survived', hyper_params=LogisticRegressionHP())
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
@@ -907,7 +907,7 @@ class ModelWrapperTests(TimerTestCase):
                              evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5,
                                                                       positive_class=positive_class)))
-        fitter.fit(data=data, target_variable='Survived')
+        fitter.fit(data=data, target_variable='Survived', hyper_params=LogisticRegressionHP())
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
