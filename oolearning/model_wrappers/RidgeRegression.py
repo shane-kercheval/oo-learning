@@ -51,7 +51,7 @@ class RidgeRegression(ModelWrapperBase):
                                    hyper_params: HyperParamsBase=None) -> FittedInfoBase:
         return RidgeRegressionFI(model_object=model_object,
                                  feature_names=data_x.columns.values.tolist(),
-                                 hyper_params=None)
+                                 hyper_params=hyper_params)
 
     def _train(self,
                data_x: pd.DataFrame,

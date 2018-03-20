@@ -46,6 +46,7 @@ from .fitted_info.LogisticRegressionFI import LogisticRegressionFI
 from .fitted_info.RandomForestFI import RandomForestFI
 from .fitted_info.RegressionFI import RegressionFI
 from .fitted_info.SoftmaxLogisticFI import SoftmaxLogisticFI
+from .fitted_info.SvmFI import SvmFI
 
 from .hyper_params.HyperParamsBase import HyperParamsBase
 from .hyper_params.HyperParamsGrid import HyperParamsGrid
@@ -88,6 +89,8 @@ from .model_wrappers.RidgeRegression import RidgeRegressionFI
 from .model_wrappers.RidgeRegression import RidgeRegressionHP
 from .model_wrappers.SoftmaxLogistic import SoftmaxLogistic
 from .model_wrappers.SoftmaxLogistic import SoftmaxLogisticHP
+from .model_wrappers.SvmLinear import SvmLinear
+from .model_wrappers.SvmLinear import SvmLinearHP
 
 from .persistence.AlwaysFetchManager import AlwaysFetchManager
 from .persistence.LocalCacheManager import LocalCacheManager

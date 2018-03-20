@@ -535,6 +535,7 @@ class ModelWrapperTests(TimerTestCase):
         fitter.fit(data=data, target_variable=target_variable, hyper_params=RidgeRegressionHP(alpha=0))
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+        assert fitter.model_info.hyper_params.params_dict == {'alpha': 0, 'solver': 'cholesky'}
         # alpha of 0 should be the same as plain Linear Regression (values are copied from above
         assert isclose(fitter.training_evaluator.mean_squared_error, 109.68243774089586)
         assert isclose(fitter.training_evaluator.mean_absolute_error, 8.360259532214116)
@@ -583,6 +584,7 @@ class ModelWrapperTests(TimerTestCase):
         fitter.fit(data=data, target_variable=target_variable, hyper_params=LassoRegressionHP(alpha=0))
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+        assert fitter.model_info.hyper_params.params_dict == {'alpha': 0}
         # alpha of 0 should be the same as plain Linear Regression (values are copied from above
         assert isclose(fitter.training_evaluator.mean_squared_error, 109.68243774089586)
         assert isclose(fitter.training_evaluator.mean_absolute_error, 8.360259532214116)
@@ -631,6 +633,8 @@ class ModelWrapperTests(TimerTestCase):
         fitter.fit(data=data, target_variable=target_variable, hyper_params=ElasticNetRegressionHP(alpha=0))
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+        assert fitter.model_info.hyper_params.params_dict == {'alpha': 0, 'l1_ratio': 0.5}
+
         # alpha of 0 should be the same as plain Linear Regression (values are copied from above
         assert isclose(fitter.training_evaluator.mean_squared_error, 109.68243774089586)
         assert isclose(fitter.training_evaluator.mean_absolute_error, 8.360259532214116)
@@ -651,10 +655,10 @@ class ModelWrapperTests(TimerTestCase):
                                                                                              CenterScaleTransformer()],  # noqa
                                                                       scores=evaluators),
                            hyper_param_object=ElasticNetRegressionHP())
-        grid = HyperParamsGrid(params_dict={'alpha': [0.1, 0.5, 1]})
+        grid = HyperParamsGrid(params_dict={'alpha': [0.1, 0.5, 1], 'l1_ratio': [0.2, 0.6]})
         tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
-        assert len(tuner.results._tune_results_objects) == 3
-        assert tuner.results.num_param_combos == 3
+        assert len(tuner.results._tune_results_objects) == 6
+        assert tuner.results.num_param_combos == 6
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ElasticNet_can_tune.pkl'))  # noqa
         # with open(file, 'wb') as output:
         #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
@@ -1473,3 +1477,48 @@ class ModelWrapperTests(TimerTestCase):
         assert con_matrix['Total'].values.tolist() == [137, 86, 223]
         assert con_matrix.index.values.tolist() == [0, 1, 'Total']
         assert con_matrix.columns.values.tolist() == [0, 1, 'Total']
+
+    def test_SVM_classification(self):
+        data = TestHelper.get_titanic_data()
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
+
+        # test with custom threshold of 0.5
+        fitter = ModelFitter(model=SvmLinear(),
+                             model_transformations=transformations,
+                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                             evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))  # noqa
+        fitter.fit(data=data, target_variable='Survived', hyper_params=SvmLinearHP())
+        assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+        assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+
+        assert fitter.model_info.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}  # noqa
+
+        con_matrix = fitter.training_evaluator._confusion_matrix
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [388, 90, 478]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [51, 183, 234]
+        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
+        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
+        assert isclose(fitter.training_evaluator.auc_roc, 0.8545478818827337)
+
+        con_matrix = fitter.holdout_evaluator._confusion_matrix
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [98, 27, 125]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [12, 42, 54]
+        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
+        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
+        assert isclose(fitter.holdout_evaluator.auc_roc, 0.841501976284585)
+
+        actual_metrics = fitter.training_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.8545478818827337, 'AUC Precision/Recall': 0.8201988699638674, 'Kappa': 0.5695394906097248, 'F1 Score': 0.7218934911242604, 'Two-Class Accuracy': 0.8019662921348315, 'Error Rate': 0.19803370786516855, 'True Positive Rate': 0.6703296703296703, 'True Negative Rate': 0.8838268792710706, 'False Positive Rate': 0.11617312072892938, 'False Negative Rate': 0.32967032967032966, 'Positive Predictive Value': 0.782051282051282, 'Negative Predictive Value': 0.8117154811715481, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+
+        actual_metrics = fitter.holdout_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.841501976284585, 'AUC Precision/Recall': 0.7946397931589366, 'Kappa': 0.5207003089598351, 'F1 Score': 0.6829268292682927, 'Two-Class Accuracy': 0.7821229050279329, 'Error Rate': 0.21787709497206703, 'True Positive Rate': 0.6086956521739131, 'True Negative Rate': 0.8909090909090909, 'False Positive Rate': 0.10909090909090909, 'False Negative Rate': 0.391304347826087, 'Positive Predictive Value': 0.7777777777777778, 'Negative Predictive Value': 0.784, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
