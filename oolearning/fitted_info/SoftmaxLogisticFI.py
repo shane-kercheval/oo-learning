@@ -4,10 +4,9 @@ from matplotlib import figure
 from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
 
 
-class LogisticFI(FittedInfoBase):
+class SoftmaxLogisticFI(FittedInfoBase):
     @property
     def results_summary(self) -> pd.DataFrame:
-        #return self._model_object.summary()
         pass
 
     @property

@@ -855,6 +855,8 @@ class ModelWrapperTests(TimerTestCase):
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
+            assert fitter.model_info.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0}  # noqa
+
             con_matrix = fitter.training_evaluator._confusion_matrix
             assert con_matrix.matrix.loc[:, 0].values.tolist() == [386, 85, 471]
             assert con_matrix.matrix.loc[:, 1].values.tolist() == [53, 188, 241]
@@ -910,6 +912,8 @@ class ModelWrapperTests(TimerTestCase):
         fitter.fit(data=data, target_variable='Survived', hyper_params=LogisticRegressionHP())
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+
+        assert fitter.model_info.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0}  # noqa
 
         con_matrix = fitter.training_evaluator._confusion_matrix
         assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [386, 85, 471]
@@ -1320,6 +1324,42 @@ class ModelWrapperTests(TimerTestCase):
         assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
         assert con_matrix['versicolor'].values.tolist() == [0, 12, 3, 15]
         assert con_matrix['virginica'].values.tolist() == [0, 1, 10, 11]
+        assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
+        assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+
+    def test_SoftmaxRegression_multiclass(self):
+        data = TestHelper.get_iris_data()
+        target_variable = 'species'
+        fitter = ModelFitter(model=SoftmaxLogistic(),
+                             model_transformations=None,
+                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
+                             evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
+        fitter.fit(data=data, target_variable=target_variable, hyper_params=SoftmaxLogisticHP())  # noqa
+
+        assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
+        assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
+
+        assert fitter.model_info.feature_names == ['sepal_length', 'sepal_width', 'petal_length',
+                                                   'petal_width']  # noqa
+        assert fitter.model_info.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0, 'solver': 'lbfgs'}  # noqa
+
+        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 0.959818225304951,
+                                                                 'Accuracy': 0.9732142857142857,
+                                                                 'Error Rate': 0.0267857142857143,
+                                                                 'No Information Rate': 0.3392857142857143,
+                                                                 'Total Observations': 112}
+
+        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.920997920997921,
+                                                                'Accuracy': 0.9473684210526315,
+                                                                'Error Rate': 0.052631578947368474,
+                                                                'No Information Rate': 0.34210526315789475,
+                                                                'Total Observations': 38}
+
+        con_matrix = fitter.holdout_evaluator.matrix
+        assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
+        assert con_matrix['versicolor'].values.tolist() == [0, 12, 1, 13]
+        assert con_matrix['virginica'].values.tolist() == [0, 1, 12, 13]
         assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
         assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
         assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']

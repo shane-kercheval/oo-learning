@@ -2,14 +2,14 @@ import pandas as pd
 import numpy as np
 from sklearn import linear_model
 
-from oolearning.fitted_info.LogisticRegressionFI import LogisticRegressionFI
+from oolearning.fitted_info.SoftmaxLogisticFI import SoftmaxLogisticFI
 from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 
 
-class LogisticRegressionHP(HyperParamsBase):
+class SoftmaxLogisticHP(HyperParamsBase):
     """
     See http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html for more
     information
@@ -17,12 +17,15 @@ class LogisticRegressionHP(HyperParamsBase):
     """
 
     # noinspection SpellCheckingInspection
-    def __init__(self, penalty: str='l2', regularization_inverse: float=1.0):
+    def __init__(self, penalty: str='l2', regularization_inverse: float=1.0, solver='lbfgs'):
+        # "The ‘newton-cg’, ‘sag’ and ‘lbfgs’ solvers support only l2 penalties."
         super().__init__()
-        self._params_dict = dict(penalty=penalty, regularization_inverse=regularization_inverse)
+        self._params_dict = dict(penalty=penalty,
+                                 regularization_inverse=regularization_inverse,
+                                 solver=solver)
 
 
-class LogisticRegression(ModelWrapperBase):
+class SoftmaxLogistic(ModelWrapperBase):
     def __init__(self, fit_intercept=True):
         """
         need to set fit_intercept to False if using One-Hot-Encoding
@@ -33,12 +36,13 @@ class LogisticRegression(ModelWrapperBase):
 
     def _create_fitted_info_object(self, model_object, data_x: pd.DataFrame, data_y: np.ndarray,
                                    hyper_params: HyperParamsBase = None) -> FittedInfoBase:
-        return LogisticRegressionFI(model_object=model_object,
-                                    feature_names=data_x.columns.values.tolist(),
-                                    hyper_params=hyper_params)
+        return SoftmaxLogisticFI(model_object=model_object,
+                                 feature_names=data_x.columns.values.tolist(),
+                                 hyper_params=hyper_params)
 
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray,
                hyper_params: HyperParamsBase = None) -> object:
+
         assert hyper_params is not None
         param_dict = hyper_params.params_dict
 
@@ -46,9 +50,12 @@ class LogisticRegression(ModelWrapperBase):
             raise MissingValueError()
 
         np.random.seed(42)
-        model_object = linear_model.LogisticRegression(fit_intercept=self._fit_intercept,
+        # noinspection SpellCheckingInspection
+        model_object = linear_model.LogisticRegression(multi_class='multinomial',
+                                                       fit_intercept=self._fit_intercept,
                                                        penalty=param_dict['penalty'],
                                                        C=param_dict['regularization_inverse'],
+                                                       solver=param_dict['solver'],
                                                        random_state=42)
         model_object.fit(X=data_x, y=data_y)
 

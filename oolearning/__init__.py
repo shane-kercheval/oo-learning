@@ -42,9 +42,10 @@ from .exploratory.ExploreRegressionDataset import ExploreRegressionDataset
 
 from .fitted_info.DummyClassifierFI import DummyClassifierFI
 from .fitted_info.FittedInfoBase import FittedInfoBase
-from .fitted_info.LogisticFI import LogisticFI
+from .fitted_info.LogisticRegressionFI import LogisticRegressionFI
 from .fitted_info.RandomForestFI import RandomForestFI
 from .fitted_info.RegressionFI import RegressionFI
+from .fitted_info.SoftmaxLogisticFI import SoftmaxLogisticFI
 
 from .hyper_params.HyperParamsBase import HyperParamsBase
 from .hyper_params.HyperParamsGrid import HyperParamsGrid
@@ -70,6 +71,8 @@ from .model_wrappers.ElasticNetRegression import ElasticNetRegressionHP
 from .model_wrappers.LassoRegression import LassoRegression
 from .model_wrappers.LassoRegression import LassoRegressionFI
 from .model_wrappers.LassoRegression import LassoRegressionHP
+
+from .model_wrappers.LinearRegression import LinearRegression
 from .model_wrappers.LogisticRegression import LogisticRegression
 from .model_wrappers.LogisticRegression import LogisticRegressionHP
 from .model_wrappers.ModelDefaults import ModelDefaults
@@ -83,7 +86,8 @@ from .model_wrappers.RandomForest import RandomForest
 from .model_wrappers.RidgeRegression import RidgeRegression
 from .model_wrappers.RidgeRegression import RidgeRegressionFI
 from .model_wrappers.RidgeRegression import RidgeRegressionHP
-from .model_wrappers.LinearRegression import LinearRegression
+from .model_wrappers.SoftmaxLogistic import SoftmaxLogistic
+from .model_wrappers.SoftmaxLogistic import SoftmaxLogisticHP
 
 from .persistence.AlwaysFetchManager import AlwaysFetchManager
 from .persistence.LocalCacheManager import LocalCacheManager
