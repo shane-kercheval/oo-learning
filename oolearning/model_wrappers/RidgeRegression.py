@@ -5,6 +5,7 @@ from sklearn.linear_model import Ridge
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictRegressionMixin
 
 
 class RidgeRegressionHP(HyperParamsBase):
@@ -19,7 +20,7 @@ class RidgeRegressionHP(HyperParamsBase):
         self._params_dict = dict(alpha=alpha, solver=solver)
 
 
-class RidgeRegression(ModelWrapperBase):
+class RidgeRegression(SklearnPredictRegressionMixin, ModelWrapperBase):
     """
     fits Linear Regression model on the data
     """
@@ -53,7 +54,3 @@ class RidgeRegression(ModelWrapperBase):
                           random_state=42)
         ridge_reg.fit(data_x, data_y)
         return ridge_reg
-
-    def _predict(self, model_object: object, data_x: pd.DataFrame) -> np.ndarray:
-        # noinspection PyUnresolvedReferences
-        return model_object.predict(data_x)

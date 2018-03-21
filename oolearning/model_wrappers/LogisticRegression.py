@@ -5,6 +5,7 @@ from sklearn import linear_model
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictClassifierMixin
 
 
 class LogisticRegressionHP(HyperParamsBase):
@@ -20,7 +21,7 @@ class LogisticRegressionHP(HyperParamsBase):
         self._params_dict = dict(penalty=penalty, regularization_inverse=regularization_inverse)
 
 
-class LogisticRegression(ModelWrapperBase):
+class LogisticRegression(SklearnPredictClassifierMixin, ModelWrapperBase):
     def __init__(self, fit_intercept=True):
         """
         need to set fit_intercept to False if using One-Hot-Encoding
@@ -49,10 +50,3 @@ class LogisticRegression(ModelWrapperBase):
         model_object.fit(X=data_x, y=data_y)
 
         return model_object
-
-    # noinspection PyUnresolvedReferences
-    def _predict(self, model_object: object, data_x: pd.DataFrame) -> pd.DataFrame:
-        predictions = pd.DataFrame(model_object.predict_proba(data_x))
-        predictions.columns = model_object.classes_
-
-        return predictions

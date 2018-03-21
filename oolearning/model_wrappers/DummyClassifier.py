@@ -5,9 +5,10 @@ import sklearn.dummy
 from oolearning.enums.DummyClassifierStrategy import DummyClassifierStrategy
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictClassifierMixin
 
 
-class DummyClassifier(ModelWrapperBase):
+class DummyClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
     def __init__(self, strategy: DummyClassifierStrategy):
         """
         need to set fit_intercept to False if using One-Hot-Encoding
@@ -29,10 +30,3 @@ class DummyClassifier(ModelWrapperBase):
         model_object.fit(X=data_x, y=data_y)
 
         return model_object
-
-    # noinspection PyUnresolvedReferences
-    def _predict(self, model_object: object, data_x: pd.DataFrame) -> pd.DataFrame:
-        predictions = pd.DataFrame(model_object.predict_proba(data_x))
-        predictions.columns = model_object.classes_
-
-        return predictions

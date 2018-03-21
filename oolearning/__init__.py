@@ -74,6 +74,8 @@ from .model_wrappers.RandomForest import RandomForest
 from .model_wrappers.RandomForest import RandomForestHP
 from .model_wrappers.RidgeRegression import RidgeRegression
 from .model_wrappers.RidgeRegression import RidgeRegressionHP
+from .model_wrappers.SklearnPredictMixin import SklearnPredictClassifierMixin
+from .model_wrappers.SklearnPredictMixin import SklearnPredictRegressionMixin
 from .model_wrappers.SoftmaxLogistic import SoftmaxLogistic
 from .model_wrappers.SoftmaxLogistic import SoftmaxLogisticHP
 from .model_wrappers.SvmLinear import SvmLinear
