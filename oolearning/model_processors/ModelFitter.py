@@ -6,7 +6,6 @@ import pandas as pd
 
 from oolearning.evaluators.EvaluatorBase import EvaluatorBase
 from oolearning.evaluators.ScoreBase import ScoreBase
-from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import ModelAlreadyFittedError, ModelNotFittedError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
@@ -60,7 +59,6 @@ class ModelFitter:
         self._training_scores = scores
         self._holdout_scores = None if scores is None else [x.clone() for x in scores]
         self._has_fitted = False
-        self._model_info = None
         self._persistence_manager = persistence_manager
         self._train_callback = train_callback
 
@@ -72,11 +70,11 @@ class ModelFitter:
         self._pipeline = None
 
     @property
-    def model_info(self) -> FittedInfoBase:
+    def model(self) -> ModelWrapperBase:
         if self._has_fitted is False:
             raise ModelNotFittedError()
 
-        return self._model_info
+        return self._model
 
     def set_persistence_manager(self, persistence_manager: PersistenceManagerBase):
         self._persistence_manager = persistence_manager
@@ -115,9 +113,8 @@ class ModelFitter:
             # noinspection PyTypeChecker
             expected_columns = TransformerPipeline.get_expected_columns(data=data.drop(columns=target_variable),  # noqa
                                                                         transformations=self._model_transformations)  # noqa
-            transformer = StatelessTransformer(custom_function=
-                                               lambda x_df: x_df.reindex(columns=expected_columns,
-                                                                         fill_value=0))
+            transformer = StatelessTransformer(custom_function=lambda x_df: x_df.reindex(columns=expected_columns,  # noqa
+                                                                                         fill_value=0))
             self._model_transformations = self._model_transformations + [transformer]
 
         self._pipeline = TransformerPipeline(transformations=self._model_transformations)
@@ -134,7 +131,6 @@ class ModelFitter:
 
         # fit the model with the transformed training data
         self._model.train(data_x=transformed_training_data, data_y=training_y, hyper_params=hyper_params)
-        self._model_info = self._model.fitted_info
 
         self._has_fitted = True
 

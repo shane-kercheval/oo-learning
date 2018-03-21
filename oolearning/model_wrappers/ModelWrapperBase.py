@@ -7,7 +7,6 @@ from typing import Union
 
 from oolearning.persistence.AlwaysFetchManager import AlwaysFetchManager
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
-from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
 from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError, ModelAlreadyFittedError,\
     ModelCachedAlreadyConfigured
 
@@ -20,28 +19,21 @@ class ModelWrapperBase(metaclass=ABCMeta):
     """
 
     def __init__(self):
-        self._fitted_info = None
+        self._model_object = None
+        self._feature_names = None
+        self._hyper_params = None
+
         # set up the PersistenceManager, default it to NoCacheManager which just returns the object from the
         # function passed in (i.e. it isn't stored anywhere, we have to go get it or create it)
         # don't allow it to be configured in constructor in case object is cloned
         self._persistence_manager = AlwaysFetchManager()
-
-    @property
-    def fitted_info(self) -> FittedInfoBase:
-        """
-        :return: returns information about the model after it is fitted
-        """
-        if self._fitted_info is None:
-            raise ModelNotFittedError()
-
-        return self._fitted_info
 
     def clone(self):
         """
         when, for example, resampling, a model will have to be cloned several times (before fitting)
         :return: a clone of the current object
         """
-        if self._fitted_info is not None:  # only intended on being called before fitting
+        if self._model_object is not None:  # only intended on being called before fitting
             raise ModelAlreadyFittedError()
 
         # if the PersistenceManager is not the default object (i.e. no cache)
@@ -56,14 +48,37 @@ class ModelWrapperBase(metaclass=ABCMeta):
         # NOTE: cannot pass cache_path in to constructor, in case we want to clone the model.
         :param persistence_manager:
         :param persistence_manager: cache (store/retrieve) the underlying model
-        #TODO: document: so, the workflow is the same whether or not you are retrieving an existing cache or
-        #not... i.e. you cannot go from retreiving to predicting without "training", even if the model is
-        #cached, before the train function passes important information to the FittedInfo object
         """
-        if self._fitted_info is not None:  # doesn't make sense to configure the cache after we `train()`
+        if self._model_object is not None:  # doesn't make sense to configure the cache after we `train()`
             raise ModelAlreadyFittedError()
 
         self._persistence_manager = persistence_manager
+
+    @property
+    def hyper_params(self):
+        if self._model_object is None:
+            raise ModelNotFittedError()
+
+        return self._hyper_params
+
+    @property
+    def feature_names(self):
+        if self._model_object is None:
+            raise ModelNotFittedError()
+
+        return self._feature_names
+
+    @property
+    @abstractmethod
+    def feature_importance(self):
+        pass
+
+    @property
+    def model_object(self):
+        if self._model_object is None:
+            raise ModelNotFittedError()
+
+        return self._model_object
 
     def train(self,
               data_x: pd.DataFrame,
@@ -79,21 +94,18 @@ class ModelWrapperBase(metaclass=ABCMeta):
         :return: None
         """
 
-        # if _fitted_info is not None, then we have already trained/fitted
-        if self._fitted_info is not None:
+        # if _model_object is not None, then we have already trained/fitted
+        if self._model_object is not None:
             raise ModelAlreadyFittedError()
+
+        self._hyper_params = hyper_params
+        self._feature_names = data_x.columns.values.tolist()
 
         # this gets the object based on the persistence system of _persistence_object;
         # the default object type, AlwaysFetchObject, always creates the object i.e. always calls _train
-        model_object = self._persistence_manager.get_object(
+        self._model_object = self._persistence_manager.get_object(
             fetch_function=lambda: self._train(data_x=data_x, data_y=data_y, hyper_params=hyper_params))
-        assert model_object is not None
-
-        # now that we have the underlying model, allow the base class to save whatever it needs to save
-        self._fitted_info = self._create_fitted_info_object(model_object=model_object,
-                                                            data_x=data_x,
-                                                            data_y=data_y,
-                                                            hyper_params=hyper_params)
+        assert self._model_object is not None
 
     def predict(self, data_x: pd.DataFrame) -> Union[np.ndarray, pd.DataFrame]:
         """
@@ -101,13 +113,13 @@ class ModelWrapperBase(metaclass=ABCMeta):
         :return: predicted values, actual predictions for Regression models and predicted probabilities for
             Classification problems.
         """
-        if self._fitted_info is None:
+        if self._model_object is None:
             raise ModelNotFittedError()
 
         # check that the columns passed in via data_x match the columns/features that the model was trained on
-        assert len(set(self._fitted_info.feature_names).symmetric_difference(set(data_x.columns.values))) == 0
+        assert len(set(self._feature_names).symmetric_difference(set(data_x.columns.values))) == 0
 
-        return self._predict(model_object=self._fitted_info.model_object, data_x=data_x)
+        return self._predict(model_object=self._model_object, data_x=data_x)
 
     ##########################################################################################################
     # Abstract Methods
@@ -128,21 +140,11 @@ class ModelWrapperBase(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def _create_fitted_info_object(self,
-                                   model_object,
-                                   data_x: pd.DataFrame,
-                                   data_y: np.ndarray,
-                                   hyper_params: HyperParamsBase=None) -> FittedInfoBase:
-        # TODO: add documentation, explain we we need this (i.e. so base classes can save any info they need
-        # specifically, while allowing the base class to cache the model_object
-        pass
-
-    @abstractmethod
     def _predict(self, model_object: object, data_x: pd.DataFrame) -> Union[np.ndarray, pd.DataFrame]:
         """
         contains the logic to predict the data, to be implemented by the sub-class
 
-        :param model_object: the object stored in FittedInfoBase.ModelObject in `_train()`
+        :param model_object:
         :param data_x:
         :return: predicted values, actual predictions for Regression models and predicted probabilities for
             Classification problems.

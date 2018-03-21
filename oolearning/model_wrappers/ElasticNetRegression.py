@@ -1,9 +1,7 @@
 import numpy as np
 import pandas as pd
-from matplotlib import figure
 from sklearn.linear_model import ElasticNet
 
-from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
@@ -21,20 +19,6 @@ class ElasticNetRegressionHP(HyperParamsBase):
         self._params_dict = dict(alpha=alpha, l1_ratio=l1_ratio)
 
 
-class ElasticNetRegressionFI(FittedInfoBase):
-    @property
-    def results_summary(self) -> object:
-        raise NotImplementedError()
-
-    @property
-    def feature_importance(self) -> dict:
-        raise NotImplementedError()
-
-    @property
-    def graph(self) -> figure.Figure:
-        raise NotImplementedError()
-
-
 class ElasticNetRegression(ModelWrapperBase):
     """
     fits Linear Regression model on the data
@@ -44,14 +28,9 @@ class ElasticNetRegression(ModelWrapperBase):
         super().__init__()
         self._fit_intercept = fit_intercept
 
-    def _create_fitted_info_object(self,
-                                   model_object,
-                                   data_x: pd.DataFrame,
-                                   data_y: np.ndarray,
-                                   hyper_params: HyperParamsBase=None) -> FittedInfoBase:
-        return ElasticNetRegressionFI(model_object=model_object,
-                                      feature_names=data_x.columns.values.tolist(),
-                                      hyper_params=hyper_params)
+    @property
+    def feature_importance(self):
+        raise NotImplementedError()
 
     def _train(self,
                data_x: pd.DataFrame,

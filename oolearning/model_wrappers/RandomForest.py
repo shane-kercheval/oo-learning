@@ -1,35 +1,10 @@
 import numpy as np
 import pandas as pd
-from matplotlib import figure
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from typing import Union
 
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
-from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-
-
-# noinspection PyPropertyDefinition
-class RandomForestFI(FittedInfoBase):
-    @property
-    def results_summary(self) -> object:
-        pass
-
-    @property
-    def summary_stats(self) -> dict:
-        pass
-
-    @property
-    def warnings(self):
-        pass
-
-    @property
-    def feature_importance(self) -> dict:
-        pass
-
-    @property
-    def graph(self) -> figure.Figure:
-        pass
 
 
 class RandomForestHP(HyperParamsBase):
@@ -135,11 +110,9 @@ class RandomForest(ModelWrapperBase):
         319-320)
     """
 
-    def _create_fitted_info_object(self, model_object, data_x: pd.DataFrame, data_y: np.ndarray,
-                                   hyper_params: HyperParamsBase = None) -> FittedInfoBase:
-        return RandomForestFI(model_object=model_object,
-                              feature_names=data_x.columns.values.tolist(),
-                              hyper_params=hyper_params)
+    @property
+    def feature_importance(self):
+        raise NotImplementedError()
 
     # noinspection PyMethodOverriding
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray, hyper_params: RandomForestHP) -> object:
@@ -186,7 +159,7 @@ class RandomForest(ModelWrapperBase):
     # noinspection PyUnresolvedReferences
     # noinspection SpellCheckingInspection
     def _predict(self, model_object: object, data_x: pd.DataFrame) -> pd.DataFrame:
-        if self.fitted_info.hyper_params.is_regression:
+        if self.hyper_params.is_regression:
             return model_object.predict(data_x)
         else:
             # `predict_proba` returns the probabilities (rows) for each class (columns);

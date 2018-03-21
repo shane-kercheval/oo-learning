@@ -1,29 +1,11 @@
 import pandas as pd
 import numpy as np
-from matplotlib import figure
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.svm import LinearSVC
 
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
-from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-
-
-# noinspection PyPropertyDefinition
-class SvmFI(FittedInfoBase):
-
-    @property
-    def results_summary(self) -> object:
-        pass
-
-    @property
-    def feature_importance(self) -> dict:
-        pass
-
-    @property
-    def graph(self) -> figure.Figure:
-        pass
 
 
 class SvmLinearHP(HyperParamsBase):
@@ -49,11 +31,9 @@ class SvmLinear(ModelWrapperBase):
         super().__init__()
         self._fit_intercept = fit_intercept
 
-    def _create_fitted_info_object(self, model_object, data_x: pd.DataFrame, data_y: np.ndarray,
-                                   hyper_params: HyperParamsBase = None) -> FittedInfoBase:
-        return SvmFI(model_object=model_object,
-                     feature_names=data_x.columns.values.tolist(),
-                     hyper_params=hyper_params)
+    @property
+    def feature_importance(self):
+        raise NotImplementedError()
 
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray,
                hyper_params: HyperParamsBase = None) -> object:

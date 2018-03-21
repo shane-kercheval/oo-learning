@@ -3,18 +3,19 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
-from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from tests.MockFittedInfo import MockFittedInfo
 
 
 class MockRegressionModelWrapper(ModelWrapperBase):
-    def _create_fitted_info_object(self, model_object, data_x: pd.DataFrame, data_y: np.ndarray,
-                                   hyper_params: HyperParamsBase = None) -> FittedInfoBase:
-        return MockFittedInfo(model_object=model_object,
-                              feature_names=data_x.columns.values.tolist(),
-                              hyper_params=hyper_params)
+
+    @property
+    def feature_importance(self):
+        raise NotImplementedError()
+
+    @property
+    def results_summary(self) -> object:
+        return 'test_summary'
 
     def __init__(self, data_y: np.ndarray, model_object: str='test model_object'):
         """
@@ -23,7 +24,7 @@ class MockRegressionModelWrapper(ModelWrapperBase):
         :param data_y: actual values, used to know which values to randomly pass back in `predict()`
         """
         super().__init__()
-        self._model_object = model_object
+        self._model_object_pre_train = model_object
         self.fitted_train_x = None
         self.fitted_test_x = None
 
@@ -40,6 +41,7 @@ class MockRegressionModelWrapper(ModelWrapperBase):
                data_y: np.ndarray,
                hyper_params: HyperParamsBase = None) -> object:
         self.fitted_train_x = data_x
+        self._model_object = self._model_object_pre_train
         return self._model_object
 
     def _predict(self, model_object: object, data_x: pd.DataFrame) -> Union[np.ndarray, pd.DataFrame]:

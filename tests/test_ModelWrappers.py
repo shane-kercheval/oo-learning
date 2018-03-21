@@ -292,7 +292,7 @@ class ModelWrapperTests(TimerTestCase):
         target_variable = 'strength'
         train_x, train_y, test_x, test_y = TestHelper.split_train_holdout_regression(data, target_variable)
         ######################################################################################################
-        # test predicting without training, training an already trained model, fitted_info without training
+        # test predicting without training, training an already trained model, properties without training
         ######################################################################################################
         model_wrapper = MockRegressionModelWrapper(data_y=data.strength)
 
@@ -300,11 +300,13 @@ class ModelWrapperTests(TimerTestCase):
         self.assertRaises(ModelNotFittedError,
                           lambda: model_wrapper.predict(data_x=train_x))
 
-        self.assertRaises(ModelNotFittedError, lambda: model_wrapper.fitted_info)
+        self.assertRaises(ModelNotFittedError, lambda: model_wrapper.model_object)
+        self.assertRaises(ModelNotFittedError, lambda: model_wrapper.feature_names)
+        self.assertRaises(ModelNotFittedError, lambda: model_wrapper.hyper_params)
 
         model_wrapper.train(data_x=train_x, data_y=train_y, hyper_params=MockHyperParams())
-        assert model_wrapper.fitted_info.results_summary == 'test_summary'
-        assert model_wrapper.fitted_info.hyper_params.test == 'test hyper-params'
+        assert model_wrapper.results_summary == 'test_summary'
+        assert model_wrapper.hyper_params.test == 'test hyper-params'
 
         self.assertRaises(ModelAlreadyFittedError,
                           lambda: model_wrapper.train(data_x=train_x,
@@ -353,8 +355,8 @@ class ModelWrapperTests(TimerTestCase):
         model_wrapper.set_persistence_manager(persistence_manager=LocalCacheManager(cache_directory=cache_directory, key=cache_key))  # noqa
         model_wrapper.train(data_x=train_x, data_y=train_y, hyper_params=MockHyperParams())
         # ensure the model "trained"
-        assert model_wrapper.fitted_info.results_summary == 'test_summary'
-        assert model_wrapper.fitted_info.hyper_params.test == 'test hyper-params'
+        assert model_wrapper.results_summary == 'test_summary'
+        assert model_wrapper.hyper_params.test == 'test hyper-params'
         # ensure the model is now cached
         assert os.path.isfile(file_path) is True
         with open(file_path, 'rb') as saved_object:
@@ -365,21 +367,21 @@ class ModelWrapperTests(TimerTestCase):
         # caching and it already exists
         # setting `model_object` on a cached/existing model, should not be updated in the model or the cache
         ######################################################################################################
-        # first ensure that setting `model_object` results in fitted_info.model_object being changed
+        # first ensure that setting `model_object` results in model_object being changed
         model_wrapper = MockRegressionModelWrapper(data_y=data.strength, model_object='new model object!!')
         model_wrapper.train(data_x=train_x, data_y=train_y, hyper_params=MockHyperParams())
-        assert model_wrapper.fitted_info.model_object == 'new model object!!'
+        assert model_wrapper.model_object == 'new model object!!'
 
         # now, if we pass in the same `model_object` to a previously cached model, we should get the old value
         model_wrapper = MockRegressionModelWrapper(data_y=data.strength, model_object='new model object!!')
         assert os.path.isfile(file_path) is True  # should already exist from above
         model_wrapper.set_persistence_manager(persistence_manager=LocalCacheManager(cache_directory=cache_directory, key=cache_key))  # noqa
         model_wrapper.train(data_x=train_x, data_y=train_y, hyper_params=MockHyperParams())
-        # ensure the cached value in fitted_info is the same (and not changed to 'new model object!!')
-        assert model_wrapper.fitted_info.model_object == 'test model_object'  # CACHED value !!!!!
+        # ensure the cached value in model_object is the same (and not changed to 'new model object!!')
+        assert model_wrapper.model_object == 'test model_object'  # CACHED value !!!!!
         # ensure the model "trained"
-        assert model_wrapper.fitted_info.results_summary == 'test_summary'
-        assert model_wrapper.fitted_info.hyper_params.test == 'test hyper-params'
+        assert model_wrapper.results_summary == 'test_summary'
+        assert model_wrapper.hyper_params.test == 'test hyper-params'
         assert os.path.isfile(file_path) is True
         # ensure same cache (i.e. has old/cached model_object value)
         with open(file_path, 'rb') as saved_object:
@@ -390,7 +392,7 @@ class ModelWrapperTests(TimerTestCase):
 
         ######################################################################################################
         # predicting with a cached model that does not exist (need to call `train()` before `predict()`)
-        # `predict()` should not change, basically testing that we have a model via fitted_info
+        # `predict()` should not change, basically testing that we have a model via model_object
         # we already tested above that the correct model_object is being cached/retrieved
         ######################################################################################################
         model_wrapper = MockRegressionModelWrapper(data_y=data.strength)
@@ -406,8 +408,8 @@ class ModelWrapperTests(TimerTestCase):
 
         ######################################################################################################
         # predicting with a cached model that already exists (still need to call `train()` before `predict()`,
-        # because train has parameters that are needed to pass to the FittedInfo object
-        # `predict()` should not change, basically testing that we have a model via fitted_info
+        # because train has parameters that are needed to set additional info after model has been fitted.
+        # `predict()` should not change, basically testing that we have a model via model_object
         # we already tested above that the correct model_object is being cached/retrieved
         ######################################################################################################
         model_wrapper = MockRegressionModelWrapper(data_y=data.strength)
@@ -500,26 +502,25 @@ class ModelWrapperTests(TimerTestCase):
         assert isclose(fitter.holdout_evaluator.mean_squared_error, 100.07028301004217)
         assert isclose(fitter.holdout_evaluator.mean_absolute_error, 7.99161252047238)
 
-        assert fitter.model_info.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic',
-                                                   'coarseagg', 'age']
+        assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'age']  # noqa
 
-        assert isclose(10.524151070654748, fitter.model_info.summary_stats['residual standard error (RSE)'])
-        assert isclose(0.6065189841627049, fitter.model_info.summary_stats['adjusted r-squared'])
-        assert isclose(4.896209721643315e-162, fitter.model_info.summary_stats['model p-value'])
-        assert isclose(0.6276616298351786, fitter.model_info.summary_stats['Ratio RSE to Target STD'])
-        assert isclose(0.015009316585157098, fitter.model_info.summary_stats['Residual Correlations'])
+        assert isclose(10.524151070654748, fitter.model.summary_stats['residual standard error (RSE)'])
+        assert isclose(0.6065189841627049, fitter.model.summary_stats['adjusted r-squared'])
+        assert isclose(4.896209721643315e-162, fitter.model.summary_stats['model p-value'])
+        assert isclose(0.6276616298351786, fitter.model.summary_stats['Ratio RSE to Target STD'])
+        assert isclose(0.015009316585157098, fitter.model.summary_stats['Residual Correlations'])
 
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_RegressionMWTest_concrete_regression_results.pkl'))  # noqa
         # SAVE THE ORIGINAL RESULTS, WHICH WERE VERIFIED AGAINST R'S LM() FUNCTION
         # with open(file, 'wb') as output:
-        #     pickle.dump(fitter.model_info.results_summary, output, pickle.HIGHEST_PROTOCOL)
+        #     pickle.dump(fitter.model.results_summary, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             regression_results_summary = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=regression_results_summary,
-                                                      data_frame2=fitter.model_info.results_summary)
+                                                      data_frame2=fitter.model.results_summary)
 
         TestHelper.check_plot('data/test_ModelWrappers/test_RegressionMW_regression_plots.png',
-                              lambda: fitter.model_info.graph)
+                              lambda: fitter.model.graph)
 
     def test_RidgeRegression(self):
         data = TestHelper.get_cement_data()
@@ -535,15 +536,14 @@ class ModelWrapperTests(TimerTestCase):
         fitter.fit(data=data, target_variable=target_variable, hyper_params=RidgeRegressionHP(alpha=0))
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
-        assert fitter.model_info.hyper_params.params_dict == {'alpha': 0, 'solver': 'cholesky'}
+        assert fitter.model.hyper_params.params_dict == {'alpha': 0, 'solver': 'cholesky'}
         # alpha of 0 should be the same as plain Linear Regression (values are copied from above
         assert isclose(fitter.training_evaluator.mean_squared_error, 109.68243774089586)
         assert isclose(fitter.training_evaluator.mean_absolute_error, 8.360259532214116)
         assert isclose(fitter.holdout_evaluator.mean_squared_error, 100.07028301004217)
         assert isclose(fitter.holdout_evaluator.mean_absolute_error, 7.99161252047238)
 
-        assert fitter.model_info.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic',
-                                                   'coarseagg', 'age']
+        assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'age']  # noqa
 
         # Test that tuner works with hyper-params
         # I also ran a Resampler with LinearRegression model and made sure it had the same values as
@@ -584,15 +584,14 @@ class ModelWrapperTests(TimerTestCase):
         fitter.fit(data=data, target_variable=target_variable, hyper_params=LassoRegressionHP(alpha=0))
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
-        assert fitter.model_info.hyper_params.params_dict == {'alpha': 0}
+        assert fitter.model.hyper_params.params_dict == {'alpha': 0}
         # alpha of 0 should be the same as plain Linear Regression (values are copied from above
         assert isclose(fitter.training_evaluator.mean_squared_error, 109.68243774089586)
         assert isclose(fitter.training_evaluator.mean_absolute_error, 8.360259532214116)
         assert isclose(fitter.holdout_evaluator.mean_squared_error, 100.07028301004217)
         assert isclose(fitter.holdout_evaluator.mean_absolute_error, 7.99161252047238)
 
-        assert fitter.model_info.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic',
-                                                   'coarseagg', 'age']
+        assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'age']  # noqa
 
         # Test that tuner works with hyper-params
         # I also ran a Resampler with LinearRegression model and made sure it had the same values as
@@ -633,7 +632,7 @@ class ModelWrapperTests(TimerTestCase):
         fitter.fit(data=data, target_variable=target_variable, hyper_params=ElasticNetRegressionHP(alpha=0))
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
-        assert fitter.model_info.hyper_params.params_dict == {'alpha': 0, 'l1_ratio': 0.5}
+        assert fitter.model.hyper_params.params_dict == {'alpha': 0, 'l1_ratio': 0.5}
 
         # alpha of 0 should be the same as plain Linear Regression (values are copied from above
         assert isclose(fitter.training_evaluator.mean_squared_error, 109.68243774089586)
@@ -641,8 +640,7 @@ class ModelWrapperTests(TimerTestCase):
         assert isclose(fitter.holdout_evaluator.mean_squared_error, 100.07028301004217)
         assert isclose(fitter.holdout_evaluator.mean_absolute_error, 7.99161252047238)
 
-        assert fitter.model_info.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic',
-                                                   'coarseagg', 'age']
+        assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'age']  # noqa
 
         # Test that tuner works with hyper-params
         # I also ran a Resampler with LinearRegression model and made sure it had the same values as
@@ -785,8 +783,7 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # removed coarseagg and fineagg, added a categorical column and used DUMMY encoding
         ######################################################################################################
-        assert model_fitter.model_info.feature_names == \
-            ['cement', 'slag', 'ash', 'water', 'superplastic', 'age', 'random_code1']
+        assert model_fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'age', 'random_code1']  # noqa
         ######################################################################################################
         # ensure that we imputed the correct values in the correct indexes
         ######################################################################################################
@@ -859,7 +856,7 @@ class ModelWrapperTests(TimerTestCase):
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
-            assert fitter.model_info.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0}  # noqa
+            assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0}  # noqa
 
             con_matrix = fitter.training_evaluator._confusion_matrix
             assert con_matrix.matrix.loc[:, 0].values.tolist() == [386, 85, 471]
@@ -917,7 +914,7 @@ class ModelWrapperTests(TimerTestCase):
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
-        assert fitter.model_info.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0}  # noqa
+        assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0}  # noqa
 
         con_matrix = fitter.training_evaluator._confusion_matrix
         assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [386, 85, 471]
@@ -1086,24 +1083,20 @@ class ModelWrapperTests(TimerTestCase):
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
-        assert fitter.model_info.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3',
-                                                   'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2',
-                                                   'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0',
-                                                   'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5',
-                                                   'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']
-        assert fitter.model_info.hyper_params.params_dict == {'n_estimators': 500,
-                                                              'criterion': 'gini',
-                                                              'max_features': None,
-                                                              'max_depth': None,
-                                                              'min_samples_split': 2,
-                                                              'min_samples_leaf': 1,
-                                                              'min_weight_fraction_leaf': 0.0,
-                                                              'max_leaf_nodes': None,
-                                                              'min_impurity_decrease': 0,
-                                                              'bootstrap': True,
-                                                              'oob_score': False,
-                                                              'n_jobs': -1,
-                                                              'random_state': 42}
+        assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'n_estimators': 500,
+                                                         'criterion': 'gini',
+                                                         'max_features': None,
+                                                         'max_depth': None,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'min_weight_fraction_leaf': 0.0,
+                                                         'max_leaf_nodes': None,
+                                                         'min_impurity_decrease': 0,
+                                                         'bootstrap': True,
+                                                         'oob_score': False,
+                                                         'n_jobs': -1,
+                                                         'random_state': 42}
 
         assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9977638155314692, 'AUC Precision/Recall': 0.9963857279946995, 'Kappa': 0.9642058165548097, 'F1 Score': 0.9777777777777779, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.967032967032967, 'True Negative Rate': 0.9931662870159453, 'False Positive Rate': 0.00683371298405467, 'False Negative Rate': 0.03296703296703297, 'Positive Predictive Value': 0.9887640449438202, 'Negative Predictive Value': 0.9797752808988764, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8198945981554676, 'AUC Precision/Recall': 0.7693830218733662, 'Kappa': 0.581636060100167, 'F1 Score': 0.736842105263158, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8636363636363636, 'False Positive Rate': 0.13636363636363635, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.765625, 'Negative Predictive Value': 0.8260869565217391, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
@@ -1138,24 +1131,20 @@ class ModelWrapperTests(TimerTestCase):
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
-        assert fitter.model_info.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3',
-                                                   'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2',
-                                                   'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0',
-                                                   'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5',
-                                                   'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']
-        assert fitter.model_info.hyper_params.params_dict == {'n_estimators': 10,
-                                                              'criterion': 'gini',
-                                                              'max_features': 'auto',
-                                                              'max_depth': None,
-                                                              'min_samples_split': 2,
-                                                              'min_samples_leaf': 1,
-                                                              'min_weight_fraction_leaf': 0.0,
-                                                              'max_leaf_nodes': None,
-                                                              'min_impurity_decrease': 0,
-                                                              'bootstrap': True,
-                                                              'oob_score': False,
-                                                              'n_jobs': 2,
-                                                              'random_state': 42}
+        assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'n_estimators': 10,
+                                                         'criterion': 'gini',
+                                                         'max_features': 'auto',
+                                                         'max_depth': None,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'min_weight_fraction_leaf': 0.0,
+                                                         'max_leaf_nodes': None,
+                                                         'min_impurity_decrease': 0,
+                                                         'bootstrap': True,
+                                                         'oob_score': False,
+                                                         'n_jobs': 2,
+                                                         'random_state': 42}
 
         assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9962785885337139, 'AUC Precision/Recall': 0.9941773735463619, 'Kappa': 0.9491855583543242, 'F1 Score': 0.9683426443202979, 'Two-Class Accuracy': 0.976123595505618, 'Error Rate': 0.023876404494382022, 'True Positive Rate': 0.9523809523809523, 'True Negative Rate': 0.9908883826879271, 'False Positive Rate': 0.009111617312072893, 'False Negative Rate': 0.047619047619047616, 'Positive Predictive Value': 0.9848484848484849, 'Negative Predictive Value': 0.9709821428571429, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.83399209486166, 'AUC Precision/Recall': 0.756480622334744, 'Kappa': 0.5503428610224728, 'F1 Score': 0.7086614173228347, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.6521739130434783, 'True Negative Rate': 0.8818181818181818, 'False Positive Rate': 0.11818181818181818, 'False Negative Rate': 0.34782608695652173, 'Positive Predictive Value': 0.7758620689655172, 'Negative Predictive Value': 0.8016528925619835, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
@@ -1185,24 +1174,20 @@ class ModelWrapperTests(TimerTestCase):
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
-        assert fitter.model_info.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3',
-                                                   'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2',
-                                                   'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0',
-                                                   'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5',
-                                                   'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']
-        assert fitter.model_info.hyper_params.params_dict == {'n_estimators': 500,
-                                                              'criterion': 'gini',
-                                                              'max_features': None,
-                                                              'max_depth': None,
-                                                              'min_samples_split': 2,
-                                                              'min_samples_leaf': 1,
-                                                              'min_weight_fraction_leaf': 0.0,
-                                                              'max_leaf_nodes': None,
-                                                              'min_impurity_decrease': 0,
-                                                              'bootstrap': True,
-                                                              'oob_score': False,
-                                                              'n_jobs': -1,
-                                                              'random_state': 42}
+        assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'n_estimators': 500,
+                                                         'criterion': 'gini',
+                                                         'max_features': None,
+                                                         'max_depth': None,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'min_weight_fraction_leaf': 0.0,
+                                                         'max_leaf_nodes': None,
+                                                         'min_impurity_decrease': 0,
+                                                         'bootstrap': True,
+                                                         'oob_score': False,
+                                                         'n_jobs': -1,
+                                                         'random_state': 42}
 
         assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9977638155314692, 'AUC Precision/Recall': 0.9963857279946995, 'Kappa': 0.9642058165548097, 'F1 Score': 0.9777777777777779, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.967032967032967, 'True Negative Rate': 0.9931662870159453, 'False Positive Rate': 0.00683371298405467, 'False Negative Rate': 0.03296703296703297, 'Positive Predictive Value': 0.9887640449438202, 'Negative Predictive Value': 0.9797752808988764, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8198945981554676, 'AUC Precision/Recall': 0.7693830218733662, 'Kappa': 0.581636060100167, 'F1 Score': 0.736842105263158, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8636363636363636, 'False Positive Rate': 0.13636363636363635, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.765625, 'Negative Predictive Value': 0.8260869565217391, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
@@ -1267,22 +1252,21 @@ class ModelWrapperTests(TimerTestCase):
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
 
-        assert fitter.model_info.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic',
-                                                   'coarseagg', 'fineagg', 'age']
+        assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
 
-        assert fitter.model_info.hyper_params.params_dict == {'n_estimators': 10,
-                                                              'criterion': 'mae',
-                                                              'max_features': None,
-                                                              'max_depth': None,
-                                                              'min_samples_split': 2,
-                                                              'min_samples_leaf': 1,
-                                                              'min_weight_fraction_leaf': 0.0,
-                                                              'max_leaf_nodes': None,
-                                                              'min_impurity_decrease': 0,
-                                                              'bootstrap': True,
-                                                              'oob_score': False,
-                                                              'n_jobs': -1,
-                                                              'random_state': 42}
+        assert fitter.model.hyper_params.params_dict == {'n_estimators': 10,
+                                                         'criterion': 'mae',
+                                                         'max_features': None,
+                                                         'max_depth': None,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'min_weight_fraction_leaf': 0.0,
+                                                         'max_leaf_nodes': None,
+                                                         'min_impurity_decrease': 0,
+                                                         'bootstrap': True,
+                                                         'oob_score': False,
+                                                         'n_jobs': -1,
+                                                         'random_state': 42}
 
         keys = fitter.training_evaluator.all_quality_metrics.keys()
         expected_values = {'Mean Absolute Error (MAE)': 1.6050794902912628, 'Mean Squared Error (MSE)': 6.946366367415049, 'Root Mean Squared Error (RMSE)': 2.6355960174911193, 'RMSE to Standard Deviation of Target': 0.15718726202422936}  # noqa
@@ -1306,20 +1290,20 @@ class ModelWrapperTests(TimerTestCase):
         assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
         assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
 
-        assert fitter.model_info.feature_names == ['sepal_length', 'sepal_width', 'petal_length', 'petal_width']  # noqa
-        assert fitter.model_info.hyper_params.params_dict == {'n_estimators': 10,
-                                                              'criterion': 'gini',
-                                                              'max_features': 'auto',
-                                                              'max_depth': None,
-                                                              'min_samples_split': 2,
-                                                              'min_samples_leaf': 1,
-                                                              'min_weight_fraction_leaf': 0.0,
-                                                              'max_leaf_nodes': None,
-                                                              'min_impurity_decrease': 0,
-                                                              'bootstrap': True,
-                                                              'oob_score': False,
-                                                              'n_jobs': -1,
-                                                              'random_state': 42}
+        assert fitter.model.feature_names == ['sepal_length', 'sepal_width', 'petal_length', 'petal_width']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'n_estimators': 10,
+                                                         'criterion': 'gini',
+                                                         'max_features': 'auto',
+                                                         'max_depth': None,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'min_weight_fraction_leaf': 0.0,
+                                                         'max_leaf_nodes': None,
+                                                         'min_impurity_decrease': 0,
+                                                         'bootstrap': True,
+                                                         'oob_score': False,
+                                                         'n_jobs': -1,
+                                                         'random_state': 42}
 
         assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
         assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.841995841995842, 'Accuracy': 0.8947368421052632, 'Error Rate': 0.10526315789473684, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa
@@ -1344,9 +1328,9 @@ class ModelWrapperTests(TimerTestCase):
         assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
         assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
 
-        assert fitter.model_info.feature_names == ['sepal_length', 'sepal_width', 'petal_length',
+        assert fitter.model.feature_names == ['sepal_length', 'sepal_width', 'petal_length',
                                                    'petal_width']  # noqa
-        assert fitter.model_info.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0, 'solver': 'lbfgs'}  # noqa
+        assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0, 'solver': 'lbfgs'}  # noqa
 
         assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 0.959818225304951,
                                                                  'Accuracy': 0.9732142857142857,
@@ -1384,7 +1368,7 @@ class ModelWrapperTests(TimerTestCase):
 
         data['Survived'].value_counts(normalize=True)
 
-        assert fitter.model_info.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+        assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
 
         assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.5,
                                                                  'AUC Precision/Recall': 0.38323353293413176,
@@ -1437,7 +1421,7 @@ class ModelWrapperTests(TimerTestCase):
                              evaluator=TwoClassProbabilityEvaluator(converter=TwoClassThresholdConverter(positive_class=1)))  # noqa
         fitter.fit(data=data, target_variable=target_variable)
 
-        assert fitter.model_info.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+        assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
 
         assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.5098983616504854,
                                                                  'AUC Precision/Recall': 0.38806072448127005,
@@ -1495,7 +1479,7 @@ class ModelWrapperTests(TimerTestCase):
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
-        assert fitter.model_info.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}  # noqa
+        assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}  # noqa
 
         con_matrix = fitter.training_evaluator._confusion_matrix
         assert con_matrix.matrix.loc[:, 0].values.tolist() == [388, 90, 478]

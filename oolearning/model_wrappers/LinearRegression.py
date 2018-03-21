@@ -5,18 +5,19 @@ import pandas as pd
 from matplotlib import figure, pyplot as plt
 from statsmodels import api as sm
 
-from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 
 
-class RegressionFI(FittedInfoBase):
-    def __init__(self, model_object, feature_names, hyper_params, training_target_std):
-        super().__init__(model_object=model_object,
-                         feature_names=feature_names,
-                         hyper_params=hyper_params)
-        self._training_target_std = training_target_std
+class LinearRegression(ModelWrapperBase):
+    """
+    fits Linear Regression model on the data
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._training_target_std = None
 
     @staticmethod
     def _get_significance_code(p_value):
@@ -40,49 +41,6 @@ class RegressionFI(FittedInfoBase):
             return '.'
         else:
             return ''
-
-    @property
-    def results_summary(self) -> pd.DataFrame:
-        """
-        :return: a traditional view of the regression tune_results (feature coefficient estimates, p-values,
-            etc.)
-        """
-        summary = pd.DataFrame(OrderedDict(zip(['(intercept)'] + self.feature_names,
-                                               self._model_object.params.values.tolist())),
-                               index=[0]).T
-        summary.columns = ['Estimate']
-        summary['Std. Error'] = self._model_object.bse.values  # round to 6
-        summary['Pr(>|t|)'] = self._model_object.pvalues.values.round(5)  # round to 4
-        summary['Sig'] = [self._get_significance_code(p_value=p_value) for p_value in summary['Pr(>|t|)']]
-        return summary
-
-    @property
-    def summary_stats(self) -> dict:
-        """
-        :return: RSE, adjusted r-squared, model p-value, etc.
-        """
-        rse = np.sqrt(np.sum(np.square(self._model_object.resid)) / self._model_object.df_resid)
-        residuals = pd.Series(self._model_object.resid)
-
-        return {'residual standard error (RSE)': rse,
-                'adjusted r-squared': self._model_object.rsquared_adj,
-                'model p-value': self._model_object.f_pvalue,
-                # dividing Residual Standard Error ('average size' of errors) by the standard deviation of our
-                # response variable, we can (sort of) get an idea of how large our errors are (are the average
-                # errors less than the standard deviation of the response response variable?)
-                'Ratio RSE to Target STD': rse / self._training_target_std,
-                # this shifts the residuals by 1, so that we can take the correlation to see if previous
-                # values are correlated with next/lagging values (i.e. e(i) provides no information about
-                # e(i+1), where e is a residual), because the "standard errors that are computed for the
-                # estimated regression coefficients or the fitted values are based on the assumption of
-                # uncorrelated error terms (ISLR pg 93-94).
-                'Residual Correlations':
-                    pd.DataFrame({'1': residuals, '2': residuals.shift(1)}).dropna().corr().iloc[0, 1]}
-
-    @property
-    def feature_importance(self) -> dict:
-        # TODO: finish
-        raise NotImplementedError()
 
     # noinspection SpellCheckingInspection
     @property
@@ -152,24 +110,47 @@ class RegressionFI(FittedInfoBase):
         fig.subplots_adjust(hspace=.3)
         return fig
 
+    @property
+    def summary_stats(self) -> dict:
+        """
+        :return: RSE, adjusted r-squared, model p-value, etc.
+        """
+        rse = np.sqrt(np.sum(np.square(self._model_object.resid)) / self._model_object.df_resid)
+        residuals = pd.Series(self._model_object.resid)
 
-class LinearRegression(ModelWrapperBase):
-    """
-    fits Linear Regression model on the data
-    """
+        return {'residual standard error (RSE)': rse,
+                'adjusted r-squared': self._model_object.rsquared_adj,
+                'model p-value': self._model_object.f_pvalue,
+                # dividing Residual Standard Error ('average size' of errors) by the standard deviation of our
+                # response variable, we can (sort of) get an idea of how large our errors are (are the average
+                # errors less than the standard deviation of the response response variable?)
+                'Ratio RSE to Target STD': rse / self._training_target_std,
+                # this shifts the residuals by 1, so that we can take the correlation to see if previous
+                # values are correlated with next/lagging values (i.e. e(i) provides no information about
+                # e(i+1), where e is a residual), because the "standard errors that are computed for the
+                # estimated regression coefficients or the fitted values are based on the assumption of
+                # uncorrelated error terms (ISLR pg 93-94).
+                'Residual Correlations':
+                    pd.DataFrame({'1': residuals, '2': residuals.shift(1)}).dropna().corr().iloc[0, 1]}
 
-    def __init__(self):
-        super().__init__()
+    @property
+    def results_summary(self) -> pd.DataFrame:
+        """
+        :return: a traditional view of the regression tune_results (feature coefficient estimates, p-values,
+            etc.)
+        """
+        summary = pd.DataFrame(OrderedDict(zip(['(intercept)'] + self.feature_names,
+                                               self._model_object.params.values.tolist())),
+                               index=[0]).T
+        summary.columns = ['Estimate']
+        summary['Std. Error'] = self._model_object.bse.values  # round to 6
+        summary['Pr(>|t|)'] = self._model_object.pvalues.values.round(5)  # round to 4
+        summary['Sig'] = [self._get_significance_code(p_value=p_value) for p_value in summary['Pr(>|t|)']]
+        return summary
 
-    def _create_fitted_info_object(self,
-                                   model_object,
-                                   data_x: pd.DataFrame,
-                                   data_y: np.ndarray,
-                                   hyper_params: HyperParamsBase=None) -> FittedInfoBase:
-        return RegressionFI(model_object=model_object,
-                            feature_names=data_x.columns.values.tolist(),
-                            hyper_params=None,  # Regression does not have any hyper-parameters
-                            training_target_std=np.std(data_y))
+    @property
+    def feature_importance(self):
+        raise NotImplementedError()
 
     def _train(self,
                data_x: pd.DataFrame,
@@ -184,6 +165,8 @@ class LinearRegression(ModelWrapperBase):
 
         if any(np.isnan(data_y)):
             raise MissingValueError()
+
+        self._training_target_std = np.std(data_y)
 
         model_object = sm.OLS(data_y, sm.add_constant(data_x)).fit()
         return model_object
