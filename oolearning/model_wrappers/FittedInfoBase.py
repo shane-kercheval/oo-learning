@@ -3,7 +3,7 @@ from typing import List
 
 from matplotlib import figure
 
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 
 
 class FittedInfoBase(metaclass=ABCMeta):

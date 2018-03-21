@@ -6,8 +6,8 @@ import pandas as pd
 
 from oolearning.evaluators.EvaluatorBase import EvaluatorBase
 from oolearning.evaluators.ScoreBase import ScoreBase
-from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import ModelAlreadyFittedError, ModelNotFittedError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase

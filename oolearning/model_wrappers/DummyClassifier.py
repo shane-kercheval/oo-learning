@@ -1,12 +1,29 @@
 import numpy as np
 import pandas as pd
 import sklearn.dummy
+from matplotlib import figure
 
 from oolearning.enums.DummyClassifierStrategy import DummyClassifierStrategy
-from oolearning.fitted_info.DummyClassifierFI import DummyClassifierFI
-from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
+
+
+class DummyClassifierFI(FittedInfoBase):
+
+    @property
+    def results_summary(self) -> object:
+        return None
+
+    @property
+    def feature_importance(self) -> dict:
+        # noinspection PyTypeChecker
+        return None
+
+    @property
+    def graph(self) -> figure.Figure:
+        # noinspection PyTypeChecker
+        return None
 
 
 class DummyClassifier(ModelWrapperBase):

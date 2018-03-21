@@ -1,13 +1,29 @@
 import pandas as pd
 import numpy as np
+from matplotlib import figure
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.svm import LinearSVC
 
-from oolearning.fitted_info.SvmFI import SvmFI
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
-from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
+from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
+
+
+# noinspection PyPropertyDefinition
+class SvmFI(FittedInfoBase):
+
+    @property
+    def results_summary(self) -> object:
+        pass
+
+    @property
+    def feature_importance(self) -> dict:
+        pass
+
+    @property
+    def graph(self) -> figure.Figure:
+        pass
 
 
 class SvmLinearHP(HyperParamsBase):

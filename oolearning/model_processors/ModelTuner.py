@@ -6,8 +6,8 @@ import pandas as pd
 
 from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
-from oolearning.hyper_params.HyperParamsGrid import HyperParamsGrid
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.HyperParamsGrid import HyperParamsGrid
 from oolearning.model_processors.ResamplerBase import ResamplerBase
 from oolearning.model_processors.TunerResults import TunerResults
 from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError

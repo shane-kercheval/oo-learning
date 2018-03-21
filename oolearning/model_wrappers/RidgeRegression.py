@@ -3,22 +3,10 @@ import pandas as pd
 from matplotlib import figure
 from sklearn.linear_model import Ridge
 
-from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-
-
-class RidgeRegressionHP(HyperParamsBase):
-    """
-    See http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html for more information
-    on tuning parameters
-    """
-
-    # noinspection SpellCheckingInspection
-    def __init__(self, alpha: float=0.5, solver: str='cholesky'):
-        super().__init__()
-        self._params_dict = dict(alpha=alpha, solver=solver)
 
 
 class RidgeRegressionFI(FittedInfoBase):
@@ -33,6 +21,18 @@ class RidgeRegressionFI(FittedInfoBase):
     @property
     def graph(self) -> figure.Figure:
         raise NotImplementedError()
+
+
+class RidgeRegressionHP(HyperParamsBase):
+    """
+    See http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html for more information
+    on tuning parameters
+    """
+
+    # noinspection SpellCheckingInspection
+    def __init__(self, alpha: float=0.5, solver: str='cholesky'):
+        super().__init__()
+        self._params_dict = dict(alpha=alpha, solver=solver)
 
 
 class RidgeRegression(ModelWrapperBase):

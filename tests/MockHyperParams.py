@@ -1,4 +1,4 @@
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 
 
 class MockHyperParams(HyperParamsBase):

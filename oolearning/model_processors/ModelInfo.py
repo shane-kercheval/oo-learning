@@ -1,7 +1,7 @@
 from typing import List
 
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
-from oolearning.hyper_params.HyperParamsGrid import HyperParamsGrid
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.HyperParamsGrid import HyperParamsGrid
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.transformers.TransformerBase import TransformerBase
 

@@ -9,7 +9,7 @@ import pandas as pd
 from oolearning.enums.Metric import Metric
 
 from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
-from oolearning.hyper_params import HyperParamsGrid
+from oolearning.model_wrappers import HyperParamsGrid
 
 
 # TODO: update documentation

@@ -3,8 +3,8 @@ import pandas as pd
 from matplotlib import figure
 from sklearn.linear_model import Lasso
 
-from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 

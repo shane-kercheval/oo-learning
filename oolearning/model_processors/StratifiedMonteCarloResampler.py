@@ -3,7 +3,7 @@ import pandas as pd
 from typing import List, Callable, Union
 
 from oolearning.evaluators.ScoreBase import ScoreBase
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.model_processors.ResamplerBase import ResamplerBase
 from oolearning.model_processors.ResamplerResults import ResamplerResults

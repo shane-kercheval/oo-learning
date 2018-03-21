@@ -1,6 +1,6 @@
 from matplotlib import figure
 
-from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
+from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
 
 
 # noinspection PyTypeChecker

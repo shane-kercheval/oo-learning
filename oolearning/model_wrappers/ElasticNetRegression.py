@@ -3,16 +3,16 @@ import pandas as pd
 from matplotlib import figure
 from sklearn.linear_model import ElasticNet
 
-from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 
 
 class ElasticNetRegressionHP(HyperParamsBase):
     """
-    See http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ElasticNet.html for more information
-    on tuning parameters
+    See http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ElasticNet.html
+    for more information on tuning parameters
     """
 
     # noinspection SpellCheckingInspection

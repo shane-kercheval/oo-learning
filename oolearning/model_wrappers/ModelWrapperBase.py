@@ -6,8 +6,8 @@ from abc import ABCMeta, abstractmethod
 from typing import Union
 
 from oolearning.persistence.AlwaysFetchManager import AlwaysFetchManager
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
-from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
 from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError, ModelAlreadyFittedError,\
     ModelCachedAlreadyConfigured
 

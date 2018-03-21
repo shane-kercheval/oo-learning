@@ -1,12 +1,27 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
+from matplotlib import figure
 from sklearn import linear_model
 
-from oolearning.fitted_info.SoftmaxLogisticFI import SoftmaxLogisticFI
-from oolearning.hyper_params.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.FittedInfoBase import FittedInfoBase
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
-from oolearning.fitted_info.FittedInfoBase import FittedInfoBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
+
+
+# noinspection PyPropertyDefinition
+class SoftmaxLogisticFI(FittedInfoBase):
+    @property
+    def results_summary(self) -> pd.DataFrame:
+        pass
+
+    @property
+    def feature_importance(self) -> dict:
+        pass
+
+    @property
+    def graph(self) -> figure.Figure:
+        pass
 
 
 class SoftmaxLogisticHP(HyperParamsBase):
