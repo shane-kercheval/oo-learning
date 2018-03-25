@@ -487,7 +487,7 @@ class ModelWrapperTests(TimerTestCase):
         data = TestHelper.get_cement_data()
         target_variable = 'strength'
 
-        fitter = ModelFitter(model=LinearRegression(),
+        fitter = ModelFitter(model=LinearRegressor(),
                              model_transformations=[RemoveColumnsTransformer(columns=['fineagg'])],
                              splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.20),
                              evaluator=RegressionEvaluator(),
@@ -526,14 +526,14 @@ class ModelWrapperTests(TimerTestCase):
         data = TestHelper.get_cement_data()
         target_variable = 'strength'
 
-        fitter = ModelFitter(model=RidgeRegression(),
+        fitter = ModelFitter(model=RidgeRegressor(),
                              model_transformations=[RemoveColumnsTransformer(columns=['fineagg'])],
                              splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.20),
                              evaluator=RegressionEvaluator(),
                              persistence_manager=None,
                              train_callback=None)
 
-        fitter.fit(data=data, target_variable=target_variable, hyper_params=RidgeRegressionHP(alpha=0))
+        fitter.fit(data=data, target_variable=target_variable, hyper_params=RidgeRegressorHP(alpha=0))
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
         assert fitter.model.hyper_params.params_dict == {'alpha': 0, 'solver': 'cholesky'}
@@ -546,16 +546,16 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'age']  # noqa
 
         # Test that tuner works with hyper-params
-        # I also ran a Resampler with LinearRegression model and made sure it had the same values as
+        # I also ran a Resampler with LinearRegressor model and made sure it had the same values as
         # as the Tuner.Resampler with Alpha == 0
         train_data_y = data[target_variable]
         train_data = data.drop(columns=target_variable)
         evaluators = [MaeScore(), RmseScore()]
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RidgeRegression(),
+        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RidgeRegressor(),
                                                                       model_transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
                                                                                              CenterScaleTransformer()],  # noqa
                                                                       scores=evaluators),
-                           hyper_param_object=RidgeRegressionHP())
+                           hyper_param_object=RidgeRegressorHP())
         grid = HyperParamsGrid(params_dict={'alpha': [0, 0.5, 1]})
         tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
         assert len(tuner.results._tune_results_objects) == 3
@@ -574,14 +574,14 @@ class ModelWrapperTests(TimerTestCase):
         data = TestHelper.get_cement_data()
         target_variable = 'strength'
 
-        fitter = ModelFitter(model=LassoRegression(),
+        fitter = ModelFitter(model=LassoRegressor(),
                              model_transformations=[RemoveColumnsTransformer(columns=['fineagg'])],
                              splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.20),
                              evaluator=RegressionEvaluator(),
                              persistence_manager=None,
                              train_callback=None)
 
-        fitter.fit(data=data, target_variable=target_variable, hyper_params=LassoRegressionHP(alpha=0))
+        fitter.fit(data=data, target_variable=target_variable, hyper_params=LassoRegressorHP(alpha=0))
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
         assert fitter.model.hyper_params.params_dict == {'alpha': 0}
@@ -594,16 +594,16 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'age']  # noqa
 
         # Test that tuner works with hyper-params
-        # I also ran a Resampler with LinearRegression model and made sure it had the same values as
+        # I also ran a Resampler with LinearRegressor model and made sure it had the same values as
         # as the Tuner.Resampler with Alpha == 0
         train_data_y = data[target_variable]
         train_data = data.drop(columns=target_variable)
         evaluators = [MaeScore(), RmseScore()]
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=LassoRegression(),
+        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=LassoRegressor(),
                                                                       model_transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
                                                                                              CenterScaleTransformer()],  # noqa
                                                                       scores=evaluators),
-                           hyper_param_object=LassoRegressionHP())
+                           hyper_param_object=LassoRegressorHP())
         grid = HyperParamsGrid(params_dict={'alpha': [0.1, 0.5, 1]})
         tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
         assert len(tuner.results._tune_results_objects) == 3
@@ -618,18 +618,18 @@ class ModelWrapperTests(TimerTestCase):
             assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
                                                       data_frame2=tuner.results.sorted_best_models)
 
-    def test_ElasticNetRegression(self):
+    def test_ElasticNetRegressor(self):
         data = TestHelper.get_cement_data()
         target_variable = 'strength'
 
-        fitter = ModelFitter(model=ElasticNetRegression(),
+        fitter = ModelFitter(model=ElasticNetRegressor(),
                              model_transformations=[RemoveColumnsTransformer(columns=['fineagg'])],
                              splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.20),
                              evaluator=RegressionEvaluator(),
                              persistence_manager=None,
                              train_callback=None)
 
-        fitter.fit(data=data, target_variable=target_variable, hyper_params=ElasticNetRegressionHP(alpha=0))
+        fitter.fit(data=data, target_variable=target_variable, hyper_params=ElasticNetRegressorHP(alpha=0))
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
         assert fitter.model.hyper_params.params_dict == {'alpha': 0, 'l1_ratio': 0.5}
@@ -643,16 +643,16 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'age']  # noqa
 
         # Test that tuner works with hyper-params
-        # I also ran a Resampler with LinearRegression model and made sure it had the same values as
+        # I also ran a Resampler with LinearRegressor model and made sure it had the same values as
         # as the Tuner.Resampler with Alpha == 0
         train_data_y = data[target_variable]
         train_data = data.drop(columns=target_variable)
         evaluators = [MaeScore(), RmseScore()]
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=ElasticNetRegression(),
+        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=ElasticNetRegressor(),
                                                                       model_transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
                                                                                              CenterScaleTransformer()],  # noqa
                                                                       scores=evaluators),
-                           hyper_param_object=ElasticNetRegressionHP())
+                           hyper_param_object=ElasticNetRegressorHP())
         grid = HyperParamsGrid(params_dict={'alpha': [0.1, 0.5, 1], 'l1_ratio': [0.2, 0.6]})
         tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
         assert len(tuner.results._tune_results_objects) == 6
@@ -847,12 +847,12 @@ class ModelWrapperTests(TimerTestCase):
                                DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
 
             # test with custom threshold of 0.5
-            fitter = ModelFitter(model=LogisticRegression(),
+            fitter = ModelFitter(model=LogisticClassifier(),
                                  model_transformations=transformations,
                                  splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                                  evaluator=TwoClassProbabilityEvaluator(
                                      converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))  # noqa
-            fitter.fit(data=data, target_variable='Survived', hyper_params=LogisticRegressionHP())
+            fitter.fit(data=data, target_variable='Survived', hyper_params=LogisticClassifierHP())
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
@@ -904,13 +904,13 @@ class ModelWrapperTests(TimerTestCase):
                            DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
 
         # test with custom threshold of 0.5
-        fitter = ModelFitter(model=LogisticRegression(),
+        fitter = ModelFitter(model=LogisticClassifier(),
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5,
                                                                       positive_class=positive_class)))
-        fitter.fit(data=data, target_variable='Survived', hyper_params=LogisticRegressionHP())
+        fitter.fit(data=data, target_variable='Survived', hyper_params=LogisticClassifierHP())
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
@@ -1296,7 +1296,7 @@ class ModelWrapperTests(TimerTestCase):
     def test_SoftmaxRegression_multiclass(self):
         data = TestHelper.get_iris_data()
         target_variable = 'species'
-        fitter = ModelFitter(model=SoftmaxLogistic(),
+        fitter = ModelFitter(model=SoftmaxLogisticClassifier(),
                              model_transformations=None,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                              evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
@@ -1447,7 +1447,7 @@ class ModelWrapperTests(TimerTestCase):
                            DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
 
         # test with custom threshold of 0.5
-        fitter = ModelFitter(model=SvmLinear(),
+        fitter = ModelFitter(model=SvmLinearClassifier(),
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=TwoClassProbabilityEvaluator(

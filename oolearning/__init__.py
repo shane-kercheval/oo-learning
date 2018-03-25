@@ -54,15 +54,15 @@ from .model_processors.StratifiedMonteCarloResampler import StratifiedMonteCarlo
 from .model_processors.TunerResults import TunerResults
 
 from .model_wrappers.DummyClassifier import DummyClassifier
-from .model_wrappers.ElasticNetRegression import ElasticNetRegression
-from .model_wrappers.ElasticNetRegression import ElasticNetRegressionHP
+from .model_wrappers.ElasticNetRegressor import ElasticNetRegressor
+from .model_wrappers.ElasticNetRegressor import ElasticNetRegressorHP
 from .model_wrappers.HyperParamsBase import HyperParamsBase
 from .model_wrappers.HyperParamsGrid import HyperParamsGrid
-from .model_wrappers.LassoRegression import LassoRegression
-from .model_wrappers.LassoRegression import LassoRegressionHP
-from .model_wrappers.LinearRegression import LinearRegression
-from .model_wrappers.LogisticRegression import LogisticRegression
-from .model_wrappers.LogisticRegression import LogisticRegressionHP
+from .model_wrappers.LassoRegressor import LassoRegressor
+from .model_wrappers.LassoRegressor import LassoRegressorHP
+from .model_wrappers.LinearRegressor import LinearRegressor
+from .model_wrappers.LogisticClassifier import LogisticClassifier
+from .model_wrappers.LogisticClassifier import LogisticClassifierHP
 from .model_wrappers.ModelDefaults import ModelDefaults
 from .model_wrappers.ModelExceptions import ModelNotFittedError
 from .model_wrappers.ModelExceptions import ModelAlreadyFittedError
@@ -73,13 +73,13 @@ from .model_wrappers.ModelWrapperBase import ModelWrapperBase
 from .model_wrappers.RandomForest import RandomForestRegressor
 from .model_wrappers.RandomForest import RandomForestClassifier
 from .model_wrappers.RandomForest import RandomForestHP
-from .model_wrappers.RidgeRegression import RidgeRegression
-from .model_wrappers.RidgeRegression import RidgeRegressionHP
+from .model_wrappers.RidgeRegressor import RidgeRegressor
+from .model_wrappers.RidgeRegressor import RidgeRegressorHP
 from .model_wrappers.SklearnPredictMixin import SklearnPredictClassifierMixin
 from .model_wrappers.SklearnPredictMixin import SklearnPredictRegressionMixin
-from .model_wrappers.SoftmaxLogistic import SoftmaxLogistic
-from .model_wrappers.SoftmaxLogistic import SoftmaxLogisticHP
-from .model_wrappers.SvmLinear import SvmLinear
+from .model_wrappers.SoftmaxLogisticClassifier import SoftmaxLogisticClassifier
+from .model_wrappers.SoftmaxLogisticClassifier import SoftmaxLogisticHP
+from .model_wrappers.SvmLinear import SvmLinearClassifier
 from .model_wrappers.SvmLinear import SvmLinearHP
 
 from .persistence.AlwaysFetchManager import AlwaysFetchManager

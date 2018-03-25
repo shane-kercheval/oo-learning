@@ -8,7 +8,7 @@ from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictRegressionMixin
 
 
-class ElasticNetRegressionHP(HyperParamsBase):
+class ElasticNetRegressorHP(HyperParamsBase):
     """
     See http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ElasticNet.html
     for more information on tuning parameters
@@ -20,7 +20,7 @@ class ElasticNetRegressionHP(HyperParamsBase):
         self._params_dict = dict(alpha=alpha, l1_ratio=l1_ratio)
 
 
-class ElasticNetRegression(SklearnPredictRegressionMixin, ModelWrapperBase):
+class ElasticNetRegressor(SklearnPredictRegressionMixin, ModelWrapperBase):
     """
     fits Linear Regression model on the data
     """

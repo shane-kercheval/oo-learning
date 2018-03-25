@@ -251,7 +251,7 @@ class TunerTests(TimerTestCase):
         train_data_y = train_data.strength
         train_data = train_data.drop(columns='strength')
 
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=LinearRegression(),
+        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=LinearRegressor(),
                                                                       model_transformations=ModelDefaults.transformations_regression(),  # noqa
                                                                       scores=[RmseScore(),
                                                                               MaeScore()],

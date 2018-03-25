@@ -10,7 +10,7 @@ from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 
 
-class LinearRegression(ModelWrapperBase):
+class LinearRegressor(ModelWrapperBase):
     """
     fits Linear Regression model on the data
     """

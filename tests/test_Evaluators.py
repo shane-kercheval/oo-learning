@@ -352,7 +352,7 @@ class EvaluatorTests(TimerTestCase):
         data = TestHelper.get_cement_data()
         target_variable = 'strength'
 
-        fitter = ModelFitter(model=LinearRegression(),
+        fitter = ModelFitter(model=LinearRegressor(),
                              model_transformations=[RemoveColumnsTransformer(columns=['fineagg'])],
                              splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.20),
                              evaluator=RegressionEvaluator(),

@@ -34,7 +34,7 @@ class ResamplerTests(TimerTestCase):
         # test_data = test_data.drop(columns='strength')
 
         resampler = RepeatedCrossValidationResampler(
-            model=LinearRegression(),
+            model=LinearRegressor(),
             model_transformations=ModelDefaults.transformations_regression(),
             scores=[RmseScore(),
                     MaeScore()],

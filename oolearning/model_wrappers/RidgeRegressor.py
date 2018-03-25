@@ -8,7 +8,7 @@ from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictRegressionMixin
 
 
-class RidgeRegressionHP(HyperParamsBase):
+class RidgeRegressorHP(HyperParamsBase):
     """
     See http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Ridge.html for more information
     on tuning parameters
@@ -20,7 +20,7 @@ class RidgeRegressionHP(HyperParamsBase):
         self._params_dict = dict(alpha=alpha, solver=solver)
 
 
-class RidgeRegression(SklearnPredictRegressionMixin, ModelWrapperBase):
+class RidgeRegressor(SklearnPredictRegressionMixin, ModelWrapperBase):
     """
     fits Linear Regression model on the data
     """

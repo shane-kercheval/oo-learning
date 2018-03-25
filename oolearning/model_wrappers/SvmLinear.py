@@ -11,7 +11,7 @@ from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictClassifi
 
 class SvmLinearHP(HyperParamsBase):
     """
-    See http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html for more
+    See http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticClassifier.html for more
     information
     on tuning parameters
     """
@@ -23,7 +23,7 @@ class SvmLinearHP(HyperParamsBase):
         self._params_dict = dict(penalty=penalty, penalty_c=penalty_c, loss=loss)
 
 
-class SvmLinear(SklearnPredictClassifierMixin, ModelWrapperBase):
+class SvmLinearClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
     def __init__(self, fit_intercept=True):
         """
         need to set fit_intercept to False if using One-Hot-Encoding

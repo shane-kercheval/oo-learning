@@ -8,7 +8,7 @@ from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictRegressionMixin
 
 
-class LassoRegressionHP(HyperParamsBase):
+class LassoRegressorHP(HyperParamsBase):
     """
     See http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Lasso.html for more information
     on tuning parameters
@@ -20,7 +20,7 @@ class LassoRegressionHP(HyperParamsBase):
         self._params_dict = dict(alpha=alpha)
 
 
-class LassoRegression(SklearnPredictRegressionMixin, ModelWrapperBase):
+class LassoRegressor(SklearnPredictRegressionMixin, ModelWrapperBase):
     """
     fits Linear Regression model on the data
     """
