@@ -46,6 +46,68 @@ def whatever():
 	pass
 ```
 
+# Available Models
+
+
+## Regression
+
+- LinearRegressor
+- LassoRegressor
+- RidgeRegressor
+- ElasticNetRegressor
+
+#### TBD
+
+- Partial Least Squares
+- Neural Networks
+- Support Vector Machines
+- MARS / FDA
+- k-nearest neighbors
+- trees
+- rules
+- bagged trees
+- random forest
+- boosted trees
+- Cubist
+
+
+
+
+## Two-Class Classification
+
+- DummyClassifier
+- LogisticClassifier
+- RandomForestClassifier
+
+
+#### TBD
+
+- Partial Least Squares
+- Neural Networks
+- Support Vector Machines
+- MARS / FDA
+- k-nearest neighbors
+- trees
+- rules
+- bagged trees
+- random forest
+- boosted trees
+- {LQRM}DA
+- Nearest Shrunken Centroids
+- Naive Bayes
+- C5.0
+- Stacker/Blenders
+
+
+## Multi-Class Classification
+
+- SoftmaxLogisticClassifier
+- RandomForestClassifier
+
+#### TBD
+
+- One vs All
+- One vs One
 
 # Unit Tests
 

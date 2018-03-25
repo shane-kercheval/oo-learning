@@ -37,7 +37,7 @@ class ModelSearcher:
         # global_transformations are transformations you want to apply to all the data, regardless of the
         # type of model. For example, regardless of the model, we want to remove the PassengerId and Name
         # fields. These just don't make sense to use as predictors. On the other hand, perhaps for Logistic
-        # Regression we also want to Center/Scale the data, but for RandomForest we don't. In those cases,
+        # Regression we also want to Center/Scale the data, but for RandomForestClassifier we don't. In those cases,
         # we would want to model specific transformations.
         """
         model_descriptions = [x.description for x in model_infos]

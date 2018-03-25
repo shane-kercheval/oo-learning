@@ -15,14 +15,14 @@ from oolearning.transformers.TransformerBase import TransformerBase
 
 class MockResampler(ResamplerBase):
     """
-    This object mocks the tune_results from a previously ran RandomForest Tuner/Resampler
+    This object mocks the tune_results from a previously ran RandomForestClassifier Tuner/Resampler
     """
     def __init__(self,
                  model: ModelWrapperBase,
                  model_transformations: List[TransformerBase],
                  scores: List[ScoreBase]):
         super().__init__(model=model, model_transformations=model_transformations, scores=scores)
-        # load actual data from a RandomForest Tuner/Resampler (test_ModelTuner_RandomForest_classification)
+        # load actual data from a RandomForestClassifier Tuner/Resampler (test_ModelTuner_RandomForest_classification)
         # so that we can build up the necessary ResamplerResults object based on the saved data.
         file = os.path.join(os.getcwd(), 'tests/data/test_ModelTuner_classification_mock.pkl')
         with open(file, 'rb') as saved_object:

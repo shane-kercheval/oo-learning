@@ -45,7 +45,7 @@ class TunerTests(TimerTestCase):
     @unittest.skip("test takes several minutes")
     def test_ModelTuner_RandomForest_classification(self):
         """
-        I want to keep this to run manually in the future, but running the Tuner/Resampler for a RandomForest
+        I want to keep this to run manually in the future, but running the Tuner/Resampler for a RandomForestClassifier
         model takes several minutes, and is not practical. I've saved the tune_results to a file and use a
         Mock Resampler to Mock out this test.
         """
@@ -66,7 +66,7 @@ class TunerTests(TimerTestCase):
                           ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
 
         cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/cached_test_models/test_ModelTuner_RandomForest_classification')  # noqa
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RandomForest(),
+        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RandomForestClassifier(),
                                                                       model_transformations=transformations,
                                                                       scores=evaluator_list),
                            hyper_param_object=RandomForestHP(),
@@ -315,7 +315,7 @@ class TunerTests(TimerTestCase):
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
         score_list = [AucRocScore(positive_class=1)]
-        resampler = RepeatedCrossValidationResampler(model=RandomForest(),
+        resampler = RepeatedCrossValidationResampler(model=RandomForestClassifier(),
                                                      model_transformations=transformations,
                                                      scores=score_list,
                                                      folds=2,

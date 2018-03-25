@@ -70,7 +70,8 @@ from .model_wrappers.ModelExceptions import ModelCachedAlreadyConfigured
 from .model_wrappers.ModelExceptions import MissingValueError
 from .model_wrappers.ModelExceptions import NegativeValuesFoundError
 from .model_wrappers.ModelWrapperBase import ModelWrapperBase
-from .model_wrappers.RandomForest import RandomForest
+from .model_wrappers.RandomForest import RandomForestRegressor
+from .model_wrappers.RandomForest import RandomForestClassifier
 from .model_wrappers.RandomForest import RandomForestHP
 from .model_wrappers.RidgeRegression import RidgeRegression
 from .model_wrappers.RidgeRegression import RidgeRegressionHP

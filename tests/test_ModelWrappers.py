@@ -474,7 +474,7 @@ class ModelWrapperTests(TimerTestCase):
             assert all(transformed_training_data['Parch_6'] == 0)
 
         # same holdout_ratio as above
-        fitter = ModelFitter(model=RandomForest(),
+        fitter = ModelFitter(model=RandomForestClassifier(),
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.9),
                              evaluator=TwoClassProbabilityEvaluator(
@@ -965,9 +965,7 @@ class ModelWrapperTests(TimerTestCase):
             'max_leaf_nodes': None,
             'min_impurity_decrease': 0,
             'bootstrap': True,
-            'oob_score': False,
-            'n_jobs': -1,
-            'random_state': 42}
+            'oob_score': False}
 
         # ensure passing only `criterion` works
         assert RandomForestHP(criterion='entropy').params_dict == {
@@ -981,9 +979,7 @@ class ModelWrapperTests(TimerTestCase):
             'max_leaf_nodes': None,
             'min_impurity_decrease': 0,
             'bootstrap': True,
-            'oob_score': False,
-            'n_jobs': -1,
-            'random_state': 42}
+            'oob_score': False}
 
         assert RandomForestHP(criterion='gini', num_features=101).params_dict == {
             'n_estimators': 500,
@@ -996,9 +992,7 @@ class ModelWrapperTests(TimerTestCase):
             'max_leaf_nodes': None,
             'min_impurity_decrease': 0,
             'bootstrap': True,
-            'oob_score': False,
-            'n_jobs': -1,
-            'random_state': 42}
+            'oob_score': False}
 
     def test_RandomForestHP_regression(self):
         # ensure n_features should be passed in OR all others, but not both
@@ -1023,9 +1017,7 @@ class ModelWrapperTests(TimerTestCase):
             'max_leaf_nodes': None,
             'min_impurity_decrease': 0,
             'bootstrap': True,
-            'oob_score': False,
-            'n_jobs': -1,
-            'random_state': 42}
+            'oob_score': False}
 
         # ensure passing only `criterion` works
         assert RandomForestHP(criterion='MAE').params_dict == {
@@ -1039,9 +1031,7 @@ class ModelWrapperTests(TimerTestCase):
             'max_leaf_nodes': None,
             'min_impurity_decrease': 0,
             'bootstrap': True,
-            'oob_score': False,
-            'n_jobs': -1,
-            'random_state': 42}
+            'oob_score': False}
 
         assert RandomForestHP(criterion='MSE', num_features=101).params_dict == {
             'n_estimators': 500,
@@ -1054,9 +1044,7 @@ class ModelWrapperTests(TimerTestCase):
             'max_leaf_nodes': None,
             'min_impurity_decrease': 0,
             'bootstrap': True,
-            'oob_score': False,
-            'n_jobs': -1,
-            'random_state': 42}
+            'oob_score': False}
 
     def test_RandomForestMW_classification(self):
         data = TestHelper.get_titanic_data()
@@ -1066,7 +1054,7 @@ class ModelWrapperTests(TimerTestCase):
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
         cache_directory = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_RandomForestMW_classification')  # noqa
         # test with custom threshold of 0.5
-        fitter = ModelFitter(model=RandomForest(),
+        fitter = ModelFitter(model=RandomForestClassifier(),
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=TwoClassProbabilityEvaluator(
@@ -1094,9 +1082,7 @@ class ModelWrapperTests(TimerTestCase):
                                                          'max_leaf_nodes': None,
                                                          'min_impurity_decrease': 0,
                                                          'bootstrap': True,
-                                                         'oob_score': False,
-                                                         'n_jobs': -1,
-                                                         'random_state': 42}
+                                                         'oob_score': False}
 
         assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9977638155314692, 'AUC Precision/Recall': 0.9963857279946995, 'Kappa': 0.9642058165548097, 'F1 Score': 0.9777777777777779, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.967032967032967, 'True Negative Rate': 0.9931662870159453, 'False Positive Rate': 0.00683371298405467, 'False Negative Rate': 0.03296703296703297, 'Positive Predictive Value': 0.9887640449438202, 'Negative Predictive Value': 0.9797752808988764, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8198945981554676, 'AUC Precision/Recall': 0.7693830218733662, 'Kappa': 0.581636060100167, 'F1 Score': 0.736842105263158, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8636363636363636, 'False Positive Rate': 0.13636363636363635, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.765625, 'Negative Predictive Value': 0.8260869565217391, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
@@ -1111,7 +1097,7 @@ class ModelWrapperTests(TimerTestCase):
         cache_directory = TestHelper.ensure_test_directory(
             'data/test_ModelWrappers/cached_test_models/test_RandomForestMW_classification')  # noqa
         # test with custom threshold of 0.5
-        fitter = ModelFitter(model=RandomForest(),
+        fitter = ModelFitter(model=RandomForestClassifier(),
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=TwoClassProbabilityEvaluator(
@@ -1124,8 +1110,7 @@ class ModelWrapperTests(TimerTestCase):
         assert not os.path.isdir(fitter._persistence_manager._cache_directory)
         fitter.fit(data=data, target_variable='Survived', hyper_params=RandomForestHP(criterion='gini',
                                                                                       max_features='auto',
-                                                                                      n_estimators=10,
-                                                                                      n_jobs=2))
+                                                                                      n_estimators=10))
         assert os.path.isfile(fitter._persistence_manager._cache_path)
 
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
@@ -1142,9 +1127,7 @@ class ModelWrapperTests(TimerTestCase):
                                                          'max_leaf_nodes': None,
                                                          'min_impurity_decrease': 0,
                                                          'bootstrap': True,
-                                                         'oob_score': False,
-                                                         'n_jobs': 2,
-                                                         'random_state': 42}
+                                                         'oob_score': False}
 
         assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9962785885337139, 'AUC Precision/Recall': 0.9941773735463619, 'Kappa': 0.9491855583543242, 'F1 Score': 0.9683426443202979, 'Two-Class Accuracy': 0.976123595505618, 'Error Rate': 0.023876404494382022, 'True Positive Rate': 0.9523809523809523, 'True Negative Rate': 0.9908883826879271, 'False Positive Rate': 0.009111617312072893, 'False Negative Rate': 0.047619047619047616, 'Positive Predictive Value': 0.9848484848484849, 'Negative Predictive Value': 0.9709821428571429, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.83399209486166, 'AUC Precision/Recall': 0.756480622334744, 'Kappa': 0.5503428610224728, 'F1 Score': 0.7086614173228347, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.6521739130434783, 'True Negative Rate': 0.8818181818181818, 'False Positive Rate': 0.11818181818181818, 'False Negative Rate': 0.34782608695652173, 'Positive Predictive Value': 0.7758620689655172, 'Negative Predictive Value': 0.8016528925619835, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
@@ -1162,7 +1145,7 @@ class ModelWrapperTests(TimerTestCase):
                            ImputationTransformer(),
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
         # test with custom threshold of 0.5
-        fitter = ModelFitter(model=RandomForest(),
+        fitter = ModelFitter(model=RandomForestClassifier(),
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=TwoClassProbabilityEvaluator(
@@ -1185,9 +1168,7 @@ class ModelWrapperTests(TimerTestCase):
                                                          'max_leaf_nodes': None,
                                                          'min_impurity_decrease': 0,
                                                          'bootstrap': True,
-                                                         'oob_score': False,
-                                                         'n_jobs': -1,
-                                                         'random_state': 42}
+                                                         'oob_score': False}
 
         assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9977638155314692, 'AUC Precision/Recall': 0.9963857279946995, 'Kappa': 0.9642058165548097, 'F1 Score': 0.9777777777777779, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.967032967032967, 'True Negative Rate': 0.9931662870159453, 'False Positive Rate': 0.00683371298405467, 'False Negative Rate': 0.03296703296703297, 'Positive Predictive Value': 0.9887640449438202, 'Negative Predictive Value': 0.9797752808988764, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8198945981554676, 'AUC Precision/Recall': 0.7693830218733662, 'Kappa': 0.581636060100167, 'F1 Score': 0.736842105263158, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8636363636363636, 'False Positive Rate': 0.13636363636363635, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.765625, 'Negative Predictive Value': 0.8260869565217391, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
@@ -1218,7 +1199,7 @@ class ModelWrapperTests(TimerTestCase):
                           ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
 
         # test with custom threshold of 0.5
-        fitter = ModelFitter(model=RandomForest(),
+        fitter = ModelFitter(model=RandomForestClassifier(),
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              scores=score_list)
@@ -1240,7 +1221,7 @@ class ModelWrapperTests(TimerTestCase):
         transformations = [ImputationTransformer(),
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
-        fitter = ModelFitter(model=RandomForest(),
+        fitter = ModelFitter(model=RandomForestRegressor(),
                              model_transformations=transformations,
                              splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=RegressionEvaluator())
@@ -1264,9 +1245,7 @@ class ModelWrapperTests(TimerTestCase):
                                                          'max_leaf_nodes': None,
                                                          'min_impurity_decrease': 0,
                                                          'bootstrap': True,
-                                                         'oob_score': False,
-                                                         'n_jobs': -1,
-                                                         'random_state': 42}
+                                                         'oob_score': False}
 
         keys = fitter.training_evaluator.all_quality_metrics.keys()
         expected_values = {'Mean Absolute Error (MAE)': 1.6050794902912628, 'Mean Squared Error (MSE)': 6.946366367415049, 'Root Mean Squared Error (RMSE)': 2.6355960174911193, 'RMSE to Standard Deviation of Target': 0.15718726202422936}  # noqa
@@ -1278,7 +1257,7 @@ class ModelWrapperTests(TimerTestCase):
     def test_RandomForestMW_classification_multiclass(self):
         data = TestHelper.get_iris_data()
         target_variable = 'species'
-        fitter = ModelFitter(model=RandomForest(),
+        fitter = ModelFitter(model=RandomForestClassifier(),
                              model_transformations=None,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                              evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
@@ -1301,9 +1280,7 @@ class ModelWrapperTests(TimerTestCase):
                                                          'max_leaf_nodes': None,
                                                          'min_impurity_decrease': 0,
                                                          'bootstrap': True,
-                                                         'oob_score': False,
-                                                         'n_jobs': -1,
-                                                         'random_state': 42}
+                                                         'oob_score': False}
 
         assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
         assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.841995841995842, 'Accuracy': 0.8947368421052632, 'Error Rate': 0.10526315789473684, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa

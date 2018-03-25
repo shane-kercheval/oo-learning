@@ -168,7 +168,7 @@ class ResamplerTests(TimerTestCase):
         score_list = [RmseScore(), MaeScore()]
         transformations = [RemoveColumnsTransformer(['coarseagg', 'fineagg']), ImputationTransformer(), DummyEncodeTransformer()]  # noqa
         resampler = RepeatedCrossValidationResampler(
-            model=RandomForest(),
+            model=RandomForestClassifier(),
             model_transformations=transformations,
             scores=score_list,
             folds=5,
@@ -267,7 +267,7 @@ class ResamplerTests(TimerTestCase):
 
         cache_directory = TestHelper.ensure_test_directory('data/test_Resamplers/cached_test_models/test_resamplers_RandomForest_classification')  # noqa
         resampler = RepeatedCrossValidationResampler(
-            model=RandomForest(),
+            model=RandomForestClassifier(),
             model_transformations=transformations,
             scores=score_list,
             persistence_manager=LocalCacheManager(cache_directory=cache_directory),
@@ -287,7 +287,7 @@ class ResamplerTests(TimerTestCase):
         assert resampler.results.num_resamples == 25
 
         # noinspection SpellCheckingInspection
-        expected_file = 'repeat{0}_fold{1}_RandomForest_n_estimators500_criteriongini_max_featuresNone_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_min_impurity_decrease0_bootstrapTrue_oob_scoreFalse_n_jobs-1_random_state42.pkl'  # noqa
+        expected_file = 'repeat{0}_fold{1}_RandomForestClassifier_n_estimators500_criteriongini_max_featuresNone_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_min_impurity_decrease0_bootstrapTrue_oob_scoreFalse.pkl'  # noqa
         for fold_index in range(5):
             for repeat_index in range(5):
                 assert os.path.isfile(os.path.join(cache_directory,
@@ -299,20 +299,20 @@ class ResamplerTests(TimerTestCase):
         assert all(resampler.results.cross_validation_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])  # noqa
 
         # metric_means and metric_standard_deviations comes from cross_validation_scores, so testing both
-        assert isclose(resampler.results.metric_means['kappa'], 0.5870121859420598)
-        assert isclose(resampler.results.metric_means['sensitivity'], 0.7216194157729687)
-        assert isclose(resampler.results.metric_means['specificity'], 0.8622628055839736)
-        assert isclose(resampler.results.metric_means['error_rate'], 0.19174428967886137)
+        assert isclose(resampler.results.metric_means['kappa'], 0.586495320545703)
+        assert isclose(resampler.results.metric_means['sensitivity'], 0.721899136052689)
+        assert isclose(resampler.results.metric_means['specificity'], 0.8617441563168404)
+        assert isclose(resampler.results.metric_means['error_rate'], 0.192053148900336)
 
-        assert isclose(resampler.results.metric_standard_deviations['kappa'], 0.0653653528731703)
-        assert isclose(resampler.results.metric_standard_deviations['sensitivity'], 0.06316345649148118)
-        assert isclose(resampler.results.metric_standard_deviations['specificity'], 0.03554555534885417)
-        assert isclose(resampler.results.metric_standard_deviations['error_rate'], 0.029647503460148796)
+        assert isclose(resampler.results.metric_standard_deviations['kappa'], 0.06833478821655113)
+        assert isclose(resampler.results.metric_standard_deviations['sensitivity'], 0.06706830388930413)
+        assert isclose(resampler.results.metric_standard_deviations['specificity'], 0.03664756028501139)
+        assert isclose(resampler.results.metric_standard_deviations['error_rate'], 0.031189357324296424)
 
-        assert isclose(resampler.results.metric_coefficient_of_variation['kappa'], round(0.0653653528731703 / 0.5870121859420598, 2))  # noqa
-        assert isclose(resampler.results.metric_coefficient_of_variation['sensitivity'], round(0.06316345649148118 / 0.7216194157729687, 2))  # noqa
-        assert isclose(resampler.results.metric_coefficient_of_variation['specificity'], round(0.03554555534885417 / 0.8622628055839736, 2))  # noqa
-        assert isclose(resampler.results.metric_coefficient_of_variation['error_rate'], round(0.029647503460148796 / 0.19174428967886137, 2))  # noqa
+        assert isclose(resampler.results.metric_coefficient_of_variation['kappa'], round(0.06833478821655113 / 0.586495320545703, 2))  # noqa
+        assert isclose(resampler.results.metric_coefficient_of_variation['sensitivity'], round(0.06706830388930413 / 0.721899136052689, 2))  # noqa
+        assert isclose(resampler.results.metric_coefficient_of_variation['specificity'], round(0.03664756028501139 / 0.8617441563168404, 2))  # noqa
+        assert isclose(resampler.results.metric_coefficient_of_variation['error_rate'], round(0.031189357324296424 / 0.192053148900336, 2))  # noqa
 
         plt.gcf().clear()
         TestHelper.check_plot('data/test_Resamplers/test_resamplers_RandomForest_classification_cv_boxplot.png',  # noqa
@@ -337,7 +337,7 @@ class ResamplerTests(TimerTestCase):
 
         score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
         resampler = RepeatedCrossValidationResampler(
-            model=RandomForest(),
+            model=RandomForestClassifier(),
             model_transformations=transformations,
             scores=score_list,
             folds=5,
@@ -369,7 +369,7 @@ class ResamplerTests(TimerTestCase):
 
         score_list = [AucRocScore(positive_class=1)]
         resampler = RepeatedCrossValidationResampler(
-            model=RandomForest(),
+            model=RandomForestClassifier(),
             model_transformations=transformations,
             scores=score_list,
             folds=2,
