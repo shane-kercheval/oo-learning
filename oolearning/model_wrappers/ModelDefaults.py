@@ -1,28 +1,66 @@
 from typing import List
 
+from oolearning.model_wrappers.LinearRegressor import LinearRegressor
 from oolearning.enums.CategoricalEncoding import CategoricalEncoding
+from oolearning.model_processors.ModelInfo import ModelInfo
+from oolearning.transformers.CenterScaleTransformer import CenterScaleTransformer
 from oolearning.transformers.DummyEncodeTransformer import DummyEncodeTransformer
 from oolearning.transformers.ImputationTransformer import ImputationTransformer
+from oolearning.transformers.PolynomialFeaturesTransformer import PolynomialFeaturesTransformer
+from oolearning.transformers.RemoveCorrelationsTransformer import RemoveCorrelationsTransformer
+from oolearning.transformers.RemoveNZPTransformer import RemoveNZPTransformer
 from oolearning.transformers.TransformerBase import TransformerBase
 
 
-# noinspection PyTypeChecker
+# noinspection PyTypeChecker,PyPep8Naming
 class ModelDefaults:
 
     ###################################################
-    # Linear Regression
+    # Regression Models
     ###################################################
     @staticmethod
-    def hyper_params_regression() -> dict:
-        return None  # no hyper-parameters for linear regression
+    def get_LinearRegressor() -> ModelInfo:
+        return ModelInfo(description='linear_regression',
+                         model_wrapper=LinearRegressor(),
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=[ImputationTransformer(),
+                                          DummyEncodeTransformer(CategoricalEncoding.DUMMY),
+                                          CenterScaleTransformer(),
+                                          RemoveNZPTransformer(),
+                                          RemoveCorrelationsTransformer()],
+                         hyper_params=None,
+                         hyper_params_grid=None)
 
     @staticmethod
-    def transformations_regression() -> List[TransformerBase]:
-        return [ImputationTransformer(),
-                DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
+    def get_LinearRegressor_polynomial(degrees: int) -> ModelInfo:
+        return ModelInfo(description='linear_regression_polynomial_' + str(degrees),
+                         model_wrapper=LinearRegressor(),
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=[ImputationTransformer(),
+                                          DummyEncodeTransformer(CategoricalEncoding.DUMMY),
+                                          CenterScaleTransformer(),
+                                          RemoveNZPTransformer(),
+                                          RemoveCorrelationsTransformer(),
+                                          PolynomialFeaturesTransformer(degrees=degrees)],
+                         hyper_params=None,
+                         hyper_params_grid=None)
+
+    @property
+    def regression_models(self):
+        """
+        returns a list of ModelInfos containing all available regression models.
+        :return:
+        """
+        return [ModelDefaults.get_LinearRegressor(),
+                ModelDefaults.get_LinearRegressor_polynomial(degrees=2),
+                ModelDefaults.get_LinearRegressor_polynomial(degrees=3)]
 
     ###################################################
-    # Logistic Regression
+    # Classification Models
+    ###################################################
+
+    ###################################################
+    # TODO: CONVERT
     ###################################################
     @staticmethod
     def hyper_params_logistic() -> dict:

@@ -45,9 +45,9 @@ class TunerTests(TimerTestCase):
     @unittest.skip("test takes several minutes")
     def test_ModelTuner_RandomForest_classification(self):
         """
-        I want to keep this to run manually in the future, but running the Tuner/Resampler for a RandomForestClassifier
-        model takes several minutes, and is not practical. I've saved the tune_results to a file and use a
-        Mock Resampler to Mock out this test.
+        I want to keep this to run manually in the future, but running the Tuner/Resampler for a
+        RandomForestClassifier model takes several minutes, and is not practical. I've saved the tune_results
+        to a file and use a Mock Resampler to Mock out this test.
         """
         data = TestHelper.get_titanic_data()
 
@@ -139,8 +139,7 @@ class TunerTests(TimerTestCase):
         tuner = ModelTuner(resampler=MockResampler(model=MockClassificationModelWrapper(data_y=data.Survived),
                                                    model_transformations=transformations,
                                                    scores=evaluators),
-                           hyper_param_object=MockHyperParams(),
-                           )
+                           hyper_param_object=MockHyperParams())
 
         columns = TransformerPipeline.get_expected_columns(transformations=transformations, data=train_data)
         assert len(columns) == 24
@@ -252,7 +251,8 @@ class TunerTests(TimerTestCase):
         train_data = train_data.drop(columns='strength')
 
         tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=LinearRegressor(),
-                                                                      model_transformations=ModelDefaults.transformations_regression(),  # noqa
+                                                                      model_transformations=[ImputationTransformer(),  # noqa
+                                                                                             DummyEncodeTransformer(CategoricalEncoding.DUMMY)],  # noqa
                                                                       scores=[RmseScore(),
                                                                               MaeScore()],
                                                                       folds=5,

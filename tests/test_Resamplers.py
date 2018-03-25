@@ -35,7 +35,8 @@ class ResamplerTests(TimerTestCase):
 
         resampler = RepeatedCrossValidationResampler(
             model=LinearRegressor(),
-            model_transformations=ModelDefaults.transformations_regression(),
+            model_transformations=[ImputationTransformer(),
+                                   DummyEncodeTransformer(CategoricalEncoding.DUMMY)],
             scores=[RmseScore(),
                     MaeScore()],
             folds=5,
@@ -82,7 +83,8 @@ class ResamplerTests(TimerTestCase):
 
         resampler = RepeatedCrossValidationResampler(
             model=MockRegressionModelWrapper(data_y=data.strength),
-            model_transformations=ModelDefaults.transformations_regression(),
+            model_transformations=[ImputationTransformer(),
+                                   DummyEncodeTransformer(CategoricalEncoding.DUMMY)],
             scores=[RmseScore(),
                     MaeScore()],
             folds=5,

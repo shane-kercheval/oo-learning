@@ -149,6 +149,62 @@ class TransformerTests(TimerTestCase):
         assert all(test_set.iloc[indexes_not_null]['total_bedrooms'] ==
                    transformed_test_data.iloc[indexes_not_null]['total_bedrooms'])
 
+    def test_transformations_PolynomialFeaturesTransformer(self):
+        data = TestHelper.get_insurance_data()
+        target_variable = 'expenses'
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_regression(data, target_variable)
+        transformer = PolynomialFeaturesTransformer(degrees=2)
+        transformer.fit(data_x=training_set)
+        # "fitting" the data should not actually rely on the training data (i.e. it is not fitting the data,
+        # capturing which columns to transform, so the transformed training data and test data should only
+        # on the data in their own set
+        assert transformer.state == {}  # nothing to retain
+        new_train_data = transformer.transform(data_x=training_set)
+        # check that indexes are retained
+        assert all(new_train_data.index == training_set.index)
+        assert all(new_train_data.columns.values == ['age', 'bmi', 'children', 'age^2', 'age bmi',
+                                                     'age children', 'bmi^2', 'bmi children', 'children^2',
+                                                     'sex', 'smoker', 'region'])
+        # original columns
+        assert all(new_train_data.age == training_set.age)
+        assert all(new_train_data.bmi == training_set.bmi)
+        assert all(new_train_data.children == training_set.children)
+        assert all(new_train_data.sex == training_set.sex)
+        assert all(new_train_data.smoker == training_set.smoker)
+        assert all(new_train_data.region == training_set.region)
+        # squared columns
+        assert all(new_train_data['age^2'] == training_set.age**2)
+        assert all(new_train_data['bmi^2'] == training_set.bmi ** 2)
+        assert all(new_train_data['children^2'] == training_set.children ** 2)
+        # interaction affects
+        assert all(new_train_data['age bmi'] == training_set.age * training_set.bmi)
+        assert all(new_train_data['age children'] == training_set.age * training_set.children)
+        assert all(new_train_data['bmi children'] == training_set.bmi * training_set.children)
+
+        # test transforming a new unseen dataset (shouldn't matter, again, results are not dependent on
+        # training set)
+        new_test_data = transformer.transform(data_x=test_set)
+        # check that indexes are retained
+        assert all(new_test_data.index == test_set.index)
+        assert all(new_test_data.columns.values == ['age', 'bmi', 'children', 'age^2', 'age bmi',
+                                                    'age children', 'bmi^2', 'bmi children', 'children^2',
+                                                    'sex', 'smoker', 'region'])
+        # original columns
+        assert all(new_test_data.age == test_set.age)
+        assert all(new_test_data.bmi == test_set.bmi)
+        assert all(new_test_data.children == test_set.children)
+        assert all(new_test_data.sex == test_set.sex)
+        assert all(new_test_data.smoker == test_set.smoker)
+        assert all(new_test_data.region == test_set.region)
+        # squared columns
+        assert all(new_test_data['age^2'] == test_set.age**2)
+        assert all(new_test_data['bmi^2'] == test_set.bmi ** 2)
+        assert all(new_test_data['children^2'] == test_set.children ** 2)
+        # interaction affects
+        assert all(new_test_data['age bmi'] == test_set.age * test_set.bmi)
+        assert all(new_test_data['age children'] == test_set.age * test_set.children)
+        assert all(new_test_data['bmi children'] == test_set.bmi * test_set.children)
+
     def test_transformations_DummyEncodeTransformer(self):
         data = TestHelper.get_insurance_data()
 
