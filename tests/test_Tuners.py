@@ -27,9 +27,13 @@ class TunerTests(TimerTestCase):
                          'max_features': [3, 6, 11],
                          'n_estimators': [10, 100, 500],
                          'min_samples_leaf': [1, 50, 100]}
-        params_dict = ModelDefaults.hyper_params_random_forest_classification(number_of_features=11)
+        params_dict = dict(criterion='gini',
+                           max_features=[int(round(11 ** (1 / 2.0))),
+                                         int(round(11 / 2)),
+                                         11],
+                           n_estimators=[10, 100, 500],
+                           min_samples_leaf=[1, 50, 100])
         assert params_dict == expected_dict
-
         grid = HyperParamsGrid(params_dict=params_dict)
         assert grid.params_grid.columns.values.tolist() == ['criterion', 'max_features', 'n_estimators', 'min_samples_leaf']  # noqa
         assert grid.params_grid.shape[0] == 3**3
@@ -73,7 +77,12 @@ class TunerTests(TimerTestCase):
                            persistence_manager=LocalCacheManager(cache_directory=cache_directory))
 
         columns = TransformerPipeline.get_expected_columns(transformations=transformations, data=train_data)
-        params_dict = ModelDefaults.hyper_params_random_forest_classification(number_of_features=len(columns))
+        params_dict = dict(criterion='gini',
+                           max_features=[int(round(len(columns) ** (1 / 2.0))),
+                                         int(round(len(columns) / 2)),
+                                         len(columns)],
+                           n_estimators=[10, 100, 500],
+                           min_samples_leaf=[1, 50, 100])
         grid = HyperParamsGrid(params_dict=params_dict)
 
         # import time
@@ -143,7 +152,12 @@ class TunerTests(TimerTestCase):
 
         columns = TransformerPipeline.get_expected_columns(transformations=transformations, data=train_data)
         assert len(columns) == 24
-        params_dict = ModelDefaults.hyper_params_random_forest_classification(number_of_features=len(columns))
+        params_dict = dict(criterion='gini',
+                           max_features=[int(round(len(columns) ** (1 / 2.0))),
+                                         int(round(len(columns) / 2)),
+                                         len(columns)],
+                           n_estimators=[10, 100, 500],
+                           min_samples_leaf=[1, 50, 100])
         grid = HyperParamsGrid(params_dict=params_dict)
 
         assert len(grid.params_grid == 27)

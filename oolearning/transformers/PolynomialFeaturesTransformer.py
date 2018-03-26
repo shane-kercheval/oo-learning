@@ -22,9 +22,8 @@ class PolynomialFeaturesTransformer(TransformerBase):
         # automatically adds the intercept column.
         poly_features = PolynomialFeatures(degree=self._degrees, include_bias=False)
 
-        numeric_features, categorical_features = OOLearningHelpers.get_columns_by_type(
-            data_dtypes=data_x.dtypes,  # noqa
-            target_variable=None)
+        numeric_features, categorical_features = OOLearningHelpers.get_columns_by_type(data_dtypes=data_x.dtypes,  # noqa
+                                                                                       target_variable=None)
         poly_features.fit(X=data_x[numeric_features])
         new_features = poly_features.get_feature_names(numeric_features)
         transformed_x = pd.DataFrame(poly_features.transform(X=data_x[numeric_features]),

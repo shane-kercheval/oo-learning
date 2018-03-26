@@ -3,7 +3,7 @@ import pandas as pd
 from oolearning.transformers.TransformerBase import TransformerBase
 
 
-class RemoveNZPTransformer(TransformerBase):
+class RemoveNZVTransformer(TransformerBase):
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         raise NotImplementedError()
 

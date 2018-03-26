@@ -1,15 +1,25 @@
-from typing import List
+from typing import Union
 
-from oolearning.model_wrappers.LinearRegressor import LinearRegressor
 from oolearning.enums.CategoricalEncoding import CategoricalEncoding
+from oolearning.enums.DummyClassifierStrategy import DummyClassifierStrategy
 from oolearning.model_processors.ModelInfo import ModelInfo
+from oolearning.model_wrappers.DummyClassifier import DummyClassifier
+from oolearning.model_wrappers.ElasticNetRegressor import ElasticNetRegressor, ElasticNetRegressorHP
+from oolearning.model_wrappers.HyperParamsGrid import HyperParamsGrid
+from oolearning.model_wrappers.LassoRegressor import LassoRegressor, LassoRegressorHP
+from oolearning.model_wrappers.LinearRegressor import LinearRegressor
+from oolearning.model_wrappers.LogisticClassifier import LogisticClassifier, LogisticClassifierHP
+from oolearning.model_wrappers.RandomForest import RandomForestRegressor, RandomForestHP, \
+    RandomForestClassifier
+from oolearning.model_wrappers.RidgeRegressor import RidgeRegressor, RidgeRegressorHP
+from oolearning.model_wrappers.SoftmaxLogisticClassifier import SoftmaxLogisticClassifier, SoftmaxLogisticHP
+from oolearning.model_wrappers.SvmLinear import SvmLinearClassifier, SvmLinearHP
 from oolearning.transformers.CenterScaleTransformer import CenterScaleTransformer
 from oolearning.transformers.DummyEncodeTransformer import DummyEncodeTransformer
 from oolearning.transformers.ImputationTransformer import ImputationTransformer
 from oolearning.transformers.PolynomialFeaturesTransformer import PolynomialFeaturesTransformer
 from oolearning.transformers.RemoveCorrelationsTransformer import RemoveCorrelationsTransformer
-from oolearning.transformers.RemoveNZPTransformer import RemoveNZPTransformer
-from oolearning.transformers.TransformerBase import TransformerBase
+from oolearning.transformers.RemoveNZVTransformer import RemoveNZVTransformer
 
 
 # noinspection PyTypeChecker,PyPep8Naming
@@ -19,76 +29,217 @@ class ModelDefaults:
     # Regression Models
     ###################################################
     @staticmethod
-    def get_LinearRegressor() -> ModelInfo:
-        return ModelInfo(description='linear_regression',
-                         model_wrapper=LinearRegressor(),
-                         # TODO: fill out rest of recommended transformations, verify order
-                         transformations=[ImputationTransformer(),
-                                          DummyEncodeTransformer(CategoricalEncoding.DUMMY),
-                                          CenterScaleTransformer(),
-                                          RemoveNZPTransformer(),
-                                          RemoveCorrelationsTransformer()],
+    def get_LinearRegressor(degrees: Union[int, None]=None) -> ModelInfo:
+        model_wrapper = LinearRegressor()
+        description = type(model_wrapper).__name__
+        # TODO: fill out rest of recommended transformations, verify order
+        transformations = [ImputationTransformer(),
+                           CenterScaleTransformer(),
+                           RemoveNZVTransformer(),
+                           RemoveCorrelationsTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
+
+        if degrees is not None:
+            description = '{0}_{1}_{2}'.format(description, 'polynomial', str(degrees))
+            transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
+
+        return ModelInfo(description=description,
+                         model_wrapper=model_wrapper,
+                         transformations=transformations,
                          hyper_params=None,
                          hyper_params_grid=None)
 
     @staticmethod
-    def get_LinearRegressor_polynomial(degrees: int) -> ModelInfo:
-        return ModelInfo(description='linear_regression_polynomial_' + str(degrees),
-                         model_wrapper=LinearRegressor(),
-                         # TODO: fill out rest of recommended transformations, verify order
-                         transformations=[ImputationTransformer(),
-                                          DummyEncodeTransformer(CategoricalEncoding.DUMMY),
-                                          CenterScaleTransformer(),
-                                          RemoveNZPTransformer(),
-                                          RemoveCorrelationsTransformer(),
-                                          PolynomialFeaturesTransformer(degrees=degrees)],
-                         hyper_params=None,
-                         hyper_params_grid=None)
+    def get_RidgeRegressor(degrees: Union[int, None]=None) -> ModelInfo:
+        return ModelDefaults._ridge_lasso_elastic_helper(model_wrapper=RidgeRegressor(),
+                                                         hyper_params=RidgeRegressorHP(),
+                                                         degrees=degrees,
+                                                         params_dict={'alpha': [0, 0.01, 0.1, 1]})
 
-    @property
-    def regression_models(self):
+    @staticmethod
+    def get_LassoRegressor(degrees: Union[int, None] = None) -> ModelInfo:
+        return ModelDefaults._ridge_lasso_elastic_helper(model_wrapper=LassoRegressor(),
+                                                         hyper_params=LassoRegressorHP(),
+                                                         degrees=degrees,
+                                                         params_dict={'alpha': [0, 0.01, 0.1, 1]})
+
+    @staticmethod
+    def get_ElasticNetRegressor(degrees: Union[int, None] = None) -> ModelInfo:
+        return ModelDefaults._ridge_lasso_elastic_helper(model_wrapper=ElasticNetRegressor(),
+                                                         hyper_params=ElasticNetRegressorHP(),
+                                                         degrees=degrees,
+                                                         params_dict={'alpha': [0.01, 0.1, 1],
+                                                                      'l1_ratio': [0, 0.5, 1]})
+
+    @staticmethod
+    def get_RandomForestRegressor(number_of_features: int) -> ModelInfo:
+        model_wrapper = RandomForestRegressor()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model_wrapper=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         #  https://stackoverflow.com/questions/24715230/can-sklearn-random-forest-directly-handle-categorical-features?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+                         transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                         hyper_params=RandomForestHP(),
+                         hyper_params_grid=dict(criterion='gini',
+                                                max_features=[int(round(number_of_features**(1/2.0))),
+                                                              int(round(number_of_features/2)),
+                                                              number_of_features],
+                                                n_estimators=[10, 100, 500],
+                                                min_samples_leaf=[1, 50, 100]))
+
+    @staticmethod
+    def get_regression_models(number_of_features):
         """
         returns a list of ModelInfos containing all available regression models.
         :return:
         """
         return [ModelDefaults.get_LinearRegressor(),
-                ModelDefaults.get_LinearRegressor_polynomial(degrees=2),
-                ModelDefaults.get_LinearRegressor_polynomial(degrees=3)]
+                ModelDefaults.get_LinearRegressor(degrees=2),
+                ModelDefaults.get_LinearRegressor(degrees=3),
+                ModelDefaults.get_RidgeRegressor(),
+                ModelDefaults.get_RidgeRegressor(degrees=2),
+                ModelDefaults.get_RidgeRegressor(degrees=3),
+                ModelDefaults.get_LassoRegressor(),
+                ModelDefaults.get_LassoRegressor(degrees=2),
+                ModelDefaults.get_LassoRegressor(degrees=3),
+                ModelDefaults.get_ElasticNetRegressor(),
+                ModelDefaults.get_ElasticNetRegressor(degrees=2),
+                ModelDefaults.get_ElasticNetRegressor(degrees=3),
+                ModelDefaults.get_RandomForestRegressor(number_of_features=number_of_features)]
+
+    @staticmethod
+    def _ridge_lasso_elastic_helper(model_wrapper, hyper_params, degrees, params_dict):
+        description = type(model_wrapper).__name__
+        # TODO: fill out rest of recommended transformations, verify order
+        transformations = [ImputationTransformer(),
+                           CenterScaleTransformer(),
+                           RemoveNZVTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
+
+        if degrees is not None:
+            description = '{0}_{1}_{2}'.format(description, 'polynomial', str(degrees))
+            transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
+
+        return ModelInfo(description=description,
+                         model_wrapper=model_wrapper,
+                         transformations=transformations,
+                         hyper_params=hyper_params,
+                         hyper_params_grid=HyperParamsGrid(params_dict=params_dict))
 
     ###################################################
     # Classification Models
     ###################################################
+    @staticmethod
+    def get_DummyClassifier(strategy: DummyClassifierStrategy) -> ModelInfo:
+        model_wrapper = DummyClassifier(strategy=strategy)
+        return ModelInfo(description='{0}_{1}'.format(type(model_wrapper).__name__, strategy.value),
+                         model_wrapper=model_wrapper,
+                         transformations=None,
+                         hyper_params=None,
+                         hyper_params_grid=None)
+
+    @staticmethod
+    def get_LogisticClassifier(degrees: Union[int, None]=None) -> ModelInfo:
+
+        model_wrapper = LogisticClassifier()
+        description = type(model_wrapper).__name__
+        # TODO: fill out rest of recommended transformations, verify order
+        transformations = [ImputationTransformer(),
+                           CenterScaleTransformer(),
+                           RemoveNZVTransformer(),
+                           RemoveCorrelationsTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
+
+        if degrees is not None:
+            description = '{0}_{1}_{2}'.format(description, 'polynomial', str(degrees))
+            transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
+
+        return ModelInfo(description=description,
+                         model_wrapper=model_wrapper,
+                         transformations=transformations,
+                         hyper_params=LogisticClassifierHP(),
+                         hyper_params_grid={'penalty': ['l1', 'l2'],
+                                            'C': [0.001, 0.01, 0.1, 1, 100, 1000]})
+
+    @staticmethod
+    def get_RandomForestClassifier(number_of_features: int) -> ModelInfo:
+        model_wrapper = RandomForestClassifier()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model_wrapper=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=[
+                             # https://stackoverflow.com/questions/24715230/can-sklearn-random-forest-directly-handle-categorical-features?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+                             DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                         hyper_params=RandomForestHP(),
+                         hyper_params_grid=dict(criterion='gini',
+                                                max_features=[int(round(number_of_features ** (1 / 2.0))),
+                                                              int(round(number_of_features / 2)),
+                                                              number_of_features],
+                                                n_estimators=[10, 100, 500],
+                                                min_samples_leaf=[1, 50, 100]))
+
+    @staticmethod
+    def get_SvmLinearClassifier() -> ModelInfo:
+        model_wrapper = SvmLinearClassifier()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model_wrapper=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=[ImputationTransformer(),
+                                          CenterScaleTransformer(),
+                                          DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                         hyper_params=SvmLinearHP(),
+                         hyper_params_grid={'penalty': ['l1', 'l2'],
+                                            'penalty_c': [0.001, 0.01, 0.1, 1, 100, 1000]})
+
+    @staticmethod
+    def get_twoclass_classification_models(number_of_features):
+        """
+        returns a list of ModelInfos containing all available classification models.
+        :return:
+        """
+        return [ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.MOST_FREQUENT),
+                ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.PRIOR),
+                ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.STRATIFIED),
+                ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.UNIFORM),
+                ModelDefaults.get_LogisticClassifier(),
+                ModelDefaults.get_LogisticClassifier(degrees=2),
+                ModelDefaults.get_LogisticClassifier(degrees=3),
+                ModelDefaults.get_RandomForestClassifier(number_of_features=number_of_features)]
 
     ###################################################
-    # TODO: CONVERT
+    # Multi-Classification Models
     ###################################################
     @staticmethod
-    def hyper_params_logistic() -> dict:
-        return None  # no hyper-parameters for logistic regression
+    def get_SoftmaxLogisticClassifier(degrees: Union[int, None] = None) -> ModelInfo:
+
+        model_wrapper = SoftmaxLogisticClassifier()
+        description = type(model_wrapper).__name__
+        # TODO: fill out rest of recommended transformations, verify order
+        transformations = [ImputationTransformer(),
+                           CenterScaleTransformer(),
+                           RemoveNZVTransformer(),
+                           RemoveCorrelationsTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
+
+        if degrees is not None:
+            description = '{0}_{1}_{2}'.format(description, 'polynomial', str(degrees))
+            transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
+
+        return ModelInfo(description=description,
+                         model_wrapper=model_wrapper,
+                         transformations=transformations,
+                         hyper_params=SoftmaxLogisticHP(),
+                         hyper_params_grid={'C': [0.001, 0.01, 0.1, 1, 100, 1000]})
 
     @staticmethod
-    def transformations_logistic() -> List[TransformerBase]:
-        return [ImputationTransformer(),
-                DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
-
-    ###################################################
-    # Random Forest
-    ###################################################
-    @staticmethod
-    def hyper_params_random_forest_classification(number_of_features) -> dict:
-        return dict(criterion='gini',
-                    max_features=[int(round(number_of_features**(1/2.0))),
-                                  int(round(number_of_features/2)),
-                                  number_of_features],
-                    n_estimators=[10, 100, 500],
-                    min_samples_leaf=[1, 50, 100])
-
-    @staticmethod
-    def hyper_params_random_forest_regression(number_of_features) -> dict:
-        # [x for x in range(tune_length-1, 0, -1)]
-        return dict(mtry=[1, 2],
-                    ntree=500)
-
-    @staticmethod
-    def transformations_random_forest() -> List[TransformerBase]:
-        return None
+    def get_multiclass_classification_models(number_of_features):
+        """
+        returns a list of ModelInfos containing all available classification models.
+        :return:
+        """
+        return [ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.MOST_FREQUENT),
+                ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.PRIOR),
+                ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.STRATIFIED),
+                ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.UNIFORM),
+                ModelDefaults.get_RandomForestClassifier(number_of_features=number_of_features),
+                ModelDefaults.get_SoftmaxLogisticClassifier()]

@@ -126,7 +126,7 @@ class ResamplerTests(TimerTestCase):
 
         resampler = RepeatedCrossValidationResampler(
             model=MockClassificationModelWrapper(data_y=data.Survived),
-            model_transformations=ModelDefaults.transformations_random_forest(),
+            model_transformations=None,
             scores=score_list,
             folds=5,
             repeats=5)

@@ -856,7 +856,7 @@ class ModelWrapperTests(TimerTestCase):
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
-            assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0}  # noqa
+            assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0, 'solver': 'liblinear'}  # noqa
 
             con_matrix = fitter.training_evaluator._confusion_matrix
             assert con_matrix.matrix.loc[:, 0].values.tolist() == [386, 85, 471]
@@ -914,7 +914,7 @@ class ModelWrapperTests(TimerTestCase):
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
-        assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0}  # noqa
+        assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0, 'solver': 'liblinear'}  # noqa
 
         con_matrix = fitter.training_evaluator._confusion_matrix
         assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [386, 85, 471]
@@ -1307,7 +1307,7 @@ class ModelWrapperTests(TimerTestCase):
 
         assert fitter.model.feature_names == ['sepal_length', 'sepal_width', 'petal_length',
                                                    'petal_width']  # noqa
-        assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0, 'solver': 'lbfgs'}  # noqa
+        assert fitter.model.hyper_params.params_dict == {'regularization_inverse': 1.0, 'solver': 'lbfgs'}  # noqa
 
         assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 0.959818225304951,
                                                                  'Accuracy': 0.9732142857142857,

@@ -50,7 +50,7 @@ class RidgeRegressor(SklearnPredictRegressionMixin, ModelWrapperBase):
 
         ridge_reg = Ridge(alpha=param_dict['alpha'],
                           solver=param_dict['solver'],
-                          fit_intercept=True,
+                          fit_intercept=self._fit_intercept,
                           random_state=42)
         ridge_reg.fit(data_x, data_y)
         return ridge_reg

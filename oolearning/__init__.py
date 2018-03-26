@@ -99,7 +99,7 @@ from .transformers.ImputationTransformer import ImputationTransformer
 from .transformers.PolynomialFeaturesTransformer import PolynomialFeaturesTransformer
 from .transformers.RemoveColumnsTransformer import RemoveColumnsTransformer
 from .transformers.RemoveCorrelationsTransformer import RemoveCorrelationsTransformer
-from .transformers.RemoveNZPTransformer import RemoveNZPTransformer
+from .transformers.RemoveNZVTransformer import RemoveNZVTransformer
 from .transformers.StatelessTransformer import StatelessTransformer
 from .transformers.TransformerBase import TransformerBase
 from .transformers.TransformerPipeline import TransformerPipeline

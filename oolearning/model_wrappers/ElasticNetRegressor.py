@@ -17,6 +17,7 @@ class ElasticNetRegressorHP(HyperParamsBase):
     # noinspection SpellCheckingInspection
     def __init__(self, alpha: float=0.5, l1_ratio: float=0.5):
         super().__init__()
+        assert 0 <= l1_ratio <= 1
         self._params_dict = dict(alpha=alpha, l1_ratio=l1_ratio)
 
 

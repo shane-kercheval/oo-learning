@@ -15,11 +15,16 @@ class SoftmaxLogisticHP(HyperParamsBase):
     on tuning parameters
     """
     # noinspection SpellCheckingInspection
-    def __init__(self, penalty: str='l2', regularization_inverse: float=1.0, solver='lbfgs'):
+    def __init__(self, regularization_inverse: float=1.0, solver='lbfgs'):
+        # http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
+        # (Currently the ‘multinomial’ option is supported only by the ‘lbfgs’, ‘sag’ and ‘newton-cg’ solvers.)
         # "The ‘newton-cg’, ‘sag’ and ‘lbfgs’ solvers support only l2 penalties."
+        # it would be misleading to give the option for `penalty` since it can only be l2, so it is manually
+        # set in the call to sklearn.LogisticRegression
         super().__init__()
-        self._params_dict = dict(penalty=penalty,
-                                 regularization_inverse=regularization_inverse,
+
+        assert solver == 'newton-cg' or solver == 'sag' or solver == 'lbfgs'
+        self._params_dict = dict(regularization_inverse=regularization_inverse,
                                  solver=solver)
 
 
@@ -49,7 +54,7 @@ class SoftmaxLogisticClassifier(SklearnPredictClassifierMixin, ModelWrapperBase)
         # noinspection SpellCheckingInspection
         model_object = linear_model.LogisticRegression(multi_class='multinomial',
                                                        fit_intercept=self._fit_intercept,
-                                                       penalty=param_dict['penalty'],
+                                                       penalty='l2',
                                                        C=param_dict['regularization_inverse'],
                                                        solver=param_dict['solver'],
                                                        random_state=42)
