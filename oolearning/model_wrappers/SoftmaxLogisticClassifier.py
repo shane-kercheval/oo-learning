@@ -50,7 +50,6 @@ class SoftmaxLogisticClassifier(SklearnPredictClassifierMixin, ModelWrapperBase)
         if data_x.isnull().sum().sum() > 0:
             raise MissingValueError()
 
-        np.random.seed(42)
         # noinspection SpellCheckingInspection
         model_object = linear_model.LogisticRegression(multi_class='multinomial',
                                                        fit_intercept=self._fit_intercept,

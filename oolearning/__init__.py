@@ -79,8 +79,14 @@ from .model_wrappers.SklearnPredictMixin import SklearnPredictClassifierMixin
 from .model_wrappers.SklearnPredictMixin import SklearnPredictRegressionMixin
 from .model_wrappers.SoftmaxLogisticClassifier import SoftmaxLogisticClassifier
 from .model_wrappers.SoftmaxLogisticClassifier import SoftmaxLogisticHP
-from .model_wrappers.SvmLinear import SvmLinearClassifier
-from .model_wrappers.SvmLinear import SvmLinearHP
+from .model_wrappers.SupportVectorMachines import SvmLinearClassifier
+from .model_wrappers.SupportVectorMachines import SvmLinearClassifierHP
+from .model_wrappers.SupportVectorMachines import SvmPolynomialClassifier
+from .model_wrappers.SupportVectorMachines import SvmPolynomialClassifierHP
+from .model_wrappers.SupportVectorMachines import SvmPolynomialRegressor
+from .model_wrappers.SupportVectorMachines import SvmPolynomialRegressorHP
+from .model_wrappers.SupportVectorMachines import SvmLinearRegressor
+from .model_wrappers.SupportVectorMachines import SvmLinearRegressorHP
 
 from .persistence.AlwaysFetchManager import AlwaysFetchManager
 from .persistence.LocalCacheManager import LocalCacheManager

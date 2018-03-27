@@ -1046,7 +1046,7 @@ class ModelWrapperTests(TimerTestCase):
             'bootstrap': True,
             'oob_score': False}
 
-    def test_RandomForestMW_classification(self):
+    def test_RandomForestClassifier(self):
         data = TestHelper.get_titanic_data()
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
@@ -1132,7 +1132,7 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9962785885337139, 'AUC Precision/Recall': 0.9941773735463619, 'Kappa': 0.9491855583543242, 'F1 Score': 0.9683426443202979, 'Two-Class Accuracy': 0.976123595505618, 'Error Rate': 0.023876404494382022, 'True Positive Rate': 0.9523809523809523, 'True Negative Rate': 0.9908883826879271, 'False Positive Rate': 0.009111617312072893, 'False Negative Rate': 0.047619047619047616, 'Positive Predictive Value': 0.9848484848484849, 'Negative Predictive Value': 0.9709821428571429, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.83399209486166, 'AUC Precision/Recall': 0.756480622334744, 'Kappa': 0.5503428610224728, 'F1 Score': 0.7086614173228347, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.6521739130434783, 'True Negative Rate': 0.8818181818181818, 'False Positive Rate': 0.11818181818181818, 'False Negative Rate': 0.34782608695652173, 'Positive Predictive Value': 0.7758620689655172, 'Negative Predictive Value': 0.8016528925619835, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
 
-    def test_RandomForestMW_classification_string_target(self):
+    def test_RandomForestClassifier_string_target(self):
         data = TestHelper.get_titanic_data()
         positive_class = 'lived'
         negative_class = 'died'
@@ -1187,7 +1187,7 @@ class ModelWrapperTests(TimerTestCase):
         assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
         assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
 
-    def test_RandomForestMW_classification_scores(self):
+    def test_RandomForestClassifier_scores(self):
         data = TestHelper.get_titanic_data()
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
@@ -1216,7 +1216,7 @@ class ModelWrapperTests(TimerTestCase):
         assert isclose(fitter.holdout_scores[2].value, 0.8636363636363636)
         assert isclose(fitter.holdout_scores[3].value, 0.19553072625698323)
 
-    def test_RandomForestMW_regression(self):
+    def test_RandomForestRegressor(self):
         data = TestHelper.get_cement_data()
         transformations = [ImputationTransformer(),
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
@@ -1254,7 +1254,7 @@ class ModelWrapperTests(TimerTestCase):
         expected_values = {'Mean Absolute Error (MAE)': 3.7880849514563115, 'Mean Squared Error (MSE)': 29.015298598300976, 'Root Mean Squared Error (RMSE)': 5.3865850590426, 'RMSE to Standard Deviation of Target': 0.3281385595158624}  # noqa
         assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
-    def test_RandomForestMW_classification_multiclass(self):
+    def test_RandomForestClassifier_multiclass(self):
         data = TestHelper.get_iris_data()
         target_variable = 'species'
         fitter = ModelFitter(model=RandomForestClassifier(),
@@ -1444,42 +1444,140 @@ class ModelWrapperTests(TimerTestCase):
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
                            ImputationTransformer(),
-                           DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
         # test with custom threshold of 0.5
         fitter = ModelFitter(model=SvmLinearClassifier(),
                              model_transformations=transformations,
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=TwoClassProbabilityEvaluator(
-                                 converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))  # noqa
-        fitter.fit(data=data, target_variable='Survived', hyper_params=SvmLinearHP())
+                                 converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))
+        fitter.fit(data=data, target_variable='Survived', hyper_params=SvmLinearClassifierHP())
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
-        assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}  # noqa
+        assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}
 
         con_matrix = fitter.training_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 0].values.tolist() == [388, 90, 478]
-        assert con_matrix.matrix.loc[:, 1].values.tolist() == [51, 183, 234]
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [387, 89, 476]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [52, 184, 236]
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
         assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
         assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.training_evaluator.auc_roc, 0.8545478818827337)
+        assert isclose(fitter.training_evaluator.auc_roc, 0.8621826161689488)
 
         con_matrix = fitter.holdout_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 0].values.tolist() == [98, 27, 125]
-        assert con_matrix.matrix.loc[:, 1].values.tolist() == [12, 42, 54]
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [99, 27, 126]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [11, 42, 53]
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
         assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
         assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.holdout_evaluator.auc_roc, 0.841501976284585)
+        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8363636363636364)
 
         actual_metrics = fitter.training_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8545478818827337, 'AUC Precision/Recall': 0.8201988699638674, 'Kappa': 0.5695394906097248, 'F1 Score': 0.7218934911242604, 'Two-Class Accuracy': 0.8019662921348315, 'Error Rate': 0.19803370786516855, 'True Positive Rate': 0.6703296703296703, 'True Negative Rate': 0.8838268792710706, 'False Positive Rate': 0.11617312072892938, 'False Negative Rate': 0.32967032967032966, 'Positive Predictive Value': 0.782051282051282, 'Negative Predictive Value': 0.8117154811715481, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        expected_metrics = {'AUC ROC': 0.8621826161689488, 'AUC Precision/Recall': 0.8353822535872308, 'Kappa': 0.5701514009728027, 'F1 Score': 0.7229862475442044, 'Two-Class Accuracy': 0.8019662921348315, 'Error Rate': 0.19803370786516855, 'True Positive Rate': 0.673992673992674, 'True Negative Rate': 0.8815489749430524, 'False Positive Rate': 0.11845102505694761, 'False Negative Rate': 0.326007326007326, 'Positive Predictive Value': 0.7796610169491526, 'Negative Predictive Value': 0.8130252100840336, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
         actual_metrics = fitter.holdout_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.841501976284585, 'AUC Precision/Recall': 0.7946397931589366, 'Kappa': 0.5207003089598351, 'F1 Score': 0.6829268292682927, 'Two-Class Accuracy': 0.7821229050279329, 'Error Rate': 0.21787709497206703, 'True Positive Rate': 0.6086956521739131, 'True Negative Rate': 0.8909090909090909, 'False Positive Rate': 0.10909090909090909, 'False Negative Rate': 0.391304347826087, 'Positive Predictive Value': 0.7777777777777778, 'Negative Predictive Value': 0.784, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        expected_metrics = {'AUC ROC': 0.8363636363636364, 'AUC Precision/Recall': 0.7935282490390818, 'Kappa': 0.5316717157807767, 'F1 Score': 0.6885245901639344, 'Two-Class Accuracy': 0.7877094972067039, 'Error Rate': 0.2122905027932961, 'True Positive Rate': 0.6086956521739131, 'True Negative Rate': 0.9, 'False Positive Rate': 0.1, 'False Negative Rate': 0.391304347826087, 'Positive Predictive Value': 0.7924528301886793, 'Negative Predictive Value': 0.7857142857142857, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
         assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+
+    def test_SvmPolynomial_classification(self):
+        data = TestHelper.get_titanic_data()
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           CenterScaleTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        # test with custom threshold of 0.5
+        fitter = ModelFitter(model=SvmPolynomialClassifier(),
+                             model_transformations=transformations,
+                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                             evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))
+        fitter.fit(data=data, target_variable='Survived', hyper_params=SvmPolynomialClassifierHP())
+        assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+        assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+
+        assert fitter.model.hyper_params.params_dict == {'degree': 3, 'coef0': 0.0, 'penalty_c': 1.0}
+
+        con_matrix = fitter.training_evaluator._confusion_matrix
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [403, 99, 502]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [36, 174, 210]
+        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
+        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
+        assert isclose(fitter.training_evaluator.auc_roc, 0.8623328076631038)
+
+        con_matrix = fitter.holdout_evaluator._confusion_matrix
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [104, 31, 135]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [6, 38, 44]
+        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
+        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
+        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8299077733860343)
+
+        actual_metrics = fitter.training_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.8623328076631038, 'AUC Precision/Recall': 0.8282519195039698, 'Kappa': 0.5806941318117573, 'F1 Score': 0.7204968944099378, 'Two-Class Accuracy': 0.8103932584269663, 'Error Rate': 0.1896067415730337, 'True Positive Rate': 0.6373626373626373, 'True Negative Rate': 0.9179954441913439, 'False Positive Rate': 0.08200455580865604, 'False Negative Rate': 0.3626373626373626, 'Positive Predictive Value': 0.8285714285714286, 'Negative Predictive Value': 0.8027888446215139, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+
+        actual_metrics = fitter.holdout_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.8299077733860343, 'AUC Precision/Recall': 0.7965623013913842, 'Kappa': 0.5321087954786295, 'F1 Score': 0.672566371681416, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.5507246376811594, 'True Negative Rate': 0.9454545454545454, 'False Positive Rate': 0.05454545454545454, 'False Negative Rate': 0.4492753623188406, 'Positive Predictive Value': 0.8636363636363636, 'Negative Predictive Value': 0.7703703703703704, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+
+    def test_SvmLinearRegressor(self):
+        data = TestHelper.get_cement_data()
+        transformations = [ImputationTransformer(),
+                           CenterScaleTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        fitter = ModelFitter(model=SvmLinearRegressor(),
+                             model_transformations=transformations,
+                             splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
+                             evaluator=RegressionEvaluator())
+        fitter.fit(data=data, target_variable='strength', hyper_params=SvmLinearRegressorHP())
+
+        assert isinstance(fitter.training_evaluator, RegressionEvaluator)
+        assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+
+        assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
+
+        assert fitter.model.hyper_params.params_dict == {'epsilon': 0.1, 'penalty_c': 1.0}
+
+        keys = fitter.training_evaluator.all_quality_metrics.keys()
+        expected_values = {'Mean Absolute Error (MAE)': 35.78470873786408, 'Mean Squared Error (MSE)': 1561.6856036407662, 'Root Mean Squared Error (RMSE)': 39.518168019795226, 'RMSE to Standard Deviation of Target': 2.3568682719281746}  # noqa
+        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+        expected_values = {'Mean Absolute Error (MAE)': 35.950970873786396, 'Mean Squared Error (MSE)': 1561.9436019417367, 'Root Mean Squared Error (RMSE)': 39.5214321848505, 'RMSE to Standard Deviation of Target': 2.4075561204348044}  # noqa
+        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+    def test_SvmPolynomialRegressor(self):
+        data = TestHelper.get_cement_data()
+        transformations = [ImputationTransformer(),
+                           CenterScaleTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        fitter = ModelFitter(model=SvmPolynomialRegressor(),
+                             model_transformations=transformations,
+                             splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
+                             evaluator=RegressionEvaluator())
+        fitter.fit(data=data, target_variable='strength', hyper_params=SvmPolynomialRegressorHP())
+
+        assert isinstance(fitter.training_evaluator, RegressionEvaluator)
+        assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+
+        assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
+
+        assert fitter.model.hyper_params.params_dict == {'degree': 3, 'epsilon': 0.1, 'penalty_c': 1.0}
+
+        keys = fitter.training_evaluator.all_quality_metrics.keys()
+        expected_values = {'Mean Absolute Error (MAE)': 8.89089537374377, 'Mean Squared Error (MSE)': 132.68328212645022, 'Root Mean Squared Error (RMSE)': 11.518822948828157, 'RMSE to Standard Deviation of Target': 0.68698397973439}  # noqa
+        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+        expected_values = {'Mean Absolute Error (MAE)': 9.01999140928503, 'Mean Squared Error (MSE)': 130.26406061226362, 'Root Mean Squared Error (RMSE)': 11.413328200497155, 'RMSE to Standard Deviation of Target': 0.6952740992562293}  # noqa
+        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa

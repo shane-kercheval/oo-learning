@@ -13,7 +13,9 @@ from oolearning.model_wrappers.RandomForest import RandomForestRegressor, Random
     RandomForestClassifier
 from oolearning.model_wrappers.RidgeRegressor import RidgeRegressor, RidgeRegressorHP
 from oolearning.model_wrappers.SoftmaxLogisticClassifier import SoftmaxLogisticClassifier, SoftmaxLogisticHP
-from oolearning.model_wrappers.SvmLinear import SvmLinearClassifier, SvmLinearHP
+from oolearning.model_wrappers.SupportVectorMachines import SvmLinearClassifier, SvmLinearClassifierHP, \
+    SvmPolynomialClassifier, SvmPolynomialClassifierHP, SvmLinearRegressor, SvmLinearRegressorHP, \
+    SvmPolynomialRegressor, SvmPolynomialRegressorHP
 from oolearning.transformers.CenterScaleTransformer import CenterScaleTransformer
 from oolearning.transformers.DummyEncodeTransformer import DummyEncodeTransformer
 from oolearning.transformers.ImputationTransformer import ImputationTransformer
@@ -40,6 +42,7 @@ class ModelDefaults:
                            DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
 
         if degrees is not None:
+            # assumes center/scaling data should be done before the polynomial transformation
             description = '{0}_{1}_{2}'.format(description, 'polynomial', str(degrees))
             transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
 
@@ -88,6 +91,33 @@ class ModelDefaults:
                                                 min_samples_leaf=[1, 50, 100]))
 
     @staticmethod
+    def get_SvmLinearRegressor() -> ModelInfo:
+        model_wrapper = SvmLinearRegressor()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model_wrapper=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=[ImputationTransformer(),
+                                          CenterScaleTransformer(),
+                                          DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                         hyper_params=SvmLinearRegressorHP(),
+                         hyper_params_grid={'epsilon': [0, 0.1, 1, 3],
+                                            'penalty_c': [0.001, 0.01, 0.1, 1000]})
+
+    @staticmethod
+    def get_SvmPolynomialRegressor() -> ModelInfo:
+        model_wrapper = SvmPolynomialRegressor()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model_wrapper=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=[ImputationTransformer(),
+                                          CenterScaleTransformer(),
+                                          DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                         hyper_params=SvmPolynomialRegressorHP(),
+                         hyper_params_grid={'degree': [2, 3],
+                                            'epsilon': [0, 0.1, 1, 3],
+                                            'penalty_c': [0.001, 0.01, 0.1, 1000]})
+
+    @staticmethod
     def get_regression_models(number_of_features):
         """
         returns a list of ModelInfos containing all available regression models.
@@ -105,7 +135,9 @@ class ModelDefaults:
                 ModelDefaults.get_ElasticNetRegressor(),
                 ModelDefaults.get_ElasticNetRegressor(degrees=2),
                 ModelDefaults.get_ElasticNetRegressor(degrees=3),
-                ModelDefaults.get_RandomForestRegressor(number_of_features=number_of_features)]
+                ModelDefaults.get_RandomForestRegressor(number_of_features=number_of_features),
+                ModelDefaults.get_SvmLinearClassifier(),
+                ModelDefaults.get_SvmPolynomialClassifier()]
 
     @staticmethod
     def _ridge_lasso_elastic_helper(model_wrapper, hyper_params, degrees, params_dict):
@@ -117,6 +149,7 @@ class ModelDefaults:
                            DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
 
         if degrees is not None:
+            # assumes center/scaling data should be done before the polynomial transformation
             description = '{0}_{1}_{2}'.format(description, 'polynomial', str(degrees))
             transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
 
@@ -151,6 +184,7 @@ class ModelDefaults:
                            DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
 
         if degrees is not None:
+            # assumes center/scaling data should be done before the polynomial transformation
             description = '{0}_{1}_{2}'.format(description, 'polynomial', str(degrees))
             transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
 
@@ -167,9 +201,8 @@ class ModelDefaults:
         return ModelInfo(description=type(model_wrapper).__name__,
                          model_wrapper=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
-                         transformations=[
-                             # https://stackoverflow.com/questions/24715230/can-sklearn-random-forest-directly-handle-categorical-features?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
-                             DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                         # https://stackoverflow.com/questions/24715230/can-sklearn-random-forest-directly-handle-categorical-features?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+                         transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
                          hyper_params=RandomForestHP(),
                          hyper_params_grid=dict(criterion='gini',
                                                 max_features=[int(round(number_of_features ** (1 / 2.0))),
@@ -187,10 +220,31 @@ class ModelDefaults:
                          transformations=[ImputationTransformer(),
                                           CenterScaleTransformer(),
                                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
-                         hyper_params=SvmLinearHP(),
-                         hyper_params_grid={'penalty': ['l1', 'l2'],
+                         hyper_params=SvmLinearClassifierHP(),
+                         hyper_params_grid={  # The ‘l2’ penalty is the standard used in SVC. The ‘l1’ leads
+                                            # to coef_ vectors that are sparse.
+                                            'penalty': ['l2'],
+                                            #  a smaller C value leads to a wider street but more margin
+                                            #  violations (HOML pg 148)
                                             'penalty_c': [0.001, 0.01, 0.1, 1, 100, 1000]})
 
+    @staticmethod
+    def get_SvmPolynomialClassifier() -> ModelInfo:
+        model_wrapper = SvmPolynomialClassifier()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model_wrapper=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=[ImputationTransformer(),
+                                          CenterScaleTransformer(),
+                                          DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                         hyper_params=SvmPolynomialClassifierHP(),
+                         hyper_params_grid={'degree': [2, 3],
+                                            'coef0': [0, 1, 10],
+                                            #  a smaller C value leads to a wider street but more margin
+                                            #  violations (HOML pg 148)
+                                            'penalty_c': [0.001, 0.1, 100, 1000]})
+
+    # noinspection SpellCheckingInspection
     @staticmethod
     def get_twoclass_classification_models(number_of_features):
         """
@@ -204,6 +258,8 @@ class ModelDefaults:
                 ModelDefaults.get_LogisticClassifier(),
                 ModelDefaults.get_LogisticClassifier(degrees=2),
                 ModelDefaults.get_LogisticClassifier(degrees=3),
+                ModelDefaults.get_SvmLinearClassifier(),
+                ModelDefaults.get_SvmPolynomialClassifier(),
                 ModelDefaults.get_RandomForestClassifier(number_of_features=number_of_features)]
 
     ###################################################
@@ -222,6 +278,7 @@ class ModelDefaults:
                            DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
 
         if degrees is not None:
+            # assumes center/scaling data should be done before the polynomial transformation
             description = '{0}_{1}_{2}'.format(description, 'polynomial', str(degrees))
             transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
 

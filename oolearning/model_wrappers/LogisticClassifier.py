@@ -45,7 +45,6 @@ class LogisticClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
         if data_x.isnull().sum().sum() > 0:
             raise MissingValueError()
 
-        np.random.seed(42)
         model_object = linear_model.LogisticRegression(fit_intercept=self._fit_intercept,
                                                        penalty=param_dict['penalty'],
                                                        C=param_dict['regularization_inverse'],
