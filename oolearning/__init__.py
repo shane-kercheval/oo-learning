@@ -53,6 +53,9 @@ from .model_processors.SearcherResults import SearcherResults
 from .model_processors.StratifiedMonteCarloResampler import StratifiedMonteCarloResampler
 from .model_processors.TunerResults import TunerResults
 
+from .model_wrappers.CartDecisionTree import CartDecisionTreeRegressor
+from .model_wrappers.CartDecisionTree import CartDecisionTreeClassifier
+from .model_wrappers.CartDecisionTree import CartDecisionTreeHP
 from .model_wrappers.DummyClassifier import DummyClassifier
 from .model_wrappers.ElasticNetRegressor import ElasticNetRegressor
 from .model_wrappers.ElasticNetRegressor import ElasticNetRegressorHP

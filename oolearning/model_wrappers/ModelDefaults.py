@@ -3,6 +3,8 @@ from typing import Union
 from oolearning.enums.CategoricalEncoding import CategoricalEncoding
 from oolearning.enums.DummyClassifierStrategy import DummyClassifierStrategy
 from oolearning.model_processors.ModelInfo import ModelInfo
+from oolearning.model_wrappers.CartDecisionTree import CartDecisionTreeRegressor, CartDecisionTreeHP, \
+    CartDecisionTreeClassifier
 from oolearning.model_wrappers.DummyClassifier import DummyClassifier
 from oolearning.model_wrappers.ElasticNetRegressor import ElasticNetRegressor, ElasticNetRegressorHP
 from oolearning.model_wrappers.HyperParamsGrid import HyperParamsGrid
@@ -75,6 +77,17 @@ class ModelDefaults:
                                                                       'l1_ratio': [0, 0.5, 1]})
 
     @staticmethod
+    def get_CartDecisionTreeRegressor() -> ModelInfo:
+        model_wrapper = CartDecisionTreeRegressor()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model_wrapper=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=None,
+                         hyper_params=CartDecisionTreeHP(),
+                         hyper_params_grid=dict(criterion='mse',
+                                                max_depth=[3, 10, 30]))
+
+    @staticmethod
     def get_RandomForestRegressor(number_of_features: int) -> ModelInfo:
         model_wrapper = RandomForestRegressor()
         return ModelInfo(description=type(model_wrapper).__name__,
@@ -135,6 +148,7 @@ class ModelDefaults:
                 ModelDefaults.get_ElasticNetRegressor(),
                 ModelDefaults.get_ElasticNetRegressor(degrees=2),
                 ModelDefaults.get_ElasticNetRegressor(degrees=3),
+                ModelDefaults.get_CartDecisionTreeRegressor(),
                 ModelDefaults.get_RandomForestRegressor(number_of_features=number_of_features),
                 ModelDefaults.get_SvmLinearClassifier(),
                 ModelDefaults.get_SvmPolynomialClassifier()]
@@ -194,6 +208,17 @@ class ModelDefaults:
                          hyper_params=LogisticClassifierHP(),
                          hyper_params_grid={'penalty': ['l1', 'l2'],
                                             'C': [0.001, 0.01, 0.1, 1, 100, 1000]})
+
+    @staticmethod
+    def get_CartDecisionTreeClassifier() -> ModelInfo:
+        model_wrapper = CartDecisionTreeClassifier()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model_wrapper=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=None,
+                         hyper_params=RandomForestHP(),
+                         hyper_params_grid=dict(criterion='gini',
+                                                max_depth=[3, 10, 30]))
 
     @staticmethod
     def get_RandomForestClassifier(number_of_features: int) -> ModelInfo:
@@ -260,6 +285,7 @@ class ModelDefaults:
                 ModelDefaults.get_LogisticClassifier(degrees=3),
                 ModelDefaults.get_SvmLinearClassifier(),
                 ModelDefaults.get_SvmPolynomialClassifier(),
+                ModelDefaults.get_CartDecisionTreeClassifier(),
                 ModelDefaults.get_RandomForestClassifier(number_of_features=number_of_features)]
 
     ###################################################
@@ -298,5 +324,6 @@ class ModelDefaults:
                 ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.PRIOR),
                 ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.STRATIFIED),
                 ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.UNIFORM),
+                ModelDefaults.get_CartDecisionTreeClassifier(),
                 ModelDefaults.get_RandomForestClassifier(number_of_features=number_of_features),
                 ModelDefaults.get_SoftmaxLogisticClassifier()]

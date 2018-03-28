@@ -1581,3 +1581,98 @@ class ModelWrapperTests(TimerTestCase):
 
         expected_values = {'Mean Absolute Error (MAE)': 9.01999140928503, 'Mean Squared Error (MSE)': 130.26406061226362, 'Root Mean Squared Error (RMSE)': 11.413328200497155, 'RMSE to Standard Deviation of Target': 0.6952740992562293}  # noqa
         assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+    def test_CartDecisionTreeRegressor(self):
+        data = TestHelper.get_cement_data()
+        transformations = None
+
+        fitter = ModelFitter(model=CartDecisionTreeRegressor(),
+                             model_transformations=transformations,
+                             splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
+                             evaluator=RegressionEvaluator())
+        ######################################################################################################
+        # test default hyper-parameters
+        ######################################################################################################
+        fitter.fit(data=data, target_variable='strength', hyper_params=CartDecisionTreeHP(criterion='mae'))
+
+        assert isinstance(fitter.training_evaluator, RegressionEvaluator)
+        assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+
+        assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
+
+        assert fitter.model.hyper_params.params_dict == {'criterion': 'mae',
+                                                         'splitter': 'best',
+                                                         'max_depth': None,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'min_weight_fraction_leaf': 0,
+                                                         'max_leaf_nodes': None,
+                                                         'max_features': None}
+
+        keys = fitter.training_evaluator.all_quality_metrics.keys()
+        expected_values = {'Mean Absolute Error (MAE)': 0.0887135922330097, 'Mean Squared Error (MSE)': 1.608594963592233, 'Root Mean Squared Error (RMSE)': 1.2683039712908861, 'RMSE to Standard Deviation of Target': 0.07564180069275088}  # noqa
+        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+        expected_values = {'Mean Absolute Error (MAE)': 4.878082524271845, 'Mean Squared Error (MSE)': 65.98628021844661, 'Root Mean Squared Error (RMSE)': 8.123193966565529, 'RMSE to Standard Deviation of Target': 0.4948465748966606}  # noqa
+        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+    def test_CartDecisionTreeClassifier(self):
+        data = TestHelper.get_titanic_data()
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+        fitter = ModelFitter(model=CartDecisionTreeClassifier(),
+                             model_transformations=transformations,
+                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                             evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=1)))
+        fitter.fit(data=data, target_variable='Survived', hyper_params=CartDecisionTreeHP(criterion='gini'))
+        assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+        assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+        assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'criterion': 'gini',
+                                                         'splitter': 'best',
+                                                         'max_depth': None,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'min_weight_fraction_leaf': 0,
+                                                         'max_leaf_nodes': None,
+                                                         'max_features': None}
+
+        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9992991063606098, 'AUC Precision/Recall': 0.9984018681159533, 'Kappa': 0.9641059680549836, 'F1 Score': 0.9776119402985075, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.9597069597069597, 'True Negative Rate': 0.9977220956719818, 'False Positive Rate': 0.002277904328018223, 'False Negative Rate': 0.040293040293040296, 'Positive Predictive Value': 0.9961977186311787, 'Negative Predictive Value': 0.9755011135857461, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.7711462450592885, 'AUC Precision/Recall': 0.6435502175777592, 'Kappa': 0.5601381417281001, 'F1 Score': 0.725925925925926, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8454545454545455, 'False Positive Rate': 0.15454545454545454, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.7424242424242424, 'Negative Predictive Value': 0.8230088495575221, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+
+    def test_CartDecisionTreeClassifier_multiclass(self):
+        data = TestHelper.get_iris_data()
+        target_variable = 'species'
+        fitter = ModelFitter(model=CartDecisionTreeClassifier(),
+                             model_transformations=None,
+                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
+                             evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
+        fitter.fit(data=data, target_variable=target_variable, hyper_params=CartDecisionTreeHP(criterion='gini'))  # noqa
+
+        assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
+        assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
+
+        assert fitter.model.feature_names == ['sepal_length', 'sepal_width', 'petal_length', 'petal_width']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'criterion': 'gini',
+                                                         'splitter': 'best',
+                                                         'max_depth': None,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'min_weight_fraction_leaf': 0,
+                                                         'max_leaf_nodes': None,
+                                                         'max_features': None}
+
+        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.841995841995842, 'Accuracy': 0.8947368421052632, 'Error Rate': 0.10526315789473684, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa
+
+        con_matrix = fitter.holdout_evaluator.matrix
+        assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
+        assert con_matrix['versicolor'].values.tolist() == [0, 12, 3, 15]
+        assert con_matrix['virginica'].values.tolist() == [0, 1, 10, 11]
+        assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
+        assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
