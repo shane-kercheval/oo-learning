@@ -5,7 +5,7 @@ from sklearn.linear_model import Lasso
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictRegressionMixin
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictRegressorMixin
 
 
 class LassoRegressorHP(HyperParamsBase):
@@ -20,7 +20,7 @@ class LassoRegressorHP(HyperParamsBase):
         self._params_dict = dict(alpha=alpha)
 
 
-class LassoRegressor(SklearnPredictRegressionMixin, ModelWrapperBase):
+class LassoRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
     """
     fits Linear Regression model on the data
     """

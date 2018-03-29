@@ -10,7 +10,7 @@ class SklearnPredictClassifierMixin:
         return predictions
 
 
-class SklearnPredictRegressionMixin:
+class SklearnPredictRegressorMixin:
     # noinspection PyMethodMayBeStatic,PyUnresolvedReferences
     def _predict(self, model_object: object, data_x: pd.DataFrame) -> np.ndarray:
         return model_object.predict(data_x)

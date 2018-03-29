@@ -53,12 +53,20 @@ from .model_processors.SearcherResults import SearcherResults
 from .model_processors.StratifiedMonteCarloResampler import StratifiedMonteCarloResampler
 from .model_processors.TunerResults import TunerResults
 
-from .model_wrappers.CartDecisionTree import CartDecisionTreeRegressor
+from .model_wrappers.AdaBoost import AdaBoostClassifier
+from .model_wrappers.AdaBoost import AdaBoostClassifierHP
+from .model_wrappers.AdaBoost import AdaBoostRegressor
+from .model_wrappers.AdaBoost import AdaBoostRegressorHP
 from .model_wrappers.CartDecisionTree import CartDecisionTreeClassifier
 from .model_wrappers.CartDecisionTree import CartDecisionTreeHP
+from .model_wrappers.CartDecisionTree import CartDecisionTreeRegressor
 from .model_wrappers.DummyClassifier import DummyClassifier
 from .model_wrappers.ElasticNetRegressor import ElasticNetRegressor
 from .model_wrappers.ElasticNetRegressor import ElasticNetRegressorHP
+from .model_wrappers.GradientBoosting import GradientBoostingClassifier
+from .model_wrappers.GradientBoosting import GradientBoostingClassifierHP
+from .model_wrappers.GradientBoosting import GradientBoostingRegressor
+from .model_wrappers.GradientBoosting import GradientBoostingRegressorHP
 from .model_wrappers.HyperParamsBase import HyperParamsBase
 from .model_wrappers.HyperParamsGrid import HyperParamsGrid
 from .model_wrappers.LassoRegressor import LassoRegressor
@@ -79,7 +87,7 @@ from .model_wrappers.RandomForest import RandomForestHP
 from .model_wrappers.RidgeRegressor import RidgeRegressor
 from .model_wrappers.RidgeRegressor import RidgeRegressorHP
 from .model_wrappers.SklearnPredictMixin import SklearnPredictClassifierMixin
-from .model_wrappers.SklearnPredictMixin import SklearnPredictRegressionMixin
+from .model_wrappers.SklearnPredictMixin import SklearnPredictRegressorMixin
 from .model_wrappers.SoftmaxLogisticClassifier import SoftmaxLogisticClassifier
 from .model_wrappers.SoftmaxLogisticClassifier import SoftmaxLogisticHP
 from .model_wrappers.SupportVectorMachines import SvmLinearClassifier

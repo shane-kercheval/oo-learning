@@ -7,7 +7,7 @@ from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictClassifierMixin, \
-    SklearnPredictRegressionMixin
+    SklearnPredictRegressorMixin
 
 
 ##############################################################################################################
@@ -127,7 +127,7 @@ class SvmLinearRegressorHP(HyperParamsBase):
         self._params_dict = dict(epsilon=epsilon, penalty_c=penalty_c)
 
 
-class SvmLinearRegressor(SklearnPredictRegressionMixin, ModelWrapperBase):
+class SvmLinearRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
     def __init__(self, fit_intercept=False):
         """
         :param fit_intercept: set to False by default, since the expectation is that One-Hot encoding will
@@ -172,7 +172,7 @@ class SvmPolynomialRegressorHP(HyperParamsBase):
         self._params_dict = dict(degree=degree, epsilon=epsilon, penalty_c=penalty_c)
 
 
-class SvmPolynomialRegressor(SklearnPredictRegressionMixin, ModelWrapperBase):
+class SvmPolynomialRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
     @property
     def feature_importance(self):
         raise NotImplementedError()

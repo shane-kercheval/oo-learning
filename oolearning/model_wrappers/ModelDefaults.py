@@ -1,12 +1,17 @@
 from typing import Union
 
+
 from oolearning.enums.CategoricalEncoding import CategoricalEncoding
 from oolearning.enums.DummyClassifierStrategy import DummyClassifierStrategy
 from oolearning.model_processors.ModelInfo import ModelInfo
+from oolearning.model_wrappers.AdaBoost import AdaBoostRegressor, AdaBoostRegressorHP, AdaBoostClassifier, \
+    AdaBoostClassifierHP
 from oolearning.model_wrappers.CartDecisionTree import CartDecisionTreeRegressor, CartDecisionTreeHP, \
     CartDecisionTreeClassifier
 from oolearning.model_wrappers.DummyClassifier import DummyClassifier
 from oolearning.model_wrappers.ElasticNetRegressor import ElasticNetRegressor, ElasticNetRegressorHP
+from oolearning.model_wrappers.GradientBoosting import GradientBoostingRegressor, \
+    GradientBoostingRegressorHP, GradientBoostingClassifier, GradientBoostingClassifierHP
 from oolearning.model_wrappers.HyperParamsGrid import HyperParamsGrid
 from oolearning.model_wrappers.LassoRegressor import LassoRegressor, LassoRegressorHP
 from oolearning.model_wrappers.LinearRegressor import LinearRegressor
@@ -131,6 +136,31 @@ class ModelDefaults:
                                             'penalty_c': [0.001, 0.01, 0.1, 1000]})
 
     @staticmethod
+    def get_AdaBoostRegressor() -> ModelInfo:
+        model_wrapper = AdaBoostRegressor()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model_wrapper=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=None,
+                         hyper_params=AdaBoostRegressorHP(),
+                         hyper_params_grid=dict(max_depth=[3, 10, 30],
+                                                n_estimators=[10, 100, 500],
+                                                learning_rate=[0.1, 0.5, 1]))
+
+    @staticmethod
+    def get_GradientBoostingRegressor() -> ModelInfo:
+        model_wrapper = GradientBoostingRegressor()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model_wrapper=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=None,
+                         hyper_params=GradientBoostingRegressorHP(),
+                         hyper_params_grid=dict(learning_rate=[0.1, 0.5, 1],
+                                                n_estimators=[50, 100, 5000],
+                                                max_depth=[1, 5, 9],
+                                                min_samples_leaf=[1, 10, 20]))
+
+    @staticmethod
     def get_regression_models(number_of_features):
         """
         returns a list of ModelInfos containing all available regression models.
@@ -151,7 +181,9 @@ class ModelDefaults:
                 ModelDefaults.get_CartDecisionTreeRegressor(),
                 ModelDefaults.get_RandomForestRegressor(number_of_features=number_of_features),
                 ModelDefaults.get_SvmLinearClassifier(),
-                ModelDefaults.get_SvmPolynomialClassifier()]
+                ModelDefaults.get_SvmPolynomialClassifier(),
+                ModelDefaults.get_AdaBoostRegressor(),
+                ModelDefaults.get_GradientBoostingRegressor()]
 
     @staticmethod
     def _ridge_lasso_elastic_helper(model_wrapper, hyper_params, degrees, params_dict):
@@ -269,6 +301,31 @@ class ModelDefaults:
                                             #  violations (HOML pg 148)
                                             'penalty_c': [0.001, 0.1, 100, 1000]})
 
+    @staticmethod
+    def get_AdaBoostClassifier() -> ModelInfo:
+        model_wrapper = AdaBoostClassifier()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model_wrapper=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=None,
+                         hyper_params=AdaBoostClassifierHP(),
+                         hyper_params_grid=dict(max_depth=[3, 10, 30],
+                                                n_estimators=[10, 100, 500],
+                                                learning_rate=[0.1, 0.5, 1]))
+
+    @staticmethod
+    def get_GradientBoostingClassifier() -> ModelInfo:
+        model_wrapper = GradientBoostingClassifier()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model_wrapper=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=None,
+                         hyper_params=GradientBoostingClassifierHP(),
+                         hyper_params_grid=dict(learning_rate=[0.1, 0.5, 1],
+                                                n_estimators=[50, 100, 5000],
+                                                max_depth=[1, 5, 9],
+                                                min_samples_leaf=[1, 10, 20]))
+
     # noinspection SpellCheckingInspection
     @staticmethod
     def get_twoclass_classification_models(number_of_features):
@@ -286,7 +343,9 @@ class ModelDefaults:
                 ModelDefaults.get_SvmLinearClassifier(),
                 ModelDefaults.get_SvmPolynomialClassifier(),
                 ModelDefaults.get_CartDecisionTreeClassifier(),
-                ModelDefaults.get_RandomForestClassifier(number_of_features=number_of_features)]
+                ModelDefaults.get_RandomForestClassifier(number_of_features=number_of_features),
+                ModelDefaults.get_AdaBoostClassifier(),
+                ModelDefaults.get_GradientBoostingClassifier()]
 
     ###################################################
     # Multi-Classification Models
@@ -324,6 +383,8 @@ class ModelDefaults:
                 ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.PRIOR),
                 ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.STRATIFIED),
                 ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.UNIFORM),
+                ModelDefaults.get_SoftmaxLogisticClassifier(),
                 ModelDefaults.get_CartDecisionTreeClassifier(),
                 ModelDefaults.get_RandomForestClassifier(number_of_features=number_of_features),
-                ModelDefaults.get_SoftmaxLogisticClassifier()]
+                ModelDefaults.get_AdaBoostClassifier(),
+                ModelDefaults.get_GradientBoostingClassifier()]

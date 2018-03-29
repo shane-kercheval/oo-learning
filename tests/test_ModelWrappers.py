@@ -1676,3 +1676,177 @@ class ModelWrapperTests(TimerTestCase):
         assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
         assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
         assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+
+    def test_AdaBoostRegressor(self):
+        data = TestHelper.get_cement_data()
+        transformations = None
+
+        fitter = ModelFitter(model=AdaBoostRegressor(),
+                             model_transformations=transformations,
+                             splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
+                             evaluator=RegressionEvaluator())
+        ######################################################################################################
+        # test default hyper-parameters
+        ######################################################################################################
+        fitter.fit(data=data, target_variable='strength', hyper_params=AdaBoostRegressorHP())
+
+        assert isinstance(fitter.training_evaluator, RegressionEvaluator)
+        assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+
+        assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
+
+        assert fitter.model.hyper_params.params_dict == {'max_depth': None,
+                                                         'n_estimators': 50,
+                                                         'learning_rate': 1.0,
+                                                         'loss': 'linear'}
+
+        keys = fitter.training_evaluator.all_quality_metrics.keys()
+        expected_values = {'Mean Absolute Error (MAE)': 1.5431027895916443, 'Mean Squared Error (MSE)': 7.862081902399274, 'Root Mean Squared Error (RMSE)': 2.8039404241886587, 'RMSE to Standard Deviation of Target': 0.16722734259434227}  # noqa
+        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+        expected_values = {'Mean Absolute Error (MAE)': 3.9066797652274916, 'Mean Squared Error (MSE)': 30.344412064467065, 'Root Mean Squared Error (RMSE)': 5.508576228433902, 'RMSE to Standard Deviation of Target': 0.33556998520745485}  # noqa
+        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+    def test_AdaBoostClassifier(self):
+        data = TestHelper.get_titanic_data()
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+        fitter = ModelFitter(model=AdaBoostClassifier(),
+                             model_transformations=transformations,
+                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                             evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=1)))
+        fitter.fit(data=data, target_variable='Survived', hyper_params=AdaBoostClassifierHP())
+        assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+        assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+        assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'max_depth': None,
+                                                         'n_estimators': 50,
+                                                         'learning_rate': 1.0,
+                                                         'algorithm': 'SAMME.R'}
+
+        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9992991063606097, 'AUC Precision/Recall': 0.9984018681159533, 'Kappa': 0.9641059680549836, 'F1 Score': 0.9776119402985075, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.9597069597069597, 'True Negative Rate': 0.9977220956719818, 'False Positive Rate': 0.002277904328018223, 'False Negative Rate': 0.040293040293040296, 'Positive Predictive Value': 0.9961977186311787, 'Negative Predictive Value': 0.9755011135857461, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.797957839262187, 'AUC Precision/Recall': 0.7339255444753214, 'Kappa': 0.5770035784214436, 'F1 Score': 0.7286821705426356, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6811594202898551, 'True Negative Rate': 0.8818181818181818, 'False Positive Rate': 0.11818181818181818, 'False Negative Rate': 0.3188405797101449, 'Positive Predictive Value': 0.7833333333333333, 'Negative Predictive Value': 0.8151260504201681, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+
+    def test_AdaBoostClassifier_multiclass(self):
+        data = TestHelper.get_iris_data()
+        target_variable = 'species'
+        fitter = ModelFitter(model=AdaBoostClassifier(),
+                             model_transformations=None,
+                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
+                             evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
+        fitter.fit(data=data, target_variable=target_variable, hyper_params=AdaBoostClassifierHP())  # noqa
+
+        assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
+        assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
+
+        assert fitter.model.feature_names == ['sepal_length', 'sepal_width', 'petal_length', 'petal_width']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'max_depth': None,
+                                                         'n_estimators': 50,
+                                                         'learning_rate': 1.0,
+                                                         'algorithm': 'SAMME.R'}
+
+        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.841995841995842, 'Accuracy': 0.8947368421052632, 'Error Rate': 0.10526315789473684, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa
+
+        con_matrix = fitter.holdout_evaluator.matrix
+        assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
+        assert con_matrix['versicolor'].values.tolist() == [0, 12, 3, 15]
+        assert con_matrix['virginica'].values.tolist() == [0, 1, 10, 11]
+        assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
+        assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+
+    def test_GradientBoostingRegressor(self):
+        data = TestHelper.get_cement_data()
+        transformations = None
+
+        fitter = ModelFitter(model=GradientBoostingRegressor(),
+                             model_transformations=transformations,
+                             splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
+                             evaluator=RegressionEvaluator())
+        ######################################################################################################
+        # test default hyper-parameters
+        ######################################################################################################
+        fitter.fit(data=data, target_variable='strength', hyper_params=GradientBoostingRegressorHP())
+
+        assert isinstance(fitter.training_evaluator, RegressionEvaluator)
+        assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+
+        assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'loss': 'ls',
+                                                         'learning_rate': 0.1,
+                                                         'n_estimators': 100,
+                                                         'max_depth': 3,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'max_features': None}
+
+        keys = fitter.training_evaluator.all_quality_metrics.keys()
+        expected_values = {'Mean Absolute Error (MAE)': 2.921039389435212, 'Mean Squared Error (MSE)': 14.909877151863128, 'Root Mean Squared Error (RMSE)': 3.861331007808464, 'RMSE to Standard Deviation of Target': 0.23029024359523864}  # noqa
+        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+        expected_values = {'Mean Absolute Error (MAE)': 4.004637648118118, 'Mean Squared Error (MSE)': 26.996454670801214, 'Root Mean Squared Error (RMSE)': 5.195811262045727, 'RMSE to Standard Deviation of Target': 0.3165170519644618}  # noqa
+        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+    def test_GradientBoostingClassifier(self):
+        data = TestHelper.get_titanic_data()
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+        fitter = ModelFitter(model=GradientBoostingClassifier(),
+                             model_transformations=transformations,
+                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                             evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=1)))
+        fitter.fit(data=data, target_variable='Survived', hyper_params=GradientBoostingClassifierHP())
+        assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+        assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+        assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'loss': 'deviance',
+                                                         'learning_rate': 0.1,
+                                                         'n_estimators': 100,
+                                                         'max_depth': 3,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'max_features': None}
+
+        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9551594950228207, 'AUC Precision/Recall': 0.9422935585546288, 'Kappa': 0.7902449021416128, 'F1 Score': 0.8654970760233918, 'Two-Class Accuracy': 0.9030898876404494, 'Error Rate': 0.09691011235955056, 'True Positive Rate': 0.8131868131868132, 'True Negative Rate': 0.958997722095672, 'False Positive Rate': 0.04100227790432802, 'False Negative Rate': 0.18681318681318682, 'Positive Predictive Value': 0.925, 'Negative Predictive Value': 0.8919491525423728, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8112648221343873, 'AUC Precision/Recall': 0.7673499978743319, 'Kappa': 0.5503428610224728, 'F1 Score': 0.7086614173228347, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.6521739130434783, 'True Negative Rate': 0.8818181818181818, 'False Positive Rate': 0.11818181818181818, 'False Negative Rate': 0.34782608695652173, 'Positive Predictive Value': 0.7758620689655172, 'Negative Predictive Value': 0.8016528925619835, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+
+    def test_GradientBoostingClassifier_multiclass(self):
+        data = TestHelper.get_iris_data()
+        target_variable = 'species'
+        fitter = ModelFitter(model=GradientBoostingClassifier(),
+                             model_transformations=None,
+                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
+                             evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
+        fitter.fit(data=data, target_variable=target_variable, hyper_params=GradientBoostingClassifierHP())  # noqa
+
+        assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
+        assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
+
+        assert fitter.model.feature_names == ['sepal_length', 'sepal_width', 'petal_length', 'petal_width']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'loss': 'deviance',
+                                                         'learning_rate': 0.1,
+                                                         'n_estimators': 100,
+                                                         'max_depth': 3,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'max_features': None}
+
+        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.9604989604989606, 'Accuracy': 0.9736842105263158, 'Error Rate': 0.02631578947368418, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa
+
+        con_matrix = fitter.holdout_evaluator.matrix
+        assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
+        assert con_matrix['versicolor'].values.tolist() == [0, 13, 1, 14]
+        assert con_matrix['virginica'].values.tolist() == [0, 0, 12, 12]
+        assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
+        assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']

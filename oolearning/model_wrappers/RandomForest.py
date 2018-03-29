@@ -3,7 +3,7 @@ import pandas as pd
 import sklearn.ensemble
 from typing import Union
 
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictRegressionMixin, \
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictRegressorMixin, \
     SklearnPredictClassifierMixin
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
@@ -142,7 +142,7 @@ class RandomForestClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
         return rf_model
 
 
-class RandomForestRegressor(SklearnPredictRegressionMixin, ModelWrapperBase):
+class RandomForestRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
     def __init__(self, _num_jobs_in_parallel: int=-1, random_state: int=42):
         super().__init__()
         self._num_jobs_in_parallel = _num_jobs_in_parallel
