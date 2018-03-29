@@ -117,6 +117,7 @@ from .transformers.PolynomialFeaturesTransformer import PolynomialFeaturesTransf
 from .transformers.RemoveColumnsTransformer import RemoveColumnsTransformer
 from .transformers.RemoveCorrelationsTransformer import RemoveCorrelationsTransformer
 from .transformers.RemoveNZVTransformer import RemoveNZVTransformer
+from .transformers.PrincipalComponentAnalysis import PCATransformer
 from .transformers.StatelessTransformer import StatelessTransformer
 from .transformers.TransformerBase import TransformerBase
 from .transformers.TransformerPipeline import TransformerPipeline

@@ -573,6 +573,72 @@ class TransformerTests(TimerTestCase):
         assert all(double_transformed.index.values == transformed_data.index.values)
         assert all(double_transformed == transformed_data)
 
+    def test_PCATransformer(self):
+        data = TestHelper.get_housing_data()
+
+        # PCA cannot be used on missing values; data must be imputed or removed
+        pca_transformer = PCATransformer()
+        self.assertRaises(AssertionError, lambda: pca_transformer.fit(data_x=data))
+        data.drop(columns='total_bedrooms', inplace=True)
+
+        target_variable = 'median_house_value'
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_regression(data, target_variable)
+
+        pca_transformer = PCATransformer()
+        # ensure that we are forced to call `fit` first
+        self.assertRaises(AssertionError, lambda: pca_transformer.transform(data_x=training_set))
+
+        assert pca_transformer.cumulative_explained_variance is None
+        assert pca_transformer.number_of_components is None
+        assert pca_transformer.state is None
+
+        pca_transformer.fit(data_x=training_set)
+        assert list(pca_transformer.cumulative_explained_variance) == [0.955751167228117]
+        assert pca_transformer.number_of_components == 1
+        assert pca_transformer.state == {'categorical_features': ['ocean_proximity', 'temp_categorical']}
+
+        # transform training data
+        transformed_data = pca_transformer.transform(data_x=training_set)
+        assert all(transformed_data.columns.values == ['component_1', 'ocean_proximity', 'temp_categorical'])
+        assert all(transformed_data.index.values == training_set.index.values)
+        assert all(transformed_data['ocean_proximity'].values == training_set['ocean_proximity'].values)
+        assert all(transformed_data['temp_categorical'].values == training_set['temp_categorical'].values)
+
+        # transform test data
+        transformed_data = pca_transformer.transform(data_x=test_set)
+        assert all(transformed_data.columns.values == ['component_1', 'ocean_proximity', 'temp_categorical'])
+        assert all(transformed_data.index.values == test_set.index.values)
+        assert all(transformed_data['ocean_proximity'].values == test_set['ocean_proximity'].values)
+        assert all(transformed_data['temp_categorical'].values == test_set['temp_categorical'].values)
+
+        # test when setting `percent_variance_explained=None`
+        pca_transformer = PCATransformer(percent_variance_explained=None)
+        pca_transformer.fit(data_x=training_set)
+        assert list(pca_transformer.cumulative_explained_variance) == [0.955751167228117, 0.9976620662281546, 0.9999751439740711, 0.9999981341821631, 0.9999994868435985, 0.9999999583168993, 1.0]  # noqa
+        assert pca_transformer.number_of_components == 7
+        assert pca_transformer.state == {'categorical_features': ['ocean_proximity', 'temp_categorical']}
+
+        # transform training data
+        transformed_data = pca_transformer.transform(data_x=training_set)
+        assert all(transformed_data.columns.values == ['component_1', 'component_2', 'component_3', 'component_4', 'component_5', 'component_6', 'component_7', 'ocean_proximity', 'temp_categorical'])  # noqa
+        assert all(transformed_data.index.values == training_set.index.values)
+        assert all(transformed_data['ocean_proximity'].values == training_set['ocean_proximity'].values)
+        assert all(transformed_data['temp_categorical'].values == training_set['temp_categorical'].values)
+
+        TestHelper.check_plot('data/test_Transformers/test_get_pca_plot.png',
+                              lambda: pca_transformer.get_pca_plot())
+
+        # test when setting `exclude_categorical_columns=True`
+        pca_transformer = PCATransformer(exclude_categorical_columns=True)
+        transformed_data = pca_transformer.fit_transform(data_x=training_set)
+        assert all(transformed_data.columns.values == ['component_1'])
+        assert all(transformed_data.index.values == training_set.index.values)
+
+        # transform test data
+        transformed_data = pca_transformer.transform(data_x=test_set)
+        assert all(transformed_data.columns.values == ['component_1'])
+        assert all(transformed_data.index.values == test_set.index.values)
+
     def test_RemoveCorrelationsTransformer(self):
         data = TestHelper.get_housing_data()
         target_variable = 'median_house_value'
