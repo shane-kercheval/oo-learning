@@ -534,14 +534,60 @@ class TransformerTests(TimerTestCase):
         # transformed_data.households.hist()
         # transformed_data.median_income.hist()
 
-    # @unittest.skip("")
-    # def test_RemoveNZPTransformer(self):
-    #     pass
+    def test_RemoveNZPTransformer(self):
+        data = TestHelper.get_housing_data()
+        target_variable = 'median_house_value'
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_regression(data, target_variable)
+
+        remove_nzv_transformer = RemoveNZVTransformer()
+        # ensure that we are forced to call `fit` first
+        self.assertRaises(AssertionError, lambda: remove_nzv_transformer.transform(data_x=training_set))
+        remove_nzv_transformer.fit(data_x=training_set)
+        assert remove_nzv_transformer.state == {'columns_to_remove': ['longitude']}
+
+        # test with data that
+        transformed_data = remove_nzv_transformer.transform(data_x=training_set)
+        # verify original data
+        assert all(training_set.columns.values == ['longitude', 'latitude', 'housing_median_age', 'total_rooms', 'total_bedrooms', 'population', 'households', 'median_income', 'ocean_proximity', 'temp_categorical'])  # noqa
+        # verify transformed data has expected column removed
+        assert all(transformed_data.columns.values == ['latitude', 'housing_median_age', 'total_rooms', 'total_bedrooms', 'population', 'households', 'median_income', 'ocean_proximity', 'temp_categorical'])  # noqa
+        assert all(transformed_data.index.values == training_set.index.values)
+
+        self.assertRaises(AssertionError, lambda: remove_nzv_transformer.fit(data_x=training_set))
+
+        # test on test set
+        # verify original data
+        transformed_data = remove_nzv_transformer.transform(data_x=test_set)
+        assert all(test_set.columns.values == ['longitude', 'latitude', 'housing_median_age', 'total_rooms', 'total_bedrooms', 'population', 'households', 'median_income', 'ocean_proximity', 'temp_categorical'])  # noqa
+        # verify transformed data has expected column removed
+        assert all(transformed_data.columns.values == ['latitude', 'housing_median_age', 'total_rooms', 'total_bedrooms', 'population', 'households', 'median_income', 'ocean_proximity', 'temp_categorical'])  # noqa
+        assert all(transformed_data.index.values == test_set.index.values)
+
+        # fit on dataset that doesn't have any NZV
+        remove_nzv_transformer2 = RemoveNZVTransformer()
+        remove_nzv_transformer2.fit(data_x=transformed_data)
+        assert remove_nzv_transformer2.state == {'columns_to_remove': []}
+        double_transformed = remove_nzv_transformer2.transform(data_x=transformed_data)
+        # ensure both datasets have the same values
+        assert all(double_transformed.columns.values == ['latitude', 'housing_median_age', 'total_rooms', 'total_bedrooms', 'population', 'households', 'median_income', 'ocean_proximity', 'temp_categorical'])  # noqa
+        assert all(double_transformed.index.values == transformed_data.index.values)
+        assert all(double_transformed == transformed_data)
 
     def test_RemoveCorrelationsTransformer(self):
         data = TestHelper.get_housing_data()
         target_variable = 'median_house_value'
         training_set, _, test_set, _ = TestHelper.split_train_holdout_regression(data, target_variable)
+
+        # at a threshold of 0.99, nothing should be removed
+        expected_removed = []
+        transformer = RemoveCorrelationsTransformer(max_correlation_threshold=0.99)
+        transformed_data = transformer.fit_transform(data_x=training_set)
+        assert transformer.state['columns_to_remove'] == expected_removed
+        assert list(transformed_data.columns.values) == [x for x in training_set.columns.values
+                                                         if x not in expected_removed]
+        transformed_data = transformer.transform(data_x=test_set)
+        assert list(transformed_data.columns.values) == [x for x in training_set.columns.values
+                                                         if x not in expected_removed]
 
         # at a threshold of 0.95, only total_bedrooms should be removed
         expected_removed = ['total_bedrooms']
@@ -583,7 +629,7 @@ class TransformerTests(TimerTestCase):
         # test creation with transformations as non-list
         self.assertRaises(AssertionError,
                           lambda: TransformerPipeline(transformations=DummyEncodeTransformer(
-                            encoding=CategoricalEncoding.DUMMY)))
+                              encoding=CategoricalEncoding.DUMMY)))
 
         # test with a single transformation
         dummy_pipeline = TransformerPipeline(
