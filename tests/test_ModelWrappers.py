@@ -1,3 +1,4 @@
+import copy
 import os
 import os.path
 import pickle
@@ -8,6 +9,8 @@ from typing import Callable
 
 import numpy as np
 import pandas as pd
+
+from sklearn.metrics import roc_auc_score
 
 from mock import patch
 from oolearning import *
@@ -206,6 +209,46 @@ class ModelWrapperTests(TimerTestCase):
         evaluator = MultiClassEvaluator.from_classes(actual_classes=test['species'], predicted_classes=preds)
         assert evaluator.all_quality_metrics is not None
 
+        ######################################################################################################
+        # playing with sklearn VotingClassifier
+        ######################################################################################################
+        from sklearn.ensemble import RandomForestClassifier as SkRandomForestClassifier
+        from sklearn.ensemble import AdaBoostClassifier as SkAdaBoostClassifier
+        from sklearn.tree import DecisionTreeClassifier as SkDecisionTreeClassifier
+        from sklearn.ensemble import VotingClassifier as SkVotingClassifier
+
+        clf1 = SkRandomForestClassifier(random_state=42)
+        clf1 = clf1.fit(train_x, train_y)
+        # clf1.predict_proba(holdout_x)
+        roc_auc_score(y_true=holdout_y, y_score=clf1.predict_proba(holdout_x)[:, 1])
+
+        clf2 = SkAdaBoostClassifier(random_state=42)
+        clf2 = clf2.fit(train_x, train_y)
+        # clf2.predict_proba(holdout_x)
+        roc_auc_score(y_true=holdout_y, y_score=clf2.predict_proba(holdout_x)[:, 1])
+
+        clf3 = SkDecisionTreeClassifier(random_state=42)
+        clf3 = clf3.fit(train_x, train_y)
+        # clf3.predict_proba(holdout_x)
+        roc_auc_score(y_true=holdout_y, y_score=clf3.predict_proba(holdout_x)[:, 1])
+
+        eclf1 = SkVotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='hard')
+        eclf1 = eclf1.fit(train_x, train_y)
+        eclf1.predict(holdout_x)
+        roc_auc_score(y_true=holdout_y, y_score=eclf1.predict_proba(holdout_x)[:, 1])
+
+        eclf2 = SkVotingClassifier(estimators=[('lr', clf1), ('rf', clf2), ('gnb', clf3)], voting='soft')
+        eclf2 = eclf2.fit(train_x, train_y)
+        # eclf2.predict_proba(holdout_x)
+        roc_auc_score(y_true=holdout_y, y_score=eclf2.predict_proba(holdout_x)[:, 1])
+
+        eclf3 = SkVotingClassifier(estimators=[
+            ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+            voting='soft', weights=[2, 1, 1],
+            flatten_transform=True)
+        eclf3 = eclf3.fit(X, y)
+        print(eclf3.predict(X))
+
     def test_MockModelWrapper(self):
         ######################################################################################################
         # seems stupid to teset a Mock object, but I just want to ensure it does what I think it will do.
@@ -287,7 +330,7 @@ class ModelWrapperTests(TimerTestCase):
         assert all(value_distribution.index.values == [32.0, 40.0, 24.0, 15.9, 48.1, 56.1, 64.1, 7.9, 72.1, 80.2])  # noqa
         assert all([(x, y) for x, y in zip(value_distribution.values, [0.19902913, 0.16796117, 0.1592233, 0.12718447, 0.1184466, 0.07961165, 0.04757282, 0.04466019, 0.03398058, 0.0223301])])  # noqa
 
-    def test_ModelWrapperBase(self):
+    def test_ModelWrapperBase_regressor(self):
         data = TestHelper.get_cement_data()
         target_variable = 'strength'
         train_x, train_y, test_x, test_y = TestHelper.split_train_holdout_regression(data, target_variable)
@@ -315,6 +358,7 @@ class ModelWrapperTests(TimerTestCase):
 
         predictions = model_wrapper.predict(data_x=train_x)
         assert predictions is not None
+        assert isinstance(predictions, np.ndarray)
 
         # pass in data that has different columns
         test_x.columns = ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg',
@@ -1679,10 +1723,9 @@ class ModelWrapperTests(TimerTestCase):
 
     def test_AdaBoostRegressor(self):
         data = TestHelper.get_cement_data()
-        transformations = None
 
         fitter = ModelFitter(model=AdaBoostRegressor(),
-                             model_transformations=transformations,
+                             model_transformations=None,
                              splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=RegressionEvaluator())
         ######################################################################################################
@@ -1850,3 +1893,201 @@ class ModelWrapperTests(TimerTestCase):
         assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
         assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
         assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+
+    def test_VotingClassifier(self):
+        data = TestHelper.get_titanic_data()
+        data.drop(columns=['PassengerId', 'Name', 'Ticket', 'Cabin', 'Age', 'Embarked'], inplace=True)
+        data.Sex = [1 if x == 'male' else 0 for x in data.Sex]
+        # data.Survived = [ if x == 'male' else 0 for x in data.Sex]
+        target_variable = 'Survived'
+        train_x, train_y, holdout_x, holdout_y = TestHelper.split_train_holdout_class(data, target_variable)
+
+        ######################################################################################################
+        # Build Classifiers that will be using by the VotingClassifier (must be pre-trained)
+        ######################################################################################################
+        model_random_forest = RandomForestClassifier()
+        model_random_forest.train(data_x=train_x, data_y=train_y, hyper_params=RandomForestHP())
+
+        model_decision_tree = CartDecisionTreeClassifier()
+        model_decision_tree.train(data_x=train_x, data_y=train_y, hyper_params=CartDecisionTreeHP())
+
+        model_adaboost = AdaBoostClassifier()
+        model_adaboost.train(data_x=train_x, data_y=train_y, hyper_params=AdaBoostClassifierHP())
+
+        predictions_random_forest = model_random_forest.predict(data_x=holdout_x)
+        predictions_decision_tree = model_decision_tree.predict(data_x=holdout_x)
+        predictions_adaboost = model_adaboost.predict(data_x=holdout_x)
+        # model_predictions = [predictions_random_forest, predictions_decision_tree, predictions_adaboost]
+        died_averages = np.mean([predictions_random_forest[0].values, predictions_decision_tree[0].values, predictions_adaboost[0].values], axis=0)  # noqa
+        survived_averages = np.mean([predictions_random_forest[1].values, predictions_decision_tree[1].values, predictions_adaboost[1].values], axis=0)  # noqa
+
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=predictions_random_forest[1]), 0.8230566534914362)  # noqa
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_decision_tree.predict(data_x=holdout_x)[1]), 0.772463768115942)  # noqa
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_adaboost.predict(data_x=holdout_x)[1]), 0.77832674571805)  # noqa
+
+        ######################################################################################################
+        # VotingStrategy.SOFT
+        ######################################################################################################
+        model_voting = VotingClassifier(models=[model_random_forest, model_decision_tree, model_adaboost],
+                                        voting_strategy=VotingStrategy.SOFT)
+        # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
+        # automatically calls `train()
+        model_voting.train(data_x=train_x, data_y=train_y)
+        voting_predictions = model_voting.predict(data_x=holdout_x)
+
+        assert all(voting_predictions.index.values == holdout_x.index.values)
+        assert all(voting_predictions.columns.values == predictions_random_forest.columns.values)
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_VotingClassifier_soft.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(voting_predictions, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            expected_predictions = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=expected_predictions,
+                                                      data_frame2=voting_predictions)
+
+        # make sure we are getting the correct averages back
+        assert all([isclose(x, y) for x, y in zip(voting_predictions[0], died_averages)])
+        assert all([isclose(x, y) for x, y in zip(voting_predictions[1], survived_averages)])
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_voting.predict(data_x=holdout_x)[1]), 0.8073781291172596)  # noqa
+
+        ######################################################################################################
+        # VotingStrategy.HARD
+        ######################################################################################################
+        # for HARD voting, need to pass converters as well
+        self.assertRaises(AssertionError,
+                          lambda: VotingClassifier(models=[model_random_forest, model_decision_tree, model_adaboost],  # noqa
+                                                   voting_strategy=VotingStrategy.HARD))
+
+        converter = TwoClassThresholdConverter(positive_class=1)
+        # noinspection PyUnusedLocal
+        model_voting = VotingClassifier(models=[model_random_forest, model_decision_tree, model_adaboost],
+                                        voting_strategy=VotingStrategy.HARD,
+                                        converters=[copy.deepcopy(converter) for x in range(0, 3)])
+        # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
+        # automatically calls `train()
+        model_voting.train(data_x=train_x, data_y=train_y)
+        voting_predictions = model_voting.predict(data_x=holdout_x)
+
+        assert all(voting_predictions.index.values == holdout_x.index.values)
+        assert all(voting_predictions.columns.values == predictions_random_forest.columns.values)
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_VotingClassifier_hard.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(voting_predictions, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            expected_predictions = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=expected_predictions,
+                                                      data_frame2=voting_predictions)
+
+        # predictions should all sum to 1
+        assert all([sum(voting_predictions.loc[x]) == 1.0 for x in voting_predictions.index.values])
+
+        # [1 if x > 0.5 else 0 for x in predictions_random_forest[1]]
+        # [1 if x > 0.5 else 0 for x in model_voting.predict(data_x=holdout_x)[1]]
+        # list(holdout_y)
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_voting.predict(data_x=holdout_x)[1]), 0.7853096179183136)  # noqa
+
+    def test_VotingClassifier_multi_class(self):
+        data = TestHelper.get_iris_data()
+        target_variable = 'species'
+        train_x, train_y, holdout_x, holdout_y = TestHelper.split_train_holdout_class(data, target_variable)
+
+        ######################################################################################################
+        # Build Classifiers that will be using by the VotingClassifier (must be pre-trained)
+        ######################################################################################################
+        model_random_forest = RandomForestClassifier()
+        model_random_forest.train(data_x=train_x, data_y=train_y, hyper_params=RandomForestHP())
+
+        model_decision_tree = CartDecisionTreeClassifier()
+        model_decision_tree.train(data_x=train_x, data_y=train_y, hyper_params=CartDecisionTreeHP())
+
+        model_adaboost = AdaBoostClassifier()
+        model_adaboost.train(data_x=train_x, data_y=train_y, hyper_params=AdaBoostClassifierHP())
+
+        predictions_random_forest = model_random_forest.predict(data_x=holdout_x)
+        predictions_decision_tree = model_decision_tree.predict(data_x=holdout_x)
+        predictions_adaboost = model_adaboost.predict(data_x=holdout_x)
+        # model_predictions = [predictions_random_forest, predictions_decision_tree, predictions_adaboost]
+
+        setosa_averages = np.mean([predictions_random_forest['setosa'].values, predictions_decision_tree['setosa'].values, predictions_adaboost['setosa'].values], axis=0)  # noqa
+        versicolor_averages = np.mean([predictions_random_forest['versicolor'].values, predictions_decision_tree['versicolor'].values, predictions_adaboost['versicolor'].values], axis=0)  # noqa
+        virginica_averages = np.mean([predictions_random_forest['virginica'].values, predictions_decision_tree['virginica'].values, predictions_adaboost['virginica'].values], axis=0)  # noqa
+
+        evaluator = MultiClassEvaluator(converter=HighestValueConverter())
+        evaluator.evaluate(actual_values=holdout_y, predicted_values=predictions_random_forest)
+        assert evaluator.all_quality_metrics == {'Kappa': 0.95, 'Accuracy': 0.9666666666666667, 'Error Rate': 0.033333333333333326, 'No Information Rate': 0.3333333333333333, 'Total Observations': 30}  # noqa
+
+        evaluator.evaluate(actual_values=holdout_y, predicted_values=predictions_decision_tree)
+        assert evaluator.all_quality_metrics == {'Kappa': 0.9, 'Accuracy': 0.9333333333333333, 'Error Rate': 0.06666666666666665, 'No Information Rate': 0.3333333333333333, 'Total Observations': 30}  # noqa
+
+        evaluator.evaluate(actual_values=holdout_y, predicted_values=predictions_adaboost)
+        assert evaluator.all_quality_metrics == {'Kappa': 0.9, 'Accuracy': 0.9333333333333333, 'Error Rate': 0.06666666666666665, 'No Information Rate': 0.3333333333333333, 'Total Observations': 30}  # noqa
+
+        ######################################################################################################
+        # VotingStrategy.SOFT
+        ######################################################################################################
+        model_voting = VotingClassifier(models=[model_random_forest, model_decision_tree, model_adaboost],
+                                        voting_strategy=VotingStrategy.SOFT)
+        # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
+        # automatically calls `train()
+        model_voting.train(data_x=train_x, data_y=train_y)
+        voting_predictions = model_voting.predict(data_x=holdout_x)
+
+        assert all(voting_predictions.index.values == holdout_x.index.values)
+        assert all(voting_predictions.columns.values == predictions_random_forest.columns.values)
+
+        # make sure we are getting the correct averages back
+        assert all([isclose(x, y) for x, y in zip(voting_predictions['setosa'], setosa_averages)])
+        assert all([isclose(x, y) for x, y in zip(voting_predictions['versicolor'], versicolor_averages)])
+        assert all([isclose(x, y) for x, y in zip(voting_predictions['virginica'], virginica_averages)])
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_VotingClassifier_multi_class_soft.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(voting_predictions, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            expected_predictions = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=expected_predictions,
+                                                      data_frame2=voting_predictions)
+
+        evaluator.evaluate(actual_values=holdout_y, predicted_values=voting_predictions)
+        assert evaluator.all_quality_metrics == {'Kappa': 0.9, 'Accuracy': 0.9333333333333333, 'Error Rate': 0.06666666666666665, 'No Information Rate': 0.3333333333333333, 'Total Observations': 30}  # noqa
+
+        ######################################################################################################
+        # VotingStrategy.HARD
+        ######################################################################################################
+        # for HARD voting, need to pass converters as well
+        self.assertRaises(AssertionError,
+                          lambda: VotingClassifier(models=[model_random_forest, model_decision_tree, model_adaboost],  # noqa
+                                                   voting_strategy=VotingStrategy.HARD))
+
+        converter = HighestValueConverter()
+        # noinspection PyUnusedLocal
+        model_voting = VotingClassifier(models=[model_random_forest, model_decision_tree, model_adaboost],
+                                        voting_strategy=VotingStrategy.HARD,
+                                        converters=[copy.deepcopy(converter) for x in range(0, 3)])
+        # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
+        # automatically calls `train()
+        model_voting.train(data_x=train_x, data_y=train_y)
+        voting_predictions = model_voting.predict(data_x=holdout_x)
+
+        assert all(voting_predictions.index.values == holdout_x.index.values)
+        assert all(voting_predictions.columns.values == predictions_random_forest.columns.values)
+
+        # predictions should all sum to 1
+        assert all([sum(voting_predictions.loc[x]) == 1.0 for x in voting_predictions.index.values])
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_VotingClassifier_multi_class_hard.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(voting_predictions, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            expected_predictions = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=expected_predictions,
+                                                      data_frame2=voting_predictions)
+
+        # [1 if x > 0.5 else 0 for x in predictions_random_forest[1]]
+        # [1 if x > 0.5 else 0 for x in model_voting.predict(data_x=holdout_x)[1]]
+        # list(holdout_y)
+
+        evaluator.evaluate(actual_values=holdout_y, predicted_values=voting_predictions)
+        assert evaluator.all_quality_metrics == {'Kappa': 0.9, 'Accuracy': 0.9333333333333333, 'Error Rate': 0.06666666666666665, 'No Information Rate': 0.3333333333333333, 'Total Observations': 30}  # noqa

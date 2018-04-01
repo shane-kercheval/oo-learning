@@ -60,4 +60,5 @@ class MockClassificationModelWrapper(ModelWrapperBase):
         for target in self._unique_targets:
             probabilities[target] = pd.Series(data=[1 if x == target else 0 for x in random_predictions])
 
+        probabilities.index = data_x.index  # ensure the index is the same
         return probabilities

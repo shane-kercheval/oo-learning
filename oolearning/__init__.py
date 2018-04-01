@@ -1,5 +1,6 @@
 from .OOLearningHelpers import OOLearningHelpers
 
+from .converters.ContinuousToClassConverterBase import ContinuousToClassConverterBase
 from .converters.HighestValueConverter import HighestValueConverter
 from .converters.TwoClassConverterBase import TwoClassConverterBase
 from .converters.TwoClassThresholdConverter import TwoClassThresholdConverter
@@ -13,6 +14,7 @@ from .enums.Metric import Metric
 from .enums.Normalization import Normalization
 from .enums.ResolveOutliers import ResolveOutliers
 from .enums.Skewness import Skewness
+from .enums.VotingStrategy import VotingStrategy
 
 from .evaluators.AccuracyScore import AccuracyScore
 from .evaluators.AucRocScore import AucRocScore
@@ -98,6 +100,7 @@ from .model_wrappers.SupportVectorMachines import SvmPolynomialRegressor
 from .model_wrappers.SupportVectorMachines import SvmPolynomialRegressorHP
 from .model_wrappers.SupportVectorMachines import SvmLinearRegressor
 from .model_wrappers.SupportVectorMachines import SvmLinearRegressorHP
+from .model_wrappers.VotingClassifier import VotingClassifier
 
 from .persistence.AlwaysFetchManager import AlwaysFetchManager
 from .persistence.LocalCacheManager import LocalCacheManager

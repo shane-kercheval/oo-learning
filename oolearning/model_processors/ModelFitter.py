@@ -165,7 +165,13 @@ class ModelFitter:
             raise ModelNotFittedError()
 
         prepared_prediction_set = self._pipeline.transform(data_x)
-        return self._model.predict(data_x=prepared_prediction_set)
+
+        predictions = self._model.predict(data_x=prepared_prediction_set)
+        if isinstance(predictions, pd.DataFrame):
+            # noinspection PyTypeChecker
+            assert all(predictions.index.values == data_x.index.values)
+
+        return predictions
 
     @property
     def training_evaluator(self):
