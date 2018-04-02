@@ -210,7 +210,7 @@ class ModelWrapperTests(TimerTestCase):
         assert evaluator.all_quality_metrics is not None
 
         ######################################################################################################
-        # playing with sklearn VotingClassifier
+        # playing with sklearn ModelAggregator
         ######################################################################################################
         from sklearn.ensemble import RandomForestClassifier as SkRandomForestClassifier
         from sklearn.ensemble import AdaBoostClassifier as SkAdaBoostClassifier
@@ -1894,7 +1894,7 @@ class ModelWrapperTests(TimerTestCase):
         assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
         assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
 
-    def test_VotingClassifier(self):
+    def test_ModelAggregator(self):
         data = TestHelper.get_titanic_data()
         data.drop(columns=['PassengerId', 'Name', 'Ticket', 'Cabin', 'Age', 'Embarked'], inplace=True)
         data.Sex = [1 if x == 'male' else 0 for x in data.Sex]
@@ -1903,7 +1903,7 @@ class ModelWrapperTests(TimerTestCase):
         train_x, train_y, holdout_x, holdout_y = TestHelper.split_train_holdout_class(data, target_variable)
 
         ######################################################################################################
-        # Build Classifiers that will be using by the VotingClassifier (must be pre-trained)
+        # Build Classifiers that will be using by the ModelAggregator (must be pre-trained)
         ######################################################################################################
         model_random_forest = RandomForestClassifier()
         model_random_forest.train(data_x=train_x, data_y=train_y, hyper_params=RandomForestHP())
@@ -1928,8 +1928,8 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # VotingStrategy.SOFT
         ######################################################################################################
-        model_voting = VotingClassifier(models=[model_random_forest, model_decision_tree, model_adaboost],
-                                        voting_strategy=VotingStrategy.SOFT)
+        model_voting = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
+                                       aggregation_strategy=SoftVotingAggregationStrategy())
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
         # automatically calls `train()
         model_voting.train(data_x=train_x, data_y=train_y)
@@ -1938,7 +1938,7 @@ class ModelWrapperTests(TimerTestCase):
         assert all(voting_predictions.index.values == holdout_x.index.values)
         assert all(voting_predictions.columns.values == predictions_random_forest.columns.values)
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_VotingClassifier_soft.pkl'))  # noqa
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_soft.pkl'))  # noqa
         # with open(file, 'wb') as output:
         #     pickle.dump(voting_predictions, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
@@ -1955,15 +1955,10 @@ class ModelWrapperTests(TimerTestCase):
         # VotingStrategy.HARD
         ######################################################################################################
         # for HARD voting, need to pass converters as well
-        self.assertRaises(AssertionError,
-                          lambda: VotingClassifier(models=[model_random_forest, model_decision_tree, model_adaboost],  # noqa
-                                                   voting_strategy=VotingStrategy.HARD))
-
         converter = TwoClassThresholdConverter(positive_class=1)
         # noinspection PyUnusedLocal
-        model_voting = VotingClassifier(models=[model_random_forest, model_decision_tree, model_adaboost],
-                                        voting_strategy=VotingStrategy.HARD,
-                                        converters=[copy.deepcopy(converter) for x in range(0, 3)])
+        model_voting = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
+                                       aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for x in range(0, 3)]))  # noqa
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
         # automatically calls `train()
         model_voting.train(data_x=train_x, data_y=train_y)
@@ -1972,7 +1967,7 @@ class ModelWrapperTests(TimerTestCase):
         assert all(voting_predictions.index.values == holdout_x.index.values)
         assert all(voting_predictions.columns.values == predictions_random_forest.columns.values)
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_VotingClassifier_hard.pkl'))  # noqa
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_hard.pkl'))  # noqa
         # with open(file, 'wb') as output:
         #     pickle.dump(voting_predictions, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
@@ -1988,13 +1983,13 @@ class ModelWrapperTests(TimerTestCase):
         # list(holdout_y)
         assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_voting.predict(data_x=holdout_x)[1]), 0.7853096179183136)  # noqa
 
-    def test_VotingClassifier_multi_class(self):
+    def test_ModelAggregator_multi_class(self):
         data = TestHelper.get_iris_data()
         target_variable = 'species'
         train_x, train_y, holdout_x, holdout_y = TestHelper.split_train_holdout_class(data, target_variable)
 
         ######################################################################################################
-        # Build Classifiers that will be using by the VotingClassifier (must be pre-trained)
+        # Build Classifiers that will be using by the ModelAggregator (must be pre-trained)
         ######################################################################################################
         model_random_forest = RandomForestClassifier()
         model_random_forest.train(data_x=train_x, data_y=train_y, hyper_params=RandomForestHP())
@@ -2027,8 +2022,8 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # VotingStrategy.SOFT
         ######################################################################################################
-        model_voting = VotingClassifier(models=[model_random_forest, model_decision_tree, model_adaboost],
-                                        voting_strategy=VotingStrategy.SOFT)
+        model_voting = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
+                                       aggregation_strategy=SoftVotingAggregationStrategy())
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
         # automatically calls `train()
         model_voting.train(data_x=train_x, data_y=train_y)
@@ -2042,7 +2037,7 @@ class ModelWrapperTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip(voting_predictions['versicolor'], versicolor_averages)])
         assert all([isclose(x, y) for x, y in zip(voting_predictions['virginica'], virginica_averages)])
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_VotingClassifier_multi_class_soft.pkl'))  # noqa
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_multi_class_soft.pkl'))  # noqa
         # with open(file, 'wb') as output:
         #     pickle.dump(voting_predictions, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
@@ -2057,15 +2052,10 @@ class ModelWrapperTests(TimerTestCase):
         # VotingStrategy.HARD
         ######################################################################################################
         # for HARD voting, need to pass converters as well
-        self.assertRaises(AssertionError,
-                          lambda: VotingClassifier(models=[model_random_forest, model_decision_tree, model_adaboost],  # noqa
-                                                   voting_strategy=VotingStrategy.HARD))
-
         converter = HighestValueConverter()
         # noinspection PyUnusedLocal
-        model_voting = VotingClassifier(models=[model_random_forest, model_decision_tree, model_adaboost],
-                                        voting_strategy=VotingStrategy.HARD,
-                                        converters=[copy.deepcopy(converter) for x in range(0, 3)])
+        model_voting = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
+                                       aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for x in range(0, 3)]))  # noqa
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
         # automatically calls `train()
         model_voting.train(data_x=train_x, data_y=train_y)
@@ -2077,7 +2067,7 @@ class ModelWrapperTests(TimerTestCase):
         # predictions should all sum to 1
         assert all([sum(voting_predictions.loc[x]) == 1.0 for x in voting_predictions.index.values])
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_VotingClassifier_multi_class_hard.pkl'))  # noqa
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_multi_class_hard.pkl'))  # noqa
         # with open(file, 'wb') as output:
         #     pickle.dump(voting_predictions, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
