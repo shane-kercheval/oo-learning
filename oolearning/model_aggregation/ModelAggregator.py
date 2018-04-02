@@ -35,10 +35,11 @@ class ModelAggregator(ModelWrapperBase):
 
     def _predict(self, model_object: object, data_x: pd.DataFrame) -> Union[np.ndarray, pd.DataFrame]:
         model_predictions = [x.predict(data_x=data_x) for x in self._models]
-        # need to ensure that all of the resulting prediction dataframes have the same indexes as `data_x`,
-        # because we rely on the indexes to calculate the means
-        # noinspection PyTypeChecker
-        assert all([all(x.index.values == data_x.index.values) for x in model_predictions])
-        voting_predictions = self._aggregation_strategy.aggregate(model_predictions=model_predictions)
+        assert len(model_predictions) == len(self._models)
+        if isinstance(model_predictions[0], pd.DataFrame):
+            # need to ensure that all of the resulting prediction dataframes have the same indexes as `data_x`
+            # because we rely on the indexes to calculate the means
+            # noinspection PyTypeChecker
+            assert all([all(x.index.values == data_x.index.values) for x in model_predictions])
 
-        return voting_predictions
+        return self._aggregation_strategy.aggregate(model_predictions=model_predictions)

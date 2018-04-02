@@ -14,7 +14,7 @@ from sklearn.metrics import roc_auc_score
 
 from mock import patch
 from oolearning import *
-from oolearning import DummyClassifierStrategy
+from oolearning import DummyClassifierStrategy, MeanAggregationStrategy
 from tests.MockClassificationModelWrapper import MockClassificationModelWrapper
 from tests.MockRegressionModelWrapper import MockRegressionModelWrapper
 from tests.TestHelper import TestHelper
@@ -545,6 +545,8 @@ class ModelWrapperTests(TimerTestCase):
         assert isclose(fitter.training_evaluator.mean_absolute_error, 8.360259532214116)
         assert isclose(fitter.holdout_evaluator.mean_squared_error, 100.07028301004217)
         assert isclose(fitter.holdout_evaluator.mean_absolute_error, 7.99161252047238)
+
+        np.asarray(fitter.predict(data_x=data.drop(columns=target_variable)))
 
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'age']  # noqa
 
@@ -1928,12 +1930,12 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # VotingStrategy.SOFT
         ######################################################################################################
-        model_voting = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
-                                       aggregation_strategy=SoftVotingAggregationStrategy())
+        model_aggregator = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
+                                           aggregation_strategy=SoftVotingAggregationStrategy())
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
         # automatically calls `train()
-        model_voting.train(data_x=train_x, data_y=train_y)
-        voting_predictions = model_voting.predict(data_x=holdout_x)
+        model_aggregator.train(data_x=train_x, data_y=train_y)
+        voting_predictions = model_aggregator.predict(data_x=holdout_x)
 
         assert all(voting_predictions.index.values == holdout_x.index.values)
         assert all(voting_predictions.columns.values == predictions_random_forest.columns.values)
@@ -1949,7 +1951,7 @@ class ModelWrapperTests(TimerTestCase):
         # make sure we are getting the correct averages back
         assert all([isclose(x, y) for x, y in zip(voting_predictions[0], died_averages)])
         assert all([isclose(x, y) for x, y in zip(voting_predictions[1], survived_averages)])
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_voting.predict(data_x=holdout_x)[1]), 0.8073781291172596)  # noqa
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.8073781291172596)  # noqa
 
         ######################################################################################################
         # VotingStrategy.HARD
@@ -1957,12 +1959,12 @@ class ModelWrapperTests(TimerTestCase):
         # for HARD voting, need to pass converters as well
         converter = TwoClassThresholdConverter(positive_class=1)
         # noinspection PyUnusedLocal
-        model_voting = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
-                                       aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for x in range(0, 3)]))  # noqa
+        model_aggregator = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
+                                           aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for x in range(0, 3)]))  # noqa
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
         # automatically calls `train()
-        model_voting.train(data_x=train_x, data_y=train_y)
-        voting_predictions = model_voting.predict(data_x=holdout_x)
+        model_aggregator.train(data_x=train_x, data_y=train_y)
+        voting_predictions = model_aggregator.predict(data_x=holdout_x)
 
         assert all(voting_predictions.index.values == holdout_x.index.values)
         assert all(voting_predictions.columns.values == predictions_random_forest.columns.values)
@@ -1979,9 +1981,9 @@ class ModelWrapperTests(TimerTestCase):
         assert all([sum(voting_predictions.loc[x]) == 1.0 for x in voting_predictions.index.values])
 
         # [1 if x > 0.5 else 0 for x in predictions_random_forest[1]]
-        # [1 if x > 0.5 else 0 for x in model_voting.predict(data_x=holdout_x)[1]]
+        # [1 if x > 0.5 else 0 for x in model_aggregator.predict(data_x=holdout_x)[1]]
         # list(holdout_y)
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_voting.predict(data_x=holdout_x)[1]), 0.7853096179183136)  # noqa
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.7853096179183136)  # noqa
 
     def test_ModelAggregator_multi_class(self):
         data = TestHelper.get_iris_data()
@@ -2022,12 +2024,12 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # VotingStrategy.SOFT
         ######################################################################################################
-        model_voting = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
-                                       aggregation_strategy=SoftVotingAggregationStrategy())
+        model_aggregator = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
+                                           aggregation_strategy=SoftVotingAggregationStrategy())
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
         # automatically calls `train()
-        model_voting.train(data_x=train_x, data_y=train_y)
-        voting_predictions = model_voting.predict(data_x=holdout_x)
+        model_aggregator.train(data_x=train_x, data_y=train_y)
+        voting_predictions = model_aggregator.predict(data_x=holdout_x)
 
         assert all(voting_predictions.index.values == holdout_x.index.values)
         assert all(voting_predictions.columns.values == predictions_random_forest.columns.values)
@@ -2054,12 +2056,12 @@ class ModelWrapperTests(TimerTestCase):
         # for HARD voting, need to pass converters as well
         converter = HighestValueConverter()
         # noinspection PyUnusedLocal
-        model_voting = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
-                                       aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for x in range(0, 3)]))  # noqa
+        model_aggregator = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
+                                           aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for x in range(0, 3)]))  # noqa
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
         # automatically calls `train()
-        model_voting.train(data_x=train_x, data_y=train_y)
-        voting_predictions = model_voting.predict(data_x=holdout_x)
+        model_aggregator.train(data_x=train_x, data_y=train_y)
+        voting_predictions = model_aggregator.predict(data_x=holdout_x)
 
         assert all(voting_predictions.index.values == holdout_x.index.values)
         assert all(voting_predictions.columns.values == predictions_random_forest.columns.values)
@@ -2076,8 +2078,41 @@ class ModelWrapperTests(TimerTestCase):
                                                       data_frame2=voting_predictions)
 
         # [1 if x > 0.5 else 0 for x in predictions_random_forest[1]]
-        # [1 if x > 0.5 else 0 for x in model_voting.predict(data_x=holdout_x)[1]]
+        # [1 if x > 0.5 else 0 for x in model_aggregator.predict(data_x=holdout_x)[1]]
         # list(holdout_y)
 
         evaluator.evaluate(actual_values=holdout_y, predicted_values=voting_predictions)
         assert evaluator.all_quality_metrics == {'Kappa': 0.9, 'Accuracy': 0.9333333333333333, 'Error Rate': 0.06666666666666665, 'No Information Rate': 0.3333333333333333, 'Total Observations': 30}  # noqa
+
+    def test_ModelAggregator_regression(self):
+        data = TestHelper.get_cement_data()
+        target_variable = 'strength'
+        train_x, train_y, holdout_x, holdout_y = TestHelper.split_train_holdout_regression(data, target_variable)  # noqa
+
+        model_linear_regression = LinearRegressor()
+        model_linear_regression.train(data_x=train_x, data_y=train_y)
+        predictions_linear_regression = model_linear_regression.predict(data_x=holdout_x)
+
+        model_cart = CartDecisionTreeRegressor()
+        model_cart.train(data_x=train_x, data_y=train_y, hyper_params=CartDecisionTreeHP(criterion='mse'))
+        predictions_cart = model_cart.predict(data_x=holdout_x)
+
+        model_adaboost = AdaBoostRegressor()
+        model_adaboost.train(data_x=train_x, data_y=train_y, hyper_params=AdaBoostRegressorHP())
+        predictions_adaboost = model_adaboost.predict(data_x=holdout_x)
+
+        expected_aggregation = (predictions_linear_regression + predictions_cart + predictions_adaboost) / 3
+
+        model_aggregator = ModelAggregator(models=[model_linear_regression, model_cart, model_adaboost],
+                                           aggregation_strategy=MeanAggregationStrategy())
+        model_aggregator.train(data_x=train_x, data_y=train_y)
+        predictions_aggregation = model_aggregator.predict(data_x=holdout_x)
+
+        assert all([isclose(x, y) for x, y in zip(expected_aggregation, predictions_aggregation)])
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_regression.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(expected_aggregation, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            expected_predictions = pickle.load(saved_object)
+            assert all([isclose(x, y) for x, y in zip(expected_predictions, predictions_aggregation)])

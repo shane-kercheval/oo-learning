@@ -180,8 +180,8 @@ class ModelDefaults:
                 ModelDefaults.get_ElasticNetRegressor(degrees=3),
                 ModelDefaults.get_CartDecisionTreeRegressor(),
                 ModelDefaults.get_RandomForestRegressor(number_of_features=number_of_features),
-                ModelDefaults.get_SvmLinearClassifier(),
-                ModelDefaults.get_SvmPolynomialClassifier(),
+                ModelDefaults.get_SvmLinearRegressor(),
+                ModelDefaults.get_SvmPolynomialRegressor(),
                 ModelDefaults.get_AdaBoostRegressor(),
                 ModelDefaults.get_GradientBoostingRegressor()]
 

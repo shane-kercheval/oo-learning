@@ -45,6 +45,7 @@ from .model_aggregation.AggregationStrategyBase import AggregationStrategyBase
 from .model_aggregation.HardVotingAggregationStrategy import HardVotingAggregationStrategy
 from .model_aggregation.ModelAggregator import ModelAggregator
 from .model_aggregation.SoftVotingAggregationStrategy import SoftVotingAggregationStrategy
+from oolearning.model_aggregation.MeanAggregationStrategy import MeanAggregationStrategy
 
 from .model_processors.DecoratorBase import DecoratorBase
 from .model_processors.TwoClassThresholdDecorator import TwoClassThresholdDecorator

@@ -173,4 +173,4 @@ class LinearRegressor(ModelWrapperBase):
 
     def _predict(self, model_object: object, data_x: pd.DataFrame) -> np.ndarray:
         # noinspection PyUnresolvedReferences
-        return model_object.predict(sm.add_constant(data_x))
+        return np.asarray(model_object.predict(sm.add_constant(data_x)))

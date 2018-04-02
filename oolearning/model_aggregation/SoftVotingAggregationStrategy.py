@@ -15,9 +15,11 @@ class SoftVotingAggregationStrategy(AggregationStrategyBase):
     def aggregate(self, model_predictions: List[Union[pd.DataFrame, np.ndarray]]) -> \
             Union[np.ndarray, pd.DataFrame]:
         assert isinstance(model_predictions, list)
-        assert isinstance(model_predictions[0], pd.DataFrame)
+        assert all([isinstance(x, pd.DataFrame) for x in model_predictions])
         df_concat = pd.concat(model_predictions)
         voting_predictions = df_concat.groupby(df_concat.index).mean()
         voting_predictions = voting_predictions.loc[model_predictions[0].index.values]
 
         return voting_predictions
+
+

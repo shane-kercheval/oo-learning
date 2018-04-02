@@ -119,7 +119,9 @@ class ModelWrapperBase(metaclass=ABCMeta):
         # check that the columns passed in via data_x match the columns/features that the model was trained on
         assert len(set(self._feature_names).symmetric_difference(set(data_x.columns.values))) == 0
 
-        return self._predict(model_object=self._model_object, data_x=data_x)
+        predictions = self._predict(model_object=self._model_object, data_x=data_x)
+        assert isinstance(predictions, pd.DataFrame) or isinstance(predictions, np.ndarray)
+        return predictions
 
     ##########################################################################################################
     # Abstract Methods

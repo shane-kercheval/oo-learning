@@ -23,7 +23,7 @@ class HardVotingAggregationStrategy(AggregationStrategyBase):
     def aggregate(self, model_predictions: List[Union[pd.DataFrame, np.ndarray]]) \
             -> Union[np.ndarray, pd.DataFrame]:
         assert isinstance(model_predictions, list)
-        assert isinstance(model_predictions[0], pd.DataFrame)
+        assert all([isinstance(x, pd.DataFrame) for x in model_predictions])
         assert len(self._converters) == len(model_predictions)
         classes = list(model_predictions[0].columns.values)
 
