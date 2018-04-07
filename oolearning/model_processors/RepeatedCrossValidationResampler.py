@@ -96,6 +96,11 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                 train_x_not_transformed, holdout_x_not_transformed = data_x[training_indexes], data_x[holdout_indexes]  # noqa
                 train_y, holdout_y = data_y[training_indexes], data_y[holdout_indexes]
 
+                # NOTE: we are fitting the transformations on the k-1 folds (i.e. local training data)
+                # for each k times we fit/predict data. This is so we don't have any contamination/
+                # leakage into the local holdout/fold we are predicting on (just like we wouldn't fit
+                # our transformations on the entire dataset; we fit/transform on the training and then
+                # simply transform on the holdout
                 # noinspection PyTypeChecker
                 pipeline = TransformerPipeline(transformations=None if self._model_transformations is None else [x.clone() for x in self._model_transformations])  # noqa
                 train_x_transformed = pipeline.fit_transform(data_x=train_x_not_transformed)

@@ -149,7 +149,7 @@ class ModelSearcher:
                 # if we have a PersistenceManager, we need to ensure each key (e.g. saved file name) is unique
                 # we might have the same models passed into the searcher; the difference, for example, might
                 # be the the transformations; but we ensure the model descriptions are unique, so use that
-                self._persistence_manager.set_key_prefix(prefix='holdout_' + local_model_description+'_')
+                self._persistence_manager.set_key_prefix(prefix='holdout_' + local_model_description +'_')
 
             # verify that the fitter uses the same training data as the Tuner (i.e. the indexes used for the
             # training data in the fitter match the index used to pass in data to the Tuner)
@@ -172,6 +172,8 @@ class ModelSearcher:
                 local_model_params_object.update_dict(tuner.results.best_hyper_params)
 
             # re-fit on entire training set using the best hyper_params.
+            # we are passing in all the data, but the Fitter will split the data according to the same
+            # Splitter that we used to get the training data to pass into the Tuner.
             fitter.fit(data=data,
                        target_variable=target_variable,
                        hyper_params=local_model_params_object)
