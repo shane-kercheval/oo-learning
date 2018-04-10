@@ -44,6 +44,7 @@ from .exploratory.ExploreRegressionDataset import ExploreRegressionDataset
 from .model_aggregation.AggregationStrategyBase import AggregationStrategyBase
 from .model_aggregation.HardVotingAggregationStrategy import HardVotingAggregationStrategy
 from .model_aggregation.ModelAggregator import ModelAggregator
+from .model_aggregation.ModelStacker import ModelStacker
 from .model_aggregation.SoftVotingAggregationStrategy import SoftVotingAggregationStrategy
 from oolearning.model_aggregation.MeanAggregationStrategy import MeanAggregationStrategy
 

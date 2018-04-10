@@ -4,6 +4,7 @@ from math import isclose
 
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from oolearning import *
 
@@ -244,6 +245,86 @@ class ResamplerTests(TimerTestCase):
         # the train_callback method will be triggered and will cause an assertion error if the data that is
         # going to be trained does not match the data previously transformed
         resampler.resample(data_x=data.drop(columns=target_variable), data_y=data[target_variable], hyper_params=None)  # noqa
+
+    def test_Resampler_fold_indexes(self):
+        # test that the resampler uses the same fold index across objects. Test that the indexes are
+        # maintained in the predicted values (only applicable for dataframes i.e. classification)
+        class TempDecorator(DecoratorBase):
+            def __init__(self):
+                self._repeat_index = list()
+                self._fold_index = list()
+                self._holdout_indexes = list()
+                self._holdout_predicted_values = pd.DataFrame()
+
+            def decorate(self, **kwargs):
+                self._repeat_index.append(kwargs['repeat_index'])
+                self._fold_index.append(kwargs['fold_index'])
+                self._holdout_indexes.extend(kwargs['holdout_indexes'])
+                self._holdout_predicted_values = self._holdout_predicted_values.append(kwargs['holdout_predicted_values'])  # noqa
+
+        data = TestHelper.get_titanic_data()
+
+        # main reason we want to split the data is to get the means/st_devs so that we can confirm with
+        # e.g. the Searcher
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+        training_indexes, _ = splitter.split(target_values=data.Survived)
+
+        train_data_y = data.iloc[training_indexes].Survived
+        train_data = data.iloc[training_indexes].drop(columns='Survived')
+
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
+
+        decorator = TempDecorator()
+        resampler = RepeatedCrossValidationResampler(
+            model=MockClassificationModelWrapper(data_y=data.Survived),
+            model_transformations=None,
+            scores=score_list,
+            folds=5,
+            repeats=2,
+            fold_decorators=[decorator])
+        resampler.resample(data_x=train_data, data_y=train_data_y)
+
+        assert decorator._repeat_index == [0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
+        assert decorator._fold_index == [0, 1, 2, 3, 4, 0, 1, 2, 3, 4]
+        # The _holdout_indexes should have twice the number of indexes as training_indexes because of
+        # `repeats=2`
+        num_holdout_indexes = len(decorator._holdout_indexes)
+        num_training_indexes = len(training_indexes)
+        assert num_training_indexes * 2 == num_holdout_indexes
+        assert len(set(training_indexes)) == num_training_indexes
+
+        # get the holdout indexes from the first repeat. This should contain exactly 1 to 1 indexes with the
+        # original training indexes, although not in the same order
+        repeat_0_holdout_indexes = decorator._holdout_indexes[0:int(num_holdout_indexes / 2)]
+        assert len(repeat_0_holdout_indexes) == num_training_indexes
+        # check that the training indexes and holdout indexes from the first repeat contain the same values
+        assert set(training_indexes) == set(repeat_0_holdout_indexes)
+
+        repeat_1_holdout_indexes = decorator._holdout_indexes[int(num_holdout_indexes / 2): num_holdout_indexes]  # noqa
+        assert len(repeat_1_holdout_indexes) == num_training_indexes
+        # check that the training indexes and holdout indexes from the second repeat contain the same values
+        assert set(training_indexes) == set(repeat_1_holdout_indexes)
+
+        # at this point we know that both repeats contain the indexes from the original training set
+        # this should correspond to the indexes of the predicted values DataFrame
+        # first, lets merge the indexes from repeats, and assign into a different list, also used below
+        repeat_0_holdout_indexes.extend(repeat_1_holdout_indexes)
+        holdout_indexes = repeat_0_holdout_indexes
+        assert len(decorator._holdout_predicted_values.index.values) == len(holdout_indexes)
+        assert all(decorator._holdout_predicted_values.index.values == holdout_indexes)
+
+        # lets repeat the same procedure to verify that the indexes are the same across resampler objects
+        decorator = TempDecorator()
+        resampler = RepeatedCrossValidationResampler(
+            model=MockClassificationModelWrapper(data_y=data.Survived),
+            model_transformations=None,
+            scores=score_list,
+            folds=5,
+            repeats=2,
+            fold_decorators=[decorator])
+        resampler.resample(data_x=train_data, data_y=train_data_y)
+        # test that NEW decorator object's predicted value dataframe has the same indexes it previously did
+        assert all(decorator._holdout_predicted_values.index.values == holdout_indexes)
 
     def test_resamplers_RandomForest_classification(self):
         data = TestHelper.get_titanic_data()

@@ -2116,3 +2116,121 @@ class ModelWrapperTests(TimerTestCase):
         with open(file, 'rb') as saved_object:
             expected_predictions = pickle.load(saved_object)
             assert all([isclose(x, y) for x, y in zip(expected_predictions, predictions_aggregation)])
+
+    def test_ModelStacker_Classification(self):
+        pass
+#         data = TestHelper.get_titanic_data()
+#         target_variable = 'Survived'
+#
+#         # main reason we want to split the data is to get the means/st_devs so that we can confirm with
+#         # e.g. the Searcher
+#         # splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+#         # training_indexes, _ = splitter.split(target_values=data.Survived)
+#         #
+#         # train_data_y = data.iloc[training_indexes].Survived
+#         # train_data = data.iloc[training_indexes].drop(columns='Survived')
+#
+#         # used both for keeping track of the CV holdout scores for base models
+#
+#         score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
+#
+#         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+#                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+#                            ImputationTransformer()]
+#
+#         base_models = [ModelInfo(description='cart',
+#                                  model=CartDecisionTreeClassifier(),
+#                                  transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+#                                  hyper_params=CartDecisionTreeHP(),
+#                                  converter=TwoClassExtractPositivePredictions(positive_class=1)),
+#                        ModelInfo(description='random_forest',
+#                                  model=RandomForestClassifier(),
+#                                  transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+#                                  hyper_params=RandomForestHP(),
+#                                  converter=TwoClassExtractPositivePredictions(positive_class=1))]
+#
+#         # TODO: could add `converter` field to ModelInfo and make it optional (so other shit doesn't have to use it).
+#         # then convert "for index in range(0, len(base_models)):" back to use " for model_info in base_models)
+#
+#         model_stacker = ModelStacker(base_models=base_models,
+#                                      scores=score_list,
+#                                      stacking_model=GradientBoostingClassifier())
+#
+#
+# ##############
+#         splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
+#         training_indexes, _ = splitter.split(target_values=data.Survived)
+#         data_y = data.iloc[training_indexes].Survived
+#         data_x = data.iloc[training_indexes].drop(columns=target_variable)
+#         model_info = base_models[0]
+#
+# #########
+#
+
+        #
+        #
+        #
+        # fitter = ModelFitter(model=model_stacker,
+        #                      model_transformations=transformations,  # transformed for all models.
+        #                      splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+        #                      evaluator=TwoClassProbabilityEvaluator(
+        #                          converter=TwoClassThresholdConverter(threshold=0.5,
+        #                                                               positive_class=1)))
+        # fitter.fit(data=data, target_variable='Survived', hyper_params=GradientBoostingClassifierHP())
+        #
+        # fitter.predict()
+        #
+
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        #
+        # assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+        # assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+        # assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female',
+        #                                       'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3',
+        #                                       'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1',
+        #                                       'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6',
+        #                                       'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+        # assert fitter.model.hyper_params.params_dict == {'max_depth': None,
+        #                                                  'n_estimators': 50,
+        #                                                  'learning_rate': 1.0,
+        #                                                  'algorithm': 'SAMME.R'}
+        #
+        # assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9992991063606097,
+        #                                                          'AUC Precision/Recall': 0.9984018681159533,
+        #                                                          'Kappa': 0.9641059680549836,
+        #                                                          'F1 Score': 0.9776119402985075,
+        #                                                          'Two-Class Accuracy': 0.9831460674157303,
+        #                                                          'Error Rate': 0.016853932584269662,
+        #                                                          'True Positive Rate': 0.9597069597069597,
+        #                                                          'True Negative Rate': 0.9977220956719818,
+        #                                                          'False Positive Rate': 0.002277904328018223,
+        #                                                          'False Negative Rate': 0.040293040293040296,
+        #                                                          'Positive Predictive Value': 0.9961977186311787,
+        #                                                          'Negative Predictive Value': 0.9755011135857461,
+        #                                                          'Prevalence': 0.38342696629213485,
+        #                                                          'No Information Rate': 0.6165730337078652,
+        #                                                          'Total Observations': 712}  # noqa
+        # assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.797957839262187,
+        #                                                         'AUC Precision/Recall': 0.7339255444753214,
+        #                                                         'Kappa': 0.5770035784214436,
+        #                                                         'F1 Score': 0.7286821705426356,
+        #                                                         'Two-Class Accuracy': 0.8044692737430168,
+        #                                                         'Error Rate': 0.19553072625698323,
+        #                                                         'True Positive Rate': 0.6811594202898551,
+        #                                                         'True Negative Rate': 0.8818181818181818,
+        #                                                         'False Positive Rate': 0.11818181818181818,
+        #                                                         'False Negative Rate': 0.3188405797101449,
+        #                                                         'Positive Predictive Value': 0.7833333333333333,
+        #                                                         'Negative Predictive Value': 0.8151260504201681,
+        #                                                         'Prevalence': 0.3854748603351955,
+        #                                                         'No Information Rate': 0.6145251396648045,
+        #                                                         'Total Observations': 179}  # noqa
+
+    def test_ModelStacker_Regression(self):
+        pass

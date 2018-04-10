@@ -11,7 +11,6 @@ class StatelessTransformer(TransformerBase):
     by, for example, imputation transformations). An example of a stateless transformation would be to remove
     certain columns. The transformation is done without any prior state or values/information.
     """
-
     def __init__(self, custom_function: Callable):
         """
         :param custom_function: a function that takes a pandas DataFrame, does a stateless transformation,
@@ -19,6 +18,9 @@ class StatelessTransformer(TransformerBase):
         """
         super().__init__()
         self._custom_function = custom_function
+
+    def peak(self, data_x: pd.DataFrame):
+        pass
 
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         # nothing to save into state

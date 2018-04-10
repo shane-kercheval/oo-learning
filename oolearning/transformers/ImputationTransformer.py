@@ -25,6 +25,9 @@ class ImputationTransformer(TransformerBase):
         self._numeric_imputation_function = numeric_imputation_function
         self._categoric_imputation_function = categoric_imputation_function
 
+    def peak(self, data_x: pd.DataFrame):
+        pass
+
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         imputed_values = dict()
         numeric_features, categoric_features = OOLearningHelpers.\

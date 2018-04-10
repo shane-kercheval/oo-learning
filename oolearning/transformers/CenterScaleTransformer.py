@@ -6,6 +6,9 @@ from oolearning.transformers.TransformerBase import TransformerBase
 
 # TODO: document
 class CenterScaleTransformer(TransformerBase):
+    def peak(self, data_x: pd.DataFrame):
+        pass
+
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
 
         numeric_features, _ = OOLearningHelpers.get_columns_by_type(data_dtypes=data_x.dtypes,

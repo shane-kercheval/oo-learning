@@ -19,6 +19,9 @@ class BoxCoxTransformer(TransformerBase):
         super().__init__()
         self._features = features
 
+    def peak(self, data_x: pd.DataFrame):
+        pass
+
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         numeric_features, _ = OOLearningHelpers.get_columns_by_type(data_dtypes=data_x.dtypes,
                                                                     target_variable=None)

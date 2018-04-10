@@ -15,6 +15,9 @@ class CategoricConverterTransformer(TransformerBase):
         assert isinstance(columns, list)
         self._columns_to_convert = columns
 
+    def peak(self, data_x: pd.DataFrame):
+        pass
+
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         # ensure all columns exist in data
         assert [column in data_x.columns.values for column in self._columns_to_convert]

@@ -53,6 +53,23 @@ class TransformerPipeline:
         if transformation_pipeline.transformations is not None:
             self._transformations.extend(transformation_pipeline.transformations)
 
+    def peak(self, data_x: pd.DataFrame):
+        """
+        Cycles through each Transformation in the pipeline, and 'peaks' at the data, allowing transformations
+        to see all the data (the assumption being that `data_x` is not the training data, as it would be in
+        `fit_transform`, but all the data.
+
+        This should rarely be used, but there are certain transformations that need to peak (e.g.
+        DummyEncodeTransformer; because unseen values will create additional columns never previously seen
+        by the model (i.e. the model will go to predict with shit it's never seen and will explode.).
+
+        Note, there is also risk of peaking in that the data when peaked at might not be the same as the
+            data that is passed in from `fit`, e.g. from previous transformations.
+        """
+        if self._transformations is not None:
+            for transformation in self._transformations:
+                transformation.peak(data_x=data_x)
+
     def fit(self):
         """
         It's not possible to `fit` all the individual transformers alone, otherwise subsequent transformers

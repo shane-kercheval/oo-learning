@@ -14,6 +14,9 @@ class PolynomialFeaturesTransformer(TransformerBase):
         assert degrees > 1
         self._degrees = degrees
 
+    def peak(self, data_x: pd.DataFrame):
+        pass
+
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         return {}
 

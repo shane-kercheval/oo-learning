@@ -54,7 +54,7 @@ class ModelDefaults:
             transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
 
         return ModelInfo(description=description,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          transformations=transformations,
                          hyper_params=None,
                          hyper_params_grid=None)
@@ -85,7 +85,7 @@ class ModelDefaults:
     def get_CartDecisionTreeRegressor() -> ModelInfo:
         model_wrapper = CartDecisionTreeRegressor()
         return ModelInfo(description=type(model_wrapper).__name__,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
                          transformations=None,
                          hyper_params=CartDecisionTreeHP(),
@@ -96,7 +96,7 @@ class ModelDefaults:
     def get_RandomForestRegressor(number_of_features: int) -> ModelInfo:
         model_wrapper = RandomForestRegressor()
         return ModelInfo(description=type(model_wrapper).__name__,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
                          #  https://stackoverflow.com/questions/24715230/can-sklearn-random-forest-directly-handle-categorical-features?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
                          transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
@@ -112,7 +112,7 @@ class ModelDefaults:
     def get_SvmLinearRegressor() -> ModelInfo:
         model_wrapper = SvmLinearRegressor()
         return ModelInfo(description=type(model_wrapper).__name__,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
                          transformations=[ImputationTransformer(),
                                           CenterScaleTransformer(),
@@ -125,7 +125,7 @@ class ModelDefaults:
     def get_SvmPolynomialRegressor() -> ModelInfo:
         model_wrapper = SvmPolynomialRegressor()
         return ModelInfo(description=type(model_wrapper).__name__,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
                          transformations=[ImputationTransformer(),
                                           CenterScaleTransformer(),
@@ -139,7 +139,7 @@ class ModelDefaults:
     def get_AdaBoostRegressor() -> ModelInfo:
         model_wrapper = AdaBoostRegressor()
         return ModelInfo(description=type(model_wrapper).__name__,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
                          transformations=None,
                          hyper_params=AdaBoostRegressorHP(),
@@ -151,7 +151,7 @@ class ModelDefaults:
     def get_GradientBoostingRegressor() -> ModelInfo:
         model_wrapper = GradientBoostingRegressor()
         return ModelInfo(description=type(model_wrapper).__name__,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
                          transformations=None,
                          hyper_params=GradientBoostingRegressorHP(),
@@ -200,7 +200,7 @@ class ModelDefaults:
             transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
 
         return ModelInfo(description=description,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          transformations=transformations,
                          hyper_params=hyper_params,
                          hyper_params_grid=HyperParamsGrid(params_dict=params_dict))
@@ -212,7 +212,7 @@ class ModelDefaults:
     def get_DummyClassifier(strategy: DummyClassifierStrategy) -> ModelInfo:
         model_wrapper = DummyClassifier(strategy=strategy)
         return ModelInfo(description='{0}_{1}'.format(type(model_wrapper).__name__, strategy.value),
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          transformations=None,
                          hyper_params=None,
                          hyper_params_grid=None)
@@ -235,7 +235,7 @@ class ModelDefaults:
             transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
 
         return ModelInfo(description=description,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          transformations=transformations,
                          hyper_params=LogisticClassifierHP(),
                          hyper_params_grid={'penalty': ['l1', 'l2'],
@@ -245,7 +245,7 @@ class ModelDefaults:
     def get_CartDecisionTreeClassifier() -> ModelInfo:
         model_wrapper = CartDecisionTreeClassifier()
         return ModelInfo(description=type(model_wrapper).__name__,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
                          transformations=None,
                          hyper_params=RandomForestHP(),
@@ -256,7 +256,7 @@ class ModelDefaults:
     def get_RandomForestClassifier(number_of_features: int) -> ModelInfo:
         model_wrapper = RandomForestClassifier()
         return ModelInfo(description=type(model_wrapper).__name__,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
                          # https://stackoverflow.com/questions/24715230/can-sklearn-random-forest-directly-handle-categorical-features?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
                          transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
@@ -272,7 +272,7 @@ class ModelDefaults:
     def get_SvmLinearClassifier() -> ModelInfo:
         model_wrapper = SvmLinearClassifier()
         return ModelInfo(description=type(model_wrapper).__name__,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
                          transformations=[ImputationTransformer(),
                                           CenterScaleTransformer(),
@@ -289,7 +289,7 @@ class ModelDefaults:
     def get_SvmPolynomialClassifier() -> ModelInfo:
         model_wrapper = SvmPolynomialClassifier()
         return ModelInfo(description=type(model_wrapper).__name__,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
                          transformations=[ImputationTransformer(),
                                           CenterScaleTransformer(),
@@ -305,7 +305,7 @@ class ModelDefaults:
     def get_AdaBoostClassifier() -> ModelInfo:
         model_wrapper = AdaBoostClassifier()
         return ModelInfo(description=type(model_wrapper).__name__,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
                          transformations=None,
                          hyper_params=AdaBoostClassifierHP(),
@@ -317,7 +317,7 @@ class ModelDefaults:
     def get_GradientBoostingClassifier() -> ModelInfo:
         model_wrapper = GradientBoostingClassifier()
         return ModelInfo(description=type(model_wrapper).__name__,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
                          transformations=None,
                          hyper_params=GradientBoostingClassifierHP(),
@@ -368,7 +368,7 @@ class ModelDefaults:
             transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
 
         return ModelInfo(description=description,
-                         model_wrapper=model_wrapper,
+                         model=model_wrapper,
                          transformations=transformations,
                          hyper_params=SoftmaxLogisticHP(),
                          hyper_params_grid={'C': [0.001, 0.01, 0.1, 1, 100, 1000]})

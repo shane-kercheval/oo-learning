@@ -35,7 +35,7 @@ class SearcherTests(TimerTestCase):
         # test that the callback is working
         ######################################################################################################
         infos = [ModelInfo(description='description1',
-                           model_wrapper=MockClassificationModelWrapper(data_y=data.Survived),
+                           model=MockClassificationModelWrapper(data_y=data.Survived),
                            transformations=None,
                            hyper_params=None,
                            hyper_params_grid=None)]
@@ -60,7 +60,7 @@ class SearcherTests(TimerTestCase):
         # test Global and Model specific transformations - no global transformations, just model trans
         ######################################################################################################
         infos = [ModelInfo(description='description1',
-                           model_wrapper=MockClassificationModelWrapper(data_y=data.Survived),
+                           model=MockClassificationModelWrapper(data_y=data.Survived),
                            transformations=[x.clone() for x in standard_transformations],
                            hyper_params=None,
                            hyper_params_grid=None)]
@@ -85,7 +85,7 @@ class SearcherTests(TimerTestCase):
         # test Global and Model transformations - no global transformations, just model trans
         ######################################################################################################
         infos = [ModelInfo(description='description1',
-                           model_wrapper=MockClassificationModelWrapper(data_y=data.Survived),
+                           model=MockClassificationModelWrapper(data_y=data.Survived),
                            transformations=None,
                            hyper_params=None,
                            hyper_params_grid=None)]
@@ -119,7 +119,7 @@ class SearcherTests(TimerTestCase):
         # test both Global and Model transformations
         ######################################################################################################
         infos = [ModelInfo(description='description1',
-                           model_wrapper=MockClassificationModelWrapper(data_y=data.Survived),
+                           model=MockClassificationModelWrapper(data_y=data.Survived),
                            transformations=[x.clone() for x in standard_transformations],
                            hyper_params=None,
                            hyper_params_grid=None)]
@@ -162,10 +162,10 @@ class SearcherTests(TimerTestCase):
         transformer_not_implemented = StatelessTransformer(custom_function=lambda x: raise_(NotImplementedError('T2')))  # noqa
 
         infos = [ModelInfo(description='description1',
-                           model_wrapper=MockClassificationModelWrapper(data_y=data.Survived),
+                           model=MockClassificationModelWrapper(data_y=data.Survived),
                            transformations=[transformer_value_error]),
                  ModelInfo(description='description2',
-                           model_wrapper=MockClassificationModelWrapper(data_y=data.Survived),
+                           model=MockClassificationModelWrapper(data_y=data.Survived),
                            transformations=[x.clone() for x in standard_transformations])]
         self.assertRaises(ValueError,
                           lambda: ModelSearcher(global_transformations=[x.clone() for x in global_transformations],  # noqa
@@ -180,10 +180,10 @@ class SearcherTests(TimerTestCase):
                                                                                  target_variable='Survived'))
 
         infos = [ModelInfo(description='description1',
-                           model_wrapper=MockClassificationModelWrapper(data_y=data.Survived),
+                           model=MockClassificationModelWrapper(data_y=data.Survived),
                            transformations=[x.clone() for x in standard_transformations]),
                  ModelInfo(description='description2',
-                           model_wrapper=MockClassificationModelWrapper(data_y=data.Survived),
+                           model=MockClassificationModelWrapper(data_y=data.Survived),
                            transformations=[transformer_not_implemented])]
         self.assertRaises(NotImplementedError,
                           lambda: ModelSearcher(global_transformations=[x.clone() for x in global_transformations],  # noqa
@@ -222,12 +222,12 @@ class SearcherTests(TimerTestCase):
         # Searcher must have unique descriptions
         ######################################################################################################
         infos = [ModelInfo(description='description1',
-                           model_wrapper=MockClassificationModelWrapper(data_y=data.Survived),
+                           model=MockClassificationModelWrapper(data_y=data.Survived),
                            transformations=[x.clone() for x in standard_transformations],
                            hyper_params=None,
                            hyper_params_grid=None),
                  ModelInfo(description='description1',
-                           model_wrapper=MockClassificationModelWrapper(data_y=data.Survived),
+                           model=MockClassificationModelWrapper(data_y=data.Survived),
                            transformations=None,
                            hyper_params=MockHyperParams(),
                            hyper_params_grid=grid)]
@@ -249,22 +249,22 @@ class SearcherTests(TimerTestCase):
         # test Searcher
         ######################################################################################################
         infos = [ModelInfo(description='description1',
-                           model_wrapper=MockClassificationModelWrapper(data_y=data.Survived),
+                           model=MockClassificationModelWrapper(data_y=data.Survived),
                            transformations=standard_transformations,
                            hyper_params=None,
                            hyper_params_grid=None),
                  ModelInfo(description='description2',
-                           model_wrapper=MockClassificationModelWrapper(data_y=data.Survived),
+                           model=MockClassificationModelWrapper(data_y=data.Survived),
                            transformations=None,
                            hyper_params=MockHyperParams(),
                            hyper_params_grid=grid),
                  ModelInfo(description='dummy_stratified',
-                           model_wrapper=DummyClassifier(DummyClassifierStrategy.STRATIFIED),
+                           model=DummyClassifier(DummyClassifierStrategy.STRATIFIED),
                            transformations=None,
                            hyper_params=None,
                            hyper_params_grid=None),
                  ModelInfo(description='dummy_frequent',
-                           model_wrapper=DummyClassifier(DummyClassifierStrategy.MOST_FREQUENT),
+                           model=DummyClassifier(DummyClassifierStrategy.MOST_FREQUENT),
                            transformations=None,
                            hyper_params=None,
                            hyper_params_grid=None)

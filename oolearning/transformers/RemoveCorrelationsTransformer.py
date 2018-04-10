@@ -9,6 +9,9 @@ class RemoveCorrelationsTransformer(TransformerBase):
         super().__init__()
         self._max_correlation_threshold = max_correlation_threshold
 
+    def peak(self, data_x: pd.DataFrame):
+        pass
+
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         # This method is described in APM on pg 47 as the following steps:
         #   - calculate the correlation matrix of features

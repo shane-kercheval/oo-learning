@@ -41,7 +41,7 @@ class ModelSearcher:
         # we would want to model specific transformations.
         """
         model_descriptions = [x.description for x in model_infos]
-        models = [x.model_wrapper for x in model_infos]
+        models = [x.model for x in model_infos]
         model_transformations = [x.transformations for x in model_infos]
         model_hyper_params_object = [x.hyper_params for x in model_infos]
         model_hyper_params_grid = [x.hyper_params_grid for x in model_infos]
@@ -149,7 +149,7 @@ class ModelSearcher:
                 # if we have a PersistenceManager, we need to ensure each key (e.g. saved file name) is unique
                 # we might have the same models passed into the searcher; the difference, for example, might
                 # be the the transformations; but we ensure the model descriptions are unique, so use that
-                self._persistence_manager.set_key_prefix(prefix='holdout_' + local_model_description +'_')
+                self._persistence_manager.set_key_prefix(prefix='holdout_' + local_model_description + '_')
 
             # verify that the fitter uses the same training data as the Tuner (i.e. the indexes used for the
             # training data in the fitter match the index used to pass in data to the Tuner)

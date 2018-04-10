@@ -32,6 +32,9 @@ class PCATransformer(TransformerBase):
         self._number_of_components = None
         self._pca_object = None
 
+    def peak(self, data_x: pd.DataFrame):
+        pass
+
     @property
     def cumulative_explained_variance(self) -> np.array:
         return self._cumulative_explained_variance

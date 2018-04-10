@@ -9,6 +9,9 @@ class RemoveNZVTransformer(TransformerBase):
         super().__init__()
         self._stdev_to_mean_ratio = stdev_to_mean_ratio
 
+    def peak(self, data_x: pd.DataFrame):
+        pass
+
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         means = data_x.mean()
         st_devs = data_x.std()

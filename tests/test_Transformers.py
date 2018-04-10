@@ -12,6 +12,10 @@ class MockFailedTransformer(TransformerBase):
     """
     This should not work because, for example, _fit_definition should set self._state
     """
+
+    def peak(self, data_x: pd.DataFrame):
+        pass
+
     def _fit_definition(self, data_x) -> dict:
         pass
 
@@ -23,6 +27,10 @@ class MockSuccessTransformer(TransformerBase):
     """
     This should not work because, for example, _fit_definition should set self._state
     """
+
+    def peak(self, data_x: pd.DataFrame):
+        pass
+
     def _fit_definition(self, data_x) -> dict:
         return {'junk_key': 'junk_value'}
 
@@ -92,6 +100,7 @@ class TransformerTests(TimerTestCase):
         assert training_set_copy.isnull().values.sum() == training_set_number_nulls + 4
         # run fit_trasnform
         transformed_training_data = imputation_transformer.fit_transform(data_x=training_set_copy)
+        assert all(transformed_training_data.index.values == training_set_copy.index.values)
 
         # ensure that if we try to call fit_transform again we get an assertion error
         self.assertRaises(AssertionError,
@@ -224,6 +233,7 @@ class TransformerTests(TimerTestCase):
         assert dummy_transformer.state == expected_state
 
         new_dummy_data = dummy_transformer.transform(data_x=data)
+        assert all(new_dummy_data.index.values == data.index.values)
         assert new_dummy_data is not None
         assert len(new_dummy_data) == len(data)
         assert all(new_dummy_data.columns.values == new_dummy_columns)
@@ -279,6 +289,53 @@ class TransformerTests(TimerTestCase):
         dummy_transformer.fit(data_x=data)
         new_data = dummy_transformer.transform(data_x=data)
         assert all(new_data.columns.values == data.columns.values)
+
+    def test_transformations_DummyEncodeTransformer_peaking(self):
+        # the problem is that when Encoding, specifically when resampling etc…. the data/Transformer is
+        # fitted with a subset of values that it will eventually see, and if a rare value is not in the
+        # dataset that is fitted, but shows up in a future dataset (i.e. during `transform`), then getting the
+        # encoded columns would result in a dataset that contains columns that the model didn't see when
+        # fitting, and therefore, doesn't know what to do with. So, before transforming, we will allow
+        # the transformer to 'peak' at ALL the data.
+        data = TestHelper.get_insurance_data()
+
+        # columns without smoker_maybe
+        wrong_columns = ['age', 'bmi', 'children', 'expenses', 'sex_female', 'sex_male', 'smoker_no', 'smoker_yes', 'region_northeast', 'region_northwest', 'region_southeast', 'region_southwest']  # noqa
+        expected_columns = ['age', 'bmi', 'children', 'expenses', 'sex_female', 'sex_male', 'smoker_maybe', 'smoker_no', 'smoker_yes', 'region_northeast', 'region_northwest', 'region_southeast', 'region_southwest']  # noqa
+        expected_state = {'region': ['northeast', 'northwest', 'southeast', 'southwest'],
+                          'sex': ['female', 'male'],
+                          'smoker': ['maybe', 'no', 'yes']}
+
+        # one person/observation has the value of `maybe`, all others are `yes`/`no`
+        data.loc[0, 'smoker'] = 'maybe'
+
+        dummy_transformer = DummyEncodeTransformer(encoding=CategoricalEncoding.ONE_HOT)
+        dummy_transformer.fit(data_x=data.drop(index=0))  # the transformer doesn't know about the value
+        # the data has the wrong columns because it doesn't know about the 'maybe' value
+        assert dummy_transformer._columns_to_reindex == wrong_columns
+
+        # now, when we try to fit with the data that has the unseen values, it will explode
+        self.assertRaises(AssertionError, lambda: dummy_transformer.transform(data_x=data))
+
+        # But if we peak at the data first, then fit only what, in a real scenario, would be the training data
+        # then it should work. Note, let's use the TransformerPipeline, which would be overkill in a normal
+        # scnario like this, but we will use it to get the benefit of testing it, and the peak function out.
+        dummy_transformer = DummyEncodeTransformer(encoding=CategoricalEncoding.ONE_HOT)
+        pipeline = TransformerPipeline(transformations=[dummy_transformer])
+        # peak at all the data
+        pipeline.peak(data_x=data)
+        # fit on only the "train" dataset (and also transform)
+        train_x_transformed = pipeline.fit_transform(data_x=data.drop(index=0))
+
+        # ensure that, even though we call "fit" on the data with "maybe" it should still be in the expected
+        # columns & state
+        assert all(train_x_transformed.columns.values == expected_columns)
+        assert dummy_transformer.state == expected_state
+
+        # transform on only 1 row, the row that was not "fitted"; hint, it should not fucking explode
+        # NOTE: have to slice (i.e. [0:1] since iloc of 1 row returns a Series, not a DataFrame
+        test_x_transformed = pipeline.transform(data_x=data.iloc[0:1])
+        assert all(test_x_transformed.columns.values == expected_columns)
 
     def test_CategoricConverterTransformer(self):
         data = TestHelper.get_titanic_data()

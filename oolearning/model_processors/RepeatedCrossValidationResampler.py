@@ -3,13 +3,13 @@ from typing import List, Callable, Union
 import numpy as np
 import pandas as pd
 
-from oolearning.model_processors.DecoratorBase import DecoratorBase
-from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 from oolearning.evaluators.ScoreBase import ScoreBase
-from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
+from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.model_processors.ResamplerBase import ResamplerBase
 from oolearning.model_processors.ResamplerResults import ResamplerResults
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
+from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 from oolearning.transformers.StatelessTransformer import StatelessTransformer
 from oolearning.transformers.TransformerBase import TransformerBase
 from oolearning.transformers.TransformerPipeline import TransformerPipeline
@@ -103,7 +103,16 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                 # simply transform on the holdout
                 # noinspection PyTypeChecker
                 pipeline = TransformerPipeline(transformations=None if self._model_transformations is None else [x.clone() for x in self._model_transformations])  # noqa
+                # before we fit the data, we actually want to 'peak' at what the expected columns will be with
+                # ALL the data. The reason is that if we so some sort of encoding (dummy/one-hot), but not all
+                # of the categories are included in the training set (i.e. maybe only a small number of
+                # observations have the categoric value), then we can still ensure that we will be giving the
+                # same expected columns/encodings to the `predict` method with the holdout set.
+                # peak at all the data
+                pipeline.peak(data_x=data_x)
+                # fit on only the train dataset (and also transform)
                 train_x_transformed = pipeline.fit_transform(data_x=train_x_not_transformed)
+                # transform on holdout
                 holdout_x_transformed = pipeline.transform(data_x=holdout_x_not_transformed)
 
                 if self._train_callback is not None:
@@ -133,9 +142,12 @@ class RepeatedCrossValidationResampler(ResamplerBase):
 
                 if self._decorators:
                     for decorator in self._decorators:
-                        decorator.decorate(scores=self._scores,
+                        decorator.decorate(repeat_index=repeat_index,
+                                           fold_index=fold_index,
+                                           scores=self._scores,
                                            holdout_actual_values=holdout_y,
-                                           holdout_predicted_values=predicted_values)
+                                           holdout_predicted_values=predicted_values,
+                                           holdout_indexes=holdout_x_transformed.index.values)
 
         # result_scores is a list of list of holdout scores.
         # Each outer list represents a resampling result

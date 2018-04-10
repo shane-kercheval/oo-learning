@@ -118,6 +118,16 @@ class ModelFitter:
             self._model_transformations = self._model_transformations + [transformer]
 
         self._pipeline = TransformerPipeline(transformations=self._model_transformations)
+        # before we fit the data, we actually want to 'peak' at what the expected columns will be with
+        # ALL the data. The reason is that if we so some sort of encoding (dummy/one-hot), but not all
+        # of the categories are included in the training set (i.e. maybe only a small number of
+        # observations have the categoric value), then we can still ensure that we will be giving the
+        # same expected columns/encodings to the `predict` method with the holdout set.
+
+        # peak at all the data (except for the target variable of course)
+        # noinspection PyTypeChecker
+        self._pipeline.peak(data_x=data.drop(columns=target_variable))
+        # fit on only the train dataset (and also transform)
         transformed_training_data = self._pipeline.fit_transform(training_x)
 
         # set up persistence if applicable
