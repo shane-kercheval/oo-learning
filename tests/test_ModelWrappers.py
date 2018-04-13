@@ -2148,112 +2148,98 @@ class ModelWrapperTests(TimerTestCase):
                                  hyper_params=RandomForestHP(),
                                  converter=ExtractPredictionsColumnConverter(column=1))]
 
-        # TODO: could add `converter` field to ModelInfo and make it optional (so other shit doesn't have to use it).
-        # then convert "for index in range(0, len(base_models)):" back to use " for model_info in base_models)
+        # Use same splitter information to get the training/holdout data
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
+        training_indexes, test_indexes = splitter.split(target_values=data.Survived)
+        expected_train_y = data.iloc[training_indexes].Survived
+        expected_train_x = data.iloc[training_indexes].drop(columns=target_variable)
+        expected_test_x = data.iloc[test_indexes].drop(columns=target_variable)
+
+        file_train_callback = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_train_callback_train_meta.pkl'))  # noqa
+        file_test_callback_traindata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_test_callback_test_meta_traindata.pkl'))  # noqa
+        file_test_callback_holdoutdata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_test_callback_test_meta_holdoutdata.pkl'))  # noqa
+
+        # these variables help us verify the callbacks were called
+        train_callback_called = list()
+        predict_callback_called = list()
+
+        def train_callback(train_meta_x, train_meta_y, hyper_params):
+            # the `train_meta_x` that we built in `train()` should have the same indexes as `train_meta_x
+            assert all(train_meta_x.index.values == expected_train_x.index.values)
+            # cached dataframe in `file_train_callback` are the predictions from the base model we expect
+            TestHelper.ensure_all_values_equal_from_file(file=file_train_callback,
+                                                         expected_dataframe=train_meta_x)
+            assert all(train_meta_y.index.values == expected_train_x.index.values)
+            # check that the y values in `train_meta_y` which will be trained on match the y's from the split
+            assert all(train_meta_y == expected_train_y)
+            assert isinstance(hyper_params, LogisticClassifierHP)
+
+            # add value to the list so we know this callback was called and completed
+            train_callback_called.append('train_called')
+
+        # predict will be called twice, first for evaluating the training data; next for the holdout
+        def predict_callback(test_meta):
+            if len(predict_callback_called) == 0:  # first time called i.e. training evaluation
+                # the `test_meta` that we built in `predict()` should have the same indexes as `train_meta_x`
+                # when evaluating the training set
+                assert all(test_meta.index.values == expected_train_x.index.values)
+                # cached dataframe in `file_test_callback_traindata` are the predictions from the base
+                # models (refitted on the entire training set) on the dataset that was passed into `predict()`
+                # in this case the original training data, which will then be predicted on the final stacking
+                # model
+                TestHelper.ensure_all_values_equal_from_file(file=file_test_callback_traindata,
+                                                             expected_dataframe=test_meta)
+                # add value to the list so we know this callback (and this if) was called
+                predict_callback_called.append('predict_called_train')
+
+            elif len(predict_callback_called) == 1:  # second time called i.e. holdout evaluation
+                # the `test_meta` that we built in `predict()` should have the same indexes as
+                # `expected_test_x` when evaluating the holdout set
+                assert all(test_meta.index.values == expected_test_x.index.values)
+                # cached dataframe in `file_test_callback_holdoutdata` are the predictions from the base
+                # models (refitted on the entire training set) on the dataset that was passed into `predict()`
+                # in this case the holdout data, which will then be predicted on the final stacking model
+                TestHelper.ensure_all_values_equal_from_file(file=file_test_callback_holdoutdata,
+                                                             expected_dataframe=test_meta)
+
+                # add value to the list so we know this callback (and this if) was called
+                predict_callback_called.append('predict_called_holdout')
+            else:
+                raise ValueError()
 
         model_stacker = ModelStacker(base_models=base_models,
                                      scores=score_list,
-                                     stacking_model=LogisticClassifier())
-                                     #stacking_model=GradientBoostingClassifier())
+                                     stacking_model=LogisticClassifier(),
+                                     train_callback=train_callback,
+                                     predict_callback=predict_callback)
 
-
-##############
-        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
-        training_indexes, _ = splitter.split(target_values=data.Survived)
-        data_y = data.iloc[training_indexes].Survived
-        data_x = data.iloc[training_indexes].drop(columns=target_variable)
-        model_info = base_models[0]
-
-#########
-
-
-
-
-
+        # use a fitter so we get don't have to worry about splitting/transforming/evaluating/etc.
         fitter = ModelFitter(model=model_stacker,
                              model_transformations=transformations,  # transformed for all models.
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=TwoClassProbabilityEvaluator(
-                                 converter=TwoClassThresholdConverter(threshold=0.5,
-                                                                      positive_class=1)))
-        fitter.fit(data=data, target_variable='Survived', hyper_params=LogisticClassifierHP())
+                                 converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))
+        assert len(train_callback_called) == 0
+        assert len(predict_callback_called) == 0
 
-        fitter.model
-        fitter.model._resampler_results[0].cross_validation_scores
-        fitter.model._resampler_results[1].cross_validation_scores
+        fitter.fit(data=data, target_variable='Survived', hyper_params=LogisticClassifierHP())
+        # verify our callback is called. If it wasn't, we would never know and the assertions wouldn't run.
+        assert train_callback_called == ['train_called']
+        # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
+        assert predict_callback_called == ['predict_called_train', 'predict_called_holdout']
+
         assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9976052800654167, 'AUC Precision/Recall': 0.9961793020728291, 'Kappa': 0.9641559618401953, 'F1 Score': 0.9776951672862454, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.9633699633699634, 'True Negative Rate': 0.9954441913439636, 'False Positive Rate': 0.004555808656036446, 'False Negative Rate': 0.03663003663003663, 'Positive Predictive Value': 0.9924528301886792, 'Negative Predictive Value': 0.9776286353467561, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         # holdout AUC/ROC for CART was: 0.7711462450592885; for Random Forest was 0.8198945981554676;
         # slight increase to 0.8203557312252964; (default hyper-params for all models)
         assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8203557312252964, 'AUC Precision/Recall': 0.7712259990480193, 'Kappa': 0.5793325723494259, 'F1 Score': 0.732824427480916, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6956521739130435, 'True Negative Rate': 0.8727272727272727, 'False Positive Rate': 0.12727272727272726, 'False Negative Rate': 0.30434782608695654, 'Positive Predictive Value': 0.7741935483870968, 'Negative Predictive Value': 0.8205128205128205, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
 
-
-
-
-
-
         # two base models
         # 5 folds each
         # verify predictions (store
 
-        # CART METRICS
-        # assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9992991063606098, 'AUC Precision/Recall': 0.9984018681159533, 'Kappa': 0.9641059680549836, 'F1 Score': 0.9776119402985075, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.9597069597069597, 'True Negative Rate': 0.9977220956719818, 'False Positive Rate': 0.002277904328018223, 'False Negative Rate': 0.040293040293040296, 'Positive Predictive Value': 0.9961977186311787, 'Negative Predictive Value': 0.9755011135857461, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        # assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.7711462450592885, 'AUC Precision/Recall': 0.6435502175777592, 'Kappa': 0.5601381417281001, 'F1 Score': 0.725925925925926, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8454545454545455, 'False Positive Rate': 0.15454545454545454, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.7424242424242424, 'Negative Predictive Value': 0.8230088495575221, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
-
-        # Random Forest Metrics
-        # assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9977638155314692, 'AUC Precision/Recall': 0.9963857279946995, 'Kappa': 0.9642058165548097, 'F1 Score': 0.9777777777777779, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.967032967032967, 'True Negative Rate': 0.9931662870159453, 'False Positive Rate': 0.00683371298405467, 'False Negative Rate': 0.03296703296703297, 'Positive Predictive Value': 0.9887640449438202, 'Negative Predictive Value': 0.9797752808988764, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        # assert fitter.holdout_evaluator.all_quality_metrics ==
-        # {'AUC ROC': 0.8198945981554676, 'AUC Precision/Recall': 0.7693830218733662, 'Kappa': 0.581636060100167, 'F1 Score': 0.736842105263158, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8636363636363636, 'False Positive Rate': 0.13636363636363635, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.765625, 'Negative Predictive Value': 0.8260869565217391, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
-        #
-
-
-
-        #
-        #
-        #
-        #
-        #
-        # assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
-        # assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
-        # assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female',
-        #                                       'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3',
-        #                                       'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1',
-        #                                       'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6',
-        #                                       'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
-        # assert fitter.model.hyper_params.params_dict == {'max_depth': None,
-        #                                                  'n_estimators': 50,
-        #                                                  'learning_rate': 1.0,
-        #                                                  'algorithm': 'SAMME.R'}
-        #
-        # assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9992991063606097,
-        #                                                          'AUC Precision/Recall': 0.9984018681159533,
-        #                                                          'Kappa': 0.9641059680549836,
-        #                                                          'F1 Score': 0.9776119402985075,
-        #                                                          'Two-Class Accuracy': 0.9831460674157303,
-        #                                                          'Error Rate': 0.016853932584269662,
-        #                                                          'True Positive Rate': 0.9597069597069597,
-        #                                                          'True Negative Rate': 0.9977220956719818,
-        #                                                          'False Positive Rate': 0.002277904328018223,
-        #                                                          'False Negative Rate': 0.040293040293040296,
-        #                                                          'Positive Predictive Value': 0.9961977186311787,
-        #                                                          'Negative Predictive Value': 0.9755011135857461,
-        #                                                          'Prevalence': 0.38342696629213485,
-        #                                                          'No Information Rate': 0.6165730337078652,
-        #                                                          'Total Observations': 712}  # noqa
-        # assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.797957839262187,
-        #                                                         'AUC Precision/Recall': 0.7339255444753214,
-        #                                                         'Kappa': 0.5770035784214436,
-        #                                                         'F1 Score': 0.7286821705426356,
-        #                                                         'Two-Class Accuracy': 0.8044692737430168,
-        #                                                         'Error Rate': 0.19553072625698323,
-        #                                                         'True Positive Rate': 0.6811594202898551,
-        #                                                         'True Negative Rate': 0.8818181818181818,
-        #                                                         'False Positive Rate': 0.11818181818181818,
-        #                                                         'False Negative Rate': 0.3188405797101449,
-        #                                                         'Positive Predictive Value': 0.7833333333333333,
-        #                                                         'Negative Predictive Value': 0.8151260504201681,
-        #                                                         'Prevalence': 0.3854748603351955,
-        #                                                         'No Information Rate': 0.6145251396648045,
-        #                                                         'Total Observations': 179}  # noqa
+        # fitter.model
+        # fitter.model._resampler_results[0].cross_validation_scores
+        # fitter.model._resampler_results[1].cross_validation_scores
 
     def test_ModelStacker_Regression(self):
         pass

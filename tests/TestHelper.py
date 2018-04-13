@@ -1,4 +1,6 @@
+import math
 import os
+import pickle
 from math import isclose
 from typing import Callable
 from sklearn import datasets
@@ -104,17 +106,39 @@ class TestHelper:
     # noinspection PyTypeChecker
     @staticmethod
     def ensure_all_values_equal(data_frame1, data_frame2):
+        def is_number(s):
+            try:
+                float(s)
+                return True
+            except ValueError:
+                return False
+
         assert all(data_frame1.columns.values == data_frame2.columns.values)
         assert all(data_frame1.index.values == data_frame2.index.values)
         numeric_col, cat_cols = OOLearningHelpers.get_columns_by_type(data_dtypes=data_frame1.dtypes)
 
         for col in numeric_col:
-            assert all([isclose(x, y) for x, y in zip(data_frame1[col].values, data_frame2[col].values)])
+            # check if the values are close, or if they are both NaN
+            assert all([isclose(x, y) or (math.isnan(x) and math.isnan(y))
+                        for x, y in zip(data_frame1[col].values, data_frame2[col].values)])
 
         for col in cat_cols:
-            assert all([x == y for x, y in zip(data_frame1[col].values, data_frame2[col].values)])
+            # if the two strings aren't equal, but also aren't 'nan', it will cause a problem because
+            # isnan will try to convert the string to a number, but it will fail with TypeError, so have to
+            # ensure both values are a number before we check that they are nan.
+            assert all([x == y or (is_number(x) and is_number(y) and math.isnan(x) and math.isnan(y))
+                        for x, y in zip(data_frame1[col].values, data_frame2[col].values)])
 
         return True
+
+    @staticmethod
+    def ensure_all_values_equal_from_file(file, expected_dataframe):
+        # with open(file, 'wb') as output:
+        #     pickle.dump(expected_dataframe, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            found_dataframe = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=found_dataframe,
+                                                      data_frame2=expected_dataframe)
 
     @staticmethod
     def check_plot(file_name: str, get_plot_function: Callable):

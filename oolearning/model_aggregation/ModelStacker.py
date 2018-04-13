@@ -1,4 +1,4 @@
-from typing import Union, List
+from typing import Union, List, Callable
 
 import numpy as np
 import pandas as pd
@@ -13,6 +13,10 @@ from oolearning.transformers.TransformerPipeline import TransformerPipeline
 
 
 class FoldPredictionsDecorator(DecoratorBase):
+    """
+    decorator that is passed into the Resampler and extracts the holdout predicted values in order to build
+    up `train_meta` in the model stacker.
+    """
     def __init__(self):
         self._holdout_indexes = list()
         self._holdout_predicted_values = pd.DataFrame()
@@ -34,7 +38,10 @@ class ModelStacker(ModelWrapperBase):
     def __init__(self,
                  base_models: List[ModelInfo],
                  scores: List[ScoreBase],
-                 stacking_model: ModelWrapperBase):
+                 stacking_model: ModelWrapperBase,
+                 train_callback: Callable[[pd.DataFrame, np.ndarray,
+                                           Union[HyperParamsBase, None]], None] = None,
+                 predict_callback: Callable[[pd.DataFrame], None] = None):
         """
         :param base_models:
         :param scores: since we are cross-validating, we can get a score from each base-model
@@ -46,6 +53,8 @@ class ModelStacker(ModelWrapperBase):
         self._stacking_model = stacking_model
         self._resampler_results = list()
         self._pipelines = list()
+        self._train_callback = train_callback
+        self._predict_callback = predict_callback
 
     @property
     def feature_importance(self):
@@ -106,8 +115,6 @@ class ModelStacker(ModelWrapperBase):
                 # the order they were originally in) and fill the necessary column with the predictions
                 train_meta.loc[list(decorator.holdout_indexes), model_info.description] = predictions
 
-                # pd.crosstab(train_meta.cart, train_meta.actual_y, rownames=['a'], colnames=['b'])
-                # pd.crosstab([1 if x > 0.5 else 0 for x in train_meta.random_forest.values], train_meta.actual_y, rownames=['a'], colnames=['b'])
             else:
                 raise NotImplementedError()
 
@@ -126,6 +133,9 @@ class ModelStacker(ModelWrapperBase):
             model_info.model.train(data_x=transformed_data_x,
                                    data_y=data_y,
                                    hyper_params=model_info.hyper_params)
+
+        if self._train_callback:
+            self._train_callback(train_meta.drop(columns='actual_y'), train_meta.actual_y, hyper_params)
         # noinspection PyTypeChecker
         self._stacking_model.train(data_x=train_meta.drop(columns='actual_y'),
                                    data_y=train_meta.actual_y,
@@ -149,6 +159,9 @@ class ModelStacker(ModelWrapperBase):
             assert all(predictions_raw.index.values == original_indexes)
             predictions = model_info.converter.convert(values=predictions_raw)
             test_meta[model_info.description] = predictions  # place predictions in associated column
+
+        if self._predict_callback:
+            self._predict_callback(test_meta)
 
         return self._stacking_model.predict(data_x=test_meta)
 
