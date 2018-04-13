@@ -1,6 +1,7 @@
 from .OOLearningHelpers import OOLearningHelpers
 
 from .converters.ContinuousToClassConverterBase import ContinuousToClassConverterBase
+from .converters.ExtractPredictionsColumnConverter import ExtractPredictionsColumnConverter
 from .converters.HighestValueConverter import HighestValueConverter
 from .converters.TwoClassConverterBase import TwoClassConverterBase
 from .converters.TwoClassThresholdConverter import TwoClassThresholdConverter

@@ -2118,72 +2118,95 @@ class ModelWrapperTests(TimerTestCase):
             assert all([isclose(x, y) for x, y in zip(expected_predictions, predictions_aggregation)])
 
     def test_ModelStacker_Classification(self):
-        pass
-#         data = TestHelper.get_titanic_data()
-#         target_variable = 'Survived'
-#
-#         # main reason we want to split the data is to get the means/st_devs so that we can confirm with
-#         # e.g. the Searcher
-#         # splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
-#         # training_indexes, _ = splitter.split(target_values=data.Survived)
-#         #
-#         # train_data_y = data.iloc[training_indexes].Survived
-#         # train_data = data.iloc[training_indexes].drop(columns='Survived')
-#
-#         # used both for keeping track of the CV holdout scores for base models
-#
-#         score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
-#
-#         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
-#                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
-#                            ImputationTransformer()]
-#
-#         base_models = [ModelInfo(description='cart',
-#                                  model=CartDecisionTreeClassifier(),
-#                                  transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
-#                                  hyper_params=CartDecisionTreeHP(),
-#                                  converter=TwoClassExtractPositivePredictions(positive_class=1)),
-#                        ModelInfo(description='random_forest',
-#                                  model=RandomForestClassifier(),
-#                                  transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
-#                                  hyper_params=RandomForestHP(),
-#                                  converter=TwoClassExtractPositivePredictions(positive_class=1))]
-#
-#         # TODO: could add `converter` field to ModelInfo and make it optional (so other shit doesn't have to use it).
-#         # then convert "for index in range(0, len(base_models)):" back to use " for model_info in base_models)
-#
-#         model_stacker = ModelStacker(base_models=base_models,
-#                                      scores=score_list,
-#                                      stacking_model=GradientBoostingClassifier())
-#
-#
-# ##############
-#         splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
-#         training_indexes, _ = splitter.split(target_values=data.Survived)
-#         data_y = data.iloc[training_indexes].Survived
-#         data_x = data.iloc[training_indexes].drop(columns=target_variable)
-#         model_info = base_models[0]
-#
-# #########
-#
+        data = TestHelper.get_titanic_data()
+        target_variable = 'Survived'
 
+        # main reason we want to split the data is to get the means/st_devs so that we can confirm with
+        # e.g. the Searcher
+        # splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+        # training_indexes, _ = splitter.split(target_values=data.Survived)
         #
-        #
-        #
-        # fitter = ModelFitter(model=model_stacker,
-        #                      model_transformations=transformations,  # transformed for all models.
-        #                      splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
-        #                      evaluator=TwoClassProbabilityEvaluator(
-        #                          converter=TwoClassThresholdConverter(threshold=0.5,
-        #                                                               positive_class=1)))
-        # fitter.fit(data=data, target_variable='Survived', hyper_params=GradientBoostingClassifierHP())
-        #
-        # fitter.predict()
+        # train_data_y = data.iloc[training_indexes].Survived
+        # train_data = data.iloc[training_indexes].drop(columns='Survived')
+
+        # used both for keeping track of the CV holdout scores for base models
+
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
+
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer()]
+
+        base_models = [ModelInfo(description='cart',
+                                 model=CartDecisionTreeClassifier(),
+                                 transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                                 hyper_params=CartDecisionTreeHP(),
+                                 converter=ExtractPredictionsColumnConverter(column=1)),
+                       ModelInfo(description='random_forest',
+                                 model=RandomForestClassifier(),
+                                 transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                                 hyper_params=RandomForestHP(),
+                                 converter=ExtractPredictionsColumnConverter(column=1))]
+
+        # TODO: could add `converter` field to ModelInfo and make it optional (so other shit doesn't have to use it).
+        # then convert "for index in range(0, len(base_models)):" back to use " for model_info in base_models)
+
+        model_stacker = ModelStacker(base_models=base_models,
+                                     scores=score_list,
+                                     stacking_model=LogisticClassifier())
+                                     #stacking_model=GradientBoostingClassifier())
+
+
+##############
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
+        training_indexes, _ = splitter.split(target_values=data.Survived)
+        data_y = data.iloc[training_indexes].Survived
+        data_x = data.iloc[training_indexes].drop(columns=target_variable)
+        model_info = base_models[0]
+
+#########
+
+
+
+
+
+        fitter = ModelFitter(model=model_stacker,
+                             model_transformations=transformations,  # transformed for all models.
+                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                             evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=1)))
+        fitter.fit(data=data, target_variable='Survived', hyper_params=LogisticClassifierHP())
+
+        fitter.model
+        fitter.model._resampler_results[0].cross_validation_scores
+        fitter.model._resampler_results[1].cross_validation_scores
+        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9976052800654167, 'AUC Precision/Recall': 0.9961793020728291, 'Kappa': 0.9641559618401953, 'F1 Score': 0.9776951672862454, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.9633699633699634, 'True Negative Rate': 0.9954441913439636, 'False Positive Rate': 0.004555808656036446, 'False Negative Rate': 0.03663003663003663, 'Positive Predictive Value': 0.9924528301886792, 'Negative Predictive Value': 0.9776286353467561, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        # holdout AUC/ROC for CART was: 0.7711462450592885; for Random Forest was 0.8198945981554676;
+        # slight increase to 0.8203557312252964; (default hyper-params for all models)
+        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8203557312252964, 'AUC Precision/Recall': 0.7712259990480193, 'Kappa': 0.5793325723494259, 'F1 Score': 0.732824427480916, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6956521739130435, 'True Negative Rate': 0.8727272727272727, 'False Positive Rate': 0.12727272727272726, 'False Negative Rate': 0.30434782608695654, 'Positive Predictive Value': 0.7741935483870968, 'Negative Predictive Value': 0.8205128205128205, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+
+
+
+
+
+
+        # two base models
+        # 5 folds each
+        # verify predictions (store
+
+        # CART METRICS
+        # assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9992991063606098, 'AUC Precision/Recall': 0.9984018681159533, 'Kappa': 0.9641059680549836, 'F1 Score': 0.9776119402985075, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.9597069597069597, 'True Negative Rate': 0.9977220956719818, 'False Positive Rate': 0.002277904328018223, 'False Negative Rate': 0.040293040293040296, 'Positive Predictive Value': 0.9961977186311787, 'Negative Predictive Value': 0.9755011135857461, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        # assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.7711462450592885, 'AUC Precision/Recall': 0.6435502175777592, 'Kappa': 0.5601381417281001, 'F1 Score': 0.725925925925926, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8454545454545455, 'False Positive Rate': 0.15454545454545454, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.7424242424242424, 'Negative Predictive Value': 0.8230088495575221, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+
+        # Random Forest Metrics
+        # assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9977638155314692, 'AUC Precision/Recall': 0.9963857279946995, 'Kappa': 0.9642058165548097, 'F1 Score': 0.9777777777777779, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.967032967032967, 'True Negative Rate': 0.9931662870159453, 'False Positive Rate': 0.00683371298405467, 'False Negative Rate': 0.03296703296703297, 'Positive Predictive Value': 0.9887640449438202, 'Negative Predictive Value': 0.9797752808988764, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        # assert fitter.holdout_evaluator.all_quality_metrics ==
+        # {'AUC ROC': 0.8198945981554676, 'AUC Precision/Recall': 0.7693830218733662, 'Kappa': 0.581636060100167, 'F1 Score': 0.736842105263158, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8636363636363636, 'False Positive Rate': 0.13636363636363635, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.765625, 'Negative Predictive Value': 0.8260869565217391, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
         #
 
-        #
-        #
-        #
+
+
         #
         #
         #

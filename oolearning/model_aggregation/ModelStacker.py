@@ -3,13 +3,13 @@ from typing import Union, List
 import numpy as np
 import pandas as pd
 
-from oolearning.converters.TwoClassConverterBase import TwoClassConverterBase
 from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.model_processors.ModelInfo import ModelInfo
 from oolearning.model_processors.RepeatedCrossValidationResampler import RepeatedCrossValidationResampler
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
+from oolearning.transformers.TransformerPipeline import TransformerPipeline
 
 
 class FoldPredictionsDecorator(DecoratorBase):
@@ -30,12 +30,6 @@ class FoldPredictionsDecorator(DecoratorBase):
         return self._holdout_predicted_values
 
 
-class TwoClassExtractPositivePredictions(TwoClassConverterBase):
-
-    def convert(self, values: pd.DataFrame) -> np.ndarray:
-        return values[self.positive_class]
-
-
 class ModelStacker(ModelWrapperBase):
     def __init__(self,
                  base_models: List[ModelInfo],
@@ -51,6 +45,7 @@ class ModelStacker(ModelWrapperBase):
         self._scores = scores
         self._stacking_model = stacking_model
         self._resampler_results = list()
+        self._pipelines = list()
 
     @property
     def feature_importance(self):
@@ -111,15 +106,26 @@ class ModelStacker(ModelWrapperBase):
                 # the order they were originally in) and fill the necessary column with the predictions
                 train_meta.loc[list(decorator.holdout_indexes), model_info.description] = predictions
 
-                pd.crosstab(train_meta.cart, train_meta.actual_y, rownames=['a'], colnames=['b'])
-                pd.crosstab([1 if x > 0.5 else 0 for x in train_meta.random_forest.values], train_meta.actual_y, rownames=['a'], colnames=['b'])
+                # pd.crosstab(train_meta.cart, train_meta.actual_y, rownames=['a'], colnames=['b'])
+                # pd.crosstab([1 if x > 0.5 else 0 for x in train_meta.random_forest.values], train_meta.actual_y, rownames=['a'], colnames=['b'])
             else:
                 raise NotImplementedError()
 
-            model_info.model.train(data_x=data_x,
+            transformed_data_x = data_x
+            if model_info.transformations:
+                # ensure none of the Transformers have been used. We will fit_transform the training data
+                # then in `predict()`, we will transform future data using the same transformations per model
+                assert all([x.state is None for x in model_info.transformations])
+                pipeline = TransformerPipeline(transformations=model_info.transformations)  # noqa
+                # fit on only the train dataset (and also transform)
+                transformed_data_x = pipeline.fit_transform(data_x=data_x)
+                self._pipelines.append(pipeline)
+            else:
+                self._pipelines.append(None)
+
+            model_info.model.train(data_x=transformed_data_x,
                                    data_y=data_y,
                                    hyper_params=model_info.hyper_params)
-
         # noinspection PyTypeChecker
         self._stacking_model.train(data_x=train_meta.drop(columns='actual_y'),
                                    data_y=train_meta.actual_y,
@@ -130,10 +136,19 @@ class ModelStacker(ModelWrapperBase):
         original_indexes = data_x.index.values
         test_meta = pd.DataFrame(index=original_indexes,
                                  columns=[model_info.description for model_info in self._base_models])
-        for model_info in self._base_models:
-            predictions = model_info.model.predict(data_x=data_x)
-
-            test_meta[model_info.description] = predictions
+        for index, model_info in enumerate(self._base_models):
+            # each model will either have an associated Pipeline, or None if no model-specific Transformations
+            transformed_data_x = data_x
+            pipeline = self._pipelines[index]
+            if pipeline:
+                transformed_data_x = pipeline.transform(data_x=data_x)
+            # noinspection PyTypeChecker
+            assert all(test_meta.index.values == original_indexes)
+            predictions_raw = model_info.model.predict(data_x=transformed_data_x)
+            # noinspection PyTypeChecker
+            assert all(predictions_raw.index.values == original_indexes)
+            predictions = model_info.converter.convert(values=predictions_raw)
+            test_meta[model_info.description] = predictions  # place predictions in associated column
 
         return self._stacking_model.predict(data_x=test_meta)
 
