@@ -5,6 +5,7 @@ from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 
 
+# noinspection SpellCheckingInspection
 class ModelWrapperTests(TimerTestCase):
     """
     Testing the TestHelper might seem like overkill; but what if, for example, there was a small bug that
@@ -45,8 +46,18 @@ class ModelWrapperTests(TimerTestCase):
         # test changing the index values
         titanic_data = TestHelper.get_titanic_data()
         index = titanic_data.index.values
-        new_index = dict(zip(index, [999] + list(index[1:])))
+        new_index = dict(zip(index, ['passengerid'] + list(index[1:])))
         TestHelper.ensure_all_values_equal_from_file(file=file, expected_dataframe=titanic_data)
         titanic_data.rename(index=new_index, inplace=True)
         self.assertRaises(AssertionError, lambda: TestHelper.ensure_all_values_equal_from_file(file=file,
                                                                                                expected_dataframe=titanic_data))  # noqa
+        # check that if we have the same values in a given column, but a different column type (e.g.
+        # one DataFrame, for a given column, is numeric, and the other, which has the same 'values' is
+        # 'object'
+        titanic_data = TestHelper.get_titanic_data()
+        titanic_data.Pclass = titanic_data.Pclass.astype(object)
+        self.assertRaises(AssertionError, lambda: TestHelper.ensure_all_values_equal_from_file(file=file,
+                                                                                               expected_dataframe=titanic_data))  # noqa
+
+
+

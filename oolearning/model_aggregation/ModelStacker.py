@@ -172,6 +172,7 @@ class ModelStacker(ModelWrapperBase):
                 # get the indexes (in the order that the decorator has them in, which will be different than
                 # the order they were originally in) and fill the necessary column with the predictions
                 train_meta.loc[list(decorator.holdout_indexes), model_info.description] = predictions
+                train_meta[model_info.description] = train_meta[model_info.description].astype(predictions.dtype)  # noqa
 
             else:
                 raise NotImplementedError()
@@ -192,11 +193,7 @@ class ModelStacker(ModelWrapperBase):
                                    data_y=data_y,
                                    hyper_params=model_info.hyper_params)
 
-
-# TODO after testing with string, figure out if this is necessary
-        is_target_numeric = OOLearningHelpers.is_series_dtype_numeric(train_meta.actual_y.dtype)
-        self._train_meta_correlations = train_meta.corr() if is_target_numeric \
-            else train_meta.drop(columns='actual_y').corr()
+        self._train_meta_correlations = train_meta.corr()
 
         if self._train_callback:
             self._train_callback(train_meta.drop(columns='actual_y'), train_meta.actual_y, hyper_params)
