@@ -35,6 +35,34 @@ class FoldPredictionsDecorator(DecoratorBase):
 
 
 class ModelStacker(ModelWrapperBase):
+    """
+    # TODO: note: the assumption in flow is that each specific model will have been previously cross-validated
+        in order to choose the best hyper-params for the specific model.
+    adopted from
+    http://blog.kaggle.com/2016/12/27/a-kagglers-guide-to-model-stacking-in-practice/
+    1. Partition the training data into five test folds (note: 5 could be refactored as parameter)
+    2. Create a dataset called train_meta with the same row Ids and fold Ids as the training dataset, with
+        empty columns M1 and M2.
+        Similarly create a dataset called test_meta with the same row Ids as the test dataset and empty
+            columns M1 and M2 (NOTE: this will be in the `_predict` function
+
+    3. For each test fold
+        3.1 Combine the other four folds to be used as a training fold
+        3.2 For each base model (with chosen hyper-params)
+        3.2.1 Fit the base model to the training fold and make predictions on the test fold.
+            Store these predictions in train_meta to be used as features for the stacking model
+            NOTE: i will also have to do the model specific Transformations
+
+    4. Fit each base model to the full training dataset and make predictions on the test dataset.
+        Store these predictions inside test_meta
+        NOTE: i will make predictions as part of the `_predict` function
+
+    5. Fit a new model, S (i.e the stacking model) to train_meta, using M1 and M2 as features.
+        Optionally, include other features from the original training dataset or engineered features.
+
+    6. Use the stacked model S to make final predictions on test_meta
+        NOTE: this will be in `_predict`
+    """
     def __init__(self,
                  base_models: List[ModelInfo],
                  scores: List[ScoreBase],
@@ -45,9 +73,10 @@ class ModelStacker(ModelWrapperBase):
         """
         :param base_models:
         :param scores: since we are cross-validating, we can get a score from each base-model
-
         """
         super().__init__()
+        # ensure unique model descriptions
+        assert len(set([x.description for x in base_models])) == len(base_models)
         self._base_models = base_models
         self._scores = scores
         self._stacking_model = stacking_model
@@ -55,6 +84,20 @@ class ModelStacker(ModelWrapperBase):
         self._pipelines = list()
         self._train_callback = train_callback
         self._predict_callback = predict_callback
+
+    def get_resample_data(self, model_description):
+            model_index = [x.description for x in self._base_models].index(model_description)
+            return self._resampler_results[model_index].cross_validation_scores
+
+    def get_resample_means(self):
+        score_names = [x.name for x in self._scores]
+        model_names = [x.description for x in self._base_models]
+        resample_means = pd.DataFrame(index=score_names,
+                                      columns=model_names)
+        for model in model_names:
+            resample_means[model] = self.get_resample_data(model_description=model).mean().loc[score_names]
+
+        return resample_means
 
     @property
     def feature_importance(self):
@@ -164,36 +207,3 @@ class ModelStacker(ModelWrapperBase):
             self._predict_callback(test_meta)
 
         return self._stacking_model.predict(data_x=test_meta)
-
-# TODO: note: the assumption in flow is that each specific model will have been previously cross-validated in
-    # order to choose the best hyper-params for the specific model.
-# TODO: note... Model specific Transformations might be tricky...
-#   A) model transformations are typically handled by some sort of "processor" like fitter or tuner
-#   B) each model has it's own model-specific transformation(s). (e.g. some models should be centered/scaled,
-    # while others do not need to (or should not) be.
-# (Suppose we use ModelFitter); The `data_x` passed in is the full training set. We will assume a test set
-# is withheld.
-# adopted from
-# http://blog.kaggle.com/2016/12/27/a-kagglers-guide-to-model-stacking-in-practice/
-# 1. Partition the training data into five test folds (note: 5 could be refactored as parameter)
-# 2. Create a dataset called train_meta with the same row Ids and fold Ids as the training dataset, with empty
-    # columns M1 and M2.
-    # Similarly create a dataset called test_meta with the same row Ids as the test dataset and empty columns
-        # M1 and M2 (NOTE: this will be in the `_predict` function
-
-# 3. For each test fold
-    # 3.1 Combine the other four folds to be used as a training fold
-    # 3.2 For each base model (with chosen hyper-params)
-    # 3.2.1 Fit the base model to the training fold and make predictions on the test fold.
-        # Store these predictions in train_meta to be used as features for the stacking model
-        # NOTE: i will also have to do the model specific Transformations
-
-# 4. Fit each base model to the full training dataset and make predictions on the test dataset.
-    # Store these predictions inside test_meta
-    # NOTE: i will make predictions as part of the `_predict` function
-
-# 5. Fit a new model, S (i.e the stacking model) to train_meta, using M1 and M2 as features.
-    # Optionally, include other features from the original training dataset or engineered features.
-
-# 6. Use the stacked model S to make final predictions on test_meta
-    # NOTE: this will be in `_predict`

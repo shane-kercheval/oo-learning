@@ -2121,32 +2121,29 @@ class ModelWrapperTests(TimerTestCase):
         data = TestHelper.get_titanic_data()
         target_variable = 'Survived'
 
-        # main reason we want to split the data is to get the means/st_devs so that we can confirm with
-        # e.g. the Searcher
-        # splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
-        # training_indexes, _ = splitter.split(target_values=data.Survived)
-        #
-        # train_data_y = data.iloc[training_indexes].Survived
-        # train_data = data.iloc[training_indexes].drop(columns='Survived')
-
-        # used both for keeping track of the CV holdout scores for base models
-
-        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                      SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
 
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
                            ImputationTransformer()]
 
-        base_models = [ModelInfo(description='cart',
-                                 model=CartDecisionTreeClassifier(),
-                                 transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
-                                 hyper_params=CartDecisionTreeHP(),
-                                 converter=ExtractPredictionsColumnConverter(column=1)),
-                       ModelInfo(description='random_forest',
-                                 model=RandomForestClassifier(),
-                                 transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
-                                 hyper_params=RandomForestHP(),
-                                 converter=ExtractPredictionsColumnConverter(column=1))]
+        cart_base_model = ModelInfo(description='cart',
+                                    model=CartDecisionTreeClassifier(),
+                                    transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                                    hyper_params=CartDecisionTreeHP(),
+                                    converter=ExtractPredictionsColumnConverter(column=1))
+        rf_base_model = ModelInfo(description='random_forest',
+                                  model=RandomForestClassifier(),
+                                  transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                                  hyper_params=RandomForestHP(),
+                                  converter=ExtractPredictionsColumnConverter(column=1))
+        base_models = [cart_base_model, rf_base_model]
+
+        # Test model stacker with duplicate model names; should get assertion error
+        self.assertRaises(AssertionError,
+                          lambda: ModelStacker(base_models=base_models + [cart_base_model],
+                                               scores=score_list, stacking_model=LogisticClassifier()))
 
         # Use same splitter information to get the training/holdout data
         splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
@@ -2233,13 +2230,16 @@ class ModelWrapperTests(TimerTestCase):
         # slight increase to 0.8203557312252964; (default hyper-params for all models)
         assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8203557312252964, 'AUC Precision/Recall': 0.7712259990480193, 'Kappa': 0.5793325723494259, 'F1 Score': 0.732824427480916, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6956521739130435, 'True Negative Rate': 0.8727272727272727, 'False Positive Rate': 0.12727272727272726, 'False Negative Rate': 0.30434782608695654, 'Positive Predictive Value': 0.7741935483870968, 'Negative Predictive Value': 0.8205128205128205, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
 
-        # two base models
-        # 5 folds each
-        # verify predictions (store
-
-        # fitter.model
-        # fitter.model._resampler_results[0].cross_validation_scores
-        # fitter.model._resampler_results[1].cross_validation_scores
+        # test resample data
+        file_test_model_stacker_resample_data_cart = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_cart.pkl'))  # noqa
+        file_test_model_stacker_resample_data_rf = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_rf.pkl'))  # noqa
+        file_test_model_stacker_resample_means = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_means.pkl'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_cart,
+                                                     expected_dataframe=fitter.model.get_resample_data(model_description='cart'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_rf,
+                                                     expected_dataframe=fitter.model.get_resample_data(model_description='random_forest'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_means,
+                                                     expected_dataframe=fitter.model.get_resample_means())  # noqa
 
     def test_ModelStacker_Regression(self):
         pass
