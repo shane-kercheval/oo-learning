@@ -105,7 +105,9 @@ class TestHelper:
 
     # noinspection PyTypeChecker
     @staticmethod
-    def ensure_all_values_equal(data_frame1: pd.DataFrame, data_frame2: pd.DataFrame):
+    def ensure_all_values_equal(data_frame1: pd.DataFrame,
+                                data_frame2: pd.DataFrame,
+                                check_column_types: bool=True):
         def is_number(s):
             try:
                 float(s)
@@ -114,7 +116,8 @@ class TestHelper:
                 return False
 
         # check that the types of the columns are all the same
-        assert all([x == y for x, y in zip(data_frame1.dtypes.values, data_frame2.dtypes.values)])
+        if check_column_types:
+            assert all([x == y for x, y in zip(data_frame1.dtypes.values, data_frame2.dtypes.values)])
         assert all(data_frame1.columns.values == data_frame2.columns.values)
         assert all(data_frame1.index.values == data_frame2.index.values)
         numeric_col, cat_cols = OOLearningHelpers.get_columns_by_type(data_dtypes=data_frame1.dtypes)
@@ -134,13 +137,14 @@ class TestHelper:
         return True
 
     @staticmethod
-    def ensure_all_values_equal_from_file(file, expected_dataframe):
+    def ensure_all_values_equal_from_file(file, expected_dataframe, check_column_types: bool=True):
         # with open(file, 'wb') as output:
         #     pickle.dump(expected_dataframe, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             found_dataframe = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=found_dataframe,
-                                                      data_frame2=expected_dataframe)
+                                                      data_frame2=expected_dataframe,
+                                                      check_column_types=check_column_types)
 
     @staticmethod
     def check_plot(file_name: str, get_plot_function: Callable):

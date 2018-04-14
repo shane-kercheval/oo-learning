@@ -116,7 +116,9 @@ class ExploratoryTests(TimerTestCase):
         assert explore.numeric_features == numeric_columns
         assert explore.categoric_features == categoric_columns
 
-        assert TestHelper.ensure_all_values_equal(data_frame1=explore_from_csv.dataset, data_frame2=explore.dataset)  # noqa
+        assert TestHelper.ensure_all_values_equal(data_frame1=explore_from_csv.dataset,
+                                                  data_frame2=explore.dataset,
+                                                  check_column_types=False)
         assert explore_from_csv.target_variable == explore.target_variable
 
         ######################################################################################################

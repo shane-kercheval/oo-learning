@@ -671,7 +671,8 @@ class TransformerTests(TimerTestCase):
         # test when setting `percent_variance_explained=None`
         pca_transformer = PCATransformer(percent_variance_explained=None)
         pca_transformer.fit(data_x=training_set)
-        assert list(pca_transformer.cumulative_explained_variance) == [0.955751167228117, 0.9976620662281546, 0.9999751439740711, 0.9999981341821631, 0.9999994868435985, 0.9999999583168993, 1.0]  # noqa
+
+        assert all([isclose(x, y) for x, y in zip(list(pca_transformer.cumulative_explained_variance), [0.955751167228117, 0.9976620662281546, 0.9999751439740711, 0.9999981341821631, 0.9999994868435985, 0.9999999583168993, 1.0])])  # noqa
         assert pca_transformer.number_of_components == 7
         assert pca_transformer.state == {'categorical_features': ['ocean_proximity', 'temp_categorical']}
 
