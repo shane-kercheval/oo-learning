@@ -1,12 +1,10 @@
 from abc import ABCMeta, abstractmethod
 from typing import List
-from matplotlib import pyplot as pl
-from pandas.plotting import scatter_matrix
 
-import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
+import pandas as pd
+from pandas.plotting import scatter_matrix
 
 from oolearning import OOLearningHelpers
 
@@ -246,11 +244,5 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         return scatter_matrix(self._dataset[numeric_columns], figsize=figure_size)
 
     def plot_correlation_heatmap(self):
-        f, ax = pl.subplots(figsize=(10, 8))
-        corr = self._dataset.corr()
-        sns.heatmap(corr, mask=np.zeros_like(corr, dtype=np.bool),
-                    cmap=sns.diverging_palette(220, 10, as_cmap=True),
-                    square=True, ax=ax,
-                    center=0)
-        plt.xticks(rotation=20)
-        plt.title('correlations')
+        OOLearningHelpers.plot_correlations(correlations=self._dataset.corr(),
+                                            title='correlations')

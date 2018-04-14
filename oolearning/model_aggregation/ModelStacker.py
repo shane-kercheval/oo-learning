@@ -3,11 +3,13 @@ from typing import Union, List, Callable
 import numpy as np
 import pandas as pd
 
+from oolearning.OOLearningHelpers import OOLearningHelpers
 from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.model_processors.ModelInfo import ModelInfo
 from oolearning.model_processors.RepeatedCrossValidationResampler import RepeatedCrossValidationResampler
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.transformers.TransformerPipeline import TransformerPipeline
 
@@ -84,12 +86,18 @@ class ModelStacker(ModelWrapperBase):
         self._pipelines = list()
         self._train_callback = train_callback
         self._predict_callback = predict_callback
+        self._train_meta_correlations = None
 
     def get_resample_data(self, model_description):
-            model_index = [x.description for x in self._base_models].index(model_description)
-            return self._resampler_results[model_index].cross_validation_scores
+        if self._model_object is None:
+            raise ModelNotFittedError()
+        model_index = [x.description for x in self._base_models].index(model_description)
+        return self._resampler_results[model_index].cross_validation_scores
 
     def get_resample_means(self):
+        if self._model_object is None:
+            raise ModelNotFittedError()
+
         score_names = [x.name for x in self._scores]
         model_names = [x.description for x in self._base_models]
         resample_means = pd.DataFrame(index=score_names,
@@ -98,6 +106,13 @@ class ModelStacker(ModelWrapperBase):
             resample_means[model] = self.get_resample_data(model_description=model).mean().loc[score_names]
 
         return resample_means
+
+    def plot_correlation_heatmap(self):
+        if self._model_object is None:
+            raise ModelNotFittedError()
+
+        OOLearningHelpers.plot_correlations(correlations=self._train_meta_correlations,
+                                            title='Correlations of Models (based on meta-training set)')
 
     @property
     def feature_importance(self):
@@ -176,6 +191,12 @@ class ModelStacker(ModelWrapperBase):
             model_info.model.train(data_x=transformed_data_x,
                                    data_y=data_y,
                                    hyper_params=model_info.hyper_params)
+
+
+# TODO after testing with string, figure out if this is necessary
+        is_target_numeric = OOLearningHelpers.is_series_dtype_numeric(train_meta.actual_y.dtype)
+        self._train_meta_correlations = train_meta.corr() if is_target_numeric \
+            else train_meta.drop(columns='actual_y').corr()
 
         if self._train_callback:
             self._train_callback(train_meta.drop(columns='actual_y'), train_meta.actual_y, hyper_params)

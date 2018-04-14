@@ -1,4 +1,8 @@
 from typing import List
+from matplotlib import pyplot as pl
+
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 import numpy as np
 import pandas as pd
@@ -31,3 +35,25 @@ class OOLearningHelpers:
                                if OOLearningHelpers.is_series_dtype_numeric(dtype=value) is False]
 
         return numeric_columns, non_numeric_columns
+
+    @staticmethod
+    def plot_correlations(correlations: pd.DataFrame, title: str=None, mask_duplicates=True):
+        if title is None:
+            title = ''
+
+        if mask_duplicates:
+            mask = np.zeros_like(correlations)
+            mask[np.triu_indices_from(mask)] = True
+        else:
+            mask = np.zeros_like(correlations, dtype=np.bool)
+
+        with sns.axes_style("white"):
+            f, ax = pl.subplots(figsize=(10, 8))
+            sns.heatmap(correlations,
+                        mask=mask,
+                        annot=True,
+                        cmap=sns.diverging_palette(220, 10, as_cmap=True),
+                        square=True, ax=ax,
+                        center=0)
+            plt.xticks(rotation=20)
+            plt.title(title)
