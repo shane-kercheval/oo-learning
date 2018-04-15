@@ -17,8 +17,11 @@ from oolearning.transformers.TransformerPipeline import TransformerPipeline
 
 class FoldPredictionsDecorator(DecoratorBase):
     """
-    decorator that is passed into the Resampler and extracts the holdout predicted values in order to build
-    up `train_meta` in the model stacker.
+    decorator that is passed into the Resampler and, for each fold of the resampler, extracts the holdout's
+    predicted values and corresponding indices of the holdout (of the original data-set (i.e. training set)
+    passed in). The predictions and corresponding indices are used to build up `train_meta` in the model
+    stacker. `train_meta` contains the predictions from each base model (of the training set), and is used
+    to train the stacker.
     """
     def __init__(self):
         self._holdout_indexes = list()
@@ -27,8 +30,8 @@ class FoldPredictionsDecorator(DecoratorBase):
     def decorate(self, **kwargs):
         self._holdout_indexes.extend(kwargs['holdout_indexes'])
         predicted_values = kwargs['holdout_predicted_values']
-        # predicted_values is either a DataFrame in the case of classification,
-        # or an array in the case of regression
+        # predicted_values is either a DataFrame in the case of classification ModelWrappers,
+        # or an array in the case of regression ModelWrappers
         if isinstance(predicted_values, pd.DataFrame):
             if self._holdout_predicted_values is None:
                 self._holdout_predicted_values = pd.DataFrame()
@@ -51,14 +54,20 @@ class FoldPredictionsDecorator(DecoratorBase):
 
 class ModelStacker(ModelWrapperBase):
     """
-    # TODO: note: the assumption in flow is that each specific model will have been previously cross-validated
-        in order to choose the best hyper-params for the specific model.
-    adopted from
+    This class implements a "Model Stacker" adopted from
     http://blog.kaggle.com/2016/12/27/a-kagglers-guide-to-model-stacking-in-practice/
+
+    The assumption in flow is that each specific model (base models & stacker) will have been previously
+        cross-validated in order to choose the best hyper-params for the specific model. As the blog post
+        mentions, there might be leakage from this method. However, if predicted on a holdout set never
+        seen by the actual models trained, it should still be a fair representation of the test error. 
+
+    The steps for building the stacker are as follows (again, directly taken from the blog, above:
+
     1. Partition the training data into five test folds (note: 5 could be refactored as parameter)
-    2. Create a dataset called train_meta with the same row Ids and fold Ids as the training dataset, with
+    2. Create a data-set called train_meta with the same row Ids and fold Ids as the training data-set, with
         empty columns M1 and M2.
-        Similarly create a dataset called test_meta with the same row Ids as the test dataset and empty
+        Similarly create a data-set called test_meta with the same row Ids as the test data-set and empty
             columns M1 and M2 (NOTE: this will be in the `_predict` function
 
     3. For each test fold
@@ -68,12 +77,12 @@ class ModelStacker(ModelWrapperBase):
             Store these predictions in train_meta to be used as features for the stacking model
             NOTE: i will also have to do the model specific Transformations
 
-    4. Fit each base model to the full training dataset and make predictions on the test dataset.
+    4. Fit each base model to the full training data-set and make predictions on the test data-set.
         Store these predictions inside test_meta
         NOTE: i will make predictions as part of the `_predict` function
 
     5. Fit a new model, S (i.e the stacking model) to train_meta, using M1 and M2 as features.
-        Optionally, include other features from the original training dataset or engineered features.
+        Optionally, include other features from the original training data-set or engineered features.
 
     6. Use the stacked model S to make final predictions on test_meta
         NOTE: this will be in `_predict`
@@ -97,6 +106,7 @@ class ModelStacker(ModelWrapperBase):
         super().__init__()
         # ensure unique model descriptions
         assert len(set([x.description for x in base_models])) == len(base_models)
+
         self._base_models = base_models
         self._scores = scores
         self._stacking_model = stacking_model
@@ -108,13 +118,22 @@ class ModelStacker(ModelWrapperBase):
         self._predict_callback = predict_callback
         self._train_meta_correlations = None
 
-    def get_resample_data(self, model_description):
+    def get_resample_data(self, model_description: str) -> pd.DataFrame:
+        """
+        :param model_description: the description of the model (i.e. identifier passed into the ModelInfo
+            object)
+        :return: a DataFrame containing the resampled scores for each holdout for a given model.
+        """
         if self._model_object is None:
             raise ModelNotFittedError()
+
         model_index = [x.description for x in self._base_models].index(model_description)
         return self._resampler_results[model_index].cross_validation_scores
 
-    def get_resample_means(self):
+    def get_resample_means(self) -> pd.DataFrame:
+        """
+        :return: a DataFrame containing the Scores (as rows) for each model (as columns)
+        """
         if self._model_object is None:
             raise ModelNotFittedError()
 
@@ -128,6 +147,15 @@ class ModelStacker(ModelWrapperBase):
         return resample_means
 
     def plot_correlation_heatmap(self):
+        """
+        Creates a plot of the correlations of each of the base-model's predictions on the training set.
+        Specifically, cross-validation is used and the predictions from each holdout-fold (for each model) are
+            used to build a training set for the stacker. The plot shows the correlations for the predictions
+            of each base-model.
+
+        The correlations are taken before the predictions are transformed by the stacker-specific
+            transformations.
+        """
         if self._model_object is None:
             raise ModelNotFittedError()
 
@@ -142,16 +170,10 @@ class ModelStacker(ModelWrapperBase):
                data_x: pd.DataFrame,
                data_y: np.ndarray,
                hyper_params: HyperParamsBase = None) -> object:
-        """
-        Where going to use the RepeatedCrossValidationResampler, because A) it already takes care of
-            model-specific transformations (etc.) and B) we can take advantage of the Fold Decorator
-            functionality to get the fold predictions for step `3.2.1`
-        :param data_x:
-        :param data_y:
-        :param hyper_params: hyper-params of the StackingModel
-        """
-        # build up `train_meta` which will be used to train the stacking_model; we will populate it with the
-        # holdout predictions from each fold in the cross-validation (utilizing the Decorator)
+        # build `train_meta` skeleton which will be used to train the stacking_model; we will populate it with
+        # the holdout predictions from each fold in the cross-validation (utilizing the Decorator to extract
+        # the corresponding holdout predictions and associated indices that will be used to tie the
+        # predictions back to the original training set's exact rows)
         original_indexes = data_x.index.values
         train_meta = pd.DataFrame(index=original_indexes,
                                   columns=[model_info.description for model_info in self._base_models] +
@@ -160,18 +182,20 @@ class ModelStacker(ModelWrapperBase):
 
         # NOTE: may be able to improve performance by utilizing same splits
         # https://github.com/shane-kercheval/oo-learning/issues/1
+        # for each base-model, resample the data and get the holdout predictions to build train_meta
         for model_info in self._base_models:
-            decorator = FoldPredictionsDecorator()
+            decorator = FoldPredictionsDecorator()  # used to extract holdout predictions and indices
             resampler = RepeatedCrossValidationResampler(
                 model=model_info.model,
-                model_transformations=model_info.transformations,
+                model_transformations=model_info.transformations,  # transformations specific to base-model
                 scores=[score.clone() for score in self._scores],
                 folds=5,
                 repeats=1,
                 fold_decorators=[decorator])
             resampler.resample(data_x=data_x, data_y=data_y, hyper_params=model_info.hyper_params)
             self._resampler_results.append(resampler.results)
-            # the predicted values will be a dataframe with a column per class. For 2 & multi-class problems,
+            # for regression problems, the predictions will be a numpy array; for classification problems,
+            # the predicted values will be a DataFrame with a column per class. For 2 & multi-class problems,
             # we have to figure out how to convert the DF to 1 column/series. So, for example, one option
             # for a two-class problem would be to simply return (via converter) the probabilities associated
             # with the positive class. For a multi-class, it might be to choose the class with the highest
@@ -193,20 +217,21 @@ class ModelStacker(ModelWrapperBase):
                 assert len(predictions) == len(original_indexes)  # predictions same length as training set
 
             # we need to fill train_meta with the predicted values from the holdout folds
-            # however, the holdout folds will be in a different order
-            # get the indexes (in the order that the decorator has them in, which will be different than
-            # the order they were originally in) and fill the necessary column with the predictions
+            # however, the indices/predictions from the holdout folds will be in a different order than the
+            # original training set. However, we can index off of the holdout_indexes to put the predictions
+            # in the right order.
             train_meta.loc[list(decorator.holdout_indexes), model_info.description] = predictions
             train_meta[model_info.description] = train_meta[model_info.description].astype(predictions.dtype)
 
             transformed_data_x = data_x
             if model_info.transformations:
-                # ensure none of the Transformers have been used. We will fit_transform the training data
-                # then in `predict()`, we will transform future data using the same transformations per model
+                # ensure none of the Transformers have been used.
                 assert all([x.state is None for x in model_info.transformations])
-                pipeline = TransformerPipeline(transformations=model_info.transformations)  # noqa
-                # fit on only the train dataset (and also transform)
-                transformed_data_x = pipeline.fit_transform(data_x=data_x)
+                # We will fit_transform the training data then in `predict()`,
+                # we will transform future data using the same transformations per model
+                pipeline = TransformerPipeline(transformations=model_info.transformations)
+                # fit on only the train data-set (and also transform)
+                transformed_data_x = pipeline.fit_transform(data_x=transformed_data_x)
                 self._base_model_pipelines.append(pipeline)
             else:
                 self._base_model_pipelines.append(None)
@@ -218,20 +243,16 @@ class ModelStacker(ModelWrapperBase):
         # get the correlations before any transformations on `train_meta` for the stacking model.
         self._train_meta_correlations = train_meta.corr()
 
-        transformed_train_meta = train_meta
+        # do stacker-specific transformations
+        transformed_train_meta = train_meta.drop(columns='actual_y')
         if self._stacking_model_pipeline is not None:
             # noinspection PyTypeChecker
-            transformed_train_meta = self._stacking_model_pipeline.fit_transform(data_x=transformed_train_meta.drop(columns='actual_y'))  # noqa
-            transformed_train_meta['actual_y'] = data_y
+            transformed_train_meta = self._stacking_model_pipeline.fit_transform(data_x=transformed_train_meta)  # noqa
 
         if self._train_callback:
-            self._train_callback(transformed_train_meta.drop(columns='actual_y'),
-                                 transformed_train_meta.actual_y,
-                                 hyper_params)
-        # noinspection PyTypeChecker
-        self._stacking_model.train(data_x=transformed_train_meta.drop(columns='actual_y'),
-                                   data_y=transformed_train_meta.actual_y,
-                                   hyper_params=hyper_params)
+            self._train_callback(transformed_train_meta, data_y, hyper_params)
+
+        self._stacking_model.train(data_x=transformed_train_meta, data_y=data_y, hyper_params=hyper_params)
         return 'none'
 
     def _predict(self, model_object: object, data_x: pd.DataFrame) -> Union[np.ndarray, pd.DataFrame]:
@@ -246,21 +267,20 @@ class ModelStacker(ModelWrapperBase):
             transformed_data_x = data_x
             pipeline = self._base_model_pipelines[index]
             if pipeline:
-                transformed_data_x = pipeline.transform(data_x=data_x)
+                transformed_data_x = pipeline.transform(data_x=transformed_data_x)
             # noinspection PyTypeChecker
             assert all(test_meta.index.values == original_indexes)
-            predictions_raw = model_info.model.predict(data_x=transformed_data_x)
-            if isinstance(predictions_raw, pd.DataFrame):
+            predictions = model_info.model.predict(data_x=transformed_data_x)
+            if isinstance(predictions, pd.DataFrame):
                 # noinspection PyTypeChecker
-                assert all(predictions_raw.index.values == original_indexes)
+                assert all(predictions.index.values == original_indexes)
 
-            predictions = predictions_raw
             if model_info.converter is not None:
                 predictions = model_info.converter.convert(values=predictions)
 
             test_meta[model_info.description] = predictions  # place predictions in associated column
 
-        # now apply any necessary transformations to test_meta
+        # now apply any necessary stacker-specific transformations to test_meta
         # for example, some models require center/scaling, which may or may not have been previously done.
         transformed_test_meta = test_meta
         if self._stacking_model_pipeline is not None:
