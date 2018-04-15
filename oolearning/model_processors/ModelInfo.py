@@ -45,3 +45,6 @@ class ModelInfo:
     @property
     def converter(self):
         return self._converter
+
+    def set_converter(self, converter: ContinuousToClassConverterBase=None):
+        self._converter = converter

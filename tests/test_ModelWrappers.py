@@ -2121,10 +2121,6 @@ class ModelWrapperTests(TimerTestCase):
         score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class)),  # noqa
                       SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class))]  # noqa
 
-        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
-                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
-                           ImputationTransformer()]
-
         cart_base_model = ModelInfo(description='cart',
                                     model=CartDecisionTreeClassifier(),
                                     transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
@@ -2204,12 +2200,16 @@ class ModelWrapperTests(TimerTestCase):
         model_stacker = ModelStacker(base_models=base_models,
                                      scores=score_list,
                                      stacking_model=LogisticClassifier(),
+                                     stacking_transformations=None,
                                      train_callback=train_callback,
                                      predict_callback=predict_callback)
 
         # use a fitter so we get don't have to worry about splitting/transforming/evaluating/etc.
         fitter = ModelFitter(model=model_stacker,
-                             model_transformations=transformations,  # transformed for all models.
+                             # transformations for all models, not just stackers
+                             model_transformations=[RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),  # noqa
+                                                    CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),  # noqa
+                                                    ImputationTransformer()],
                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                              evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5,
@@ -2266,5 +2266,227 @@ class ModelWrapperTests(TimerTestCase):
                                                      target_variable='Survived',
                                                      positive_class=positive_class)
 
-    def test_ModelStacker_Regression(self):
-        pass
+    def test_ModelStacker_Regression_no_stacker_transformations(self):
+        ######################################################################################################
+        # elastic_net stacker, svm & GBM & polynomial linear regression base models
+        ######################################################################################################
+        data = TestHelper.get_insurance_data()
+        target_variable = 'expenses'
+
+        # Use same splitter information to get the training/holdout data
+        splitter = RegressionStratifiedDataSplitter(holdout_ratio=0.2)
+        training_indexes, test_indexes = splitter.split(target_values=data[target_variable])
+        expected_train_y = data.iloc[training_indexes][target_variable]
+        expected_train_x = data.iloc[training_indexes].drop(columns=target_variable)
+        expected_test_x = data.iloc[test_indexes].drop(columns=target_variable)
+
+        file_train_callback = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_regression_train_callback_train_meta.pkl'))  # noqa
+        file_test_callback_traindata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_regression_test_callback_test_meta_traindata.pkl'))  # noqa
+        file_test_callback_holdoutdata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_regression_test_callback_test_meta_holdoutdata.pkl'))  # noqa
+
+        # these variables help us verify the callbacks were called
+        train_callback_called = list()
+        predict_callback_called = list()
+
+        def train_callback(train_meta_x, train_meta_y, hyper_params):
+            # the `train_meta_x` that we built in `train()` should have the same indexes as `train_meta_x
+            assert all(train_meta_x.index.values == expected_train_x.index.values)
+            # cached dataframe in `file_train_callback` are the predictions from the base model we expect
+            TestHelper.ensure_all_values_equal_from_file(file=file_train_callback,
+                                                         expected_dataframe=train_meta_x)
+            assert all(train_meta_y.index.values == expected_train_x.index.values)
+            # check that the y values in `train_meta_y` which will be trained on match the y's from the split
+            assert all(train_meta_y == expected_train_y)
+            assert isinstance(hyper_params, ElasticNetRegressorHP)
+
+            # add value to the list so we know this callback was called and completed
+            train_callback_called.append('train_called')
+
+        # predict will be called twice, first for evaluating the training data; next for the holdout
+        def predict_callback(test_meta):
+            if len(predict_callback_called) == 0:  # first time called i.e. training evaluation
+                # the `test_meta` that we built in `predict()` should have the same indexes as `train_meta_x`
+                # when evaluating the training set
+                assert all(test_meta.index.values == expected_train_x.index.values)
+                # cached dataframe in `file_test_callback_traindata` are the predictions from the base
+                # models (refitted on the entire training set) on the dataset that was passed into `predict()`
+                # in this case the original training data, which will then be predicted on the final stacking
+                # model
+                TestHelper.ensure_all_values_equal_from_file(file=file_test_callback_traindata,
+                                                             expected_dataframe=test_meta)
+                # add value to the list so we know this callback (and this if) was called
+                predict_callback_called.append('predict_called_train')
+
+            elif len(predict_callback_called) == 1:  # second time called i.e. holdout evaluation
+                # the `test_meta` that we built in `predict()` should have the same indexes as
+                # `expected_test_x` when evaluating the holdout set
+                assert all(test_meta.index.values == expected_test_x.index.values)
+                # cached dataframe in `file_test_callback_holdoutdata` are the predictions from the base
+                # models (refitted on the entire training set) on the dataset that was passed into `predict()`
+                # in this case the holdout data, which will then be predicted on the final stacking model
+                TestHelper.ensure_all_values_equal_from_file(file=file_test_callback_holdoutdata,
+                                                             expected_dataframe=test_meta)
+
+                # add value to the list so we know this callback (and this if) was called
+                predict_callback_called.append('predict_called_holdout')
+            else:
+                raise ValueError()
+
+        model_stacker = ModelStacker(base_models=[ModelDefaults.get_LinearRegressor(degrees=2),
+                                                  ModelDefaults.get_CartDecisionTreeRegressor(),
+                                                  ModelDefaults.get_GradientBoostingRegressor()],
+                                     scores=[MaeScore(), RmseScore()],
+                                     stacking_model=ElasticNetRegressor(),
+                                     stacking_transformations=None,
+                                     train_callback=train_callback,
+                                     predict_callback=predict_callback)
+
+        # use a fitter so we get don't have to worry about splitting/transforming/evaluating/etc.
+        fitter = ModelFitter(model=model_stacker,
+                             model_transformations=None,  # transformed for stacker and base models.
+                             splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
+                             evaluator=RegressionEvaluator())
+        assert len(train_callback_called) == 0
+        assert len(predict_callback_called) == 0
+        fitter.fit(data=data, target_variable=target_variable, hyper_params=ElasticNetRegressorHP())
+        # verify our callback is called. If it wasn't, we would never know and the assertions wouldn't run.
+        assert train_callback_called == ['train_called']
+        # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
+        assert predict_callback_called == ['predict_called_train', 'predict_called_holdout']
+
+        assert fitter.training_evaluator.all_quality_metrics == {'Mean Absolute Error (MAE)': 2076.786737970561, 'Mean Squared Error (MSE)': 14253435.121538397, 'Root Mean Squared Error (RMSE)': 3775.372183181202, 'RMSE to Standard Deviation of Target': 0.31371673938056}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'Mean Absolute Error (MAE)': 2578.4603370617365, 'Mean Squared Error (MSE)': 22314572.10651289, 'Root Mean Squared Error (RMSE)': 4723.830236843074, 'RMSE to Standard Deviation of Target': 0.3814308387480915}  # noqa
+
+        assert [x.description for x in model_stacker._base_models] == ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor']  # noqa
+        # test resample data
+        file_test_model_stacker_resample_data_regression = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_regression.pkl'))  # noqa
+        file_test_model_stacker_resample_data_cart = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_cart_regression.pkl'))  # noqa
+        file_test_model_stacker_resample_data_gb = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_gb.pkl'))  # noqa
+        file_test_model_stacker_resample_means = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_means_regression.pkl'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_regression,
+                                                     expected_dataframe=fitter.model.get_resample_data(model_description='LinearRegressor_polynomial_2'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_cart,
+                                                     expected_dataframe=fitter.model.get_resample_data(model_description='CartDecisionTreeRegressor'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_gb,
+                                                     expected_dataframe=fitter.model.get_resample_data(model_description='GradientBoostingRegressor'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_means,
+                                                     expected_dataframe=fitter.model.get_resample_means())
+
+        file_test_model_stacker_train_meta_correlations = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_train_meta_correlations_regression.pkl'))  # noqa
+        file_plot_correlations = 'data/test_ModelWrappers/test_modelModel_stacker_correlations_regression.png'
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_train_meta_correlations,
+                                                     expected_dataframe=fitter.model._train_meta_correlations)
+        TestHelper.check_plot(file_plot_correlations, lambda: fitter.model.plot_correlation_heatmap())
+
+    def test_ModelStacker_Regression_with_stacker_transformations(self):
+        ######################################################################################################
+        # elastic_net stacker, svm & GBM & polynomial linear regression base models
+        ######################################################################################################
+        data = TestHelper.get_insurance_data()
+        target_variable = 'expenses'
+
+        # Use same splitter information to get the training/holdout data
+        splitter = RegressionStratifiedDataSplitter(holdout_ratio=0.2)
+        training_indexes, test_indexes = splitter.split(target_values=data[target_variable])
+        expected_train_y = data.iloc[training_indexes][target_variable]
+        expected_train_x = data.iloc[training_indexes].drop(columns=target_variable)
+        expected_test_x = data.iloc[test_indexes].drop(columns=target_variable)
+
+        file_train_callback = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_regression_train_callback_train_meta_stacker_trans.pkl'))  # noqa
+        file_test_callback_traindata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_regression_test_callback_test_meta_traindata_stacker_trans.pkl'))  # noqa
+        file_test_callback_holdoutdata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_regression_test_callback_test_meta_holdoutdata_stacker_trans.pkl'))  # noqa
+
+        # these variables help us verify the callbacks were called
+        train_callback_called = list()
+        predict_callback_called = list()
+
+        def train_callback(train_meta_x, train_meta_y, hyper_params):
+            # the `train_meta_x` that we built in `train()` should have the same indexes as `train_meta_x
+            assert all(train_meta_x.index.values == expected_train_x.index.values)
+            # cached dataframe in `file_train_callback` are the predictions from the base model we expect
+            TestHelper.ensure_all_values_equal_from_file(file=file_train_callback,
+                                                         expected_dataframe=train_meta_x)
+            assert all(train_meta_y.index.values == expected_train_x.index.values)
+            # check that the y values in `train_meta_y` which will be trained on match the y's from the split
+            assert all(train_meta_y == expected_train_y)
+            assert isinstance(hyper_params, ElasticNetRegressorHP)
+
+            # add value to the list so we know this callback was called and completed
+            train_callback_called.append('train_called')
+
+        # predict will be called twice, first for evaluating the training data; next for the holdout
+        def predict_callback(test_meta):
+            if len(predict_callback_called) == 0:  # first time called i.e. training evaluation
+                # the `test_meta` that we built in `predict()` should have the same indexes as `train_meta_x`
+                # when evaluating the training set
+                assert all(test_meta.index.values == expected_train_x.index.values)
+                # cached dataframe in `file_test_callback_traindata` are the predictions from the base
+                # models (refitted on the entire training set) on the dataset that was passed into `predict()`
+                # in this case the original training data, which will then be predicted on the final stacking
+                # model
+                TestHelper.ensure_all_values_equal_from_file(file=file_test_callback_traindata,
+                                                             expected_dataframe=test_meta)
+                # add value to the list so we know this callback (and this if) was called
+                predict_callback_called.append('predict_called_train')
+
+            elif len(predict_callback_called) == 1:  # second time called i.e. holdout evaluation
+                # the `test_meta` that we built in `predict()` should have the same indexes as
+                # `expected_test_x` when evaluating the holdout set
+                assert all(test_meta.index.values == expected_test_x.index.values)
+                # cached dataframe in `file_test_callback_holdoutdata` are the predictions from the base
+                # models (refitted on the entire training set) on the dataset that was passed into `predict()`
+                # in this case the holdout data, which will then be predicted on the final stacking model
+                TestHelper.ensure_all_values_equal_from_file(file=file_test_callback_holdoutdata,
+                                                             expected_dataframe=test_meta)
+
+                # add value to the list so we know this callback (and this if) was called
+                predict_callback_called.append('predict_called_holdout')
+            else:
+                raise ValueError()
+
+        model_stacker = ModelStacker(base_models=[ModelDefaults.get_LinearRegressor(degrees=2),
+                                                  ModelDefaults.get_CartDecisionTreeRegressor(),
+                                                  ModelDefaults.get_GradientBoostingRegressor()],
+                                     scores=[MaeScore(), RmseScore()],
+                                     stacking_model=ElasticNetRegressor(),
+                                     stacking_transformations=[CenterScaleTransformer()],
+                                     train_callback=train_callback,
+                                     predict_callback=predict_callback)
+
+        # use a fitter so we get don't have to worry about splitting/transforming/evaluating/etc.
+        fitter = ModelFitter(model=model_stacker,
+                             # transformed for stacker and base models.
+                             model_transformations=None,
+                             splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
+                             evaluator=RegressionEvaluator())
+        assert len(train_callback_called) == 0
+        assert len(predict_callback_called) == 0
+        fitter.fit(data=data, target_variable=target_variable, hyper_params=ElasticNetRegressorHP())
+        # verify our callback is called. If it wasn't, we would never know and the assertions wouldn't run.
+        assert train_callback_called == ['train_called']
+        # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
+        assert predict_callback_called == ['predict_called_train', 'predict_called_holdout']
+
+        assert fitter.training_evaluator.all_quality_metrics == {'Mean Absolute Error (MAE)': 2199.9677284425243, 'Mean Squared Error (MSE)': 11793128.871692684, 'Root Mean Squared Error (RMSE)': 3434.112530435292, 'RMSE to Standard Deviation of Target': 0.28535957077648894}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'Mean Absolute Error (MAE)': 2998.721845738518, 'Mean Squared Error (MSE)': 24415070.16514672, 'Root Mean Squared Error (RMSE)': 4941.16081150439, 'RMSE to Standard Deviation of Target': 0.3989794336853368}  # noqa
+
+        assert [x.description for x in model_stacker._base_models] == ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor']  # noqa
+        # test resample data
+        file_test_model_stacker_resample_data_regression = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_regression_stacker_trans.pkl'))  # noqa
+        file_test_model_stacker_resample_data_cart = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_cart_regression_stacker_trans.pkl'))  # noqa
+        file_test_model_stacker_resample_data_gb = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_gb_stacker_trans.pkl'))  # noqa
+        file_test_model_stacker_resample_means = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_means_regression_stacker_trans.pkl'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_regression,
+                                                     expected_dataframe=fitter.model.get_resample_data(model_description='LinearRegressor_polynomial_2'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_cart,
+                                                     expected_dataframe=fitter.model.get_resample_data(model_description='CartDecisionTreeRegressor'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_gb,
+                                                     expected_dataframe=fitter.model.get_resample_data(model_description='GradientBoostingRegressor'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_means,
+                                                     expected_dataframe=fitter.model.get_resample_means())
+
+        file_test_model_stacker_train_meta_correlations = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_train_meta_correlations_regression_stacker_trans.pkl'))  # noqa
+        file_plot_correlations = 'data/test_ModelWrappers/test_modelModel_stacker_correlations_regression_stacker_trans.png'  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_train_meta_correlations,
+                                                     expected_dataframe=fitter.model._train_meta_correlations)
+        TestHelper.check_plot(file_plot_correlations, lambda: fitter.model.plot_correlation_heatmap())

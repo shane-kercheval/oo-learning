@@ -87,10 +87,10 @@ class ModelDefaults:
         return ModelInfo(description=type(model_wrapper).__name__,
                          model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
-                         transformations=None,
-                         hyper_params=CartDecisionTreeHP(),
-                         hyper_params_grid=dict(criterion='mse',
-                                                max_depth=[3, 10, 30]))
+                         transformations=[ImputationTransformer(),
+                                          DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                         hyper_params=CartDecisionTreeHP(criterion='mse'),
+                         hyper_params_grid=dict(max_depth=[3, 10, 30]))
 
     @staticmethod
     def get_RandomForestRegressor(number_of_features: int) -> ModelInfo:
@@ -100,9 +100,8 @@ class ModelDefaults:
                          # TODO: fill out rest of recommended transformations, verify order
                          #  https://stackoverflow.com/questions/24715230/can-sklearn-random-forest-directly-handle-categorical-features?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
                          transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
-                         hyper_params=RandomForestHP(),
-                         hyper_params_grid=dict(criterion='gini',
-                                                max_features=[int(round(number_of_features**(1/2.0))),
+                         hyper_params=RandomForestHP(criterion='gini'),
+                         hyper_params_grid=dict(max_features=[int(round(number_of_features**(1/2.0))),
                                                               int(round(number_of_features/2)),
                                                               number_of_features],
                                                 n_estimators=[10, 100, 500],
@@ -153,7 +152,8 @@ class ModelDefaults:
         return ModelInfo(description=type(model_wrapper).__name__,
                          model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
-                         transformations=None,
+                         transformations=[ImputationTransformer(),
+                                          DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
                          hyper_params=GradientBoostingRegressorHP(),
                          hyper_params_grid=dict(learning_rate=[0.1, 0.5, 1],
                                                 n_estimators=[50, 100, 5000],
