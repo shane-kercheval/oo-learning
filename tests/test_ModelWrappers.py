@@ -2354,8 +2354,10 @@ class ModelWrapperTests(TimerTestCase):
         # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
         assert predict_callback_called == ['predict_called_train', 'predict_called_holdout']
 
-        assert fitter.training_evaluator.all_quality_metrics == {'Mean Absolute Error (MAE)': 2076.786737970561, 'Mean Squared Error (MSE)': 14253435.121538397, 'Root Mean Squared Error (RMSE)': 3775.372183181202, 'RMSE to Standard Deviation of Target': 0.31371673938056}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'Mean Absolute Error (MAE)': 2578.4603370617365, 'Mean Squared Error (MSE)': 22314572.10651289, 'Root Mean Squared Error (RMSE)': 4723.830236843074, 'RMSE to Standard Deviation of Target': 0.3814308387480915}  # noqa
+        expected_training_evaluator_metrics = {'Mean Absolute Error (MAE)': 2076.786737970561, 'Mean Squared Error (MSE)': 14253435.121538397, 'Root Mean Squared Error (RMSE)': 3775.372183181202, 'RMSE to Standard Deviation of Target': 0.31371673938056}  # noqa
+        assert all([isclose(expected_training_evaluator_metrics[key], fitter.training_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noq
+        expected_holdout_evaluator_metrics = {'Mean Absolute Error (MAE)': 2578.4603370617365, 'Mean Squared Error (MSE)': 22314572.10651289, 'Root Mean Squared Error (RMSE)': 4723.830236843074, 'RMSE to Standard Deviation of Target': 0.3814308387480915}  # noqa
+        assert all([isclose(expected_holdout_evaluator_metrics[key], fitter.holdout_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noq
 
         assert [x.description for x in model_stacker._base_models] == ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor']  # noqa
         # test resample data
@@ -2467,8 +2469,10 @@ class ModelWrapperTests(TimerTestCase):
         # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
         assert predict_callback_called == ['predict_called_train', 'predict_called_holdout']
 
-        assert fitter.training_evaluator.all_quality_metrics == {'Mean Absolute Error (MAE)': 2199.9677284425243, 'Mean Squared Error (MSE)': 11793128.871692684, 'Root Mean Squared Error (RMSE)': 3434.112530435292, 'RMSE to Standard Deviation of Target': 0.28535957077648894}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'Mean Absolute Error (MAE)': 2998.721845738518, 'Mean Squared Error (MSE)': 24415070.16514672, 'Root Mean Squared Error (RMSE)': 4941.16081150439, 'RMSE to Standard Deviation of Target': 0.3989794336853368}  # noqa
+        expected_training_evaluator_metrics = {'Mean Absolute Error (MAE)': 2199.9677284425243, 'Mean Squared Error (MSE)': 11793128.871692684, 'Root Mean Squared Error (RMSE)': 3434.112530435292, 'RMSE to Standard Deviation of Target': 0.28535957077648894}  # noqa
+        assert all([isclose(expected_training_evaluator_metrics[key], fitter.training_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noq
+        expected_holdout_evaluator_metrics = {'Mean Absolute Error (MAE)': 2998.721845738518, 'Mean Squared Error (MSE)': 24415070.16514672, 'Root Mean Squared Error (RMSE)': 4941.16081150439, 'RMSE to Standard Deviation of Target': 0.3989794336853368}  # noqa
+        assert all([isclose(expected_holdout_evaluator_metrics[key], fitter.holdout_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noq
 
         assert [x.description for x in model_stacker._base_models] == ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor']  # noqa
         # test resample data
