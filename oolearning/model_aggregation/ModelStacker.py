@@ -9,7 +9,7 @@ from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.model_processors.ModelInfo import ModelInfo
 from oolearning.model_processors.RepeatedCrossValidationResampler import RepeatedCrossValidationResampler
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
-from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError
+from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError, ModelAlreadyFittedError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.transformers.TransformerBase import TransformerBase
 from oolearning.transformers.TransformerPipeline import TransformerPipeline
@@ -50,6 +50,40 @@ class FoldPredictionsDecorator(DecoratorBase):
     @property
     def holdout_predicted_values(self):
         return self._holdout_predicted_values
+
+
+class ModelStackerTrainingObject:
+    """
+    In a typical model wrapper, the model_object is returned from `_train` and used in `_predict` with the
+    assumption of independence; i.e. _predict doesn't use anything else than the model_object it is given
+    when the persistence_manager finds a record, it doesn't even call train, it just returns the model_object
+    it de-serialized. So we have to use `_predict` as if it didn't have access to class variables set up in
+    `_train`, in order to use the persistence manager
+    """
+    def __init__(self, base_models: List[ModelInfo],
+                 base_model_pipelines: List[TransformerPipeline],
+                 stacking_model: ModelWrapperBase,
+                 stacking_model_pipeline: Union[TransformerPipeline, None]):
+        self._base_models = base_models
+        self._base_model_pipelines = base_model_pipelines
+        self._stacking_model = stacking_model
+        self._stacking_model_pipeline = stacking_model_pipeline
+
+    @property
+    def base_models(self) -> List[ModelInfo]:
+        return self._base_models
+
+    @property
+    def base_model_pipelines(self) -> List[TransformerPipeline]:
+        return self._base_model_pipelines
+
+    @property
+    def stacking_model(self) -> ModelWrapperBase:
+        return self._stacking_model
+
+    @property
+    def stacking_model_pipeline(self) -> Union[TransformerPipeline, None]:
+        return self._stacking_model_pipeline
 
 
 class ModelStacker(ModelWrapperBase):
@@ -117,6 +151,11 @@ class ModelStacker(ModelWrapperBase):
         self._train_callback = train_callback
         self._predict_callback = predict_callback
         self._train_meta_correlations = None
+        self._stackerobject_persistence_manager = None
+
+    @property
+    def name(self) -> str:
+        return "{0}_{1}".format(type(self).__name__, type(self._stacking_model).__name__)
 
     def get_resample_data(self, model_description: str) -> pd.DataFrame:
         """
@@ -166,6 +205,16 @@ class ModelStacker(ModelWrapperBase):
     def feature_importance(self):
         raise NotImplementedError()
 
+    def set_persistence_manager(self, persistence_manager):
+        """
+        NOTE: I need to override this so `train()` in base does not use the persistence_manager passed in
+        to this object. I will delegate it manually to the base and stacker models.
+        """
+        if self._model_object is not None:  # doesn't make sense to configure the cache after we `train()`
+            raise ModelAlreadyFittedError()
+
+        self._stackerobject_persistence_manager = persistence_manager
+
     def _train(self,
                data_x: pd.DataFrame,
                data_y: np.ndarray,
@@ -185,13 +234,23 @@ class ModelStacker(ModelWrapperBase):
         # for each base-model, resample the data and get the holdout predictions to build train_meta
         for model_info in self._base_models:
             decorator = FoldPredictionsDecorator()  # used to extract holdout predictions and indices
+
+            local_persistence_manager = self._stackerobject_persistence_manager.clone() \
+                if self._stackerobject_persistence_manager else None
+            if local_persistence_manager is not None:
+                # if there is a PersistenceManager, each base model that is resampled should get its own
+                # sub_structure (e.g. directory)
+                local_persistence_manager.set_sub_structure(sub_structure='resample_'+model_info.description)
+
             resampler = RepeatedCrossValidationResampler(
                 model=model_info.model,
                 model_transformations=model_info.transformations,  # transformations specific to base-model
                 scores=[score.clone() for score in self._scores],
                 folds=5,
                 repeats=1,
-                fold_decorators=[decorator])
+                fold_decorators=[decorator],
+                persistence_manager=local_persistence_manager)
+
             resampler.resample(data_x=data_x, data_y=data_y, hyper_params=model_info.hyper_params)
             self._resampler_results.append(resampler.results)
             # for regression problems, the predictions will be a numpy array; for classification problems,
@@ -236,6 +295,17 @@ class ModelStacker(ModelWrapperBase):
             else:
                 self._base_model_pipelines.append(None)
 
+            local_persistence_manager = self._stackerobject_persistence_manager.clone() \
+                if self._stackerobject_persistence_manager else None  # noqa
+            if local_persistence_manager is not None:
+                # if there is a PersistenceManager, each base model that is refitted on training data should
+                # get its own prefix
+                local_persistence_manager.set_key_prefix(prefix='base_' + model_info.description)
+                cache_key = ModelStacker.build_cache_key(model=model_info.model,
+                                                         hyper_params=model_info.hyper_params)
+                local_persistence_manager.set_key(key=cache_key)
+
+            model_info.model.set_persistence_manager(local_persistence_manager)
             model_info.model.train(data_x=transformed_data_x,
                                    data_y=data_y,
                                    hyper_params=model_info.hyper_params)
@@ -252,20 +322,26 @@ class ModelStacker(ModelWrapperBase):
         if self._train_callback:
             self._train_callback(transformed_train_meta, data_y, hyper_params)
 
+        self._stacking_model.set_persistence_manager(self._stackerobject_persistence_manager)
         self._stacking_model.train(data_x=transformed_train_meta, data_y=data_y, hyper_params=hyper_params)
-        return 'none'
+
+        return ModelStackerTrainingObject(base_models=self._base_models,
+                                          base_model_pipelines=self._base_model_pipelines,
+                                          stacking_model=self._stacking_model,
+                                          stacking_model_pipeline=self._stacking_model_pipeline)
 
     def _predict(self, model_object: object, data_x: pd.DataFrame) -> Union[np.ndarray, pd.DataFrame]:
+        assert isinstance(model_object, ModelStackerTrainingObject)
         original_indexes = data_x.index.values
         # skeleton of test_meta, contains the original indexes and a column for each model
         test_meta = pd.DataFrame(index=original_indexes,
-                                 columns=[model_info.description for model_info in self._base_models])
+                                 columns=[model_info.description for model_info in model_object.base_models])
         # for each model, apply applicable transformations, make predictions, and convert predictions to
         # a single column if necessary
-        for index, model_info in enumerate(self._base_models):
+        for index, model_info in enumerate(model_object.base_models):
             # each model will either have an associated Pipeline, or None if no model-specific Transformations
             transformed_data_x = data_x
-            pipeline = self._base_model_pipelines[index]
+            pipeline = model_object.base_model_pipelines[index]
             if pipeline:
                 transformed_data_x = pipeline.transform(data_x=transformed_data_x)
             # noinspection PyTypeChecker
@@ -283,10 +359,22 @@ class ModelStacker(ModelWrapperBase):
         # now apply any necessary stacker-specific transformations to test_meta
         # for example, some models require center/scaling, which may or may not have been previously done.
         transformed_test_meta = test_meta
-        if self._stacking_model_pipeline is not None:
-            transformed_test_meta = self._stacking_model_pipeline.transform(data_x=transformed_test_meta)
+        if model_object.stacking_model_pipeline is not None:
+            transformed_test_meta = model_object.stacking_model_pipeline.transform(data_x=transformed_test_meta)  # noqa
 
         if self._predict_callback:
             self._predict_callback(transformed_test_meta)
 
-        return self._stacking_model.predict(data_x=transformed_test_meta)
+        return model_object.stacking_model.predict(data_x=transformed_test_meta)
+
+    @staticmethod
+    def build_cache_key(model: ModelWrapperBase, hyper_params: HyperParamsBase) -> str:
+        model_name = model.name
+        if hyper_params is None:
+            key = model_name
+        else:
+            # if hyper-params, flatten out list of param names and values and concatenate/join them together
+            hyper_params_long = '_'.join(list(sum([(str(x), str(y)) for x, y in hyper_params.params_dict.items()], ())))  # noqa
+            return model_name + '_' + hyper_params_long
+
+        return key

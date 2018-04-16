@@ -34,11 +34,13 @@ class ModelSearcher:
         # TODO: document: we can't define the model and model transformations, everything else we can
         # TODO: document why the lamdba, basically, we can't instantiate a Resampler at this point, and to get around this would probably cause more confusion
 
+        # TODO: document, the persistence_manger is cloned for each model, and when tuning, the substructure is set to "tune_[model description]" and when fitting on the entire dataset, the prefix is set to "final_[model description]"
+
         # global_transformations are transformations you want to apply to all the data, regardless of the
         # type of model. For example, regardless of the model, we want to remove the PassengerId and Name
         # fields. These just don't make sense to use as predictors. On the other hand, perhaps for Logistic
-        # Regression we also want to Center/Scale the data, but for RandomForestClassifier we don't. In those cases,
-        # we would want to model specific transformations.
+        # Regression we also want to Center/Scale the data, but for RandomForestClassifier we don't. In those
+        # cases, we would want to model specific transformations.
         """
         model_descriptions = [x.description for x in model_infos]
         models = [x.model for x in model_infos]
@@ -47,7 +49,7 @@ class ModelSearcher:
         model_hyper_params_grid = [x.hyper_params_grid for x in model_infos]
 
         # ensure all descriptions are unique
-        # length of unique values should be the same as the length of all the values
+        # length of unique values (via `set()`) should be the same as the length of all the values
         assert len(set(model_descriptions)) == len(model_descriptions)
 
         self._model_descriptions = model_descriptions
@@ -113,13 +115,14 @@ class ModelSearcher:
             local_model_params_object = self._model_hyper_params_object[index]
             local_model_params_grid = self._model_hyper_params_grid[index]
 
-            if self._persistence_manager is not None:
+            local_persistence_manager = self._persistence_manager.clone() if self._persistence_manager else None  # noqa
+            if local_persistence_manager is not None:
                 # we have a PersistenceManager, we need to ensure each key (e.g. saved file name) is unique
                 # because keys across various Tuners are not guaranteed to be unique;
                 # keys within Tuners are only unique for each model/hyper-param combination (plus whatever
                 # the resampler does), but we might have the same models/hyper-params passed into the
                 # searcher; the difference, for example, might be the the transformations
-                self._persistence_manager.set_key_prefix(prefix='tune_' + local_model_description+'_')
+                local_persistence_manager.set_sub_structure(sub_structure='tune_' + local_model_description)
 
             # clone all the objects to be reused with the ModelFitter after tuning
             tuner = ModelTuner(resampler=self._resampler_function(local_model.clone(),
@@ -133,7 +136,7 @@ class ModelSearcher:
                                                                   [x.clone() for x in local_model_trans]),
                                hyper_param_object=None if local_model_params_object is None else local_model_params_object.clone(),  # noqa
                                resampler_decorators=self._resampler_decorators,
-                               persistence_manager=self._persistence_manager)
+                               persistence_manager=local_persistence_manager)
 
             # noinspection PyProtectedMember
             # before we tune, we need to steel i.e. clone the Scores from the resampler so we can use the
@@ -145,11 +148,13 @@ class ModelSearcher:
                        params_grid=local_model_params_grid)
             tuner_results.append(tuner.results)  # TunerResults.tune_results will have resampled means/st_devs
 
-            if self._persistence_manager is not None:
+            # set prefix rather than sub_structure for refitting model on all data
+            local_persistence_manager = self._persistence_manager.clone() if self._persistence_manager else None  # noqa
+            if local_persistence_manager is not None:
                 # if we have a PersistenceManager, we need to ensure each key (e.g. saved file name) is unique
                 # we might have the same models passed into the searcher; the difference, for example, might
                 # be the the transformations; but we ensure the model descriptions are unique, so use that
-                self._persistence_manager.set_key_prefix(prefix='holdout_' + local_model_description + '_')
+                local_persistence_manager.set_key_prefix(prefix='final_' + local_model_description + '_')
 
             # verify that the fitter uses the same training data as the Tuner (i.e. the indexes used for the
             # training data in the fitter match the index used to pass in data to the Tuner)
@@ -163,7 +168,7 @@ class ModelSearcher:
 # TODO note (and verify to self) that splitter will split in the same way as above, so we don't really need the holdout data above, Fitter will train on the same dataset that the resampler used, and predict on the holdout set, which the resampler did not see
                                  splitter=self._splitter,
                                  scores=scores,
-                                 persistence_manager=self._persistence_manager,
+                                 persistence_manager=local_persistence_manager,
                                  train_callback=train_callback)
 
             if local_model_params_object is not None:

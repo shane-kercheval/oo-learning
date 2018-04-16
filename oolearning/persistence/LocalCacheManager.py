@@ -12,9 +12,9 @@ class LocalCacheManager(PersistenceManagerBase):
     can either set the key in the constructor (perhaps for only retrieving a single object, or can set the
     key when calling get_object (perhaps when retrieving multiple objects from the same directory)
     """
-
     def __init__(self,
                  cache_directory: str,
+                 sub_directory: str=None,
                  key: str=None,
                  key_prefix: str=None,
                  create_dir_if_not_exist: bool=True):
@@ -34,7 +34,8 @@ class LocalCacheManager(PersistenceManagerBase):
         if key_prefix is not None and len(key_prefix) > 100:
             raise ValueError('prefix must be <= 100')
 
-        self._cache_directory = cache_directory
+        self._cache_directory = os.path.join(cache_directory, sub_directory) if sub_directory else cache_directory  # noqa
+        self._key = key
         self._key_prefix = key_prefix
         self._cache_path = None if key is None else self._create_cached_path(key)
 
@@ -109,3 +110,13 @@ class LocalCacheManager(PersistenceManagerBase):
 
         cache_path = os.path.join(self._cache_directory, cache_path)
         return cache_path if cache_path[0] != '/' else cache_path[1:]
+
+    def set_sub_structure(self, sub_structure: str):
+        """
+        :param sub_structure: string of max length of 100;
+        """
+        if len(sub_structure) > 100:
+            raise ValueError('sub_structure must be <= 100')
+
+        self._cache_directory = os.path.join(self._cache_directory, sub_structure)
+        self._cache_path = None if self._key is None else self._create_cached_path(self._key)

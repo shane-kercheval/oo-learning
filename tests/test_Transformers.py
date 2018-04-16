@@ -348,6 +348,7 @@ class TransformerTests(TimerTestCase):
         test_data = data.iloc[test_indexes]
 
         columns_to_convert = ['Pclass', 'SibSp', 'Parch']
+        self.assertRaises(KeyError, lambda: CategoricConverterTransformer(columns=columns_to_convert+['doesnt exist']).fit(train_data))  # noqa
         transformer = CategoricConverterTransformer(columns=columns_to_convert)
         transformer.fit(train_data)
         assert test_data.Pclass.dtype.name != 'category'
@@ -437,7 +438,9 @@ class TransformerTests(TimerTestCase):
             assert all(new_data.columns.values ==
                        [column for column in data.columns.values if column not in columns_to_remove])
 
-        self.assertRaises(ValueError, lambda: test_remove_columns(columns_to_remove=['expensess']))
+        # `fit()` should fail if coluns don't exist
+        self.assertRaises(AssertionError,
+                          lambda: RemoveColumnsTransformer(columns=['expensess']).fit(data_x=data))
 
         # test removing each individual columns
         for x in data.columns.values:

@@ -7,6 +7,13 @@ from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 
 
+class MockRegressionModelWrapperTrainingObject:
+    def __init__(self, model_object, target_probabilities, target_intervals):
+        self._model_object = model_object
+        self._target_probabilities = target_probabilities
+        self._target_intervals = target_intervals
+
+
 class MockRegressionModelWrapper(ModelWrapperBase):
 
     @property
@@ -26,7 +33,6 @@ class MockRegressionModelWrapper(ModelWrapperBase):
         super().__init__()
         self._model_object_pre_train = model_object
         self.fitted_train_x = None
-        self.fitted_test_x = None
 
         if not isinstance(data_y, pd.Series):
             data_y = pd.Series(data_y)
@@ -42,17 +48,18 @@ class MockRegressionModelWrapper(ModelWrapperBase):
                hyper_params: HyperParamsBase = None) -> object:
         self.fitted_train_x = data_x
         self._model_object = self._model_object_pre_train
-        return self._model_object
+        return MockRegressionModelWrapperTrainingObject(model_object=self._model_object,
+                                                        target_probabilities=self._target_probabilities,
+                                                        target_intervals=self._target_intervals)
 
+    # noinspection PyProtectedMember,PyUnresolvedReferences
     def _predict(self, model_object: object, data_x: pd.DataFrame) -> Union[np.ndarray, pd.DataFrame]:
-        self.fitted_test_x = data_x
-        
         # get length of data, return random
         np.random.seed(123)
         # generate random `0` through `(len-1)` following the distribution found in data_y,
         # generate n=len(data_x) predictions
-        random_predictions = np.random.choice(a=np.arange(0, len(self._target_probabilities)),
-                                              p=self._target_probabilities,
+        random_predictions = np.random.choice(a=np.arange(0, len(model_object._target_probabilities)),
+                                              p=model_object._target_probabilities,
                                               size=len(data_x))
         # pd.Series(random_predictions).value_counts(normalize=True)
 
@@ -63,4 +70,5 @@ class MockRegressionModelWrapper(ModelWrapperBase):
             np.random.seed(123)
             return round(np.random.uniform(low=interval.left, high=interval.right, size=1)[0], 1)
 
-        return np.array([get_random_float(interval=self._target_intervals[x]) for x in random_predictions])
+        return np.array([get_random_float(interval=model_object._target_intervals[x])
+                         for x in random_predictions])

@@ -3,6 +3,7 @@ import os
 import os.path
 import pickle
 import shutil
+import time
 import warnings
 from math import isclose
 from typing import Callable
@@ -50,6 +51,9 @@ class MockPersistenceManagerBase(PersistenceManagerBase):
         pass
 
     def get_object(self, fetch_function: Callable[[], object], key: str = None):
+        pass
+
+    def set_sub_structure(self, sub_structure: str):
         pass
 
 
@@ -379,9 +383,6 @@ class ModelWrapperTests(TimerTestCase):
         model_wrapper.train(data_x=train_x, data_y=train_y, hyper_params={'test': 'test1'})
         self.assertRaises(ModelAlreadyFittedError, lambda: model_wrapper.set_persistence_manager(persistence_manager=MockPersistenceManagerBase()))  # noqa
 
-        ######################################################################################################
-        # calling `clone()` after `set_persistence_manager` should fail
-        ######################################################################################################
         model_wrapper = MockRegressionModelWrapper(data_y=data.strength)
         model_wrapper.set_persistence_manager(persistence_manager=MockPersistenceManagerBase())
         self.assertRaises(ModelCachedAlreadyConfigured, lambda: model_wrapper.clone())
@@ -393,6 +394,10 @@ class ModelWrapperTests(TimerTestCase):
         cache_directory = TestHelper.ensure_test_directory('data/temp_caching_tests')
         cache_key = 'test_caching_file'
         file_path = os.path.join(cache_directory, cache_key + '.pkl')
+
+        if os.path.isdir(cache_directory) or os.path.isfile(file_path):
+            shutil.rmtree(cache_directory)
+
         assert os.path.isdir(cache_directory) is False
         assert os.path.isfile(file_path) is False
 
@@ -405,7 +410,8 @@ class ModelWrapperTests(TimerTestCase):
         assert os.path.isfile(file_path) is True
         with open(file_path, 'rb') as saved_object:
             model_object = pickle.load(saved_object)
-            assert model_object == 'test model_object'  # this is from the MockRegressionModelWrapper
+            # this is from the MockRegressionModelWrapper
+            assert model_object._model_object == 'test model_object'
 
         ######################################################################################################
         # caching and it already exists
@@ -414,7 +420,7 @@ class ModelWrapperTests(TimerTestCase):
         # first ensure that setting `model_object` results in model_object being changed
         model_wrapper = MockRegressionModelWrapper(data_y=data.strength, model_object='new model object!!')
         model_wrapper.train(data_x=train_x, data_y=train_y, hyper_params=MockHyperParams())
-        assert model_wrapper.model_object == 'new model object!!'
+        assert model_wrapper.model_object._model_object == 'new model object!!'
 
         # now, if we pass in the same `model_object` to a previously cached model, we should get the old value
         model_wrapper = MockRegressionModelWrapper(data_y=data.strength, model_object='new model object!!')
@@ -422,7 +428,7 @@ class ModelWrapperTests(TimerTestCase):
         model_wrapper.set_persistence_manager(persistence_manager=LocalCacheManager(cache_directory=cache_directory, key=cache_key))  # noqa
         model_wrapper.train(data_x=train_x, data_y=train_y, hyper_params=MockHyperParams())
         # ensure the cached value in model_object is the same (and not changed to 'new model object!!')
-        assert model_wrapper.model_object == 'test model_object'  # CACHED value !!!!!
+        assert model_object._model_object == 'test model_object'  # CACHED value !!!!!
         # ensure the model "trained"
         assert model_wrapper.results_summary == 'test_summary'
         assert model_wrapper.hyper_params.test == 'test hyper-params'
@@ -430,7 +436,8 @@ class ModelWrapperTests(TimerTestCase):
         # ensure same cache (i.e. has old/cached model_object value)
         with open(file_path, 'rb') as saved_object:
             model_object = pickle.load(saved_object)
-            assert model_object == 'test model_object'  # old model_object value ensures same cache
+            # old model_object value ensures same cache
+            assert model_object._model_object == 'test model_object'
 
         os.remove(file_path)  # clean up
 
@@ -468,6 +475,82 @@ class ModelWrapperTests(TimerTestCase):
 
         os.remove(file_path)  # clean up
 
+        shutil.rmtree(cache_directory)
+
+        ######################################################################################################
+        # test sub-structure i.e. sub-directories
+        ######################################################################################################
+        model_wrapper = MockRegressionModelWrapper(data_y=data.strength)
+        cache_directory = TestHelper.ensure_test_directory('data/temp_caching_tests')
+        cache_key = 'test_caching_file'
+        prefix = 'prefix_'
+        sub_directory = 'sub'
+
+        file_path = os.path.join(cache_directory, sub_directory, prefix + cache_key + '.pkl')
+
+        if os.path.isdir(cache_directory) or os.path.isfile(file_path):
+            shutil.rmtree(cache_directory)
+        assert os.path.isdir(cache_directory) is False
+        assert os.path.isfile(file_path) is False
+
+        model_wrapper.set_persistence_manager(
+            persistence_manager=LocalCacheManager(cache_directory=cache_directory,
+                                                  sub_directory=sub_directory,
+                                                  key=cache_key,
+                                                  key_prefix=prefix))
+
+        model_wrapper.train(data_x=train_x, data_y=train_y, hyper_params=MockHyperParams())
+        # ensure the model "trained"
+        assert model_wrapper.results_summary == 'test_summary'
+        assert model_wrapper.hyper_params.test == 'test hyper-params'
+        # ensure the model is now cached
+        assert os.path.isfile(file_path) is True
+        with open(file_path, 'rb') as saved_object:
+            model_object = pickle.load(saved_object)
+            # this is from the MockRegressionModelWrapper
+            assert model_object._model_object == 'test model_object'
+        shutil.rmtree(cache_directory)
+        ######################################################################################################
+        # test sub-structure i.e. sub-directories vis `set_substructure after initializing
+        ######################################################################################################
+        model_wrapper = MockRegressionModelWrapper(data_y=data.strength)
+        cache_directory = TestHelper.ensure_test_directory('data/temp_caching_tests')
+        cache_key = 'test_caching_file'
+        prefix = 'prefix_'
+        sub_directory = 'sub'
+
+        file_path = os.path.join(cache_directory, sub_directory, prefix + cache_key + '.pkl')
+
+        if os.path.isdir(cache_directory) or os.path.isfile(file_path):
+            shutil.rmtree(cache_directory)
+        assert os.path.isdir(cache_directory) is False
+        assert os.path.isfile(file_path) is False
+
+        model_wrapper.set_persistence_manager(
+            persistence_manager=LocalCacheManager(cache_directory=cache_directory,
+                                                  # do NOT set sub_directory
+                                                  sub_directory=None,
+                                                  key=cache_key,
+                                                  key_prefix=prefix))
+        # no sub-directory
+        TestHelper.ensure_test_directory('data/temp_caching_tests')
+        assert model_wrapper._persistence_manager._cache_directory == TestHelper.ensure_test_directory('data/temp_caching_tests')  # noqa
+        assert model_wrapper._persistence_manager._cache_path == TestHelper.ensure_test_directory('data/temp_caching_tests/prefix_test_caching_file.pkl')  # noqa
+        # set sub_structure via setter
+        model_wrapper._persistence_manager.set_sub_structure(sub_structure=sub_directory)
+        # now should contain sub-directory
+        assert model_wrapper._persistence_manager._cache_directory == TestHelper.ensure_test_directory('data/temp_caching_tests/sub')  # noqa
+        assert model_wrapper._persistence_manager._cache_path == TestHelper.ensure_test_directory('data/temp_caching_tests/sub/prefix_test_caching_file.pkl')  # noqa
+        model_wrapper.train(data_x=train_x, data_y=train_y, hyper_params=MockHyperParams())
+        # ensure the model "trained"
+        assert model_wrapper.results_summary == 'test_summary'
+        assert model_wrapper.hyper_params.test == 'test hyper-params'
+        # ensure the model is now cached
+        assert os.path.isfile(file_path) is True
+        with open(file_path, 'rb') as saved_object:
+            model_object = pickle.load(saved_object)
+            # this is from the MockRegressionModelWrapper
+            assert model_object._model_object == 'test model_object'
         shutil.rmtree(cache_directory)
 
     def test_HyperParamsBase(self):
@@ -853,11 +936,6 @@ class ModelWrapperTests(TimerTestCase):
                    expected_cement_median)
         assert all(model_fitter._model.fitted_train_x.loc[index_missing_train_ash]['ash'] ==
                    expected_ash_median)
-        # test set
-        assert all(model_fitter._model.fitted_test_x.loc[index_missing_test_cement]['cement'] ==
-                   expected_cement_median)
-        assert all(model_fitter._model.fitted_test_x.loc[index_missing_test_ash]['ash'] ==
-                   expected_ash_median)
         ######################################################################################################
         # ensure that we calculated the correct dummy encodings
         ######################################################################################################
@@ -868,12 +946,6 @@ class ModelWrapperTests(TimerTestCase):
         assert all(model_fitter._model.fitted_train_x[indexes]['random_code1'] == 1)
         assert all(model_fitter._model.fitted_train_x[~indexes]['random_code1'] == 0)
 
-        # same for test set
-        test_code1 = [index for index in test_x.index.values if test_x.loc[index]['random'] == 'code1']
-        # boolean indexes that correspond with code1 (so we can negate)
-        indexes = model_fitter._model.fitted_test_x.index.isin(test_code1)
-        assert all(model_fitter._model.fitted_test_x[indexes]['random_code1'] == 1)
-        assert all(model_fitter._model.fitted_test_x[~indexes]['random_code1'] == 0)
         ######################################################################################################
         # ensure that we didn't change any of the original datasets
         ######################################################################################################
@@ -1109,7 +1181,8 @@ class ModelWrapperTests(TimerTestCase):
                              persistence_manager=LocalCacheManager(cache_directory=cache_directory))
 
         assert fitter._persistence_manager._cache_directory == cache_directory
-        shutil.rmtree(fitter._persistence_manager._cache_directory)
+        if os.path.isdir(fitter._persistence_manager._cache_directory):
+            shutil.rmtree(fitter._persistence_manager._cache_directory)
         assert not os.path.isdir(fitter._persistence_manager._cache_directory)
         fitter.fit(data=data, target_variable='Survived', hyper_params=RandomForestHP(criterion='gini'))
         assert os.path.isfile(fitter._persistence_manager._cache_path)
@@ -2117,7 +2190,13 @@ class ModelWrapperTests(TimerTestCase):
             expected_predictions = pickle.load(saved_object)
             assert all([isclose(x, y) for x, y in zip(expected_predictions, predictions_aggregation)])
 
-    def helper_test_ModelStacker_Classification(self, data, target_variable, positive_class):
+    def helper_test_ModelStacker_Classification(self, data, positive_class, cache_directory=None):
+        """
+        NOTE: WHEN USING cache_directory THIS FUNCTION DOESN'T CHECK WHETHER OR NOT THE CACHED FILES EXIST.
+            SO YOU CAN TEST AS IF RUNNING THE SEARCHER FOR "FIRST TIME", OR "SUBSEQUENT RUNS" (i.e. cache
+            files already exist)
+        """
+        target_variable = 'Survived'
         score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class)),  # noqa
                       SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class))]  # noqa
 
@@ -2204,20 +2283,60 @@ class ModelWrapperTests(TimerTestCase):
                                      train_callback=train_callback,
                                      predict_callback=predict_callback)
 
-        # use a fitter so we get don't have to worry about splitting/transforming/evaluating/etc.
-        fitter = ModelFitter(model=model_stacker,
-                             # transformations for all models, not just stackers
-                             model_transformations=[RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),  # noqa
-                                                    CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),  # noqa
-                                                    ImputationTransformer()],
-                             splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
-                             evaluator=TwoClassProbabilityEvaluator(
-                                 converter=TwoClassThresholdConverter(threshold=0.5,
-                                                                      positive_class=positive_class)))
         assert len(train_callback_called) == 0
         assert len(predict_callback_called) == 0
 
-        fitter.fit(data=data, target_variable='Survived', hyper_params=LogisticClassifierHP())
+        if cache_directory:
+            # NOTE: THIS DOESN'T CHECK WHETHER OR NOT THE CACHED FILES EXIST. CAN TEST FOR FIRST TIME, OR NOT
+            fitter = ModelFitter(model=model_stacker,
+                                 # transformations for all models, not just stackers
+                                 model_transformations=[RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),  # noqa
+                                                        CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),  # noqa
+                                                        ImputationTransformer()],
+                                 splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                                 evaluator=TwoClassProbabilityEvaluator(
+                                     converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                          positive_class=positive_class)),
+                                 persistence_manager=LocalCacheManager(cache_directory=cache_directory))
+            assert fitter._persistence_manager._cache_directory == cache_directory
+
+            time_start = time.time()
+            fitter.fit(data=data, target_variable=target_variable, hyper_params=LogisticClassifierHP())
+            time_stop = time.time()
+            fit_time = time_stop - time_start
+
+            assert os.path.isdir(fitter._persistence_manager._cache_directory)
+            expected_stacker_cached_file = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification/ModelStacker_LogisticClassifier_penalty_l2_regularization_inverse_1.0_solver_liblinear.pkl')  # noqa
+            # ensure the cache path of the stacker is the final stacked model
+            assert fitter._persistence_manager._cache_path == expected_stacker_cached_file
+            assert os.path.isfile(fitter._persistence_manager._cache_path)
+            # each base model should have a corresponding directory
+            assert os.path.isdir(os.path.join(fitter._persistence_manager._cache_directory, 'resample_' + base_models[0].description))  # noqa
+            assert os.path.isdir(os.path.join(fitter._persistence_manager._cache_directory, 'resample_' + base_models[1].description))  # noqa
+            # check the directory contents of the base models
+            cart_pkl_file_name = 'CartDecisionTreeClassifier_criteriongini_splitterbest_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_max_featuresNone.pkl'  # noqa
+            rf_pkl_file_name = 'RandomForestClassifier_n_estimators500_criteriongini_max_featuresNone_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_min_impurity_decrease0_bootstrapTrue_oob_scoreFalse.pkl'  # noqa
+            # there should only be 1 repeat and 5 folds
+            expected_prefixes = ['repeat0_fold' + str(x) for x in range(5)]
+            # check that all the expected files exist for the given directory and model/hyper-params
+            assert all([os.path.isfile(os.path.join(cache_directory, 'resample_cart', "{0}_{1}".format(x, cart_pkl_file_name))) for x in expected_prefixes])  # noqa
+            assert all([os.path.isfile(os.path.join(cache_directory, 'resample_random_forest', "{0}_{1}".format(x, rf_pkl_file_name))) for x in expected_prefixes])  # noqa
+
+        else:
+            fitter = ModelFitter(model=model_stacker,
+                                 # transformations for all models, not just stackers
+                                 model_transformations=[RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),  # noqa
+                                                        CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),  # noqa
+                                                        ImputationTransformer()],
+                                 splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                                 evaluator=TwoClassProbabilityEvaluator(
+                                     converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                          positive_class=positive_class)))
+            time_start = time.time()
+            fitter.fit(data=data, target_variable=target_variable, hyper_params=LogisticClassifierHP())
+            time_stop = time.time()
+            fit_time = time_stop - time_start
+
         # verify our callback is called. If it wasn't, we would never know and the assertions wouldn't run.
         assert train_callback_called == ['train_called']
         # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
@@ -2251,10 +2370,10 @@ class ModelWrapperTests(TimerTestCase):
 
         TestHelper.check_plot(file_plot_correlations, lambda: fitter.model.plot_correlation_heatmap())
 
+        return fit_time
+
     def test_ModelStacker_Classification(self):
-        self.helper_test_ModelStacker_Classification(data=TestHelper.get_titanic_data(),
-                                                     target_variable='Survived',
-                                                     positive_class=1)
+        self.helper_test_ModelStacker_Classification(data=TestHelper.get_titanic_data(), positive_class=1)
 
     def test_ModelStacker_Classification_string_classes(self):
         data = TestHelper.get_titanic_data()
@@ -2262,9 +2381,7 @@ class ModelWrapperTests(TimerTestCase):
         negative_class = 'died'
         # Test with a string target variable rather than 0/1
         data.Survived = np.where(data.Survived == 1, positive_class, negative_class)
-        self.helper_test_ModelStacker_Classification(data=data,
-                                                     target_variable='Survived',
-                                                     positive_class=positive_class)
+        self.helper_test_ModelStacker_Classification(data=data, positive_class=positive_class)
 
     def test_ModelStacker_Regression_no_stacker_transformations(self):
         ######################################################################################################
@@ -2473,8 +2590,7 @@ class ModelWrapperTests(TimerTestCase):
         assert all([isclose(expected_training_evaluator_metrics[key], fitter.training_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
         expected_holdout_evaluator_metrics = {'Mean Absolute Error (MAE)': 2998.721845738518, 'Mean Squared Error (MSE)': 24415070.16514672, 'Root Mean Squared Error (RMSE)': 4941.16081150439, 'RMSE to Standard Deviation of Target': 0.3989794336853368}  # noqa
         assert all([isclose(expected_holdout_evaluator_metrics[key], fitter.holdout_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
-
-        assert [x.description for x in model_stacker._base_models] == ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor']  # noqa
+        assert all([x == y for x, y in zip([x.description for x in model_stacker._base_models], ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor'])])  # noqa
         # test resample data
         file_test_model_stacker_resample_data_regression = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_regression_stacker_trans.pkl'))  # noqa
         file_test_model_stacker_resample_data_cart = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_cart_regression_stacker_trans.pkl'))  # noqa
@@ -2494,3 +2610,22 @@ class ModelWrapperTests(TimerTestCase):
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_train_meta_correlations,
                                                      expected_dataframe=fitter.model._train_meta_correlations)
         TestHelper.check_plot(file_plot_correlations, lambda: fitter.model.plot_correlation_heatmap())
+
+    def test_ModelStacker_caching(self):
+        cache_directory = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification')  # noqa
+
+        if os.path.isdir(cache_directory):
+            shutil.rmtree(cache_directory)
+        assert not os.path.isdir(cache_directory)
+
+        # cache files do not exist
+        fit_time_not_previously_cached = self.helper_test_ModelStacker_Classification(data=TestHelper.get_titanic_data(),  # noqa
+                                                                                      positive_class=1,
+                                                                                      cache_directory=cache_directory)  # noqa
+
+        fit_time_previously_cached = self.helper_test_ModelStacker_Classification(data=TestHelper.get_titanic_data(),  # noqa
+                                                                                  positive_class=1,
+                                                                                  cache_directory=cache_directory)  # noqa
+        shutil.rmtree(cache_directory)
+        assert 6 < fit_time_not_previously_cached < 8  # looks like around ~7 seconds on average
+        assert fit_time_previously_cached < 2  # improves to less than 2 with caching

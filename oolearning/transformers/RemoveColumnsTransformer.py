@@ -20,7 +20,7 @@ class RemoveColumnsTransformer(TransformerBase):
 
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         # ensure all columns exist in data
-        assert [column in data_x.columns.values for column in self._columns_to_remove]
+        assert all([column in data_x.columns.values for column in self._columns_to_remove])
 
         # nothing to save into state
         return {}

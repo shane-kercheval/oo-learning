@@ -83,7 +83,7 @@ class ModelTuner:
                 resampler_copy.set_decorators(decorators=[x.clone() for x in self._resampler_decorators])
 
             if self._persistence_manager is not None:
-                resampler_copy.set_persistence_manager(persistence_manager=self._persistence_manager)
+                resampler_copy.set_persistence_manager(persistence_manager=self._persistence_manager.clone())
             hyper_params_copy = None if self._hyper_param_object is None else self._hyper_param_object.clone()
 
             if params_grid is not None and self._hyper_param_object is not None:

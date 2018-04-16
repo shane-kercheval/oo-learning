@@ -159,7 +159,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                         hyper_params: HyperParamsBase,
                         repeat_index: int,
                         fold_index: int) -> str:
-        model_name = type(model).__name__
+        model_name = model.name
         if hyper_params is None:
             key = model_name
         else:

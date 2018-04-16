@@ -19,9 +19,6 @@ class CategoricConverterTransformer(TransformerBase):
         pass
 
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
-        # ensure all columns exist in data
-        assert [column in data_x.columns.values for column in self._columns_to_convert]
-
         # save unique values for each column to convert, so that if converting a smaller (future) dataset that
         # doesn't contain all the values (e.g. a single observation), we recreate categories that have the
         # original categories

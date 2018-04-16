@@ -283,11 +283,19 @@ class SearcherTests(TimerTestCase):
         searcher.search(data=data, target_variable='Survived')
 
         # check persistence
-        # first check cache files for tuning
-        assert os.path.isfile(os.path.join(cache_directory, 'tune_description1_MockClassificationModelWrapper.pkl'))  # noqa
-        assert os.path.isfile(os.path.join(cache_directory, 'tune_dummy_stratified_DummyClassifier.pkl'))
-        assert os.path.isfile(os.path.join(cache_directory, 'tune_dummy_frequent_DummyClassifier.pkl'))
-
+        # should be a file for each of the final models `final_[model description]_[hyper_params].pkl`
+        assert os.path.isfile(os.path.join(cache_directory, 'final_description1_MockClassificationModelWrapper.pkl'))  # noqa
+        assert os.path.isfile(os.path.join(cache_directory, 'final_description2_MockClassificationModelWrapper_criterion_gini_max_features_a_n_estimators_c_min_samples_leaf_e.pkl'))  # noqa
+        assert os.path.isfile(os.path.join(cache_directory, 'final_dummy_frequent_DummyClassifier.pkl'))  # noqa
+        assert os.path.isfile(os.path.join(cache_directory, 'final_dummy_stratified_DummyClassifier.pkl'))  # noqa
+        # should be a directory for each of the tuned models: `tune_[model description]`
+        expected_directories = [os.path.join(cache_directory, 'tune_' + x.description) for x in infos]
+        assert all([os.path.isdir(x) for x in expected_directories])
+        # the following models/directories should have 1 file i.e. no hyper-params to tune
+        assert os.path.isfile(os.path.join(expected_directories[0], 'MockClassificationModelWrapper.pkl'))
+        assert os.path.isfile(os.path.join(expected_directories[2], 'DummyClassifier.pkl'))
+        assert os.path.isfile(os.path.join(expected_directories[3], 'DummyClassifier.pkl'))
+        # the following model should have many hyper_params
         # build up the list of combinations of hyper_parameters and repeates/folds
         param_combinations = {'repeats': list(range(num_repeats)), 'folds': list(range(num_folds))}
         param_combinations.update(params_dict)
@@ -295,12 +303,8 @@ class SearcherTests(TimerTestCase):
         expected_file_values = list(itertools.product(*params_list))
         assert len(expected_file_values) == 48
         # for each combination, ensure the file exists
-        expected_file_format = os.path.join(cache_directory, 'tune_description2_repeat{0}_fold{1}_MockClassificationModelWrapper_criterion{2}_max_features{3}_n_estimators{4}_min_samples_leaf{5}.pkl')  # noqa
-        assert [os.path.isfile(expected_file_format.format(x[0], x[1], x[2], x[3], x[4], x[5])) for x in expected_file_values]  # noqa
-
-        # now check cache files for the holdout set
-        assert os.path.isfile(os.path.join(cache_directory, 'holdout_description1_MockClassificationModelWrapper.pkl'))  # noqa
-        assert os.path.isfile(os.path.join(cache_directory, 'holdout_description2_MockClassificationModelWrapper_criterion_gini_max_features_a_n_estimators_c_min_samples_leaf_e.pkl'))  # noqa
+        expected_file_format = os.path.join(cache_directory, 'tune_description2/repeat{0}_fold{1}_MockClassificationModelWrapper_criterion{2}_max_features{3}_n_estimators{4}_min_samples_leaf{5}.pkl')  # noqa
+        assert all([os.path.isfile(expected_file_format.format(x[0], x[1], x[2], x[3], x[4], x[5])) for x in expected_file_values])  # noqa
 
         shutil.rmtree(cache_directory)
 
@@ -378,24 +382,24 @@ class SearcherTests(TimerTestCase):
         assert len(searcher.results.holdout_scores[1]) == 4  # 4 Evaluators
         assert len(searcher.results.holdout_scores[2]) == 4  # 4 Evaluators
         assert len(searcher.results.holdout_scores[3]) == 4  # 4 Evaluators
-        assert [x.name for x in searcher.results.holdout_scores[0]] == ['kappa', 'sensitivity', 'specificity', 'error_rate']  # noqa
-        assert [x.name for x in searcher.results.holdout_scores[1]] == ['kappa', 'sensitivity', 'specificity', 'error_rate']  # noqa
-        assert [x.name for x in searcher.results.holdout_scores[2]] == ['kappa', 'sensitivity', 'specificity', 'error_rate']  # noqa
-        assert [x.name for x in searcher.results.holdout_scores[3]] == ['kappa', 'sensitivity', 'specificity', 'error_rate']  # noqa
+        assert all([x == y for x, y in zip([x.name for x in searcher.results.holdout_scores[0]], ['kappa', 'sensitivity', 'specificity', 'error_rate'])])  # noqa
+        assert all([x == y for x, y in zip([x.name for x in searcher.results.holdout_scores[1]], ['kappa', 'sensitivity', 'specificity', 'error_rate'])])  # noqa
+        assert all([x == y for x, y in zip([x.name for x in searcher.results.holdout_scores[2]], ['kappa', 'sensitivity', 'specificity', 'error_rate'])])  # noqa
+        assert all([x == y for x, y in zip([x.name for x in searcher.results.holdout_scores[3]], ['kappa', 'sensitivity', 'specificity', 'error_rate'])])  # noqa
 
-        assert [x.value for x in searcher.results.holdout_scores[0]] == [0.02628424657534245, 0.38372093023255816, 0.6423357664233577, 0.45739910313901344]  # noqa
-        assert [x.value for x in searcher.results.holdout_scores[1]] == [0.02628424657534245, 0.38372093023255816, 0.6423357664233577, 0.45739910313901344]  # noqa
+        assert all([isclose(x, y) for x, y in zip([x.value for x in searcher.results.holdout_scores[0]], [0.02628424657534245, 0.38372093023255816, 0.6423357664233577, 0.45739910313901344])])  # noqa
+        assert all([isclose(x, y) for x, y in zip([x.value for x in searcher.results.holdout_scores[1]], [0.02628424657534245, 0.38372093023255816, 0.6423357664233577, 0.45739910313901344])])  # noqa
         # same values that are in `fitter.training_evaluator.all_quality_metrics` in test_ModelWrappers
-        assert [x.value for x in searcher.results.holdout_scores[2]] == [0.10655528087972044, 0.4418604651162791, 0.6642335766423357, 0.42152466367713004]  # noqa
-        assert [x.value for x in searcher.results.holdout_scores[3]] == [0.0, 0.0, 1.0, 0.38565022421524664]
+        assert all([isclose(x, y) for x, y in zip([x.value for x in searcher.results.holdout_scores[2]], [0.10655528087972044, 0.4418604651162791, 0.6642335766423357, 0.42152466367713004])])  # noqa
+        assert all([isclose(x, y) for x, y in zip([x.value for x in searcher.results.holdout_scores[3]], [0.0, 0.0, 1.0, 0.38565022421524664])])  # noqa
         # same values for indexes 2,3 (DummyClassifiers) that are in
         # `fitter.training_evaluator.all_quality_metrics` in test_ModelWrappers
         assert all(searcher.results.holdout_score_values.index.values == model_descriptions)
-        assert all(searcher.results.holdout_score_values.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])  # noqa
-        assert list(searcher.results.holdout_score_values.kappa) == [0.02628424657534245, 0.02628424657534245, 0.10655528087972044, 0.0]  # noqa
-        assert list(searcher.results.holdout_score_values.sensitivity) == [0.38372093023255816, 0.38372093023255816, 0.4418604651162791, 0.0]  # noqa
-        assert list(searcher.results.holdout_score_values.specificity) == [0.6423357664233577, 0.6423357664233577, 0.6642335766423357, 1.0]  # noqa
-        assert list(searcher.results.holdout_score_values.error_rate) == [0.45739910313901344, 0.45739910313901344, 0.42152466367713004, 0.38565022421524664]  # noqa
+        assert all(searcher.results.holdout_score_values.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])
+        assert all([isclose(x, y) for x, y in zip(list(searcher.results.holdout_score_values.kappa), [0.02628424657534245, 0.02628424657534245, 0.10655528087972044, 0.0])])  # noqa
+        assert all([isclose(x, y) for x, y in zip(list(searcher.results.holdout_score_values.sensitivity), [0.38372093023255816, 0.38372093023255816, 0.4418604651162791, 0.0])])  # noqa
+        assert all([isclose(x, y) for x, y in zip(list(searcher.results.holdout_score_values.specificity), [0.6423357664233577, 0.6423357664233577, 0.6642335766423357, 1.0])])  # noqa
+        assert all([isclose(x, y) for x, y in zip(list(searcher.results.holdout_score_values.error_rate), [0.45739910313901344, 0.45739910313901344, 0.42152466367713004, 0.38565022421524664])])  # noqa
 
         values = list(searcher.results.holdout_score_values.kappa)
         highest_kappa = values.index(max(values))

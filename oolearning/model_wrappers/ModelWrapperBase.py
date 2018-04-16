@@ -1,14 +1,14 @@
 import copy
-import numpy as np
-import pandas as pd
-
 from abc import ABCMeta, abstractmethod
 from typing import Union
 
-from oolearning.persistence.AlwaysFetchManager import AlwaysFetchManager
+import numpy as np
+import pandas as pd
+
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
-from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError, ModelAlreadyFittedError,\
+from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError, ModelAlreadyFittedError, \
     ModelCachedAlreadyConfigured
+from oolearning.persistence.AlwaysFetchManager import AlwaysFetchManager
 
 
 class ModelWrapperBase(metaclass=ABCMeta):
@@ -22,11 +22,7 @@ class ModelWrapperBase(metaclass=ABCMeta):
         self._model_object = None
         self._feature_names = None
         self._hyper_params = None
-
-        # set up the PersistenceManager, default it to NoCacheManager which just returns the object from the
-        # function passed in (i.e. it isn't stored anywhere, we have to go get it or create it)
-        # don't allow it to be configured in constructor in case object is cloned
-        self._persistence_manager = AlwaysFetchManager()
+        self._persistence_manager = None
 
     def clone(self):
         """
@@ -36,8 +32,7 @@ class ModelWrapperBase(metaclass=ABCMeta):
         if self._model_object is not None:  # only intended on being called before fitting
             raise ModelAlreadyFittedError()
 
-        # if the PersistenceManager is not the default object (i.e. no cache)
-        if not isinstance(self._persistence_manager, AlwaysFetchManager):
+        if self._persistence_manager is not None:
             raise ModelCachedAlreadyConfigured('Should not clone after we configure the cache (cloning is intended to reuse empty model objects.).')  # noqa
 
         return copy.deepcopy(self)
@@ -53,6 +48,10 @@ class ModelWrapperBase(metaclass=ABCMeta):
             raise ModelAlreadyFittedError()
 
         self._persistence_manager = persistence_manager
+
+    @property
+    def name(self) -> str:
+        return type(self).__name__
 
     @property
     def hyper_params(self):
@@ -101,10 +100,11 @@ class ModelWrapperBase(metaclass=ABCMeta):
         self._hyper_params = hyper_params
         self._feature_names = data_x.columns.values.tolist()
 
-        # this gets the object based on the persistence system of _persistence_object;
-        # the default object type, AlwaysFetchObject, always creates the object i.e. always calls _train
-        self._model_object = self._persistence_manager.get_object(
-            fetch_function=lambda: self._train(data_x=data_x, data_y=data_y, hyper_params=hyper_params))
+        if self._persistence_manager:
+            self._model_object = self._persistence_manager.get_object(fetch_function=lambda: self._train(data_x=data_x, data_y=data_y, hyper_params=hyper_params))  # noqa
+        else:
+            self._model_object = self._train(data_x=data_x, data_y=data_y, hyper_params=hyper_params)
+
         assert self._model_object is not None
 
     def predict(self, data_x: pd.DataFrame) -> Union[np.ndarray, pd.DataFrame]:
@@ -151,4 +151,4 @@ class ModelWrapperBase(metaclass=ABCMeta):
         :return: predicted values, actual predictions for Regression models and predicted probabilities for
             Classification problems.
         """
-        pass
+        raise NotImplementedError()

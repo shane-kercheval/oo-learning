@@ -81,7 +81,7 @@ class ModelFitter:
 
     @staticmethod
     def build_cache_key(model: ModelWrapperBase, hyper_params: HyperParamsBase) -> str:
-        model_name = type(model).__name__
+        model_name = model.name
         if hyper_params is None:
             key = model_name
         else:
