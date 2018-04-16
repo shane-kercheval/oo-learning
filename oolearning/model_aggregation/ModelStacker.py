@@ -300,10 +300,7 @@ class ModelStacker(ModelWrapperBase):
             if local_persistence_manager is not None:
                 # if there is a PersistenceManager, each base model that is refitted on training data should
                 # get its own prefix
-                local_persistence_manager.set_key_prefix(prefix='base_' + model_info.description)
-                cache_key = ModelStacker.build_cache_key(model=model_info.model,
-                                                         hyper_params=model_info.hyper_params)
-                local_persistence_manager.set_key(key=cache_key)
+                local_persistence_manager.set_key(key='base_' + model_info.description)
 
             model_info.model.set_persistence_manager(local_persistence_manager)
             model_info.model.train(data_x=transformed_data_x,
@@ -366,15 +363,3 @@ class ModelStacker(ModelWrapperBase):
             self._predict_callback(transformed_test_meta)
 
         return model_object.stacking_model.predict(data_x=transformed_test_meta)
-
-    @staticmethod
-    def build_cache_key(model: ModelWrapperBase, hyper_params: HyperParamsBase) -> str:
-        model_name = model.name
-        if hyper_params is None:
-            key = model_name
-        else:
-            # if hyper-params, flatten out list of param names and values and concatenate/join them together
-            hyper_params_long = '_'.join(list(sum([(str(x), str(y)) for x, y in hyper_params.params_dict.items()], ())))  # noqa
-            return model_name + '_' + hyper_params_long
-
-        return key

@@ -2307,9 +2307,15 @@ class ModelWrapperTests(TimerTestCase):
 
             assert os.path.isdir(fitter._persistence_manager._cache_directory)
             expected_stacker_cached_file = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification/ModelStacker_LogisticClassifier_penalty_l2_regularization_inverse_1.0_solver_liblinear.pkl')  # noqa
+            expected_base_cart_cached_file = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification/base_cart.pkl')  # noqa
+            expected_base_rf_cached_file = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification/base_random_forest.pkl')  # noqa
             # ensure the cache path of the stacker is the final stacked model
             assert fitter._persistence_manager._cache_path == expected_stacker_cached_file
             assert os.path.isfile(fitter._persistence_manager._cache_path)
+            # each base model should have the following file,
+            # corresponding to the final trained model for each base model
+            assert os.path.isfile(expected_base_cart_cached_file)
+            assert os.path.isfile(expected_base_rf_cached_file)
             # each base model should have a corresponding directory
             assert os.path.isdir(os.path.join(fitter._persistence_manager._cache_directory, 'resample_' + base_models[0].description))  # noqa
             assert os.path.isdir(os.path.join(fitter._persistence_manager._cache_directory, 'resample_' + base_models[1].description))  # noqa
