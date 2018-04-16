@@ -16,6 +16,7 @@ class RegressionEvaluator(EvaluatorBase):
         self._mean_absolute_error = None
 
     def evaluate(self, actual_values: np.ndarray, predicted_values: object):
+        assert len(actual_values) == len(predicted_values)
         self._actual_values = actual_values
         self._predicted_values = predicted_values
         self._residuals = actual_values - predicted_values
@@ -42,11 +43,16 @@ class RegressionEvaluator(EvaluatorBase):
         return self.root_mean_squared_error / self._standard_deviation
 
     @property
+    def total_observations(self):
+        return len(self._actual_values)
+
+    @property
     def all_quality_metrics(self) -> dict:
         return {'Mean Absolute Error (MAE)': self.mean_absolute_error,
                 'Mean Squared Error (MSE)': self.mean_squared_error,
                 'Root Mean Squared Error (RMSE)': self.root_mean_squared_error,
-                'RMSE to Standard Deviation of Target': self.rmse_to_st_dev}
+                'RMSE to Standard Deviation of Target': self.rmse_to_st_dev,
+                'Total Observations': self.total_observations}
 
     def plot_residuals_vs_fits(self):
         from statsmodels import api as sm

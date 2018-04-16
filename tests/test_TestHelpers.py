@@ -59,5 +59,25 @@ class ModelWrapperTests(TimerTestCase):
         self.assertRaises(AssertionError, lambda: TestHelper.ensure_all_values_equal_from_file(file=file,
                                                                                                expected_dataframe=titanic_data))  # noqa
 
+    def test_ensure_values_numeric_dictionary(self):
+        dict_1 = {'a': 3.7880849514563115,
+                  'b': 29.015298598300976,
+                  'c': 5.3865850590426,
+                  'd': 0.3281385595158624,
+                  'e': 206}
 
+        dict_missing_key = {'a': 3.7880849514563115,
+                            'c': 5.3865850590426,
+                            'd': 0.3281385595158624,
+                            'e': 206}
 
+        dict_different_value = {'a': 3.78808491,
+                                'b': 29.015298598300976,
+                                'c': 5.3865850590426,
+                                'd': 0.3281385595158624,
+                                'e': 206}
+        TestHelper.ensure_values_numeric_dictionary(dictionary_1=dict_1, dictionary_2=dict_1)
+        self.assertRaises(AssertionError,
+                          lambda: TestHelper.ensure_values_numeric_dictionary(dictionary_1=dict_1, dictionary_2=dict_missing_key))  # noqa
+        self.assertRaises(AssertionError,
+                          lambda: TestHelper.ensure_values_numeric_dictionary(dictionary_1=dict_1, dictionary_2=dict_different_value))  # noqa

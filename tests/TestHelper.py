@@ -147,6 +147,11 @@ class TestHelper:
                                                       check_column_types=check_column_types)
 
     @staticmethod
+    def ensure_values_numeric_dictionary(dictionary_1, dictionary_2):
+        assert set(dictionary_1.keys()) == set(dictionary_2.keys())
+        assert all([isclose(dictionary_1[x], dictionary_2[x]) for x in dictionary_1.keys()])  # noqa
+
+    @staticmethod
     def check_plot(file_name: str, get_plot_function: Callable):
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory(file_name))
         if os.path.isfile(file):

@@ -30,9 +30,9 @@ class ModelFitter:
     def __init__(self,
                  model: ModelWrapperBase,
                  model_transformations: List[TransformerBase],
-                 splitter: DataSplitterBase,
-                 evaluator: Union[EvaluatorBase]=None,
-                 scores: Union[List[ScoreBase]]=None,
+                 splitter: DataSplitterBase=None,
+                 evaluator: EvaluatorBase=None,
+                 scores: List[ScoreBase]=None,
                  persistence_manager: PersistenceManagerBase=None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None):
@@ -95,7 +95,12 @@ class ModelFitter:
         if self._has_fitted:
             raise ModelAlreadyFittedError()
 
-        training_indexes, holdout_indexes = self._splitter.split(target_values=data[target_variable])
+        if self._splitter:
+            training_indexes, holdout_indexes = self._splitter.split(target_values=data[target_variable])
+        else:  # we are fitting the entire data-set, no such thing as a holdout dataset/evaluator/scores
+            training_indexes, holdout_indexes = range(len(data)), []
+            self._holdout_evaluator = None
+            self._holdout_scores = None
 
         training_y = data.iloc[training_indexes][target_variable]
         training_x = data.iloc[training_indexes].drop(columns=target_variable)
@@ -149,8 +154,9 @@ class ModelFitter:
             # predict will apply the transformations (which are fitted on the training data)
             self._training_evaluator.evaluate(actual_values=training_y,
                                               predicted_values=self.predict(data_x=training_x))
-            self._holdout_evaluator.evaluate(actual_values=holdout_y,
-                                             predicted_values=self.predict(data_x=holdout_x))
+            if self._holdout_evaluator:
+                self._holdout_evaluator.evaluate(actual_values=holdout_y,
+                                                 predicted_values=self.predict(data_x=holdout_x))
 
         # if scores, score on both the training and holdout set
         if self._training_scores is not None:
@@ -158,9 +164,11 @@ class ModelFitter:
             for score in self._training_scores:
                 score.calculate(actual_values=training_y,
                                 predicted_values=self.predict(data_x=training_x))
-            for score in self._holdout_scores:
-                score.calculate(actual_values=holdout_y,
-                                predicted_values=self.predict(data_x=holdout_x))
+
+            if self._holdout_scores:
+                for score in self._holdout_scores:
+                    score.calculate(actual_values=holdout_y,
+                                    predicted_values=self.predict(data_x=holdout_x))
 
     def predict(self, data_x: pd.DataFrame) -> np.ndarray:
         """

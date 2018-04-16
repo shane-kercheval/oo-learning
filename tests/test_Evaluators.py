@@ -351,10 +351,11 @@ class EvaluatorTests(TimerTestCase):
     def test_RegressionEvaluator(self):
         data = TestHelper.get_cement_data()
         target_variable = 'strength'
+        holdout_ratio = 0.20
 
         fitter = ModelFitter(model=LinearRegressor(),
                              model_transformations=[RemoveColumnsTransformer(columns=['fineagg'])],
-                             splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.20),
+                             splitter=RegressionStratifiedDataSplitter(holdout_ratio=holdout_ratio),
                              evaluator=RegressionEvaluator(),
                              persistence_manager=None,
                              train_callback=None)
@@ -366,10 +367,13 @@ class EvaluatorTests(TimerTestCase):
         assert isclose(fitter.training_evaluator.root_mean_squared_error, np.sqrt(fitter.training_evaluator.mean_squared_error))  # noqa
         assert isclose(fitter.training_evaluator.rmse_to_st_dev, 0.6246072972091289)
 
-        assert isclose(fitter.training_evaluator.all_quality_metrics['Mean Absolute Error (MAE)'], 8.360259532214116)  # noqa
-        assert isclose(fitter.training_evaluator.all_quality_metrics['Mean Squared Error (MSE)'], 109.68243774089586)  # noqa
-        assert isclose(fitter.training_evaluator.all_quality_metrics['Root Mean Squared Error (RMSE)'], 10.472938352768809)  # noqa
-        assert isclose(fitter.training_evaluator.all_quality_metrics['RMSE to Standard Deviation of Target'], 0.6246072972091289)  # noqa
+        expected_dictionary = {'Mean Absolute Error (MAE)': 8.360259532214116, 'Mean Squared Error (MSE)': 109.68243774089586, 'Root Mean Squared Error (RMSE)': 10.472938352768809, 'RMSE to Standard Deviation of Target': 0.6246072972091289, 'Total Observations': 824}  # noqa
+        TestHelper.ensure_values_numeric_dictionary(dictionary_1=expected_dictionary,
+                                                    dictionary_2=fitter.training_evaluator.all_quality_metrics)  # noqa
+
+        expected_dictionary = {'Mean Absolute Error (MAE)': 7.991612520472382, 'Mean Squared Error (MSE)': 100.07028301004217, 'Root Mean Squared Error (RMSE)': 10.003513533256312, 'RMSE to Standard Deviation of Target': 0.6093913833941373, 'Total Observations': 206}  # noqa
+        TestHelper.ensure_values_numeric_dictionary(dictionary_1=expected_dictionary,
+                                                    dictionary_2=fitter.holdout_evaluator.all_quality_metrics)
 
         TestHelper.check_plot('data/test_Evaluators/test_RegressionEval_resid_vs_fits.png', lambda: fitter.training_evaluator.plot_residuals_vs_fits())  # noqa
         TestHelper.check_plot('data/test_Evaluators/test_RegressionEval_pred_vs_act.png', lambda: fitter.training_evaluator.plot_predictions_vs_actuals())  # noqa
