@@ -85,6 +85,8 @@ class TransformerBase(metaclass=ABCMeta):
         """
         assert self._state is None  # ensure that we have not fitted the data previously
         assert isinstance(data_x, pd.DataFrame)
+        data_x = data_x.copy()
+        # noinspection PyTypeChecker
         self._state = self._fit_definition(data_x=data_x)
         assert self._state is not None  # ensure after we have fitted the transformation, we have cached state
 

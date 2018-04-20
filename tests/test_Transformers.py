@@ -166,7 +166,6 @@ class TransformerTests(TimerTestCase):
         training_set, _, test_set, _ = TestHelper.split_train_holdout_class(data, 'Survived')
 
         assert training_set.isna().sum().sum() == 139
-        assert test_set.isna().sum().sum() == 40
 
         indexes_of_na_age = training_set[training_set['Age'].isna()].index.values
         indexes_of_na_embarked = training_set[training_set['Embarked'].isna()].index.values
@@ -283,6 +282,25 @@ class TransformerTests(TimerTestCase):
         assert all(former_nas[former_nas.Pclass == 1].Embarked == state['Embarked'][1])
 
         ######################################################################################################
+        # Test test_set
+        ######################################################################################################
+        # Age
+        assert test_set.isna().sum().sum() == 40  # there are 40 NAs
+        assert test_set.isna().sum().Age == 40  # and all NAs ae in Age
+        transformed_test_data = imputation_transformer.transform(data_x=test_set)
+        test_indexes_na_age = test_set[test_set['Age'].isna()].index.values
+        assert len(test_indexes_na_age) == 40
+        # Next Lets check all of the indexes that were not NA, ensure they did not change
+        check_non_nas(indexes_of_nas=test_indexes_na_age, column='Age',
+                      dataset1=transformed_test_data, dataset2=test_set)
+        # lets check the remaining indexes that were NA, except for the NA associated with Pclass == NA,
+        # which we already checked
+        former_nas = transformed_test_data.loc[test_indexes_na_age]
+        assert all(former_nas[former_nas.Pclass == 3].Age == state['Age'][3])
+        assert all(former_nas[former_nas.Pclass == 2].Age == state['Age'][2])
+        assert all(former_nas[former_nas.Pclass == 1].Age == state['Age'][1])
+
+        ######################################################################################################
         # column to group by as STRING
         ######################################################################################################
         def transform_column_to_categorical(mapping, dataset, feature):
@@ -293,6 +311,10 @@ class TransformerTests(TimerTestCase):
         training_set['Pclass'] = transform_column_to_categorical(mapping={1: 'a', 2: 'b', 3: 'c'},
                                                                  dataset=training_set,
                                                                  feature='Pclass')
+
+        test_set['Pclass'] = transform_column_to_categorical(mapping={1: 'a', 2: 'b', 3: 'c'},
+                                                             dataset=test_set,
+                                                             feature='Pclass')
 
         imputation_transformer = ImputationTransformer(group_by_column='Pclass')
         transformed_training_data = imputation_transformer.fit_transform(data_x=training_set)
@@ -379,11 +401,178 @@ class TransformerTests(TimerTestCase):
         # both Pclas == 1
         assert all(former_nas[former_nas.Pclass == 'a'].Embarked == state['Embarked']['a'])
 
-    def test_transformations_ImputationTransformer_treat_zeros_as_na(self):
-        raise NotImplementedError()
+        ######################################################################################################
+        # Test test_set
+        ######################################################################################################
+        # Age
+        assert test_set.isna().sum().sum() == 40  # there are 40 NAs
+        assert test_set.isna().sum().Age == 40  # and all NAs ae in Age
+        transformed_test_data = imputation_transformer.transform(data_x=test_set)
+        test_indexes_na_age = test_set[test_set['Age'].isna()].index.values
+        assert len(test_indexes_na_age) == 40
+        # Next Lets check all of the indexes that were not NA, ensure they did not change
+        check_non_nas(indexes_of_nas=test_indexes_na_age, column='Age',
+                      dataset1=transformed_test_data, dataset2=test_set)
+        # lets check the remaining indexes that were NA, except for the NA associated with Pclass == NA,
+        # which we already checked
+        former_nas = transformed_test_data.loc[test_indexes_na_age]
+        assert all(former_nas[former_nas.Pclass == 'c'].Age == state['Age']['c'])
+        assert all(former_nas[former_nas.Pclass == 'b'].Age == state['Age']['b'])
+        assert all(former_nas[former_nas.Pclass == 'a'].Age == state['Age']['a'])
+
+    def test_transformations_ImputationTransformer_treat_zeros_as_na_include_columns(self):
+        data = TestHelper.get_titanic_data()
+        data.drop(columns=['PassengerId', 'Name', 'Ticket', 'Cabin'], inplace=True)
+        # prepare data with additional na values
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_class(data, 'Survived')
+
+        training_indexes_of_zero = training_set[training_set.Fare == 0].index.values
+        test_indexes_of_zero = test_set[test_set.Fare == 0].index.values
+
+        assert len(training_indexes_of_zero) == 14
+        assert len(test_indexes_of_zero) == 1
+
+        # include Embarked just to test categoric column (in columns_explicit)
+        imputation_transformer = ImputationTransformer(group_by_column='Pclass',
+                                                       treat_zeros_as_na=True,
+                                                       columns_explicit=['Embarked', 'Fare'])
+
+        transformed_training_data = imputation_transformer.fit_transform(data_x=training_set)
+        assert all(transformed_training_data.index.values == training_set.index.values)  # index should match
+        assert all(transformed_training_data.columns.values == training_set.columns.values)  # columns match
+        assert imputation_transformer.state == {'Fare': {1: 61.679199999999994, 2: 15.0479, 3: 8.05,
+                                                         'all': 14.5},
+                                                'Embarked': {1: 'S', 2: 'S', 3: 'S', 'all': 'S'}}
+        state = imputation_transformer.state
+
+        # test that the changes (to 0) didn't affect the training set
+        assert len(training_set[np.isnan(training_set.Fare)]) == 0
+
+        def check_non_nas(indexes_of_nas, column, dataset1, dataset2):
+            # ensure non-na columns match
+            series_1 = dataset1.loc[~dataset1.index.isin(indexes_of_nas), column]
+            series_2 = dataset2.loc[~dataset2.index.isin(indexes_of_nas), column]
+            assert all(series_1.index.values == series_2.index.values)
+            assert all(series_1 == series_2)
+
+        # columns that didn't change
+        assert all(transformed_training_data.Pclass == training_set.Pclass)
+        assert all(transformed_training_data.Sex == training_set.Sex)
+        assert all([x == y or (np.isnan(x) and np.isnan(y)) for x, y in zip(transformed_training_data.Age,
+                                                                            training_set.Age)])
+        assert all(transformed_training_data.SibSp == training_set.SibSp)
+        assert all(transformed_training_data.Parch == training_set.Parch)
+
+        # now check Fare
+        check_non_nas(indexes_of_nas=training_indexes_of_zero, column='Fare',
+                      dataset1=transformed_training_data, dataset2=training_set)
+
+        assert not any(transformed_training_data.Fare == 0)
+        former_nas = transformed_training_data.loc[training_indexes_of_zero]
+        assert all(former_nas[former_nas.Pclass == 3].Fare == state['Fare'][3])
+        assert all(former_nas[former_nas.Pclass == 2].Fare == state['Fare'][2])
+        assert all(former_nas[former_nas.Pclass == 1].Fare == state['Fare'][1])
+
+        # now check Embarked
+        embarked_na_indexes = training_set[training_set.Embarked.isna()].index.values
+        check_non_nas(indexes_of_nas=embarked_na_indexes, column='Embarked',
+                      dataset1=transformed_training_data, dataset2=training_set)
+
+        former_nas = transformed_training_data.loc[embarked_na_indexes]
+        assert all(former_nas[former_nas.Pclass == 3].Embarked == state['Embarked'][3])
+        assert all(former_nas[former_nas.Pclass == 2].Embarked == state['Embarked'][2])
+        assert all(former_nas[former_nas.Pclass == 1].Embarked == state['Embarked'][1])
+
+        ######################################################################################################
+        # Test test_set
+        ######################################################################################################
+        transformed_test_data = imputation_transformer.transform(data_x=test_set)
+
+        check_non_nas(indexes_of_nas=test_indexes_of_zero, column='Fare',
+                      dataset1=transformed_test_data, dataset2=test_set)
+
+        assert not any(transformed_test_data.Fare == 0)
+        former_nas = transformed_test_data.loc[test_indexes_of_zero]
+        assert all(former_nas[former_nas.Pclass == 3].Fare == state['Fare'][3])
+        assert all(former_nas[former_nas.Pclass == 2].Fare == state['Fare'][2])
+        assert all(former_nas[former_nas.Pclass == 1].Fare == state['Fare'][1])
 
     def test_transformations_ImputationTransformer_include_exclude_columns(self):
-        raise NotImplementedError()
+        data = TestHelper.get_titanic_data()
+        # prepare data with additional na values
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_class(data, 'Survived')
+
+        training_indexes_of_zero = training_set[training_set.Fare == 0].index.values
+        test_indexes_of_zero = test_set[test_set.Fare == 0].index.values
+
+        assert len(training_indexes_of_zero) == 14
+        assert len(test_indexes_of_zero) == 1
+
+        # include Embarked just to test categoric column (in columns_explicit)
+        columns_to_ignore = [x for x in data.columns.values if x not in ['Embarked', 'Fare']]
+        imputation_transformer = ImputationTransformer(group_by_column='Pclass',
+                                                       treat_zeros_as_na=True,
+                                                       columns_to_ignore=columns_to_ignore)
+
+        transformed_training_data = imputation_transformer.fit_transform(data_x=training_set)
+        assert all(transformed_training_data.index.values == training_set.index.values)  # index should match
+        assert all(transformed_training_data.columns.values == training_set.columns.values)  # columns match
+        assert imputation_transformer.state == {'Fare': {1: 61.679199999999994, 2: 15.0479, 3: 8.05,
+                                                         'all': 14.5},
+                                                'Embarked': {1: 'S', 2: 'S', 3: 'S', 'all': 'S'}}
+        state = imputation_transformer.state
+
+        # test that the changes (to 0) didn't affect the training set
+        assert len(training_set[np.isnan(training_set.Fare)]) == 0
+
+        def check_non_nas(indexes_of_nas, column, dataset1, dataset2):
+            # ensure non-na columns match
+            series_1 = dataset1.loc[~dataset1.index.isin(indexes_of_nas), column]
+            series_2 = dataset2.loc[~dataset2.index.isin(indexes_of_nas), column]
+            assert all(series_1.index.values == series_2.index.values)
+            assert all(series_1 == series_2)
+
+        # columns that didn't change
+        assert all(transformed_training_data.Pclass == training_set.Pclass)
+        assert all(transformed_training_data.Sex == training_set.Sex)
+        assert all([x == y or (np.isnan(x) and np.isnan(y)) for x, y in zip(transformed_training_data.Age,
+                                                                            training_set.Age)])
+        assert all(transformed_training_data.SibSp == training_set.SibSp)
+        assert all(transformed_training_data.Parch == training_set.Parch)
+
+        # now check Fare
+        check_non_nas(indexes_of_nas=training_indexes_of_zero, column='Fare',
+                      dataset1=transformed_training_data, dataset2=training_set)
+
+        assert not any(transformed_training_data.Fare == 0)
+        former_nas = transformed_training_data.loc[training_indexes_of_zero]
+        assert all(former_nas[former_nas.Pclass == 3].Fare == state['Fare'][3])
+        assert all(former_nas[former_nas.Pclass == 2].Fare == state['Fare'][2])
+        assert all(former_nas[former_nas.Pclass == 1].Fare == state['Fare'][1])
+
+        # now check Embarked
+        embarked_na_indexes = training_set[training_set.Embarked.isna()].index.values
+        check_non_nas(indexes_of_nas=embarked_na_indexes, column='Embarked',
+                      dataset1=transformed_training_data, dataset2=training_set)
+
+        former_nas = transformed_training_data.loc[embarked_na_indexes]
+        assert all(former_nas[former_nas.Pclass == 3].Embarked == state['Embarked'][3])
+        assert all(former_nas[former_nas.Pclass == 2].Embarked == state['Embarked'][2])
+        assert all(former_nas[former_nas.Pclass == 1].Embarked == state['Embarked'][1])
+
+        ######################################################################################################
+        # Test test_set
+        ######################################################################################################
+        transformed_test_data = imputation_transformer.transform(data_x=test_set)
+
+        check_non_nas(indexes_of_nas=test_indexes_of_zero, column='Fare',
+                      dataset1=transformed_test_data, dataset2=test_set)
+
+        assert not any(transformed_test_data.Fare == 0)
+        former_nas = transformed_test_data.loc[test_indexes_of_zero]
+        assert all(former_nas[former_nas.Pclass == 3].Fare == state['Fare'][3])
+        assert all(former_nas[former_nas.Pclass == 2].Fare == state['Fare'][2])
+        assert all(former_nas[former_nas.Pclass == 1].Fare == state['Fare'][1])
 
     def test_transformations_PolynomialFeaturesTransformer(self):
         data = TestHelper.get_insurance_data()

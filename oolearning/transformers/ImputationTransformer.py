@@ -84,8 +84,21 @@ class ImputationTransformer(TransformerBase):
         numeric_features, categoric_features = OOLearningHelpers.\
             get_columns_by_type(data_dtypes=data_x.dtypes, target_variable=None)
 
+        if self._columns_explicit:
+            numeric_features = [x for x in numeric_features if x in self._columns_explicit]
+            categoric_features = [x for x in categoric_features if x in self._columns_explicit]
+
+        if self._columns_to_ignore:
+            numeric_features = [x for x in numeric_features if x not in self._columns_to_ignore]
+            categoric_features = [x for x in categoric_features if x not in self._columns_to_ignore]
+
         if self._numeric_imputation_function is not None:
             for column in numeric_features:
+                # i need to replace 0's with NA here, if flag is set, so that the data is fitted correctly,
+                # even though we won't be replacing the data
+                if self._treat_zeros_as_na:
+                    data_x[column].replace(0, np.nan, inplace=True)
+
                 imputed_values[column] = self._imputation_helper(data_x=data_x,
                                                                  imputation_function=self._numeric_imputation_function,  # noqa
                                                                  column=column,
@@ -101,6 +114,14 @@ class ImputationTransformer(TransformerBase):
         return imputed_values
 
     def _transform_definition(self, data_x: pd.DataFrame, state: dict) -> pd.DataFrame:
+
+        if self._treat_zeros_as_na:
+            numeric_features, _ = OOLearningHelpers.get_columns_by_type(data_dtypes=data_x.dtypes,
+                                                                        target_variable=None)
+            for column in state.keys():
+                if column in numeric_features:
+                    data_x[column].replace(0, np.nan, inplace=True)
+
         if self._group_by_column:
             # for each group, fill na values with corresponding imputation values from dictionary
             # the imputed_value is a dictionary with the corresponding values per group, unless the column
