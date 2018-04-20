@@ -158,6 +158,233 @@ class TransformerTests(TimerTestCase):
         assert all(test_set.iloc[indexes_not_null]['total_bedrooms'] ==
                    transformed_test_data.iloc[indexes_not_null]['total_bedrooms'])
 
+    def test_transformations_ImputationTransformer_by_group(self):
+        data = TestHelper.get_titanic_data()
+        data.drop(columns=['PassengerId', 'Name', 'Ticket', 'Cabin'], inplace=True)
+
+        # prepare data with additional na values
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_class(data, 'Survived')
+
+        assert training_set.isna().sum().sum() == 139
+        assert test_set.isna().sum().sum() == 40
+
+        indexes_of_na_age = training_set[training_set['Age'].isna()].index.values
+        indexes_of_na_embarked = training_set[training_set['Embarked'].isna()].index.values
+
+        # change 0's to NA for "Fare" column and confirm
+        indexes_of_zero_fare = training_set[training_set.Fare == 0].index.values
+        assert len(indexes_of_zero_fare) == 14
+        training_set['Fare'].replace(0, np.nan, inplace=True)
+        new_fare_values = training_set.loc[indexes_of_zero_fare, 'Fare'].isna().values
+        assert len(new_fare_values) == 14
+        assert all([x == True for x in new_fare_values])  # noqa
+
+        # also, test out when Pclass is missing
+        # set the value of Pclass to NaN for the first record where we also have a NaN Fare
+        training_set.loc[indexes_of_zero_fare[0], 'Pclass'] = np.nan
+        # let's also set Sex for this row to NA as well, to check categoric data
+        training_set.loc[indexes_of_zero_fare[0], 'Sex'] = np.nan
+        # give Parch a special value to check to make sure we didn't change this value
+        training_set.loc[indexes_of_zero_fare[0], 'Parch'] = 1000
+        assert np.isnan(training_set.loc[indexes_of_zero_fare[0], 'Pclass'])
+
+        ######################################################################################################
+        # column to group by as NUMERIC
+        ######################################################################################################
+        imputation_transformer = ImputationTransformer(group_by_column='Pclass')
+        transformed_training_data = imputation_transformer.fit_transform(data_x=training_set)
+        assert transformed_training_data.isna().sum().sum() == 0  # should be 0 NAs
+        assert all(transformed_training_data.index.values == training_set.index.values)  # index should match
+        assert all(transformed_training_data.columns.values == training_set.columns.values)  # columns match
+        assert imputation_transformer.state == {'Pclass': 3.0,
+                                                'Age': {1: 38.0, 2: 29.0, 3: 24.0, 'all': 28.5},
+                                                'SibSp': {1: 0.0, 2: 0.0, 3: 0.0, 'all': 0.0},
+                                                'Parch': {1: 0.0, 2: 0.0, 3: 0.0, 'all': 0.0},
+                                                'Fare': {1: 61.679199999999994, 2: 15.0479, 3: 8.05,
+                                                         'all': 14.5},
+                                                'Sex': {1: 'male', 2: 'male', 3: 'male', 'all': 'male'},
+                                                'Embarked': {1: 'S', 2: 'S', 3: 'S', 'all': 'S'}}
+        state = imputation_transformer.state
+
+        def check_non_nas(indexes_of_nas, column, dataset1, dataset2):
+            # ensure non-na columns match
+            series_1 = dataset1.loc[~dataset1.index.isin(indexes_of_nas), column]
+            series_2 = dataset2.loc[~dataset2.index.isin(indexes_of_nas), column]
+            assert all(series_1.index.values == series_2.index.values)
+            assert all(series_1 == series_2)
+
+        ######################################################################################################
+        # Pclass - 1 NA, manually set
+        ######################################################################################################
+        # Pclass : indexes_of_zero_fare[0] was set to na and should have value of state['Pclass'],
+        # since it was the "group by" column
+        assert transformed_training_data.loc[indexes_of_zero_fare[0], 'Pclass'] == state['Pclass']
+        # Pclass : all NON-nas should have maching values (only NA is indexes_of_zero_fare[0])
+        check_non_nas(indexes_of_nas=[indexes_of_zero_fare[0]], column='Pclass',
+                      dataset1=transformed_training_data, dataset2=training_set)
+
+        ######################################################################################################
+        # Age
+        ######################################################################################################
+        # First, there is 1 case where Age is NA and Pclass is NA, which should result in state['Sex']['all']
+        # it is at the first index where fare == 0
+        assert transformed_training_data.loc[indexes_of_zero_fare[0], 'Age'] == state['Age']['all']
+        # Next Lets check all of the indexes that were not NA, ensure they did not change
+        check_non_nas(indexes_of_nas=indexes_of_na_age, column='Age',
+                      dataset1=transformed_training_data, dataset2=training_set)
+
+        # lets check the remaining indexes that were NA, except for the NA associated with Pclass == NA,
+        # which we already checked
+        indexes = [x for x in indexes_of_na_age if x != indexes_of_zero_fare[0]]
+        former_nas = transformed_training_data.loc[indexes]
+        assert all(former_nas[former_nas.Pclass == 3].Age == state['Age'][3])
+        assert all(former_nas[former_nas.Pclass == 2].Age == state['Age'][2])
+        assert all(former_nas[former_nas.Pclass == 1].Age == state['Age'][1])
+
+        ######################################################################################################
+        # SibSp - 0 NAs
+        ######################################################################################################
+        assert all(transformed_training_data.SibSp == training_set.SibSp)
+
+        ######################################################################################################
+        # Parch - 0 NAs
+        ######################################################################################################
+        assert all(transformed_training_data.Parch == training_set.Parch)
+
+        ######################################################################################################
+        # Fare - 14 NAs that were set from Fares that had value of 0
+        ######################################################################################################
+        # First, there is 1 case where Fare is NA and Pclass is NA, which should result in state['Sex']['all']
+        # it is at the first index where fare == 0
+        assert transformed_training_data.loc[indexes_of_zero_fare[0], 'Fare'] == state['Fare']['all']
+        # Next Lets check all of the indexes that were not NA, ensure they did not change
+        check_non_nas(indexes_of_nas=indexes_of_zero_fare, column='Fare',
+                      dataset1=transformed_training_data, dataset2=training_set)
+
+        # lets check the remaining indexes that were NA, except for the NA associated with Pclass == NA,
+        # which we already checked
+        former_nas = transformed_training_data.loc[indexes_of_zero_fare[1:]]
+        assert all(former_nas[former_nas.Pclass == 3].Fare == state['Fare'][3])
+        assert all(former_nas[former_nas.Pclass == 2].Fare == state['Fare'][2])
+        assert all(former_nas[former_nas.Pclass == 1].Fare == state['Fare'][1])
+
+        ######################################################################################################
+        # Sex - 1 NA manually set
+        ######################################################################################################
+        # there is 1 clase where Sex was manually set to NA, it is the index that Pclass is NA, which should
+        # result in state['Sex']['all']
+        assert transformed_training_data.loc[indexes_of_zero_fare[0], 'Sex'] == state['Sex']['all']
+
+        ######################################################################################################
+        # Emabarked - 2 NAs
+        ######################################################################################################
+        former_nas = transformed_training_data.loc[indexes_of_na_embarked]
+        # both Pclas == 1
+        assert all(former_nas[former_nas.Pclass == 1].Embarked == state['Embarked'][1])
+
+        ######################################################################################################
+        # column to group by as STRING
+        ######################################################################################################
+        def transform_column_to_categorical(mapping, dataset, feature):
+            actual_to_expected_mapping = dict(zip(mapping.keys(), np.arange(len(mapping))))
+            codes = pd.Series(dataset[feature]).map(actual_to_expected_mapping).fillna(-1)
+            return pd.Categorical.from_codes(codes, mapping.values(), ordered=False)
+
+        training_set['Pclass'] = transform_column_to_categorical(mapping={1: 'a', 2: 'b', 3: 'c'},
+                                                                 dataset=training_set,
+                                                                 feature='Pclass')
+
+        imputation_transformer = ImputationTransformer(group_by_column='Pclass')
+        transformed_training_data = imputation_transformer.fit_transform(data_x=training_set)
+        assert transformed_training_data.isna().sum().sum() == 0  # should be 0 NAs
+        assert all(transformed_training_data.index.values == training_set.index.values)  # index should match
+        assert all(transformed_training_data.columns.values == training_set.columns.values)  # columns match
+        # state is the same except for Pclass is down with the categoric columns rather than with numeric
+        assert imputation_transformer.state == {'Age': {'a': 38.0, 'b': 29.0, 'c': 24.0, 'all': 28.5},
+                                                'SibSp': {'a': 0.0, 'b': 0.0, 'c': 0.0, 'all': 0.0},
+                                                'Parch': {'a': 0.0, 'b': 0.0, 'c': 0.0, 'all': 0.0},
+                                                'Fare': {'a': 61.679199999999994, 'b': 15.0479, 'c': 8.05,
+                                                         'all': 14.5},
+                                                'Pclass': 'c',
+                                                'Sex': {'a': 'male', 'b': 'male', 'c': 'male', 'all': 'male'},
+                                                'Embarked': {'a': 'S', 'b': 'S', 'c': 'S', 'all': 'S'}}
+        state = imputation_transformer.state
+
+        ######################################################################################################
+        # Pclass - 1 NA, manually set
+        ######################################################################################################
+        # Pclass : indexes_of_zero_fare[0] was set to na and should have value of state['Pclass'],
+        # since it was the "group by" column
+        assert transformed_training_data.loc[indexes_of_zero_fare[0], 'Pclass'] == state['Pclass']
+        # Pclass : all NON-nas should have maching values (only NA is indexes_of_zero_fare[0])
+        check_non_nas(indexes_of_nas=[indexes_of_zero_fare[0]], column='Pclass',
+                      dataset1=transformed_training_data, dataset2=training_set)
+
+        ######################################################################################################
+        # Age
+        ######################################################################################################
+        # First, there is 1 case where Age is NA and Pclass is NA, which should result in state['Sex']['all']
+        # it is at the first index where fare == 0
+        assert transformed_training_data.loc[indexes_of_zero_fare[0], 'Age'] == state['Age']['all']
+        # Next Lets check all of the indexes that were not NA, ensure they did not change
+        check_non_nas(indexes_of_nas=indexes_of_na_age, column='Age',
+                      dataset1=transformed_training_data, dataset2=training_set)
+
+        # lets check the remaining indexes that were NA, except for the NA associated with Pclass == NA,
+        # which we already checked
+        indexes = [x for x in indexes_of_na_age if x != indexes_of_zero_fare[0]]
+        former_nas = transformed_training_data.loc[indexes]
+        assert all(former_nas[former_nas.Pclass == 'c'].Age == state['Age']['c'])
+        assert all(former_nas[former_nas.Pclass == 'b'].Age == state['Age']['b'])
+        assert all(former_nas[former_nas.Pclass == 'a'].Age == state['Age']['a'])
+
+        ######################################################################################################
+        # SibSp - 0 NAs
+        ######################################################################################################
+        assert all(transformed_training_data.SibSp == training_set.SibSp)
+
+        ######################################################################################################
+        # Parch - 0 NAs
+        ######################################################################################################
+        assert all(transformed_training_data.Parch == training_set.Parch)
+
+        ######################################################################################################
+        # Fare - 14 NAs that were set from Fares that had value of 0
+        ######################################################################################################
+        # First, there is 1 case where Fare is NA and Pclass is NA, which should result in state['Sex']['all']
+        # it is at the first index where fare == 0
+        assert transformed_training_data.loc[indexes_of_zero_fare[0], 'Fare'] == state['Fare']['all']
+        # Next Lets check all of the indexes that were not NA, ensure they did not change
+        check_non_nas(indexes_of_nas=indexes_of_zero_fare, column='Fare',
+                      dataset1=transformed_training_data, dataset2=training_set)
+
+        # lets check the remaining indexes that were NA, except for the NA associated with Pclass == NA,
+        # which we already checked
+        former_nas = transformed_training_data.loc[indexes_of_zero_fare[1:]]
+        assert all(former_nas[former_nas.Pclass == 'c'].Fare == state['Fare']['c'])
+        assert all(former_nas[former_nas.Pclass == 'b'].Fare == state['Fare']['b'])
+        assert all(former_nas[former_nas.Pclass == 'a'].Fare == state['Fare']['a'])
+
+        ######################################################################################################
+        # Sex - 1 NA manually set
+        ######################################################################################################
+        # there is 1 clase where Sex was manually set to NA, it is the index that Pclass is NA, which should
+        # result in state['Sex']['all']
+        assert transformed_training_data.loc[indexes_of_zero_fare[0], 'Sex'] == state['Sex']['all']
+
+        ######################################################################################################
+        # Emabarked - 2 NAs
+        ######################################################################################################
+        former_nas = transformed_training_data.loc[indexes_of_na_embarked]
+        # both Pclas == 1
+        assert all(former_nas[former_nas.Pclass == 'a'].Embarked == state['Embarked']['a'])
+
+    def test_transformations_ImputationTransformer_treat_zeros_as_na(self):
+        raise NotImplementedError()
+
+    def test_transformations_ImputationTransformer_include_exclude_columns(self):
+        raise NotImplementedError()
+
     def test_transformations_PolynomialFeaturesTransformer(self):
         data = TestHelper.get_insurance_data()
         target_variable = 'expenses'

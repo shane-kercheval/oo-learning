@@ -153,9 +153,8 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         # pandas expects code to be `0, 1, 2, ...`, which won't always be the case. We need to map the actual
         # values to what pandas expects.
         actual_to_expected_mapping = dict(zip(mapping.keys(), np.arange(len(mapping))))
-        self._dataset[feature] = pd.Categorical.from_codes(pd.Series(self._dataset[feature]).map(actual_to_expected_mapping),  # noqa
-                                                           mapping.values(),
-                                                           ordered=ordered)
+        codes = pd.Series(self._dataset[feature]).map(actual_to_expected_mapping).fillna(-1)
+        self._dataset[feature] = pd.Categorical.from_codes(codes, mapping.values(), ordered=ordered)
         self._update_feature_types()
 
     def set_level_order(self, categoric_feature: str, levels: List):

@@ -5,6 +5,10 @@ from oolearning.exploratory.ExploreDatasetBase import ExploreDatasetBase
 
 
 class ExploreClassificationDataset(ExploreDatasetBase):
+    """
+    ExploreClassificationDataset is a class that provides a lot of convenience for exploring a new
+        (classification) dataset.
+    """
     def __init__(self,
                  dataset: pd.DataFrame,
                  target_variable: str,

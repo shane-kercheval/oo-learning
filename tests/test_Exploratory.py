@@ -304,7 +304,15 @@ class ExploratoryTests(TimerTestCase):
         feature = 'Pclass'
         assert feature in explore.numeric_features
         assert feature not in explore.categoric_features
-        assert all(explore.dataset.iloc[0:10][feature] == [3, 1, 3, 1, 3, 3, 1, 3, 3, 2])
+
+        # set 1 to NAN to test what happens, should just be nan
+        import numpy as np
+        explore.dataset.loc[1, feature] = np.nan
+
+        # x and y are equal or they are both non.
+        assert all([x == y or (np.isnan(x) and np.isnan(y)) for x, y in
+                    zip(explore.dataset.iloc[0:10][feature], [3, np.nan, 3, 1, 3, 3, 1, 3, 3, 2])])
+
         target_mapping = {1: 'a',
                           2: 'b',
                           3: 'c'}
@@ -314,7 +322,9 @@ class ExploratoryTests(TimerTestCase):
         # make sure we mapped right values
         assert all(explore.dataset[feature].values.categories.values == list(target_mapping.values()))
         # spot check first 10
-        assert all(explore.dataset.iloc[0:10][feature] == ['c', 'a', 'c', 'a', 'c', 'c', 'a', 'c', 'c', 'b'])
+
+        assert all([x == y or (np.isnan(x) and np.isnan(y)) for x, y in
+                    zip(explore.dataset.iloc[0:10][feature], ['c', np.nan, 'c', 'a', 'c', 'c', 'a', 'c', 'c', 'b'])])  # noqa
 
     def test_ExploreDatasetBase_histogram(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
