@@ -134,7 +134,7 @@ class ModelStacker(ModelWrapperBase):
         :param stacking_transformations: The transformations that are specific to the 'stacker'.
             (The transformations that are specific to the base models will be included in the corresponding
             ModelInfo objects. Transformations applied to ALL models (base and stacker) could be passed in
-            via (for example) a ModelFitter.)
+            via (for example) a ModelTrainer.)
         :param scores: since we are cross-validating, we can get a score from each base-model
         """
         super().__init__()

@@ -353,14 +353,14 @@ class EvaluatorTests(TimerTestCase):
         target_variable = 'strength'
         holdout_ratio = 0.20
 
-        fitter = ModelFitter(model=LinearRegressor(),
-                             model_transformations=[RemoveColumnsTransformer(columns=['fineagg'])],
-                             splitter=RegressionStratifiedDataSplitter(holdout_ratio=holdout_ratio),
-                             evaluator=RegressionEvaluator(),
-                             persistence_manager=None,
-                             train_callback=None)
+        fitter = ModelTrainer(model=LinearRegressor(),
+                              model_transformations=[RemoveColumnsTransformer(columns=['fineagg'])],
+                              splitter=RegressionStratifiedDataSplitter(holdout_ratio=holdout_ratio),
+                              evaluator=RegressionEvaluator(),
+                              persistence_manager=None,
+                              train_callback=None)
 
-        fitter.fit(data=data, target_variable=target_variable, hyper_params=None)
+        fitter.train(data=data, target_variable=target_variable, hyper_params=None)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
         assert isclose(fitter.training_evaluator.mean_squared_error, 109.68243774089586)
         assert isclose(fitter.training_evaluator.mean_absolute_error, 8.360259532214116)

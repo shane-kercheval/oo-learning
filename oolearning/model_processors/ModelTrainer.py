@@ -16,10 +16,10 @@ from oolearning.transformers.TransformerBase import TransformerBase
 from oolearning.transformers.TransformerPipeline import TransformerPipeline
 
 
-class ModelFitter:
+class ModelTrainer:
     """
     # TODO document
-    Intent of ModelFitter is to abstract away the details of the general process of fitting a model.
+    Intent of ModelTrainer is to abstract away the details of the general process of training a model.
         - transform data specific to the model (e.g. regression requires imputing/dummifying
         - train
         - access training value
@@ -91,7 +91,7 @@ class ModelFitter:
 
         return key
 
-    def fit(self, data: pd.DataFrame, target_variable: str, hyper_params: HyperParamsBase=None):
+    def train(self, data: pd.DataFrame, target_variable: str, hyper_params: HyperParamsBase=None):
         if self._has_fitted:
             raise ModelAlreadyFittedError()
 
@@ -108,9 +108,9 @@ class ModelFitter:
         holdout_y = data.iloc[holdout_indexes][target_variable]
         holdout_x = data.iloc[holdout_indexes].drop(columns=target_variable)
 
-        # transform/fit on training data
+        # transform/train on training data
         if self._model_transformations is not None:
-            # before we fit the data, we actually want to 'snoop' at what the expected columns will be with
+            # before we train the data, we actually want to 'snoop' at what the expected columns will be with
             # ALL the data. The reason is that if we so some sort of dummy encoding, but not all the
             # categories are included in the training set (i.e. maybe only a small number of observations have
             # the categoric value), then we can still ensure that we will be giving the same expected columns/
@@ -137,14 +137,14 @@ class ModelFitter:
 
         # set up persistence if applicable
         if self._persistence_manager is not None:  # then build the key
-            cache_key = ModelFitter.build_cache_key(model=self._model, hyper_params=hyper_params)
+            cache_key = ModelTrainer.build_cache_key(model=self._model, hyper_params=hyper_params)
             self._persistence_manager.set_key(key=cache_key)
             self._model.set_persistence_manager(persistence_manager=self._persistence_manager)
 
         if self._train_callback is not None:
             self._train_callback(transformed_training_data, training_y, hyper_params)
 
-        # fit the model with the transformed training data
+        # train the model with the transformed training data
         self._model.train(data_x=transformed_training_data, data_y=training_y, hyper_params=hyper_params)
 
         self._has_fitted = True

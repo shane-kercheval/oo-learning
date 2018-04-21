@@ -123,7 +123,7 @@ class RandomForestClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
 
         param_dict = hyper_params.params_dict
 
-        #  n_jobs: The number of jobs to run in parallel for both fit and predict. If -1, then the number
+        #  n_jobs: The number of jobs to run in parallel for both train and predict. If -1, then the number
         # of jobs is set to the number of cores.
         rf_model = sklearn.ensemble.RandomForestClassifier(n_estimators=param_dict['n_estimators'],
                                                            criterion=param_dict['criterion'],
@@ -158,7 +158,7 @@ class RandomForestRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
         assert hyper_params.is_regression
         param_dict = hyper_params.params_dict
 
-        #  n_jobs: The number of jobs to run in parallel for both fit and predict. If -1, then the number
+        #  n_jobs: The number of jobs to run in parallel for both train and predict. If -1, then the number
         # of jobs is set to the number of cores.
         rf_model = sklearn.ensemble.RandomForestRegressor(n_estimators=param_dict['n_estimators'],
                                                           criterion=param_dict['criterion'],

@@ -51,7 +51,7 @@ from oolearning.model_aggregation.MeanAggregationStrategy import MeanAggregation
 
 from .model_processors.DecoratorBase import DecoratorBase
 from .model_processors.TwoClassThresholdDecorator import TwoClassThresholdDecorator
-from .model_processors.ModelFitter import ModelFitter
+from .model_processors.ModelTrainer import ModelTrainer
 from .model_processors.ModelInfo import ModelInfo
 from .model_processors.ModelSearcher import ModelSearcher
 from .model_processors.ModelTuner import ModelTuner

@@ -3,7 +3,7 @@ from typing import List, Callable, Union
 import pandas as pd
 
 from oolearning.model_processors.DecoratorBase import DecoratorBase
-from oolearning.model_processors.ModelFitter import ModelFitter
+from oolearning.model_processors.ModelTrainer import ModelTrainer
 from oolearning.model_processors.ModelInfo import ModelInfo
 from oolearning.model_processors.ModelTuner import ModelTuner
 from oolearning.model_processors.ResamplerBase import ResamplerBase
@@ -72,14 +72,14 @@ class ModelSearcher:
         # even if no hyper-params), and then get the holdout set value. We will want to track the
         # mean/st_dev resampling value vs the holdout value.
 
-        # we don't need the holdout data.. we will send the data to the ModelFitter which will use the same
+        # we don't need the holdout data.. we will send the data to the ModelTrainer which will use the same
         # splitter and will use the training/holdout data appropriately
         # so, we will only get the training data, use that with the tuner, then the tuner's best model, refit
         # the entire training set with the specific model/hyper-params (same training set is used under the
-        # hood in the ModelFitter because we pass the same splitter), and then will evaluate on holdout set
+        # hood in the ModelTrainer because we pass the same splitter), and then will evaluate on holdout set
         # which the tuner did not see
 
-        # NOTE: we do NOT need to get the expected columns (like we do for the Resampler and ModelFitter; for
+        # NOTE: we do NOT need to get the expected columns (like we do for the Resampler and ModelTrainer; for
         # the purposes of ensuring that when we split, uncommon values are missing from being encoded
         # (dummy/one-hot/etc.) and then appearing in the holdout set). The reason we don't need to is because
         # A) the resampler only sees the training set and handles this problem itself and B) the fitter
@@ -97,7 +97,7 @@ class ModelSearcher:
 
         tuner_results = list()
         holdout_scores = list()
-        # for each model: tune; get the best hyper-parameters; fit all the training data on the best
+        # for each model: tune; get the best hyper-parameters; train all the training data on the best
         # hyper-parameters; then calculate the final model on the holdout data
         for index in range(len(self._models)):
             local_model_description = self._model_descriptions[index]
@@ -124,9 +124,9 @@ class ModelSearcher:
                 # searcher; the difference, for example, might be the the transformations
                 local_persistence_manager.set_sub_structure(sub_structure='tune_' + local_model_description)
 
-            # clone all the objects to be reused with the ModelFitter after tuning
+            # clone all the objects to be reused with the ModelTrainer after tuning
             tuner = ModelTuner(resampler=self._resampler_function(local_model.clone(),
-# we want to fit the transformations only on the training data and transform accordingly.
+# we want to train the transformations only on the training data and transform accordingly.
 # Then, when we make predictions, we will transform the "unseen" data based based on the
 # transformations fitted on the training set
 # this is the best way to simulate never-before-seen data with the holdout set.
@@ -162,26 +162,26 @@ class ModelSearcher:
                 assert all(transformed_training_data.index.values == training_indexes)
 
             # do not have to clone these objects again, since they won't be reused after this
-            fitter = ModelFitter(model=local_model,
-# TODO document or make note to self that the resampler will transform the data according to each fold (e.g. fit/transform on training folds and transform on holdout fold)
-                                 model_transformations=local_model_trans,
-# TODO note (and verify to self) that splitter will split in the same way as above, so we don't really need the holdout data above, Fitter will train on the same dataset that the resampler used, and predict on the holdout set, which the resampler did not see
-                                 splitter=self._splitter,
-                                 scores=scores,
-                                 persistence_manager=local_persistence_manager,
-                                 train_callback=train_callback)
+            fitter = ModelTrainer(model=local_model,
+                                  # TODO document or make note to self that the resampler will transform the data according to each fold (e.g. fit/transform on training folds and transform on holdout fold)
+                                  model_transformations=local_model_trans,
+                                  # TODO note (and verify to self) that splitter will split in the same way as above, so we don't really need the holdout data above, Fitter will train on the same dataset that the resampler used, and predict on the holdout set, which the resampler did not see
+                                  splitter=self._splitter,
+                                  scores=scores,
+                                  persistence_manager=local_persistence_manager,
+                                  train_callback=train_callback)
 
             if local_model_params_object is not None:
                 # if the params object is not None, then we tuned across params and we need to get the best
                 # combination
                 local_model_params_object.update_dict(tuner.results.best_hyper_params)
 
-            # re-fit on entire training set using the best hyper_params.
+            # re-train on entire training set using the best hyper_params.
             # we are passing in all the data, but the Fitter will split the data according to the same
             # Splitter that we used to get the training data to pass into the Tuner.
-            fitter.fit(data=data,
-                       target_variable=target_variable,
-                       hyper_params=local_model_params_object)
+            fitter.train(data=data,
+                         target_variable=target_variable,
+                         hyper_params=local_model_params_object)
 
             # get the best model
             holdout_scores.append(fitter.holdout_scores)

@@ -97,7 +97,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                 train_y, holdout_y = data_y[training_indexes], data_y[holdout_indexes]
 
                 # NOTE: we are fitting the transformations on the k-1 folds (i.e. local training data)
-                # for each k times we fit/predict data. This is so we don't have any contamination/
+                # for each k times we train/predict data. This is so we don't have any contamination/
                 # leakage into the local holdout/fold we are predicting on (just like we wouldn't fit
                 # our transformations on the entire dataset; we fit/transform on the training and then
                 # simply transform on the holdout

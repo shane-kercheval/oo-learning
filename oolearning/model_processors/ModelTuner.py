@@ -62,7 +62,7 @@ class ModelTuner:
         """
         `resample` handles the logic of applying the pre-process transformations, as well as fitting the data
             based on teh resampling method and storing the resampled accuracies
-        :param data_x: DataFrame to fit the model on
+        :param data_x: DataFrame to train the model on
         :param data_y: np.ndarray containing the target values to be trained on
         :type params_grid: object containing the sequences of hyper-parameters to tune. Each hyper-parameter
             will over-write the associated hyper-parameter passed into the constructor's

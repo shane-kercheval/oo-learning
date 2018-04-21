@@ -82,7 +82,7 @@ class ResamplerBase(metaclass=ABCMeta):
         """
         `resample` handles the logic of applying the pre-process transformations, as well as fitting the data
             based on teh resampling method and storing the resampled accuracies
-        :param data_x: DataFrame to fit the model on
+        :param data_x: DataFrame to train the model on
         :param data_y: np.ndarray containing the target values to be trained on
         :type hyper_params: object containing the hyper-parameters to tune
         :return: None
