@@ -177,7 +177,7 @@ skewnewss_statistics <- map_dbl(classification_column_names, ~ {
     column_name <- .
 
     dataset_column <- classification_dataset[, column_name]
-    if(is.numeric(dataset_column) && min(dataset_column > 0)) {
+    if(is.numeric(dataset_column) && !any(is.na(dataset_column)) && min(dataset_column > 0)) {
 
         return (BoxCoxTrans(dataset_column)$skewness)
 
@@ -198,15 +198,15 @@ df_outliers <- map(numeric_column_names, ~ {
 
     outlier_range <- 2 # this multipied by IQR (traditionally this number is 1.5)
 
-    lower_quantile <- quantile(numeric_data)[2]
-    upper_quantile <- quantile(numeric_data)[4]
+    lower_quantile <- quantile(numeric_data, na.rm = TRUE)[2]
+    upper_quantile <- quantile(numeric_data, na.rm = TRUE)[4]
     iqr <- upper_quantile - lower_quantile
 
     threshold_upper <- (iqr * outlier_range) + upper_quantile
     threshold_lower <- lower_quantile - (iqr * 1.5) # Any numeric_data point outside (> threshold_upper or < threshold_lower) these values is a mild outlier
 
-    upper_outlier_count <- sum(numeric_data > threshold_upper)
-    lower_outlier_count <- sum(numeric_data < threshold_lower)
+    upper_outlier_count <- sum(numeric_data > threshold_upper, na.rm = TRUE)
+    lower_outlier_count <- sum(numeric_data < threshold_lower, na.rm = TRUE)
 
     return (list(upper_outlier_count, lower_outlier_count))
 })
@@ -225,7 +225,7 @@ kable(df_outliers)
 if(sum(numeric_columns == TRUE) >= 2) {
 
     #pairs.panels(classification_dataset[, numeric_columns])
-    matrix_correlations <- cor(classification_dataset[, numeric_columns])
+    matrix_correlations <- cor(classification_dataset[, numeric_columns][complete.cases(classification_dataset[, numeric_columns]), ])
     corrplot::corrplot( matrix_correlations, 
                         order = 'hclust',
                         tl.cex = .35,
@@ -360,8 +360,8 @@ walk(classification_column_names, ~ {
         target_column <- classification_dataset$target
         
         df_data <- data.frame(target=dataset_column)
-        fun_args <- list(mean = mean(df_data$target), sd = sd(df_data$target))
-        quantiles <- quantile(df_data$target, c(0.02, 0.98)) # cut off any 'outliers' (crude) so it doesn't skew graph
+        fun_args <- list(mean = mean(df_data$target), sd = sd(df_data$target, na.rm=TRUE))
+        quantiles <- quantile(df_data$target, c(0.02, 0.98), na.rm=TRUE) # cut off any 'outliers' (crude) so it doesn't skew graph
         
         result = tryCatch({
             print(ggplot(data = df_data, mapping = aes(x = target)) +
@@ -376,8 +376,8 @@ walk(classification_column_names, ~ {
             df_column_target_negative <- df_column_target %>% dplyr::filter(target == target_negative_class)
     
             df_data <- data.frame(target=df_column_target_positive$column)
-            fun_args <- list(mean = mean(df_data$target), sd = sd(df_data$target))
-            quantiles <- quantile(df_data$target, c(0.02, 0.98)) # cut off any 'outliers' (crude) so it doesn't skew graph
+            fun_args <- list(mean = mean(df_data$target), sd = sd(df_data$target, na.rm=TRUE))
+            quantiles <- quantile(df_data$target, c(0.02, 0.98), na.rm=TRUE) # cut off any 'outliers' (crude) so it doesn't skew graph
             print(ggplot(data = df_data, mapping = aes(x = target)) +
                 geom_histogram(mapping=aes(y = ..density..), bins = 30) + # histogram of data
                 geom_density(col = 'red') + # emperical PDF
@@ -386,8 +386,8 @@ walk(classification_column_names, ~ {
                 labs(title = 'Histogram for Positive Class'))
     
             df_data <- data.frame(target=df_column_target_negative$column)
-            fun_args <- list(mean = mean(df_data$target), sd = sd(df_data$target))
-            quantiles <- quantile(df_data$target, c(0.02, 0.98)) # cut off any 'outliers' (crude) so it doesn't skew graph
+            fun_args <- list(mean = mean(df_data$target), sd = sd(df_data$target, na.rm=TRUE))
+            quantiles <- quantile(df_data$target, c(0.02, 0.98), na.rm=TRUE) # cut off any 'outliers' (crude) so it doesn't skew graph
             print(ggplot(data = df_data, mapping = aes(x = target)) +
                 geom_histogram(mapping=aes(y = ..density..), bins = 30) + # histogram of data
                 geom_density(col = 'red') + # emperical PDF
@@ -577,7 +577,7 @@ train_classification <- function(   model_name,
                                     data = dataset,
                                     method = training_method,
                                     metric = training_metric,
-                                    preProc = training_preProcess,
+                                    preProcess = training_preProcess,
                                     trControl = training_control,
                                     tuneGrid = training_tune_grid,
                                     tuneLength = training_tune_length,
@@ -594,7 +594,7 @@ train_classification <- function(   model_name,
                                         data = dataset,
                                         method = training_method,
                                         metric = training_metric,
-                                        preProc = training_preProcess,
+                                        preProcess = training_preProcess,
                                         trControl = training_control,
                                         tuneGrid = training_tune_grid,
                                         tuneLength = training_tune_length)
@@ -605,7 +605,7 @@ train_classification <- function(   model_name,
                                         y = dataset$target,
                                         method = training_method,
                                         metric = training_metric,
-                                        preProc = training_preProcess,
+                                        preProcess = training_preProcess,
                                         trControl = training_control,
                                         tuneGrid = training_tune_grid,
                                         tuneLength = training_tune_length)
@@ -689,78 +689,23 @@ train_classification <- function(   model_name,
     
     return (list(caret_model, mean_roc_threshold))
 }
-
-#############################
-## TEST train_classification
-#############################
-test_model_glm <- train_classification( model_name = 'test',
-                        dataset = classification_train,
-                        custom_seed = custom_seed,
-                        training_method = 'glm',
-                        training_metric = metric,
-                        training_preProcess = c('nzv', 'center', 'scale'),
-                        training_control = train_control,
-                        training_tune_grid = NULL,
-                        training_tune_length = NULL,
-                        refresh_models = TRUE,
-                        sample_to_predictor_ratio_threshold = NULL,
-                        class_to_predictor_ratio_threshold = NULL,
-                        class_names = NULL)
-roc_cutoff <- test_model_glm[[2]]
-stopifnot(near(roc_cutoff, 0.3183735))
-test_model_glm <- test_model_glm[[1]]
-stopifnot(file.exists('./classification_data/test.RDS'))
-# expected_model_glm <- test_model_glm
-# saveRDS(expected_model_glm, file = './classification_data/expected_model_glm.RDS')
-expected_model_glm <- readRDS(file = './classification_data/expected_model_glm.RDS')
-
-stopifnot(varImp(expected_model_glm)$importance$Overall == varImp(test_model_glm)$importance$Overall)
-stopifnot(expected_model_glm$resample == test_model_glm$resample)
-
-expected_error = tryCatch(
-    train_classification(   model_name = 'test',
-                            dataset = classification_train,
-                            custom_seed = custom_seed,
-                            training_method = 'rda',
-                            training_metric = metric,
-                            training_preProcess = c('nzv', 'center', 'scale'),
-                            training_control = train_control,
-                            training_tune_grid = expand.grid(   #lambda = tuning_rda_lambda,
-                                                                gamma = tuning_rda_gamma),
-                            training_tune_length = NULL,
-                            refresh_models = TRUE,
-                            sample_to_predictor_ratio_threshold = NULL,
-                            class_to_predictor_ratio_threshold = NULL,
-                            class_names = NULL),
-    error=function(e) e)
-stopifnot(inherits(expected_error, 'error'))
-stopifnot(expected_error$message == 'model_tuning_parameters %in% colnames(training_tune_grid) are not all TRUE')
-
-expected_error = tryCatch(
-    train_classification(   model_name = 'test',
-                            dataset = classification_train,
-                            custom_seed = custom_seed,
-                            training_method = 'rda',
-                            training_metric = metric,
-                            training_preProcess = c('nzv', 'center', 'scale'),
-                            training_control = train_control,
-                            training_tune_grid = expand.grid(   lambda = tuning_rda_lambda),
-                                                                #gamma = tuning_rda_gamma),
-                            training_tune_length = NULL,
-                            refresh_models = TRUE,
-                            sample_to_predictor_ratio_threshold = NULL,
-                            class_to_predictor_ratio_threshold = NULL,
-                            class_names = NULL),
-    error=function(e) e)
-stopifnot(inherits(expected_error, 'error'))
-stopifnot(expected_error$message == 'model_tuning_parameters %in% colnames(training_tune_grid) are not all TRUE')
 ```
 
+
+```{r impute, echo = FALSE, comment = '', results = 'asis'}
+# caret isn't fucking imputing values.. 
+imputation <- preProcess(classification_train, method = 'medianImpute')
+
+classification_train <- predict(imputation, classification_train)
+classification_test <- predict(imputation, classification_test)
+```
 ## Models
 
 ### glm_no_pre_process
 
 ```{r glm_no_pre_process, echo = FALSE, comment = '', results = 'asis'}
+#asdf <- preProcess(classification_train %>% dplyr::select(Fare, Age, target), method = 'medianImpute')
+#all(complete.cases(predict(asdf, classification_train %>% dplyr::select(Fare, Age, target))))
 glm_no_pre_process <- train_classification(
     refresh_models = refresh_models,
     training_metric = metric,
@@ -768,7 +713,7 @@ glm_no_pre_process <- train_classification(
     model_name = 'glm_no_pre_process',
     dataset = classification_train,
     training_method = 'glm',
-    training_preProcess = NULL,
+    training_preProcess = "medianImpute",
     training_control = train_control,
     training_tune_grid = NULL,
     training_tune_length = NULL,
@@ -1223,35 +1168,6 @@ model_information <- rbind(model_information,
 classification_models[['nearest_shrunken_centroids']] <- nearest_shrunken_centroids
 ```
 
-### regularized_discriminant_analysis
-
-```{r regularized_discriminant_analysis, echo = FALSE, comment = '', results = 'asis'}
-model_pre_processing <- c('nzv', 'center', 'scale')
-regularized_discriminant_analysis <- train_classification(
-    refresh_models = refresh_models,
-    training_metric = metric,
-    custom_seed = custom_seed,
-    model_name = 'regularized_discriminant_analysis',
-    dataset = classification_train,
-    training_method = 'rda',
-    training_preProcess = model_pre_processing,
-    training_control = train_control,
-    training_tune_grid = expand.grid(lambda = tuning_rda_lambda, gamma = tuning_rda_gamma),
-    training_tune_length = NULL,
-    sample_to_predictor_ratio_threshold = NULL,
-    class_to_predictor_ratio_threshold = 5,
-    class_names = c(target_positive_class, target_negative_class))
-
-mean_roc_threshold <- regularized_discriminant_analysis[[2]]
-regularized_discriminant_analysis <- regularized_discriminant_analysis[[1]]
-
-model_information <- rbind(model_information,
-                                    data.frame( model = 'regularized_discriminant_analysis',
-                                                training_preProcess = I(list(model_pre_processing)),
-                                                mean_roc_threshold = mean_roc_threshold))
-classification_models[['regularized_discriminant_analysis']] <- regularized_discriminant_analysis
-```
-
 ### regularized_discriminant_analysis_rc
 
 ```{r regularized_discriminant_analysis_rc, echo = FALSE, comment = '', results = 'asis'}
@@ -1349,76 +1265,6 @@ if(all(classification_column_names %in% recommended_columns_caret)) { # if all t
                                                     mean_roc_threshold = mean_roc_threshold))
     classification_models[['mixture_discriminant_analysis_rc']] <- mixture_discriminant_analysis_rc
 }
-```
-
-### neural_network_spatial_rc
-
-```{r neural_network_spatial_rc, echo = FALSE, comment = '', results = 'asis'}
-parameter_nnet_training_numWts <- calculate_nnet_MaxNWts(max_nnet_size = max(tuning_nnet_size),
-                                                         number_of_dataset_columns = ncol(classification_train[, recommended_columns_caret]))
-
-model_pre_processing <- c('nzv', 'center', 'scale', 'spatialSign')
-neural_network_spatial_rc <- train_classification(
-    refresh_models = refresh_models,
-    training_metric = metric,
-    custom_seed = custom_seed,
-    model_name = 'neural_network_spatial_rc',
-    dataset = classification_train[, recommended_columns_caret],
-    training_method = 'nnet',
-    training_preProcess = model_pre_processing,
-    training_control = train_control,
-    training_tune_grid = expand.grid(size = tuning_nnet_size, decay = tuning_nnet_decay),
-    training_tune_length = NULL,
-    sample_to_predictor_ratio_threshold = NULL,
-    class_to_predictor_ratio_threshold = 5,
-    class_names = c(target_positive_class, target_negative_class),
-    neural_net_numWts = parameter_nnet_training_numWts,
-    neural_net_lineout = parameter_nnet_linout,
-    neural_net_max_iterations = parameter_nnet_max_iterations)
-
-mean_roc_threshold <- neural_network_spatial_rc[[2]]
-neural_network_spatial_rc <- neural_network_spatial_rc[[1]]
-
-model_information <- rbind(model_information,
-                                    data.frame( model = 'neural_network_spatial_rc',
-                                                training_preProcess = I(list(model_pre_processing)),
-                                                mean_roc_threshold = mean_roc_threshold))
-classification_models[['neural_network_spatial_rc']] <- neural_network_spatial_rc
-```
-
-### neural_network_spatial_rc_skew
-
-```{r neural_network_spatial_rc_skew, echo = FALSE, comment = '', results = 'asis'}
-parameter_nnet_training_numWts <- calculate_nnet_MaxNWts(max_nnet_size = max(tuning_nnet_size),
-                                                         number_of_dataset_columns = ncol(classification_train[, recommended_columns_caret]))
-
-model_pre_processing <- c('nzv', 'YeoJohnson', 'center', 'scale', 'spatialSign')
-neural_network_spatial_rc_skew <- train_classification(
-    refresh_models = refresh_models,
-    training_metric = metric,
-    custom_seed = custom_seed,
-    model_name = 'neural_network_spatial_rc_skew',
-    dataset = classification_train[, recommended_columns_caret],
-    training_method = 'nnet',
-    training_preProcess = model_pre_processing,
-    training_control = train_control,
-    training_tune_grid = expand.grid(size = tuning_nnet_size, decay = tuning_nnet_decay),
-    training_tune_length = NULL,
-    sample_to_predictor_ratio_threshold = NULL,
-    class_to_predictor_ratio_threshold = 5,
-    class_names = c(target_positive_class, target_negative_class),
-    neural_net_numWts = parameter_nnet_training_numWts,
-    neural_net_lineout = parameter_nnet_linout,
-    neural_net_max_iterations = parameter_nnet_max_iterations)
-
-mean_roc_threshold <- neural_network_spatial_rc_skew[[2]]
-neural_network_spatial_rc_skew <- neural_network_spatial_rc_skew[[1]]
-
-model_information <- rbind(model_information,
-                                    data.frame( model = 'neural_network_spatial_rc_skew',
-                                                training_preProcess = I(list(model_pre_processing)),
-                                                mean_roc_threshold = mean_roc_threshold))
-classification_models[['neural_network_spatial_rc_skew']] <- neural_network_spatial_rc_skew
 ```
 
 ### flexible_discriminant_analsysis
@@ -1773,37 +1619,6 @@ model_information <- rbind(model_information,
 classification_models[['c50_model_independent_categories']] <- c50_model_independent_categories
 ```
 
-### c50_model_grouped_categories
-
-```{r c50_model_grouped_categories, echo = FALSE, comment = '', results = 'asis'}
-# modelLookup('C5.0')
-model_pre_processing <- NULL
-c50_model_grouped_categories <- train_classification(
-    refresh_models = refresh_models,
-    training_metric = metric,
-    custom_seed = custom_seed,
-    model_name = 'c50_model_grouped_categories',
-    use_formula = FALSE,
-    dataset = classification_train,
-    training_method = 'C5.0',
-    training_preProcess = model_pre_processing,
-    training_control = train_control,
-    training_tune_grid = NULL,
-    training_tune_length = 27,
-    sample_to_predictor_ratio_threshold = NULL,
-    class_to_predictor_ratio_threshold = 5,
-    class_names = c(target_positive_class, target_negative_class))
-
-mean_roc_threshold <- c50_model_grouped_categories[[2]]
-c50_model_grouped_categories <- c50_model_grouped_categories[[1]]
-
-model_information <- rbind(model_information,
-                                    data.frame( model = 'c50_model_grouped_categories',
-                                                training_preProcess = I(list(model_pre_processing)),
-                                                mean_roc_threshold = mean_roc_threshold))
-classification_models[['c50_model_grouped_categories']] <- c50_model_grouped_categories
-```
-
 ### c50_rules_model_independent_categories
 
 ```{r c50_rules_model_independent_categories, echo = FALSE, comment = '', results = 'asis'}
@@ -1835,36 +1650,6 @@ model_information <- rbind(model_information,
 classification_models[['c50_rules_model_independent_categories']] <- c50_rules_model_independent_categories
 ```
 
-### c50_rules_model_grouped_categories
-
-```{r c50_rules_model_grouped_categories, echo = FALSE, comment = '', results = 'asis'}
-# modelLookup('C5.0Rules')
-model_pre_processing <- NULL
-c50_rules_model_grouped_categories <- train_classification(
-    refresh_models = refresh_models,
-    training_metric = metric,
-    custom_seed = custom_seed,
-    model_name = 'c50_rules_model_grouped_categories',
-    use_formula = FALSE,
-    dataset = classification_train,
-    training_method = 'C5.0Rules',
-    training_preProcess = model_pre_processing,
-    training_control = train_control,
-    training_tune_grid = NULL,
-    training_tune_length = NULL,
-    sample_to_predictor_ratio_threshold = NULL,
-    class_to_predictor_ratio_threshold = 5,
-    class_names = c(target_positive_class, target_negative_class))
-
-mean_roc_threshold <- c50_rules_model_grouped_categories[[2]]
-c50_rules_model_grouped_categories <- c50_rules_model_grouped_categories[[1]]
-
-model_information <- rbind(model_information,
-                                    data.frame( model = 'c50_rules_model_grouped_categories',
-                                                training_preProcess = I(list(model_pre_processing)),
-                                                mean_roc_threshold = mean_roc_threshold))
-classification_models[['c50_rules_model_grouped_categories']] <- c50_rules_model_grouped_categories
-```
 
 ### rf_independent_categories
 
@@ -2173,8 +1958,8 @@ ggplot() +
     theme(legend.position = 'bottom')
 
 # densityplot(resamples, metric = 'ROC')
-densityplot(resamples, metric = 'Sens')
-densityplot(resamples, metric = 'Spec')
+#densityplot(resamples, metric = 'Sens')
+#densityplot(resamples, metric = 'Spec')
 ```
 
 ## Train Top Models on Entire Training Dataset & Predict on Test Set
@@ -2441,6 +2226,7 @@ model_stats <- pmap(list(   as.character(top_models$model),
         saveRDS(final_model, file = paste0('./classification_data/top_model_', model_name, '.RDS'))
 
     } else {
+        print(model_name)
 
         final_model <- readRDS(file = paste0('./classification_data/top_model_', model_name, '.RDS'))
     }

@@ -38,13 +38,18 @@ After model selection, if implementing the model in a production system, the use
 - `cost` function measure how **bad** the model is
 
 
-## Example
+# Examples
 
-```python
+## Classification Dataset
 
-def whatever():
-	pass
-```
+https://github.com/shane-kercheval/oo-learning/tree/master/examples/classification-titanic
+
+* [Exploring a dataset](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/1-%20Exploring%20the%20Titanic%20Dataset.ipynb)
+* TBD 
+
+## Regression Dataset
+
+* TBD 
 
 # Available Models
 

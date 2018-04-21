@@ -10,6 +10,10 @@ from oolearning import OOLearningHelpers
 
 
 class ExploreDatasetBase(metaclass=ABCMeta):
+    """
+    Base class (for e.g. classification and regression specific overriding) that makes exploring a dataset
+        easier by providing functionality that will almost always be needed during exploration.
+    """
     def __init__(self, dataset: pd.DataFrame, target_variable: str):
         """
         # TODO: DOCUMENT; NOTE: unlike from_csv, THIS METHOD DOES NOT NON-NUMERIC COLUMNS TO pd.Categorical
