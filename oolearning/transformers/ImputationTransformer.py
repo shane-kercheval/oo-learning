@@ -20,10 +20,12 @@ class ImputationTransformer(TransformerBase):
                  columns_explicit: List[str]=None,
                  columns_to_ignore: List[str]=None):  # noqa
         """
-        :param numeric_imputation_function:  default is a function that returns the median; setting this
+        :param numeric_imputation_function: A function that will be used to compute the value used to impute
+            for numeric features. The default is a function that returns the median; setting this
             field to None will result in no numeric columns being imputed
             Callable takes a pd.Series and returns a pd.Series
-        :param categoric_imputation_function: default is a function that returns the mode; setting this
+        :param categoric_imputation_function: A function that will be used to compute the value used to impute
+            for categoric features. The default is a function that returns the mode; setting this
             field to None will result in no categoric columns being imputed
         :param group_by_column: takes a column name, and imputation will be per (or grouped by) that column.
             For example, if we had the titanic dataset, and were imputing the `fare`; rather than, for
@@ -66,13 +68,14 @@ class ImputationTransformer(TransformerBase):
         # if we are grouping by a specific column
         # and the current column isn't the same one we are grouping by, then ... else just impute
         if group_by_column and column != group_by_column:
+            # run the imputation function on each subset of data (for each group), via apply
             values_per_group = data_x.groupby(group_by_column).apply(lambda x: imputation_function(x[column]))
             assert isinstance(values_per_group, pd.Series)
             assert set(values_per_group.index.values) == set(data_x[group_by_column].dropna().unique())
             imputation_value = values_per_group.to_dict()
             # in the event that we are imputing a value based on column X, and X's value is missing,
-            # we can automatically index on NaN and return the overall median (of the column belonging to the
-            # value we are imputing)
+            # we will simply calculate the value to impute on all of the data (from the column belonging to
+            # the value we are imputing)
             imputation_value['all'] = imputation_function(data_x[column])
         else:
             imputation_value = imputation_function(data_x[column])
@@ -84,26 +87,30 @@ class ImputationTransformer(TransformerBase):
         numeric_features, categoric_features = OOLearningHelpers.\
             get_columns_by_type(data_dtypes=data_x.dtypes, target_variable=None)
 
+        # only keep features that are in _columns_explicit, if specified
         if self._columns_explicit:
             numeric_features = [x for x in numeric_features if x in self._columns_explicit]
             categoric_features = [x for x in categoric_features if x in self._columns_explicit]
 
+        # remove features that are in _columns_to_ignore, if specified
         if self._columns_to_ignore:
             numeric_features = [x for x in numeric_features if x not in self._columns_to_ignore]
             categoric_features = [x for x in categoric_features if x not in self._columns_to_ignore]
 
+        # impute and store numeric values, if numeric function exists
         if self._numeric_imputation_function is not None:
             for column in numeric_features:
-                # i need to replace 0's with NA here, if flag is set, so that the data is fitted correctly,
-                # even though we won't be replacing the data
                 if self._treat_zeros_as_na:
+                    # if we are treating zeros ans NAs, then we need to replace 0's with NA here so that the
+                    # data is fitted correctly (i.e. as if the 0's were NAs), even though we won't be
+                    # transforming the data
                     data_x[column].replace(0, np.nan, inplace=True)
 
                 imputed_values[column] = self._imputation_helper(data_x=data_x,
                                                                  imputation_function=self._numeric_imputation_function,  # noqa
                                                                  column=column,
                                                                  group_by_column=self._group_by_column)
-
+        # impute and store categoric values, if numeric function exists
         if self._categoric_imputation_function is not None:
             for column in categoric_features:
                 imputed_values[column] = self._imputation_helper(data_x=data_x,
@@ -151,6 +158,9 @@ class ImputationTransformer(TransformerBase):
                             data_x.loc[indexes_of_group_by_value, column] = \
                                 data_x.loc[indexes_of_group_by_value, column].fillna(state[column][value])
 
+            # earlier, we ignored imputing the _group_by_column (if it was one of the columns we were
+            # imputing), so it didn't interfere with what we do for NA values of the "group by" column.
+            # Let's circle back and now impute the column if it is in fact a column we are imputing.
             if self._group_by_column in state.keys():
                 data_x[self._group_by_column].fillna(value=state[self._group_by_column], inplace=True)
 

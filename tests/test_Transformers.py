@@ -41,6 +41,18 @@ class MockSuccessTransformer(TransformerBase):
 # noinspection SpellCheckingInspection,PyMethodMayBeStatic, PyTypeChecker
 class TransformerTests(TimerTestCase):
 
+    @staticmethod
+    def check_non_nas(indexes_of_nas, column, dataset1, dataset2):
+        # ensure non-na columns match
+        # grab all the indexes, NOT in the indexes_of_na
+        series_1 = dataset1.loc[~dataset1.index.isin(indexes_of_nas), column]
+        series_2 = dataset2.loc[~dataset2.index.isin(indexes_of_nas), column]
+        # ensure that the series` indexes (non-NAs) + indexes of NAs == the indexes of original dataset
+        assert set(list(series_1.index.values) + list(indexes_of_nas)) == set(dataset1.index.values)
+        assert set(list(series_2.index.values) + list(indexes_of_nas)) == set(dataset2.index.values)
+        assert all(series_1.index.values == series_2.index.values)
+        assert all(series_1 == series_2)
+
     @classmethod
     def setUpClass(cls):
         pass
@@ -205,13 +217,6 @@ class TransformerTests(TimerTestCase):
                                                 'Embarked': {1: 'S', 2: 'S', 3: 'S', 'all': 'S'}}
         state = imputation_transformer.state
 
-        def check_non_nas(indexes_of_nas, column, dataset1, dataset2):
-            # ensure non-na columns match
-            series_1 = dataset1.loc[~dataset1.index.isin(indexes_of_nas), column]
-            series_2 = dataset2.loc[~dataset2.index.isin(indexes_of_nas), column]
-            assert all(series_1.index.values == series_2.index.values)
-            assert all(series_1 == series_2)
-
         ######################################################################################################
         # Pclass - 1 NA, manually set
         ######################################################################################################
@@ -219,18 +224,18 @@ class TransformerTests(TimerTestCase):
         # since it was the "group by" column
         assert transformed_training_data.loc[indexes_of_zero_fare[0], 'Pclass'] == state['Pclass']
         # Pclass : all NON-nas should have maching values (only NA is indexes_of_zero_fare[0])
-        check_non_nas(indexes_of_nas=[indexes_of_zero_fare[0]], column='Pclass',
-                      dataset1=transformed_training_data, dataset2=training_set)
+        TransformerTests.check_non_nas(indexes_of_nas=[indexes_of_zero_fare[0]], column='Pclass',
+                                       dataset1=transformed_training_data, dataset2=training_set)
 
         ######################################################################################################
         # Age
         ######################################################################################################
-        # First, there is 1 case where Age is NA and Pclass is NA, which should result in state['Sex']['all']
-        # it is at the first index where fare == 0
+        # First, there is 1 case where Age is NA and Pclass is NA (at the first index where fare == 0), which
+        # should result in using the median for all of the Age Data i.e. state['Age']['all']
         assert transformed_training_data.loc[indexes_of_zero_fare[0], 'Age'] == state['Age']['all']
         # Next Lets check all of the indexes that were not NA, ensure they did not change
-        check_non_nas(indexes_of_nas=indexes_of_na_age, column='Age',
-                      dataset1=transformed_training_data, dataset2=training_set)
+        TransformerTests.check_non_nas(indexes_of_nas=indexes_of_na_age, column='Age',
+                                       dataset1=transformed_training_data, dataset2=training_set)
 
         # lets check the remaining indexes that were NA, except for the NA associated with Pclass == NA,
         # which we already checked
@@ -257,8 +262,8 @@ class TransformerTests(TimerTestCase):
         # it is at the first index where fare == 0
         assert transformed_training_data.loc[indexes_of_zero_fare[0], 'Fare'] == state['Fare']['all']
         # Next Lets check all of the indexes that were not NA, ensure they did not change
-        check_non_nas(indexes_of_nas=indexes_of_zero_fare, column='Fare',
-                      dataset1=transformed_training_data, dataset2=training_set)
+        TransformerTests.check_non_nas(indexes_of_nas=indexes_of_zero_fare, column='Fare',
+                                       dataset1=transformed_training_data, dataset2=training_set)
 
         # lets check the remaining indexes that were NA, except for the NA associated with Pclass == NA,
         # which we already checked
@@ -291,8 +296,8 @@ class TransformerTests(TimerTestCase):
         test_indexes_na_age = test_set[test_set['Age'].isna()].index.values
         assert len(test_indexes_na_age) == 40
         # Next Lets check all of the indexes that were not NA, ensure they did not change
-        check_non_nas(indexes_of_nas=test_indexes_na_age, column='Age',
-                      dataset1=transformed_test_data, dataset2=test_set)
+        TransformerTests.check_non_nas(indexes_of_nas=test_indexes_na_age, column='Age',
+                                       dataset1=transformed_test_data, dataset2=test_set)
         # lets check the remaining indexes that were NA, except for the NA associated with Pclass == NA,
         # which we already checked
         former_nas = transformed_test_data.loc[test_indexes_na_age]
@@ -339,8 +344,8 @@ class TransformerTests(TimerTestCase):
         # since it was the "group by" column
         assert transformed_training_data.loc[indexes_of_zero_fare[0], 'Pclass'] == state['Pclass']
         # Pclass : all NON-nas should have maching values (only NA is indexes_of_zero_fare[0])
-        check_non_nas(indexes_of_nas=[indexes_of_zero_fare[0]], column='Pclass',
-                      dataset1=transformed_training_data, dataset2=training_set)
+        TransformerTests.check_non_nas(indexes_of_nas=[indexes_of_zero_fare[0]], column='Pclass',
+                                       dataset1=transformed_training_data, dataset2=training_set)
 
         ######################################################################################################
         # Age
@@ -349,8 +354,8 @@ class TransformerTests(TimerTestCase):
         # it is at the first index where fare == 0
         assert transformed_training_data.loc[indexes_of_zero_fare[0], 'Age'] == state['Age']['all']
         # Next Lets check all of the indexes that were not NA, ensure they did not change
-        check_non_nas(indexes_of_nas=indexes_of_na_age, column='Age',
-                      dataset1=transformed_training_data, dataset2=training_set)
+        TransformerTests.check_non_nas(indexes_of_nas=indexes_of_na_age, column='Age',
+                                       dataset1=transformed_training_data, dataset2=training_set)
 
         # lets check the remaining indexes that were NA, except for the NA associated with Pclass == NA,
         # which we already checked
@@ -377,8 +382,8 @@ class TransformerTests(TimerTestCase):
         # it is at the first index where fare == 0
         assert transformed_training_data.loc[indexes_of_zero_fare[0], 'Fare'] == state['Fare']['all']
         # Next Lets check all of the indexes that were not NA, ensure they did not change
-        check_non_nas(indexes_of_nas=indexes_of_zero_fare, column='Fare',
-                      dataset1=transformed_training_data, dataset2=training_set)
+        TransformerTests.check_non_nas(indexes_of_nas=indexes_of_zero_fare, column='Fare',
+                                       dataset1=transformed_training_data, dataset2=training_set)
 
         # lets check the remaining indexes that were NA, except for the NA associated with Pclass == NA,
         # which we already checked
@@ -411,8 +416,8 @@ class TransformerTests(TimerTestCase):
         test_indexes_na_age = test_set[test_set['Age'].isna()].index.values
         assert len(test_indexes_na_age) == 40
         # Next Lets check all of the indexes that were not NA, ensure they did not change
-        check_non_nas(indexes_of_nas=test_indexes_na_age, column='Age',
-                      dataset1=transformed_test_data, dataset2=test_set)
+        TransformerTests.check_non_nas(indexes_of_nas=test_indexes_na_age, column='Age',
+                                       dataset1=transformed_test_data, dataset2=test_set)
         # lets check the remaining indexes that were NA, except for the NA associated with Pclass == NA,
         # which we already checked
         former_nas = transformed_test_data.loc[test_indexes_na_age]
@@ -448,13 +453,6 @@ class TransformerTests(TimerTestCase):
         # test that the changes (to 0) didn't affect the training set
         assert len(training_set[np.isnan(training_set.Fare)]) == 0
 
-        def check_non_nas(indexes_of_nas, column, dataset1, dataset2):
-            # ensure non-na columns match
-            series_1 = dataset1.loc[~dataset1.index.isin(indexes_of_nas), column]
-            series_2 = dataset2.loc[~dataset2.index.isin(indexes_of_nas), column]
-            assert all(series_1.index.values == series_2.index.values)
-            assert all(series_1 == series_2)
-
         # columns that didn't change
         assert all(transformed_training_data.Pclass == training_set.Pclass)
         assert all(transformed_training_data.Sex == training_set.Sex)
@@ -464,8 +462,8 @@ class TransformerTests(TimerTestCase):
         assert all(transformed_training_data.Parch == training_set.Parch)
 
         # now check Fare
-        check_non_nas(indexes_of_nas=training_indexes_of_zero, column='Fare',
-                      dataset1=transformed_training_data, dataset2=training_set)
+        TransformerTests.check_non_nas(indexes_of_nas=training_indexes_of_zero, column='Fare',
+                                       dataset1=transformed_training_data, dataset2=training_set)
 
         assert not any(transformed_training_data.Fare == 0)
         former_nas = transformed_training_data.loc[training_indexes_of_zero]
@@ -475,8 +473,8 @@ class TransformerTests(TimerTestCase):
 
         # now check Embarked
         embarked_na_indexes = training_set[training_set.Embarked.isna()].index.values
-        check_non_nas(indexes_of_nas=embarked_na_indexes, column='Embarked',
-                      dataset1=transformed_training_data, dataset2=training_set)
+        TransformerTests.check_non_nas(indexes_of_nas=embarked_na_indexes, column='Embarked',
+                                       dataset1=transformed_training_data, dataset2=training_set)
 
         former_nas = transformed_training_data.loc[embarked_na_indexes]
         assert all(former_nas[former_nas.Pclass == 3].Embarked == state['Embarked'][3])
@@ -488,8 +486,8 @@ class TransformerTests(TimerTestCase):
         ######################################################################################################
         transformed_test_data = imputation_transformer.transform(data_x=test_set)
 
-        check_non_nas(indexes_of_nas=test_indexes_of_zero, column='Fare',
-                      dataset1=transformed_test_data, dataset2=test_set)
+        TransformerTests.check_non_nas(indexes_of_nas=test_indexes_of_zero, column='Fare',
+                                       dataset1=transformed_test_data, dataset2=test_set)
 
         assert not any(transformed_test_data.Fare == 0)
         former_nas = transformed_test_data.loc[test_indexes_of_zero]
@@ -525,24 +523,19 @@ class TransformerTests(TimerTestCase):
         # test that the changes (to 0) didn't affect the training set
         assert len(training_set[np.isnan(training_set.Fare)]) == 0
 
-        def check_non_nas(indexes_of_nas, column, dataset1, dataset2):
-            # ensure non-na columns match
-            series_1 = dataset1.loc[~dataset1.index.isin(indexes_of_nas), column]
-            series_2 = dataset2.loc[~dataset2.index.isin(indexes_of_nas), column]
-            assert all(series_1.index.values == series_2.index.values)
-            assert all(series_1 == series_2)
-
         # columns that didn't change
         assert all(transformed_training_data.Pclass == training_set.Pclass)
         assert all(transformed_training_data.Sex == training_set.Sex)
+        # Age was ignored, so it should still have the same amount of NA values
+        assert training_set['Age'].isna().sum() == transformed_training_data['Age'].isna().sum()
         assert all([x == y or (np.isnan(x) and np.isnan(y)) for x, y in zip(transformed_training_data.Age,
                                                                             training_set.Age)])
         assert all(transformed_training_data.SibSp == training_set.SibSp)
         assert all(transformed_training_data.Parch == training_set.Parch)
 
         # now check Fare
-        check_non_nas(indexes_of_nas=training_indexes_of_zero, column='Fare',
-                      dataset1=transformed_training_data, dataset2=training_set)
+        TransformerTests.check_non_nas(indexes_of_nas=training_indexes_of_zero, column='Fare',
+                                       dataset1=transformed_training_data, dataset2=training_set)
 
         assert not any(transformed_training_data.Fare == 0)
         former_nas = transformed_training_data.loc[training_indexes_of_zero]
@@ -552,8 +545,9 @@ class TransformerTests(TimerTestCase):
 
         # now check Embarked
         embarked_na_indexes = training_set[training_set.Embarked.isna()].index.values
-        check_non_nas(indexes_of_nas=embarked_na_indexes, column='Embarked',
-                      dataset1=transformed_training_data, dataset2=training_set)
+        assert len(embarked_na_indexes) == 2
+        TransformerTests.check_non_nas(indexes_of_nas=embarked_na_indexes, column='Embarked',
+                                       dataset1=transformed_training_data, dataset2=training_set)
 
         former_nas = transformed_training_data.loc[embarked_na_indexes]
         assert all(former_nas[former_nas.Pclass == 3].Embarked == state['Embarked'][3])
@@ -565,8 +559,8 @@ class TransformerTests(TimerTestCase):
         ######################################################################################################
         transformed_test_data = imputation_transformer.transform(data_x=test_set)
 
-        check_non_nas(indexes_of_nas=test_indexes_of_zero, column='Fare',
-                      dataset1=transformed_test_data, dataset2=test_set)
+        TransformerTests.check_non_nas(indexes_of_nas=test_indexes_of_zero, column='Fare',
+                                       dataset1=transformed_test_data, dataset2=test_set)
 
         assert not any(transformed_test_data.Fare == 0)
         former_nas = transformed_test_data.loc[test_indexes_of_zero]
