@@ -58,4 +58,5 @@ class ConfusionMatrix:
         matrix = self.matrix if include_totals else self.matrix.drop(index='Total', columns='Total')
         sns.heatmap(ax=ax, data=matrix, annot=True, cmap="Blues")
         ax.set_title('Predicted vs Actual Classifications')
+        plt.xticks(rotation=20, ha='right')
         return ax

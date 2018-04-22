@@ -55,5 +55,5 @@ class OOLearningHelpers:
                         cmap=sns.diverging_palette(220, 10, as_cmap=True),
                         square=True, ax=ax,
                         center=0)
-            plt.xticks(rotation=20)
+            plt.xticks(rotation=20, ha='right')
             plt.title(title)

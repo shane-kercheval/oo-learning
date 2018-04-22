@@ -4,6 +4,14 @@ from oolearning import ExploreDatasetBase
 
 
 class ExploreRegressionDataset(ExploreDatasetBase):
+    """
+    ExploreRegressionDataset gives convenience while exploring a new dataset (with a numeric target
+        variable) by providing common functionality frequently needed during standard exploration.
+    
+    WARNING: The underlying dataset should be changed from these class methods (i.e. subclass), rather
+        than changing directly, since this class caches information about the dataset. If changes are made,
+        the user can call `._update_cache()` manually.    
+    """
     def __init__(self, dataset: pd.DataFrame, target_variable: str):
         super().__init__(dataset=dataset, target_variable=target_variable)
         if self._is_target_numeric is False:

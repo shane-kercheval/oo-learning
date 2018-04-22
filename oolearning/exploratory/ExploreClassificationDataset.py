@@ -6,8 +6,13 @@ from oolearning.exploratory.ExploreDatasetBase import ExploreDatasetBase
 
 class ExploreClassificationDataset(ExploreDatasetBase):
     """
-    ExploreClassificationDataset is a class that provides a lot of convenience for exploring a new
-        (classification) dataset.
+    ExploreClassificationDataset gives convenience while exploring a new dataset (with a categoric target
+        variable) by providing common functionality frequently needed during standard exploration.
+
+    
+    WARNING: The underlying dataset should be changed from these class methods (i.e. subclass), rather
+        than changing directly, since this class caches information about the dataset. If changes are made,
+        the user can call `._update_cache()` manually.    
     """
     def __init__(self,
                  dataset: pd.DataFrame,
@@ -15,10 +20,15 @@ class ExploreClassificationDataset(ExploreDatasetBase):
                  map_numeric_target: dict=None,
                  ordered: bool=False):
         """
-        # TODO document: explain mapping target variable
-        :param dataset:
-        :param target_variable:
-        :param map_numeric_target:
+        :param dataset: dataset to explore
+        :param target_variable: the name of the target variable/column
+        :param map_numeric_target: A dictionary mapping that describes how to convert a numeric target (e.g. 
+            a column with `0`s & `1`s to e.g. a column of `yes`s & `no`s.).
+
+            for example, the dictionary for the example above would be `{0: 'no', 1: 'yes'}`
+        :param ordered: when `map_numeric_target` is not None, `ordered` is a flag indicating whether or not
+            the provided dictionary (in `map_numeric_target`) should be treated in the DataFrame column 
+            (pd.Categorical) as logically ordered.
         """
         super().__init__(dataset=dataset, target_variable=target_variable)
         if self._is_target_numeric and map_numeric_target is not None:
@@ -31,12 +41,15 @@ class ExploreClassificationDataset(ExploreDatasetBase):
                  map_numeric_target: dict=None,
                  ordered: bool=False) -> 'ExploreDatasetBase':
         """
-        # TODO: DOCUMENT; THIS METHOD SETS NON-NUMERIC COLUMNS TO pd.Categorical types
-        :param ordered:
-        :param map_numeric_target:
-        :param csv_file_path:
-        :param target_variable:
-        :return:
+        Instantiates this class (via subclass) by first loading in a csv from `csv_file_path`.
+
+        NOTE: this method sets non-numeric columns to `pd.Categorical` types.
+
+        :param csv_file_path: path to the csv file
+        :param target_variable: the name of the target variable/column
+         :param map_numeric_target: same as `__init__()`
+        :param ordered: same as `__init__()`
+        :return: an instance of this class (i.e. subclass)
         """
         explore = super().from_csv(csv_file_path=csv_file_path, target_variable=target_variable)
         if explore._is_target_numeric:
@@ -47,7 +60,12 @@ class ExploreClassificationDataset(ExploreDatasetBase):
         return explore
 
     def plot_histogram_against_target(self, numeric_feature):
-        # percentiles = (0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100)
+        """
+        Shows a plot of the specific `numeric_feature` against, or compared with, the target variable, as a
+            histogram.
+
+        :param numeric_feature: feature to visualize and compare against the target
+        """
         subset = pd.DataFrame(pd.cut(self._dataset[numeric_feature],
                                      bins=20,
                                      # [np.percentile(self._dataset[feature], x) for x in percentiles],
@@ -60,7 +78,9 @@ class ExploreClassificationDataset(ExploreDatasetBase):
 
     def plot_against_target(self, feature):
         """
-        TODO: Document
+        Shows a plot of the specific `feature` against, or compared with, the target variable.
+
+        :param feature: feature to visualize and compare against the target
         """
         assert feature != self._target_variable
 
@@ -75,6 +95,7 @@ class ExploreClassificationDataset(ExploreDatasetBase):
     @staticmethod
     def _dodged_barchart(dataset: pd.DataFrame, feature, target_variable, plot_group_percentages=False):
         """
+        Helper method that creates a dodged barchart.
         :param: dataset containing the feature column and target_variable
         :return: bar chart
         """
@@ -130,7 +151,7 @@ class ExploreClassificationDataset(ExploreDatasetBase):
         ax.set_xlabel(feature)
         ax.set_title('{0} vs. target (`{1}`)'.format(feature, target_variable))
         ax.set_xticks(group_locations + width / num_of_unique_classes)
-        ax.set_xticklabels(labels=labels, rotation=20)
+        ax.set_xticklabels(labels=labels, rotation=20, ha='right')
 
         ax.legend([ax[0] for ax in ax_list] + [ax_totals[0]], [x for x in unique_classes] + ['Total'],
                   title=target_variable)

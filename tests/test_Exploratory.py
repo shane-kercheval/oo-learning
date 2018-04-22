@@ -196,6 +196,17 @@ class ExploratoryTests(TimerTestCase):
             assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
                                                       data_frame2=explore.categoric_summary())
 
+    def test_ExploreDatasetBase_summary_nulls_and_zeros(self):
+        explore = MockExploreBase(dataset=TestHelper.get_titanic_data(), target_variable='Survived')
+
+        # change the dataset so that age has nulls AND zeros
+        explore.dataset.loc[0:4, 'Age'] = 0
+        explore._update_cache()
+
+        # now check to make sure we get the expected number of zeros, even with NA values
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_summary_nulls_and_zeros.pkl'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file, expected_dataframe=explore.numeric_summary())
+
     def test_ExploreDatasetBase_summary_no_features_drop_columns(self):
         ######################################################################################################
         # categoric target
@@ -442,6 +453,8 @@ class ExploratoryTests(TimerTestCase):
         TestHelper.check_plot('data/test_exploratory/plot_histogram_against_target_amount.png',
                               lambda: explore.plot_histogram_against_target(numeric_feature='amount'))
 
+        explore.plot_histogram_against_target(numeric_feature='amount')
+
     def test_ExploreRegressionDataset(self):
         self.assertRaises(ValueError, lambda: ExploreRegressionDataset.from_csv(csv_file_path=TestHelper.ensure_test_directory('data/credit.csv'), target_variable='default'))  # noqa
 
@@ -474,27 +487,3 @@ class ExploratoryTests(TimerTestCase):
 
         TestHelper.check_plot('data/test_exploratory/compare_against_target_median_income.png',
                               lambda: explore.plot_against_target(feature='median_income'))
-
-    # def test_ExploreRegressionDataset_statistical_tests(self):
-    #     target_variable = 'expenses'
-    #     explore = ExploreRegressionDataset(dataset=TestHelper.get_insurance_data(),
-    # target_variable=target_variable)
-    #     explore.dataset
-    #
-    #     # numeric vs numeric: correlations
-    #     explore.numeric_tests_against_target()
-    #
-    #
-    # def test_ExploreClassificationDataset_statistical_tests(self):
-    #     target_variable = 'default'
-    #     explore = ExploreClassificationDataset(dataset=TestHelper.get_credit_data(), target_variable=target_variable)  # noqa
-    #     explore.dataset
-    #
-    #     # numeric vs numeric: correlations
-    #     explore.numeric_tests_against_target()
-    #
-    #     # categoric vs categoric:
-    #     explore.plot_against_target(feature='phone')
-    #     explore.plot_against_target(feature='housing')
-    #
-    #     explore.plot_against_target(feature='age')
