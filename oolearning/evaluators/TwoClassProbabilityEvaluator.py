@@ -70,14 +70,14 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
             self._tpr = converter.true_positive_rates
             self._ideal_threshold_roc = converter.ideal_threshold
 
-        return self._create_curve(x_coordinates=self._fpr,
-                                  y_coordinates=self._tpr,
-                                  threshold=0.5,
-                                  ideal_threshold=self._ideal_threshold_roc,
-                                  title='ROC (AUC={0})'.format(round(self.auc_roc, 3)),
-                                  x_label='False Positive Rate (1 - True Negative Rate)',
-                                  y_label='True Positive Rate',
-                                  corner='Left')
+        self._create_curve(x_coordinates=self._fpr,
+                           y_coordinates=self._tpr,
+                           threshold=0.5,
+                           ideal_threshold=self._ideal_threshold_roc,
+                           title='ROC (AUC={0})'.format(round(self.auc_roc, 3)),
+                           x_label='False Positive Rate (1 - True Negative Rate)',
+                           y_label='True Positive Rate',
+                           corner='Left')
 
     def get_precision_recall_curve(self):
         """
@@ -97,14 +97,14 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
             self._tpr = converter.true_positive_rates
             self._ideal_threshold_ppv_tpr = converter.ideal_threshold
 
-        return self._create_curve(x_coordinates=self._tpr,
-                                  y_coordinates=self._ppv,
-                                  threshold=0.5,
-                                  ideal_threshold=self._ideal_threshold_ppv_tpr,
-                                  title='Positive Predictive Value vs. True Positive Rate',
-                                  x_label='True Positive Rate',
-                                  y_label='Positive Predictive Value',
-                                  corner='Right')
+        self._create_curve(x_coordinates=self._tpr,
+                           y_coordinates=self._ppv,
+                           threshold=0.5,
+                           ideal_threshold=self._ideal_threshold_ppv_tpr,
+                           title='Positive Predictive Value vs. True Positive Rate',
+                           x_label='True Positive Rate',
+                           y_label='Positive Predictive Value',
+                           corner='Right')
 
     @staticmethod
     def _create_curve(x_coordinates, y_coordinates, threshold, ideal_threshold,

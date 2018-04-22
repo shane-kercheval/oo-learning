@@ -4,7 +4,7 @@ from oolearning.splitters.StratifiedDataSplitter import StratifiedDataSplitter
 
 class ClassificationStratifiedDataSplitter(StratifiedDataSplitter):
     """
-    Splits the data into training/test groups while maintaining the categorical proportions of the
+    Splits the data into training/holdout sets while maintaining the categorical proportions of the
     target variable
     """
 
