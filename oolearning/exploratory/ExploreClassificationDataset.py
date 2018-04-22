@@ -72,9 +72,9 @@ class ExploreClassificationDataset(ExploreDatasetBase):
                                      right=True,
                                      include_lowest=True))
         subset[self._target_variable] = self._dataset[self._target_variable]
-        return self._dodged_barchart(dataset=subset,
-                                     feature=numeric_feature,
-                                     target_variable=self._target_variable)
+        self._dodged_barchart(dataset=subset,
+                              feature=numeric_feature,
+                              target_variable=self._target_variable)
 
     def plot_against_target(self, feature):
         """
@@ -85,12 +85,12 @@ class ExploreClassificationDataset(ExploreDatasetBase):
         assert feature != self._target_variable
 
         if feature in self._numeric_features:
-            return self._dataset[[feature, self._target_variable]].boxplot(by=self._target_variable)
+            self._dataset[[feature, self._target_variable]].boxplot(by=self._target_variable)
         else:
-            return self._dodged_barchart(dataset=self._dataset,
-                                         feature=feature,
-                                         target_variable=self._target_variable,
-                                         plot_group_percentages=True)
+            self._dodged_barchart(dataset=self._dataset,
+                                  feature=feature,
+                                  target_variable=self._target_variable,
+                                  plot_group_percentages=True)
 
     @staticmethod
     def _dodged_barchart(dataset: pd.DataFrame, feature, target_variable, plot_group_percentages=False):
