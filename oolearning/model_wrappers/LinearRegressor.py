@@ -3,11 +3,13 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 from matplotlib import figure, pyplot as plt
-from statsmodels import api as sm
+np.warnings.filterwarnings("ignore")  # https://github.com/statsmodels/statsmodels/issues/3814
+from statsmodels import api as sm  # noqa
+np.warnings.resetwarnings()
 
-from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
-from oolearning.model_wrappers.ModelExceptions import MissingValueError
-from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase  # noqa
+from oolearning.model_wrappers.ModelExceptions import MissingValueError  # noqa
+from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase  # noqa
 
 
 class LinearRegressor(ModelWrapperBase):
