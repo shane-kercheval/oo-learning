@@ -11,13 +11,17 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 
+import warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=Warning)
+    import statsmodels.api as sm  # https://github.com/statsmodels/statsmodels/issues/3814
+
 from sklearn.metrics import roc_auc_score
 # noinspection PyProtectedMember
 from sklearn.utils import shuffle
 
 from mock import patch
 from oolearning import *
-from oolearning import DummyClassifierStrategy, MeanAggregationStrategy
 from tests.MockClassificationModelWrapper import MockClassificationModelWrapper
 from tests.MockRegressionModelWrapper import MockRegressionModelWrapper
 from tests.TestHelper import TestHelper
@@ -101,7 +105,6 @@ class ModelWrapperTests(TimerTestCase):
         assert isclose(mean_squared_error(y_true=holdout_y, y_pred=predictions), 100.07028301004217)
         assert isclose(mean_absolute_error(y_true=holdout_y, y_pred=predictions), 7.99161252047238)
 
-        import statsmodels.api as sm
         model_object = sm.OLS(train_y, sm.add_constant(train_x)).fit()
         model_object.pvalues.values.round(5)
 
@@ -809,8 +812,8 @@ class ModelWrapperTests(TimerTestCase):
 
         model_fitter = ModelTrainer(model=MockRegressionModelWrapper(data_y=data.strength),
                                     model_transformations=[RemoveColumnsTransformer(['coarseagg', 'fineagg']),
-                                                          ImputationTransformer(),
-                                                          DummyEncodeTransformer()],
+                                                           ImputationTransformer(),
+                                                           DummyEncodeTransformer()],
                                     splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.20),
                                     evaluator=RegressionEvaluator(),
                                     train_callback=train_callback)

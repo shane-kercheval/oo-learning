@@ -1,8 +1,12 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from statsmodels import api as sm
 
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase
+import warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=Warning)
+    from statsmodels import api as sm  # https://github.com/statsmodels/statsmodels/issues/3814
+
+from oolearning.evaluators.EvaluatorBase import EvaluatorBase  # noqa
 
 
 # noinspection SpellCheckingInspection
@@ -16,6 +20,7 @@ class RegressionEvaluator(EvaluatorBase):
         self._mean_absolute_error = None
 
     def evaluate(self, actual_values: np.ndarray, predicted_values: object):
+        # noinspection PyTypeChecker
         assert len(actual_values) == len(predicted_values)
         self._actual_values = actual_values
         self._predicted_values = predicted_values
@@ -55,7 +60,6 @@ class RegressionEvaluator(EvaluatorBase):
                 'Total Observations': self.total_observations}
 
     def plot_residuals_vs_fits(self):
-        from statsmodels import api as sm
         lowess = sm.nonparametric.lowess
         loess_points = lowess(self._residuals, self._predicted_values)
         loess_x, loess_y = zip(*loess_points)
