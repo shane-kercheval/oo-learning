@@ -22,7 +22,7 @@ class TwoClassEvaluator(EvaluatorBase):
              if `positive_class` is None, then the confusion matrix is not arranged by category.
 
              For multi-class problems, `positive_class` is not applicable.
-         """
+        """
         self._positive_class = positive_class
         self._confusion_matrix = None
 
@@ -149,4 +149,3 @@ class TwoClassEvaluator(EvaluatorBase):
 
         plt.title('Quality Scores')
         plt.grid()
-        return ax

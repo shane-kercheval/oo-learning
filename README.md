@@ -45,14 +45,20 @@ After model selection, if implementing the model in a production system, the use
 https://github.com/shane-kercheval/oo-learning/tree/master/examples/classification-titanic
 
 * [Exploring a dataset](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/1-%20Exploring%20the%20Titanic%20Dataset.ipynb)
-* TBD 
+* [Training a model](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/2-Basic%20Modeling.ipynb)
+* Resampling data
+* Tuning Data
+* Searching Models
 
 ## Regression Dataset
 
-* TBD 
+* Exploring a dataset
+* Training a model
+* Resampling data
+* Tuning Data
+* Searching Models
 
 # Available Models
-
 
 ## Regression
 
