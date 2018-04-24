@@ -10,7 +10,9 @@ The power of object-oriented design means the user can easily interchange variou
 
 After model selection, if implementing the model in a production system, the user may or may not want to use a more mature library such as [scikit-learn](https://github.com/scikit-learn/scikit-learn).
 
-## Conventions / Definitions
+# Conventions / Definitions
+
+## Conventions
 
 - `train` for models
 - `fit` for data (e.g. transformations)
@@ -28,20 +30,40 @@ After model selection, if implementing the model in a production system, the use
 - `utility` function measures how **good** the model is
 - `cost` function measure how **bad** the model is
 
+## Class Terminology
+
+- `Converter`: 
+- `Evaluator`:
+- `Transformer`:
+- `Aggregator`:
+- `Stacker`: 
+- `Resampler`: 
+- `Tuner`: 
+- `Searcher`: 
+- `Splitter`:
+- `ModelWrapper`: 
 
 # Examples
 
-## Classification Data-set
-
 https://github.com/shane-kercheval/oo-learning/tree/master/examples/classification-titanic
 
-* [Exploring a dataset](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/1-%20Exploring%20the%20Titanic%20Dataset.ipynb)
-* [Training a model](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/2-Basic%20Modeling.ipynb)
-* Resampling data (TBD)
-* Tuning Data (TBD)
-* Searching Models (TBD)
+* Exploring a dataset
+	* [Classification](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/1-%20Exploring%20the%20Titanic%20Dataset.ipynb)
+	* Regression (TBD)
+* Training a model
+	* [Classification](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/2-Basic%20Modeling.ipynb)
+	* Regression (TBD)
+* Resampling data
+	* Classification (TBD)
+	* Regression (TBD)
+* Tuning Data
+	* Classification (TBD)
+	* Regression (TBD)
+* Searching Models
+	* Classification (TBD)
+	* Regression (TBD)
  
-### ModelTrainer Example
+### ModelTrainer Snippet
 
 ```python
 # define how we want to split the training/holding datasets
@@ -71,30 +93,22 @@ trainer.holdout_evaluator.all_quality_metrics
 
 *Code Snippet from [Training a model](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/2-Basic%20Modeling.ipynb) notebook.*
 
-### ModelTuner Example
+### ModelTuner Snippet
 
 ```python
 TBD
 ```
-### ModelSearcher Example
+### ModelSearcher Snippet
 
 ```python
 TBD
 ```
 
-## Regression Dataset
+## Advanced Topics (Examples)
 
-* Exploring a dataset (TBD)
-* Training a model (TBD)
-* Resampling data (TBD)
-* Tuning Data (TBD)
-* Searching Models (TBD)
-
-## Advanced Topics
-
-* Advanced Topics (TBD)
-	* Caching Models via `PersistenceManager` (TBD)
-	* Using "resampling decorators" to resample the ideal ROC threshold (TBD)
+* Model Aggregation and Stacking (TBD)
+* Using "resampling decorators" to resample the ideal ROC threshold (TBD)
+* Caching Models via `PersistenceManager` (TBD)
 
 
 # Available Models

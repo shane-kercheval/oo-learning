@@ -39,6 +39,7 @@ class TransformerBase(metaclass=ABCMeta):
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         """
         determines ('fits') the information necessary to transform future data-sets
+
         :param data_x: data to fit
         :return: state (dictionary) to be saved for the next transformation
         """
@@ -48,6 +49,7 @@ class TransformerBase(metaclass=ABCMeta):
     def _transform_definition(self, data_x: pd.DataFrame, state: dict) -> pd.DataFrame:
         """
         performs the transformations of `data` based on the previously fitted information
+
         :param data_x: the data (DataFrame) to transform
         :param state: the previous state saved based on the fitted data (i.e. values needed to do the
         transformation)
@@ -80,6 +82,7 @@ class TransformerBase(metaclass=ABCMeta):
     def fit(self, data_x: pd.DataFrame):
         """
         saves the necessary information into _state to transform future data-sets
+
         :param data_x: data to fit
         :return: None
         """
@@ -93,6 +96,7 @@ class TransformerBase(metaclass=ABCMeta):
     def transform(self, data_x: pd.DataFrame) -> pd.DataFrame:
         """
         performs the transformations of `data` based on the previously fitted information
+
         :param data_x:
         :return: transformed DataFrame
         """
@@ -109,6 +113,7 @@ class TransformerBase(metaclass=ABCMeta):
     def fit_transform(self, data_x: pd.DataFrame) -> pd.DataFrame:
         """
         convenience method that calls both fit & transform (e.g. could be used on the initial training set)
+
         :param data_x:
         :return:
         """
