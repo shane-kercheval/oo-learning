@@ -4,7 +4,6 @@ import os.path
 import pickle
 import shutil
 import time
-import warnings
 from math import isclose
 from typing import Callable
 
@@ -16,16 +15,16 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=Warning)
     import statsmodels.api as sm  # https://github.com/statsmodels/statsmodels/issues/3814
 
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import roc_auc_score  # noqa
 # noinspection PyProtectedMember
-from sklearn.utils import shuffle
+from sklearn.utils import shuffle  # noqa
 
-from mock import patch
-from oolearning import *
-from tests.MockClassificationModelWrapper import MockClassificationModelWrapper
-from tests.MockRegressionModelWrapper import MockRegressionModelWrapper
-from tests.TestHelper import TestHelper
-from tests.TimerTestCase import TimerTestCase
+from mock import patch  # noqa
+from oolearning import *  # noqa
+from tests.MockClassificationModelWrapper import MockClassificationModelWrapper  # noqa
+from tests.MockRegressionModelWrapper import MockRegressionModelWrapper  # noqa
+from tests.TestHelper import TestHelper  # noqa
+from tests.TimerTestCase import TimerTestCase  # noqa
 
 
 class MockHyperParams(HyperParamsBase):
@@ -890,8 +889,8 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         model_fitter = ModelTrainer(model=MockRegressionModelWrapper(data_y=data.strength),
                                     model_transformations=[RemoveColumnsTransformer(['coarseagg', 'fineagg']),
-                                                          ImputationTransformer(),
-                                                          DummyEncodeTransformer()],
+                                                           ImputationTransformer(),
+                                                           DummyEncodeTransformer()],
                                     evaluator=RegressionEvaluator(),
                                     splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.20),
                                     train_callback=train_callback)
