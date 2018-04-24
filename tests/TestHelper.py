@@ -153,6 +153,7 @@ class TestHelper:
 
     @staticmethod
     def check_plot(file_name: str, get_plot_function: Callable):
+        plt.gcf().clear()
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory(file_name))
         if os.path.isfile(file):
             os.remove(file)

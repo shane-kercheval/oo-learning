@@ -2435,10 +2435,16 @@ class ModelWrapperTests(TimerTestCase):
         # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
         assert predict_callback_called == ['predict_called_train', 'predict_called_holdout']
 
-        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9976052800654167, 'AUC Precision/Recall': 0.9961793020728291, 'Kappa': 0.9641559618401953, 'F1 Score': 0.9776951672862454, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.9633699633699634, 'True Negative Rate': 0.9954441913439636, 'False Positive Rate': 0.004555808656036446, 'False Negative Rate': 0.03663003663003663, 'Positive Predictive Value': 0.9924528301886792, 'Negative Predictive Value': 0.9776286353467561, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        actual_metrics = fitter.training_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.9976052800654167, 'AUC Precision/Recall': 0.9961793020728291, 'Kappa': 0.9641559618401953, 'F1 Score': 0.9776951672862454, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.9633699633699634, 'True Negative Rate': 0.9954441913439636, 'False Positive Rate': 0.004555808656036446, 'False Negative Rate': 0.03663003663003663, 'Positive Predictive Value': 0.9924528301886792, 'Negative Predictive Value': 0.9776286353467561, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
         # holdout AUC/ROC for CART was: 0.7711462450592885; for Random Forest was 0.8198945981554676;
         # slight increase to 0.8203557312252964; (default hyper-params for all models)
-        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8203557312252964, 'AUC Precision/Recall': 0.7712259990480193, 'Kappa': 0.5793325723494259, 'F1 Score': 0.732824427480916, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6956521739130435, 'True Negative Rate': 0.8727272727272727, 'False Positive Rate': 0.12727272727272726, 'False Negative Rate': 0.30434782608695654, 'Positive Predictive Value': 0.7741935483870968, 'Negative Predictive Value': 0.8205128205128205, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        actual_metrics = fitter.holdout_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.8203557312252964, 'AUC Precision/Recall': 0.7712259990480193, 'Kappa': 0.5793325723494259, 'F1 Score': 0.732824427480916, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6956521739130435, 'True Negative Rate': 0.8727272727272727, 'False Positive Rate': 0.12727272727272726, 'False Negative Rate': 0.30434782608695654, 'Positive Predictive Value': 0.7741935483870968, 'Negative Predictive Value': 0.8205128205128205, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
         # test resample data
         file_test_model_stacker_resample_data_cart = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_cart.pkl'))  # noqa
