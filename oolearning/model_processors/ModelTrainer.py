@@ -18,13 +18,14 @@ from oolearning.transformers.TransformerPipeline import TransformerPipeline
 
 class ModelTrainer:
     """
-    # TODO document
-    Intent of ModelTrainer is to abstract away the details of the general process of training a model.
-        - transform data specific to the model (e.g. regression requires imputing/dummifying
-        - train
-        - access training value
-        - evaluate on a holdout set
-        - predict on future data using same (training) transformations
+    ModelTrainer encapsulates the (mundane and repetitive) logic of the general process of training a model,
+        including:
+
+        - splitting the data into training and holdout sets
+        - data transformations & pre-processing
+        - training a model
+        - predicting on a holdout data-set, or on future data (applying the same transformations)
+        - evaluate the performance of the model on a holdout set
     """
 
     def __init__(self,
@@ -37,24 +38,27 @@ class ModelTrainer:
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None):
         """
-        # TODO: update documentation
-        :param model_transformations: List of Transformer objects to pre-process data (specific to the model,
-        e.g. Regression should impute and create dummy columns).
-            Child classes should list recommended transformations as the default value to the constructor
-            and callers have the ability to replace with their own list (or None)
+
+        :param model: a class representing the model to train
+        :param model_transformations: a list of transformations to apply before training (and predicting)
+        :param splitter: a class encapsulating the logic of splitting the data into training and holdout sets;
+            if None, then no split occurs, and the model is trained on all the data (and so no holdout
+            evaluator or scores are available).
+        :param evaluator: a class encapsulating the logic of evaluating a holdout set
+        :param scores: a list of Score objects
         :param persistence_manager: a PersistenceManager defining how the underlying models should be cached,
             optional.
         :param train_callback: a callback that is called before the model is trained, which returns the
-            data_x, data_y, and hyper_params that are passed into `ModelWrapper.train()`.
-            The primary intent is for unit tests to have the ability to ensure that the data (data_x) is
-            being transformed as expected, but it is imaginable to think that users will also benefit
-            from this capability to also peak at the data that is being trained.
+           data_x, data_y, and hyper_params that are passed into `ModelWrapper.train()`.
+           The primary intent is for unit tests to have the ability to ensure that the data (data_x) is
+           being transformed as expected, but it is imaginable to think that users will also benefit
+           from this capability to also peak at the data that is being trained.
         """
         assert isinstance(model, ModelWrapperBase)
         self._model = model
         self._splitter = splitter
         self._training_evaluator = evaluator
-        # copy so that we can use 'same' evaluator type
+        # copy so that we can use 'same' evaluator type in the holdout evaluator
         self._holdout_evaluator = copy.deepcopy(evaluator)
         self._training_scores = scores
         self._holdout_scores = None if scores is None else [x.clone() for x in scores]
@@ -71,16 +75,27 @@ class ModelTrainer:
 
     @property
     def model(self) -> ModelWrapperBase:
+        """
+        :return: underlying model object
+        """
         if self._has_fitted is False:
             raise ModelNotFittedError()
 
         return self._model
 
     def set_persistence_manager(self, persistence_manager: PersistenceManagerBase):
+        """
+        Sets the persistence manager, defining how the underlying model should be cached
+        :param persistence_manager:
+        :return:
+        """
         self._persistence_manager = persistence_manager
 
     @staticmethod
-    def build_cache_key(model: ModelWrapperBase, hyper_params: HyperParamsBase) -> str:
+    def _build_cache_key(model: ModelWrapperBase, hyper_params: HyperParamsBase) -> str:
+        """
+        helper function to build the cache key (e.g. file name)
+        """
         model_name = model.name
         if hyper_params is None:
             key = model_name
@@ -92,12 +107,22 @@ class ModelTrainer:
         return key
 
     def train(self, data: pd.DataFrame, target_variable: str, hyper_params: HyperParamsBase=None):
+        """
+        splits the data according to the Splitter (if provided; if not provided, no split occurs and the model
+            is trained on all the `data`), fits & transforms the data (based on the training set if a Splitter
+            is provided; caches transformers to transform during `predict()`), trains the model on the
+            appropriate data-set, and if a holdout data-set exists (if a Splitter is provided) then the
+            holdout data-set is evaluated.
+        :param data: data to split (if Splitter is provided) and train the model on
+        :param target_variable: the name of the target variable/column
+        :param hyper_params: a corresponding HyperParams object
+        """
         if self._has_fitted:
             raise ModelAlreadyFittedError()
 
         if self._splitter:
             training_indexes, holdout_indexes = self._splitter.split(target_values=data[target_variable])
-        else:  # we are fitting the entire data-set, no such thing as a holdout dataset/evaluator/scores
+        else:  # we are fitting the entire data-set, no such thing as a holdout data-set/evaluator/scores
             training_indexes, holdout_indexes = range(len(data)), []
             self._holdout_evaluator = None
             self._holdout_scores = None
@@ -132,12 +157,12 @@ class ModelTrainer:
         # peak at all the data (except for the target variable of course)
         # noinspection PyTypeChecker
         self._pipeline.peak(data_x=data.drop(columns=target_variable))
-        # fit on only the train dataset (and also transform)
+        # fit on only the train data-set (and also transform)
         transformed_training_data = self._pipeline.fit_transform(training_x)
 
         # set up persistence if applicable
         if self._persistence_manager is not None:  # then build the key
-            cache_key = ModelTrainer.build_cache_key(model=self._model, hyper_params=hyper_params)
+            cache_key = ModelTrainer._build_cache_key(model=self._model, hyper_params=hyper_params)
             self._persistence_manager.set_key(key=cache_key)
             self._model.set_persistence_manager(persistence_manager=self._persistence_manager)
 
@@ -192,28 +217,44 @@ class ModelTrainer:
         return predictions
 
     @property
-    def training_evaluator(self):
+    def training_evaluator(self) -> Union[EvaluatorBase, None]:
+        """
+        :return: if an Evaluator was provided via class constructor, returns the object evaluated on the
+            training data
+        """
         if self._has_fitted is False:
             raise ModelNotFittedError()
 
         return self._training_evaluator
 
     @property
-    def holdout_evaluator(self):
+    def holdout_evaluator(self) -> Union[EvaluatorBase, None]:
+        """
+        :return: if an Evaluator *and* a Splitter (thus creating a holdout set before training) were provided
+            via class constructor, returns the object evaluated on the holdout data
+        """
         if self._has_fitted is False:
             raise ModelNotFittedError()
 
         return self._holdout_evaluator
 
     @property
-    def training_scores(self):
+    def training_scores(self) -> Union[List[ScoreBase], None]:
+        """
+        :return: if a list of Scores was provided via class constructor, returns the list of Scores calculated
+            on the training data.
+        """
         if self._has_fitted is False:
             raise ModelNotFittedError()
 
         return self._training_scores
 
     @property
-    def holdout_scores(self):
+    def holdout_scores(self) -> Union[List[ScoreBase], None]:
+        """
+        :return: if list of Scores *and* a Splitter (thus creating a holdout set before training) were
+            provided via class constructor, returns the list of Scores evaluated on the holdout data
+        """
         if self._has_fitted is False:
             raise ModelNotFittedError()
 

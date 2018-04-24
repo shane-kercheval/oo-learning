@@ -1,14 +1,6 @@
-
-**THIS PROJECT IS NOT READY TO BE CONSUMED.**
-
-
-
-
-
-
 # oo-learning
 
-OO-Learning is a simple Python machine learning library based on Object Oriented design principles.
+**`oo-learning`** is a simple Python machine learning library based on Object Oriented design principles.
 
 The goal of the project is to allow users to quickly explore data and search for top machine learning algorithm *candidates* for a given dataset.
 
@@ -18,8 +10,7 @@ The power of object-oriented design means the user can easily interchange variou
 
 After model selection, if implementing the model in a production system, the user may or may not want to use a more mature library such as [scikit-learn](https://github.com/scikit-learn/scikit-learn).
 
-
-## Conventions
+## Conventions / Definitions
 
 - `train` for models
 - `fit` for data (e.g. transformations)
@@ -40,86 +31,100 @@ After model selection, if implementing the model in a production system, the use
 
 # Examples
 
-## Classification Dataset
+## Classification Data-set
 
 https://github.com/shane-kercheval/oo-learning/tree/master/examples/classification-titanic
 
 * [Exploring a dataset](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/1-%20Exploring%20the%20Titanic%20Dataset.ipynb)
 * [Training a model](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/2-Basic%20Modeling.ipynb)
-* Resampling data
-* Tuning Data
-* Searching Models
+* Resampling data (TBD)
+* Tuning Data (TBD)
+* Searching Models (TBD)
+ 
+### ModelTrainer Example
+
+```python
+# define how we want to split the training/holding datasets
+splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
+
+# define the transformations
+transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                   CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                   ImputationTransformer(),
+                   DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
+
+# Define how we want to evaluate (and convert the probabilities DataFrame to predicted classes)
+evaluator = TwoClassProbabilityEvaluator(converter=
+                                         TwoClassThresholdConverter(threshold=0.5,
+                                                                    positive_class='lived'))
+
+# give the objects, which encapsulate the behavior of everything involved with training the model, to our ModelTrainer
+trainer = ModelTrainer(model=LogisticClassifier(),
+                       model_transformations=transformations,
+                       splitter=splitter,
+                       evaluator=evaluator)
+trainer.train(data=data, target_variable='Survived', hyper_params=LogisticClassifierHP())
+
+# access the holdout metrics
+trainer.holdout_evaluator.all_quality_metrics
+```
+
+*Code Snippet from [Training a model](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/2-Basic%20Modeling.ipynb) notebook.*
+
+### ModelTuner Example
+
+```python
+TBD
+```
+### ModelSearcher Example
+
+```python
+TBD
+```
 
 ## Regression Dataset
 
-* Exploring a dataset
-* Training a model
-* Resampling data
-* Tuning Data
-* Searching Models
+* Exploring a dataset (TBD)
+* Training a model (TBD)
+* Resampling data (TBD)
+* Tuning Data (TBD)
+* Searching Models (TBD)
+
+## Advanced Topics
+
+* Advanced Topics (TBD)
+	* Caching Models via `PersistenceManager` (TBD)
+	* Using "resampling decorators" to resample the ideal ROC threshold (TBD)
+
 
 # Available Models
 
-## Regression
+`R = Regression; 2C = Two-class Classification; MC = Multi-class Classification`
 
-- LinearRegressor
-- LassoRegressor
-- RidgeRegressor
-- ElasticNetRegressor
-- RandomForestRegressor
+- AdaBoost (R, 2C, MC)
+- Cart Decision Tree (R, 2C, MC)
+- Elastic Net (R)
+- Gradient Boosting (R, 2C, MC)
+- Lasso (R, 2C, MC)
+- Linear Regression (R, 2C, MC)
+- Logistic (2C)
+- Random Forest (R, 2C, MC)
+- Ridge (R)
+- Softmax Logistic (MC)
+- Support Vector Machines (R, 2C)
 
-#### TBD
+## Future (TBD)
 
-- Partial Least Squares
-- Neural Networks
-- Support Vector Machines
-- MARS / FDA
-- k-nearest neighbors
-- trees
-- rules
-- bagged trees
-- random forest
-- boosted trees
-- Cubist
-
-
-
-
-## Two-Class Classification
-
-- DummyClassifier
-- LogisticClassifier
-- RandomForestClassifier
-
-
-#### TBD
-
-- Partial Least Squares
-- Neural Networks
-- Support Vector Machines
-- MARS / FDA
-- k-nearest neighbors
-- trees
-- rules
-- bagged trees
-- random forest
-- boosted trees
-- {LQRM}DA
-- Nearest Shrunken Centroids
+- One-vs-All & One-vs-One (MC)
 - Naive Bayes
+- Nearest Shrunken Centroids
+- KNN
 - C5.0
-- Stacker/Blenders
+- Cubist
+- Partial Least Squares
+- MARS / FDA
+- Neural Networks
 
-
-## Multi-Class Classification
-
-- SoftmaxLogisticClassifier
-- RandomForestClassifier
-
-#### TBD
-
-- One vs All
-- One vs One
 
 # Unit Tests
 

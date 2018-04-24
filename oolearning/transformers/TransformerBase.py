@@ -6,8 +6,8 @@ import pandas as pd
 
 class TransformerBase(metaclass=ABCMeta):
     """
-    A transformer is an object that transforms datasets by first `fitting` an an initial dataset, and saving
-    the values necessary to consistently transform future datasets based on the fitted dataset.
+    A transformer is an object that transforms data-sets by first `fitting` an an initial data-set, and saving
+    the values necessary to consistently transform future data-sets based on the fitted data-set.
     """
 
     def __init__(self, check_dataframe_indexes_maintained=True):
@@ -29,16 +29,16 @@ class TransformerBase(metaclass=ABCMeta):
     def state(self) -> dict:
         """
         :return: the 'state' saved during fitting.
-            state is a dictionary of values; the values are used to consistently transform subsequent datasets
-            e.g. the state might be the median value of each of the columns of the training set, used to
-            impute future datasets using the same numbers/medians during each transformation
+            state is a dictionary of values; the values are used to consistently transform subsequent
+            data-sets e.g. the state might be the median value of each of the columns of the training set,
+            used to impute future data-sets using the same numbers/medians during each transformation
         """
         return self._state
 
     @abstractmethod
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         """
-        determines ('fits') the information necessary to transform future datasets
+        determines ('fits') the information necessary to transform future data-sets
         :param data_x: data to fit
         :return: state (dictionary) to be saved for the next transformation
         """
@@ -59,7 +59,7 @@ class TransformerBase(metaclass=ABCMeta):
     def peak(self, data_x: pd.DataFrame):
         """
         There are times (for example when resampling) when the data is fitted with a subset of data, and if a
-            rare value is not contained within the data when fitted, but shows up in a future dataset (i.e.
+            rare value is not contained within the data when fitted, but shows up in a future data-set (i.e.
             during `transform`), then there are instances (for example when creating dummy variables) that the
             unexpected data creates problems. In the case of creating dummy variables, `transform` would add a
             new columns that didn't previously exist when fitting the original model, which would cause the
@@ -79,7 +79,7 @@ class TransformerBase(metaclass=ABCMeta):
 
     def fit(self, data_x: pd.DataFrame):
         """
-        saves the necessary information into _state to transform future datasets
+        saves the necessary information into _state to transform future data-sets
         :param data_x: data to fit
         :return: None
         """
