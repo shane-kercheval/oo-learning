@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 
 
 class ConfusionMatrix:
+    """
+    Class that represents a confusion matrix for any number of classes.
+    """
     def __init__(self,
                  actual_classes: np.ndarray,
                  predicted_classes: np.ndarray,
@@ -42,21 +45,33 @@ class ConfusionMatrix:
 
     @property
     def matrix(self) -> pd.DataFrame:
+        """
+        :return: The matrix as a DataFrame.
+        """
         return self._confusion_matrix
 
     @property
     def matrix_proportions(self) -> pd.DataFrame:
+        """
+        :return: The matrix as a DataFrame, showing frequencies rather than absolute values.
+        """
         # noinspection PyTypeChecker
         return self.matrix / self.total_observations
 
     @property
     def total_observations(self) -> int:
+        """
+        :return: the total number of observations
+        """
         return self.matrix.loc['Total', 'Total']
 
-    def get_heatmap(self, include_totals=False):
+    def get_heatmap(self, include_totals: bool=False):
+        """
+        :param include_totals: if `include_totals` is True, it includes a row and column for totals
+        :return: a heatmap plot of the confusion matrix
+        """
         ax = plt.axes()
         matrix = self.matrix if include_totals else self.matrix.drop(index='Total', columns='Total')
         sns.heatmap(ax=ax, data=matrix, annot=True, cmap="Blues")
         ax.set_title('Predicted vs Actual Classifications')
         plt.xticks(rotation=20, ha='right')
-        return ax

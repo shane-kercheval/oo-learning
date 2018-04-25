@@ -10,6 +10,10 @@ from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
 
 class AucRocScore(UtilityFunctionMixin, TwoClassScoreBase):
+    """
+    Calculates the AUC of the ROC curve as defined by sklearn's `roc_auc_score()`
+        http://scikit-learn.org/stable/modules/generated/sklearn.metrics.roc_auc_score.html
+    """
 
     @property
     def name(self) -> str:

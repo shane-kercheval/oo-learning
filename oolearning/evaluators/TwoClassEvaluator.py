@@ -10,24 +10,17 @@ from oolearning.evaluators.EvaluatorBase import EvaluatorBase
 
 class TwoClassEvaluator(EvaluatorBase):
     """
-    Class representing a confusion confusion_matrix for two-class (or 2 category) classifiers.
+    Evaluates models for two-class classification problems.
     """
     def __init__(self, positive_class: object):
         """
-             |                  | Predicted Negative | Predicted Positive |
-             | ---------------- | ------------------ | ------------------ |
-             | Actual Negative  | True Negative      | False Positive     |
-             | Actual Positive  | False Negative     | True Positive      |
-
-             if `positive_class` is None, then the confusion matrix is not arranged by category.
-
-             For multi-class problems, `positive_class` is not applicable.
+        :param positive_class: if `positive_class` is None, then the confusion matrix is not arranged by
+            category
         """
         self._positive_class = positive_class
         self._confusion_matrix = None
 
     def evaluate(self, actual_values: np.ndarray, predicted_values: np.ndarray):
-
         self._confusion_matrix = TwoClassConfusionMatrix(actual_classes=actual_values,
                                                          predicted_classes=predicted_values,
                                                          positive_class=self._positive_class)
@@ -110,6 +103,13 @@ class TwoClassEvaluator(EvaluatorBase):
         return self._confusion_matrix.all_quality_metrics
 
     def plot_all_quality_metrics(self, comparison_evaluator: "TwoClassEvaluator"=None):
+        """
+        Creates a plot that shows all of the quality metrics in this class.
+
+        :param comparison_evaluator: adds additional points to the plot for the metrics associated with the
+            `comparison_evaluator`; allows the user to compare two different evaluators (e.g. from two
+            different models
+        """
         # convert diction to dataframe, without "Total Observations" which will fuck up axis
         # noinspection PyTypeChecker
         metrics_dataframe = pd.DataFrame.from_dict([self.all_quality_metrics])

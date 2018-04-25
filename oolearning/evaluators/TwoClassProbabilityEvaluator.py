@@ -1,8 +1,3 @@
-"""
-Evaluates 2-class classification problems, where "probabilities" are supplied as well as a Converted (i.e.
-    an object that encapsulates the logic to convert the probabilities to classes.
-"""
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -16,6 +11,10 @@ from oolearning.evaluators.TwoClassEvaluator import TwoClassEvaluator
 
 
 class TwoClassProbabilityEvaluator(TwoClassEvaluator):
+    """
+    Evaluates 2-class classification problems, where "probabilities" are supplied as well as a Converter (i.e.
+      an object that encapsulates the logic to convert the probabilities to classes.
+    """
     def __init__(self,
                  converter: TwoClassConverterBase):
         super().__init__(positive_class=converter.positive_class)

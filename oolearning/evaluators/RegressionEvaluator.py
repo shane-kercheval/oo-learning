@@ -11,6 +11,9 @@ from oolearning.evaluators.EvaluatorBase import EvaluatorBase  # noqa
 
 # noinspection SpellCheckingInspection
 class RegressionEvaluator(EvaluatorBase):
+    """
+    Evaluates models for regresion (i.e. numeric outcome) problems.
+    """
     def __init__(self):
         self._actual_values = None
         self._predicted_values = None

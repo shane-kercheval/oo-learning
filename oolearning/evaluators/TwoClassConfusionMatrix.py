@@ -8,6 +8,14 @@ from oolearning.evaluators.ConfusionMatrix import ConfusionMatrix
 
 
 class TwoClassConfusionMatrix(ConfusionMatrix):
+    """
+    Class representing a confusion matrix for two-class (or 2 category) classifiers.
+
+        |                  | Predicted Negative | Predicted Positive |
+        | ---------------- | ------------------ | ------------------ |
+        | Actual Negative  | True Negative      | False Positive     |
+        | Actual Positive  | False Negative     | True Positive      |
+    """
     def __init__(self,
                  actual_classes: np.ndarray,
                  predicted_classes: np.ndarray,
@@ -120,6 +128,9 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
 
     @property
     def all_quality_metrics(self) -> dict:
+        """
+        :return: dictionary with all the metrics and associated values
+        """
         return {'Kappa': self.kappa,
                 'F1 Score': self.f1_score,
                 'Two-Class Accuracy': self.accuracy,
@@ -135,6 +146,13 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
                 'Total Observations': self.total_observations}
 
     def plot_all_quality_metrics(self, comparison_matrix: "TwoClassConfusionMatrix"=None):
+        """
+        Creates a plot that shows all of the quality metrics in this class.
+
+        :param comparison_matrix: adds additional points to the plot for the metrics associated with the
+            `comparison_matrix`; allows the user to compare two different confusion matrices (e.g. from two
+            different models
+        """
         # convert diction to dataframe, without "Total Observations" which will fuck up axis
         # noinspection PyTypeChecker
         metrics_dataframe = pd.DataFrame.from_dict([self.all_quality_metrics])
@@ -174,4 +192,3 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
 
         plt.title('Quality Scores')
         plt.grid()
-        return ax

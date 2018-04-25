@@ -11,6 +11,10 @@ from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
 
 class AccuracyScore(UtilityFunctionMixin, ScoreBase):
+    """
+    For classification problems, calculates simple "accuracy"; uses sklearn's `accuracy_score()` function:
+        http://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html
+    """
     def __init__(self, converter: ContinuousToClassConverterBase):
         super().__init__()
         self._converter = converter

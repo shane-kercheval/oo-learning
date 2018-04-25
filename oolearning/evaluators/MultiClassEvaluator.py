@@ -9,14 +9,17 @@ from oolearning.evaluators.TwoClassEvaluator import TwoClassEvaluator
 
 
 class MultiClassEvaluator(EvaluatorBase):
+    """
+    Evaluates models for multi-class classification problems.
+    """
     def __init__(self,
                  converter: ContinuousToClassConverterBase,
                  actual_classes: np.ndarray=None,
                  predicted_classes: np.ndarray=None):
         """
-
-        :param converter:
-        # TODO document: can alternatively pass in a values; primarily from `from_classes`
+        :param converter: A Converter that converts a predictions DataFrame to the predicted classes.
+        :param actual_classes:
+        :param predicted_classes:
         """
         super().__init__()
         self._converter = converter
