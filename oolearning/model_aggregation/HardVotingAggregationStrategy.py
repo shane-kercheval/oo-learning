@@ -9,12 +9,12 @@ from oolearning.model_aggregation.AggregationStrategyBase import AggregationStra
 
 class HardVotingAggregationStrategy(AggregationStrategyBase):
     """
-        Voting strategy for classification problems. Each class (i.e. column in the returned probabilities)
-            represents the percent of votes that each prediction got
+    Voting strategy for classification problems.
 
-        Before each classifier votes, it must transform it's continuous value (e.g. probability), to a vote.
-        Since 0.5 is not always the most appropriate value, a converter needs to be passed in for each model.
+    Before the vote, the predictions are transformed from it's continuous value (e.g. probability), to a
+    specific class prediction. The percent of votes is recorded for each class (i.e. column).
 
+    Since 0.5 is not always the most appropriate value, a converter needs to be passed in for each model.
     """
     def __init__(self, converters: List[ContinuousToClassConverterBase]):
         super().__init__()

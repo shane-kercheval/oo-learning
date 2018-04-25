@@ -10,7 +10,8 @@ from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 
 class ModelAggregator(ModelWrapperBase):
     """
-    Simple Bridge Between ModelWrapperBase and AggregationStrategyBase
+    Simple Bridge Between ModelWrapperBase and AggregationStrategyBase. Allows this object to be treated
+        like any other model; although there is no logic necessary in `.train()`.
     """
     def __init__(self, models: List[ModelWrapperBase], aggregation_strategy: AggregationStrategyBase):
         """
@@ -34,6 +35,12 @@ class ModelAggregator(ModelWrapperBase):
         return 0
 
     def _predict(self, model_object: object, data_x: pd.DataFrame) -> Union[np.ndarray, pd.DataFrame]:
+        """
+        :param model_object: not used
+        :param data_x: for each of the models passed into the constructor, the predictions are made with
+        `data_x` and then are aggregated according to the specified strategy.
+        :return: aggregated predictions.
+        """
         model_predictions = [x.predict(data_x=data_x) for x in self._models]
         assert len(model_predictions) == len(self._models)
         if isinstance(model_predictions[0], pd.DataFrame):

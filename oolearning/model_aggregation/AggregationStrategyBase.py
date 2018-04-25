@@ -6,15 +6,19 @@ import pandas as pd
 
 
 class AggregationStrategyBase(metaclass=ABCMeta):
+    """
+    Aggregators combine the predictions of various models into a single prediction (e.g.
+    """
     @abstractmethod
-    def aggregate(self, model_predictions: List[Union[pd.DataFrame, np.ndarray]]) -> Union[np.ndarray, pd.DataFrame]:  # noqa
+    def aggregate(self, model_predictions: List[Union[pd.DataFrame, np.ndarray]]) \
+            -> Union[np.ndarray, pd.DataFrame]:
         """
-        :param model_predictions: these will be the model predictions from the models passed into the
-            `ModelAggregator`. `model_predictions` is a list, with the predictions from each model represented
-            in a single list index. The object in the list index will either be a `pd.DataFrame` in the
-            case of a classification problem or an `np.ndarray` in the case of a regression problem.
-        :return: Dataframe of continuous values (e.g. probabilities) for Classification Problems (1 column
-            per class)
-            Or, for Regression problems, an ndarray with the aggregated values.
+        Defines how the model predictions will be aggregated together.
+
+        :param model_predictions: each list item will be the model predictions (either a `DataFrame` of
+            predictions per model for classification problems, or a `np.ndarray` in the case of regressions
+            problems.
+        :return: `Dataframe` of continuous values (e.g. probabilities) for Classification Problems (1 column
+            per class); or, for Regression problems, an `ndarray` with the aggregated values.
         """
         pass

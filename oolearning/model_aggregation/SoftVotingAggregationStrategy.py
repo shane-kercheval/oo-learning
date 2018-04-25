@@ -8,8 +8,7 @@ from oolearning.model_aggregation.AggregationStrategyBase import AggregationStra
 
 class SoftVotingAggregationStrategy(AggregationStrategyBase):
     """
-    Voting strategy for classification problems. For each prediction, averages the model probabilities
-        together, per class
+    Voting strategy for classification problems. All of the prediction DataFrames are averaged together.
     """
 
     def aggregate(self, model_predictions: List[Union[pd.DataFrame, np.ndarray]]) -> \
@@ -21,5 +20,3 @@ class SoftVotingAggregationStrategy(AggregationStrategyBase):
         voting_predictions = voting_predictions.loc[model_predictions[0].index.values]
 
         return voting_predictions
-
-
