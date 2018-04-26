@@ -5,7 +5,16 @@ from oolearning.transformers.TransformerBase import TransformerBase
 
 
 class RemoveCorrelationsTransformer(TransformerBase):
+    """
+    Removes numeric features that are correlated above a specified threshold. For each pair of features that
+        are correlated above the specified threshold, the feature with the higher average correlation (among
+        other features) is removed. The procedure is repeated until no correlation (absolute value) are above
+        the threshold.
+    """
     def __init__(self, max_correlation_threshold=0.95):
+        """
+        :param max_correlation_threshold: correlation threshold for algorithm
+        """
         super().__init__()
         self._max_correlation_threshold = max_correlation_threshold
 
@@ -21,7 +30,6 @@ class RemoveCorrelationsTransformer(TransformerBase):
         #     - Do the same for `B`
         #   - If `A` has a larger average correlation, remove it; otherwise, remove feature `B`
         #   - Repeat until no absolute correlations are above the threshold (``r correlation_threshold``)
-
         columns_to_remove = list()
 
         while True:

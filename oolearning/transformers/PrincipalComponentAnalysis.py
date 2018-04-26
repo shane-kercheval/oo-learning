@@ -12,18 +12,23 @@ from oolearning.transformers.TransformerBase import TransformerBase
 
 # noinspection PyTypeChecker, SpellCheckingInspection
 class PCATransformer(TransformerBase):
-
+    """
+    Performs Principal Component Analysis.
+    """
     def __init__(self,
                  percent_variance_explained: Union[float, None]=0.95,
                  exclude_categorical_columns=False):
         """
-        :param percent_variance_explained: " select the number of components such that the amount of variance
+        :param percent_variance_explained: "select the number of components such that the amount of variance
             that needs to be explained is greater than the percentage specified" by
             `percent_variance_explained`.
             http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
 
             Alternatively, the user can pass in `None`, which will give all components, and then use
                 `get_pca_plot()` to determine ideal number of components baed off of the bend in the graph.
+
+        :param exclude_categorical_columns: if set to True, the categoric features are not retained in the
+            transformed dataset returned.
         """
         super().__init__()
         self._percent_variance_explained = percent_variance_explained
@@ -69,6 +74,10 @@ class PCATransformer(TransformerBase):
                                                                                     axis=1)
 
     def get_pca_plot(self):
+        """
+        Creates a strandard plot of PCA that shows the cumulative variance explained for each additional
+            component used.
+        """
         assert self._cumulative_explained_variance is not None
 
         plt.plot(range(1, 8), self.cumulative_explained_variance)
