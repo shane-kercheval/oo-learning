@@ -6,9 +6,15 @@ from oolearning.transformers.TransformerBase import TransformerBase
 
 
 class PolynomialFeaturesTransformer(TransformerBase):
-    def __init__(self, degrees: int):
+    """
+    Generates polynomial and interactions features for numeric features; retains categoric features.
+
+    Utilizes `sklearn.PolynomialFeatures`:
+        http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PolynomialFeatures.html
+    """
+    def __init__(self, degrees: int=2):
         """
-        :param degrees:
+        :param degrees: the degree of the polynomial feature
         """
         super().__init__()
         assert degrees > 1

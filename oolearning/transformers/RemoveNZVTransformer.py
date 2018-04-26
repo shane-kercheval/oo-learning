@@ -5,7 +5,15 @@ from oolearning.transformers.TransformerBase import TransformerBase
 
 # noinspection PyTypeChecker, SpellCheckingInspection
 class RemoveNZVTransformer(TransformerBase):
+    """
+    Removes 'near zero variance' (NZV) numeric features; NZV defined as features that have a `standard
+        deviation / absolute value of mean` ratio that is less than the specified value.
+    """
     def __init__(self, stdev_to_mean_ratio: float=0.02):
+        """
+        :param stdev_to_mean_ratio: columns that have a `standard deviation / absolute value of mean` ratio
+            that is less than `stdev_to_mean_ratio` will be removed.
+        """
         super().__init__()
         self._stdev_to_mean_ratio = stdev_to_mean_ratio
 

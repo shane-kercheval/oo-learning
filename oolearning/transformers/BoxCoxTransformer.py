@@ -9,7 +9,11 @@ from oolearning.transformers.TransformerBase import TransformerBase
 
 # noinspection SpellCheckingInspection
 class BoxCoxTransformer(TransformerBase):
-    # TODO: document
+    """
+    Applies the "Box-Cox" transformation to numeric data.
+
+    uses https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.boxcox.html
+    """
     def __init__(self, features):
         """
         :param features: features i.e. column names to transform.

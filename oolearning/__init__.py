@@ -131,5 +131,3 @@ from .transformers.PrincipalComponentAnalysis import PCATransformer
 from .transformers.StatelessTransformer import StatelessTransformer
 from .transformers.TransformerBase import TransformerBase
 from .transformers.TransformerPipeline import TransformerPipeline
-
-from .tuning_parameters.TuningGridBase import TuningGridBase

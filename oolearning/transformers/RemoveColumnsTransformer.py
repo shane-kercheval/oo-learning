@@ -8,7 +8,6 @@ class RemoveColumnsTransformer(TransformerBase):
     """
     Removes the columns passed into the constructor.
     """
-
     def __init__(self, columns: List[str]):
         super().__init__()
         assert columns is not None

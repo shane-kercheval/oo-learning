@@ -4,8 +4,12 @@ from oolearning.OOLearningHelpers import OOLearningHelpers
 from oolearning.transformers.TransformerBase import TransformerBase
 
 
-# TODO: document
 class CenterScaleTransformer(TransformerBase):
+    """
+    Centers and Scales the numeric features (centers by subtracting the mean of the feature from each
+        value within the feature; scales by dividing each value within the feature by the standard deviation
+        of the feature.
+    """
     def peak(self, data_x: pd.DataFrame):
         pass
 

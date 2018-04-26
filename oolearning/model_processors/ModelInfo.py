@@ -8,6 +8,10 @@ from oolearning.transformers.TransformerBase import TransformerBase
 
 
 class ModelInfo:
+    """
+    Class that wraps/encapsulates model information, with the intent on handing the information to model
+        processors, such as the ModelSearcher
+    """
     def __init__(self,
                  description: str,
                  model: ModelWrapperBase,
@@ -15,6 +19,17 @@ class ModelInfo:
                  hyper_params: HyperParamsBase=None,
                  hyper_params_grid: HyperParamsGrid=None,
                  converter: ContinuousToClassConverterBase=None):
+        """
+        :param description: a *unique* description of the model (e.g. if forming a list of ModelInfo objects,
+            then this description should be unique among the objects in the list)
+        :param model:
+        :param transformations:
+        :param hyper_params: the hyper-params object
+        :param hyper_params_grid: a HyperParamsGrid object, which specifies the different combinations of
+            hyper-params to, for example, tune
+        :param converter: A Converter object specifying how the predictions (e.g. DataFrame of probabilities
+            for a classification problem) should be converted to classes.
+        """
         self._description = description
         self._model = model
         self._transformations = transformations
