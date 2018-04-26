@@ -7,7 +7,7 @@ import pandas as pd
 
 class AggregationStrategyBase(metaclass=ABCMeta):
     """
-    Aggregators combine the predictions of various models into a single prediction (e.g.
+    Aggregators combine the predictions of various models into a single prediction.
     """
     @abstractmethod
     def aggregate(self, model_predictions: List[Union[pd.DataFrame, np.ndarray]]) \

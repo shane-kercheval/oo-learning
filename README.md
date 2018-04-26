@@ -32,16 +32,16 @@ After model selection, if implementing the model in a production system, the use
 
 ## Class Terminology
 
-- `Converter`: 
-- `Evaluator`:
-- `Transformer`:
-- `Aggregator`:
-- `Stacker`: 
-- `Resampler`: 
-- `Tuner`: 
-- `Searcher`: 
-- `Splitter`:
-- `ModelWrapper`: 
+- `Converter`: A Converter converts a DataFrame containing predictions (i.e. a standard DataFrame returned by `.predict()`, with continuous values (e.g. probabilities) for each class, as columns) into an array of class predictions.
+- `Evaluator`: An Evaluator object takes the predictions of a model, as well as the actual values, and evaluates the model across many metrics.
+- `Transformer`:  A transformer is an object that transforms data-sets by first `fitting` an initial data-set, and saving the values necessary to consistently transform future data-sets based on the fitted data-set.
+- `Splitter`: A Splitter splits a dataset into training and holdout sets.
+- `ModelWrapper`: A ModelWrapper is a class encapsulating a machine learning model/algorithm.
+- `Aggregator`: Aggregators combine the predictions of various models into a single prediction.
+- `Stacker`: This class implements a simple 'Model Stacker', taking the predictions of base models and feeding the values into a 'stacking' model.
+- `Resampler`: A Resampler accesses the accuracy of the model by training the model many times via a particular resampling strategy.
+- `Tuner`:  A ModelTuner uses a Resampler for tuning a single model across various hyper-parameters, finding the "best" hyper-parameters supplied as well as related information.
+- `Searcher`: A Searcher searches across different models and hyper-params, with the goal of finding the "best" ideal model candidates for further tuning and optimization.
 
 # Examples
 

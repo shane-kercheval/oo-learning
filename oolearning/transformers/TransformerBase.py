@@ -6,7 +6,7 @@ import pandas as pd
 
 class TransformerBase(metaclass=ABCMeta):
     """
-    A transformer is an object that transforms data-sets by first `fitting` an an initial data-set, and saving
+    A transformer is an object that transforms data-sets by first `fitting` an initial data-set, and saving
     the values necessary to consistently transform future data-sets based on the fitted data-set.
     """
 

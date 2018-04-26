@@ -15,9 +15,9 @@ from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError
 
 class ModelTuner:
     """
-    A ModelTuner uses a Resampler for tuning single model across various hyper-parameters.
+    A ModelTuner uses a Resampler for tuning a single model across various hyper-parameters.
     In other words, it runs a specified Resampler repeatedly over a combination of hyper-parameters, finding
-    the "best" potential model as well as associated information.
+    the "best" potential model as well as related information.
     """
     def __init__(self,
                  resampler: ResamplerBase,
