@@ -26,13 +26,12 @@ After model selection, if implementing the model in a production system, the use
 - `hyperparameter`
 	- over `tuning parameter`
 
-
-- `utility` function measures how **good** the model is
-- `cost` function measure how **bad** the model is
-
 ## Class Terminology
 
 - `Converter`: A Converter converts a DataFrame containing predictions (i.e. a standard DataFrame returned by `.predict()`, with continuous values (e.g. probabilities) for each class, as columns) into an array of class predictions.
+- `Score`: A Score object contains the logic of a single metric for accessing the performance of a model.
+	- `utility` function measures how **good** the model is
+	- `cost` function measure how **bad** the model is
 - `Evaluator`: An Evaluator object takes the predictions of a model, as well as the actual values, and evaluates the model across many metrics.
 - `Transformer`:  A transformer is an object that transforms data-sets by first `fitting` an initial data-set, and saving the values necessary to consistently transform future data-sets based on the fitted data-set.
 - `Splitter`: A Splitter splits a dataset into training and holdout sets.
@@ -42,7 +41,8 @@ After model selection, if implementing the model in a production system, the use
 - `Resampler`: A Resampler accesses the accuracy of the model by training the model many times via a particular resampling strategy.
 - `Tuner`:  A ModelTuner uses a Resampler for tuning a single model across various hyper-parameters, finding the "best" hyper-parameters supplied as well as related information.
 - `Searcher`: A Searcher searches across different models and hyper-params, with the goal of finding the "best" ideal model candidates for further tuning and optimization.
-
+- `Decorator`: Intent is to add responsibility objects dynamically. (For example, to piggy-back off of the Resampler and do a calculation or capture data at the end of each fold.)
+    
 # Examples
 
 https://github.com/shane-kercheval/oo-learning/tree/master/examples/classification-titanic
@@ -62,6 +62,11 @@ https://github.com/shane-kercheval/oo-learning/tree/master/examples/classificati
 * Searching Models
 	* Classification (TBD)
 	* Regression (TBD)
+* Advanced Topics
+	* Model Aggregation and Stacking (TBD)
+	* "resampling decorators" 
+		* resample the ideal ROC threshold (TBD)
+	* Caching Models via `PersistenceManager` (TBD)
  
 ### ModelTrainer Snippet
 
@@ -103,13 +108,6 @@ TBD
 ```python
 TBD
 ```
-
-## Advanced Topics (Examples)
-
-* Model Aggregation and Stacking (TBD)
-* Using "resampling decorators" to resample the ideal ROC threshold (TBD)
-* Caching Models via `PersistenceManager` (TBD)
-
 
 # Available Models
 

@@ -430,13 +430,13 @@ class ResamplerTests(TimerTestCase):
 
         expected_roc_thresholds = [0.43, 0.31, 0.47, 0.59, 0.48]
         expected_precision_recall_thresholds = [0.43, 0.53, 0.64, 0.59, 0.6]
-        assert decorator.resampled_roc == expected_roc_thresholds
-        assert decorator.resampled_precision_recall == expected_precision_recall_thresholds
-        assert isclose(decorator.resampled_roc_mean, np.mean(expected_roc_thresholds))
+        assert decorator.roc_ideal_thresholds == expected_roc_thresholds
+        assert decorator.precision_recall_ideal_thresholds == expected_precision_recall_thresholds
+        assert isclose(decorator.roc_ideal_thresholds_mean, np.mean(expected_roc_thresholds))
         assert isclose(decorator.resampled_precision_recall_mean, np.mean(expected_precision_recall_thresholds))  # noqa
-        assert isclose(decorator.resampled_roc_st_dev, np.std(expected_roc_thresholds))
+        assert isclose(decorator.roc_ideal_thresholds_st_dev, np.std(expected_roc_thresholds))
         assert isclose(decorator.resampled_precision_recall_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
-        assert isclose(decorator.resampled_roc_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
+        assert isclose(decorator.roc_ideal_thresholds_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
         assert isclose(decorator.resampled_precision_recall_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa
 
         # the object should be stored in the results as the first and only decorator element
@@ -461,8 +461,8 @@ class ResamplerTests(TimerTestCase):
         resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
         expected_roc_thresholds = [0.35, 0.48]
         expected_precision_recall_thresholds = [0.35, 0.48]
-        assert decorator.resampled_roc == expected_roc_thresholds
-        assert decorator.resampled_precision_recall == expected_precision_recall_thresholds
+        assert decorator.roc_ideal_thresholds == expected_roc_thresholds
+        assert decorator.precision_recall_ideal_thresholds == expected_precision_recall_thresholds
 
         # the object should be stored in the results as the first and only decorator element
         assert len(resampler.results.decorators) == 1
@@ -486,8 +486,8 @@ class ResamplerTests(TimerTestCase):
         resampler.resample(data_x=train_data, data_y=train_data_y)
         expected_roc_thresholds = [0.0, 0.0]
         expected_precision_recall_thresholds = [0.0, 0.0]
-        assert decorator.resampled_roc == expected_roc_thresholds
-        assert decorator.resampled_precision_recall == expected_precision_recall_thresholds
+        assert decorator.roc_ideal_thresholds == expected_roc_thresholds
+        assert decorator.precision_recall_ideal_thresholds == expected_precision_recall_thresholds
 
         # the object should be stored in the results as the first and only decorator element
         assert len(resampler.results.decorators) == 1

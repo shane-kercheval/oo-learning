@@ -344,8 +344,8 @@ class TunerTests(TimerTestCase):
         tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
 
         # should have cloned the decorator each time, so it should not have been used
-        assert len(decorator._resampled_roc) == 0
-        assert len(decorator._resampled_precision_recall) == 0
+        assert len(decorator._roc_ideal_thresholds) == 0
+        assert len(decorator._precision_recall_ideal_thresholds) == 0
 
         # resampler_decorators is a list (per hyper-param combo), of lists (multiple decorators)
         assert len(tuner.results.resampler_decorators) == 1
@@ -362,12 +362,12 @@ class TunerTests(TimerTestCase):
         expected_roc_thresholds = [0.37, 0.37]
         expected_precision_recall_thresholds = [0.37, 0.49]
 
-        assert decorator.resampled_roc == expected_roc_thresholds
-        assert decorator.resampled_precision_recall == expected_precision_recall_thresholds
+        assert decorator.roc_ideal_thresholds == expected_roc_thresholds
+        assert decorator.precision_recall_ideal_thresholds == expected_precision_recall_thresholds
 
-        assert isclose(decorator.resampled_roc_mean, np.mean(expected_roc_thresholds))
+        assert isclose(decorator.roc_ideal_thresholds_mean, np.mean(expected_roc_thresholds))
         assert isclose(decorator.resampled_precision_recall_mean, np.mean(expected_precision_recall_thresholds))  # noqa
-        assert isclose(decorator.resampled_roc_st_dev, np.std(expected_roc_thresholds))
+        assert isclose(decorator.roc_ideal_thresholds_st_dev, np.std(expected_roc_thresholds))
         assert isclose(decorator.resampled_precision_recall_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
-        assert isclose(decorator.resampled_roc_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
+        assert isclose(decorator.roc_ideal_thresholds_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
         assert isclose(decorator.resampled_precision_recall_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa

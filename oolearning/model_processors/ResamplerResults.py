@@ -49,9 +49,8 @@ class ResamplerResults:
 
     def cross_validation_score_boxplot(self):
         plt.ylim(0.0, 1.0)
-        plot = self.cross_validation_scores.boxplot()
+        self.cross_validation_scores.boxplot()
         plt.title('Cross-Validation Scores')
-        return plot
 
     @property
     def metric_means(self) -> dict:
