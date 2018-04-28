@@ -71,7 +71,7 @@ class TunerTests(TimerTestCase):
 
         cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/cached_test_models/test_ModelTuner_RandomForest_classification')  # noqa
         tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RandomForestClassifier(),
-                                                                      model_transformations=transformations,
+                                                                      transformations=transformations,
                                                                       scores=evaluator_list),
                            hyper_param_object=RandomForestHP(),
                            persistence_manager=LocalCacheManager(cache_directory=cache_directory))
@@ -146,7 +146,7 @@ class TunerTests(TimerTestCase):
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
         tuner = ModelTuner(resampler=MockResampler(model=MockClassificationModelWrapper(data_y=data.Survived),
-                                                   model_transformations=transformations,
+                                                   transformations=transformations,
                                                    scores=evaluators),
                            hyper_param_object=MockHyperParams())
 
@@ -265,8 +265,8 @@ class TunerTests(TimerTestCase):
         train_data = train_data.drop(columns='strength')
 
         tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=LinearRegressor(),
-                                                                      model_transformations=[ImputationTransformer(),  # noqa
-                                                                                             DummyEncodeTransformer(CategoricalEncoding.DUMMY)],  # noqa
+                                                                      transformations=[ImputationTransformer(),  # noqa
+                                                                                       DummyEncodeTransformer(CategoricalEncoding.DUMMY)],  # noqa
                                                                       scores=[RmseScore(),
                                                                               MaeScore()],
                                                                       folds=5,
@@ -330,7 +330,7 @@ class TunerTests(TimerTestCase):
 
         score_list = [AucRocScore(positive_class=1)]
         resampler = RepeatedCrossValidationResampler(model=RandomForestClassifier(),
-                                                     model_transformations=transformations,
+                                                     transformations=transformations,
                                                      scores=score_list,
                                                      folds=2,
                                                      repeats=1,

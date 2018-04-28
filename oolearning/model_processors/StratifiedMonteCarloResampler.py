@@ -17,7 +17,7 @@ from oolearning.transformers.TransformerPipeline import TransformerPipeline
 class StratifiedMonteCarloResampler(ResamplerBase):
     def __init__(self,
                  model: ModelWrapperBase,
-                 model_transformations: List[TransformerBase],
+                 transformations: List[TransformerBase],
                  stratified_splitter: StratifiedDataSplitter,
                  scores: List[ScoreBase],
                  persistence_manager: PersistenceManagerBase = None,
@@ -26,7 +26,7 @@ class StratifiedMonteCarloResampler(ResamplerBase):
                  repeats=30):
         """
         :param model:
-        :param model_transformations:
+        :param transformations:
         :param stratified_splitter: e.g. ClassificationStratifiedDataSplitter or
             RegressionStratifiedDataSplitter; i.e. this resampler needs to know how to stratify the data
             based off of the target values
@@ -34,7 +34,7 @@ class StratifiedMonteCarloResampler(ResamplerBase):
         :param repeats:
         """
         super().__init__(model=model,
-                         model_transformations=model_transformations,
+                         transformations=transformations,
                          scores=scores,
                          persistence_manager=persistence_manager,
                          train_callback=train_callback)
@@ -57,7 +57,7 @@ class StratifiedMonteCarloResampler(ResamplerBase):
                 train_x_not_transformed, holdout_x_not_transformed = data_x[train_ind], data_x[test_ind]
                 train_y, test_y = data_y[train_ind], data_y[test_ind]
 
-                pipeline = TransformerPipeline(transformations=self._model_transformations)
+                pipeline = TransformerPipeline(transformations=self._transformations)
                 train_x_transformed = pipeline.fit_transform(data_x=train_x_not_transformed)
                 holdout_x_transformed = pipeline.transform(data_x=holdout_x_not_transformed)
 

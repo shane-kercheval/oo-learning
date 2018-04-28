@@ -685,8 +685,8 @@ class ModelWrapperTests(TimerTestCase):
         train_data = data.drop(columns=target_variable)
         evaluators = [MaeScore(), RmseScore()]
         tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RidgeRegressor(),
-                                                                      model_transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
-                                                                                             CenterScaleTransformer()],  # noqa
+                                                                      transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
+                                                                                       CenterScaleTransformer()],  # noqa
                                                                       scores=evaluators),
                            hyper_param_object=RidgeRegressorHP())
         grid = HyperParamsGrid(params_dict={'alpha': [0, 0.5, 1]})
@@ -733,8 +733,8 @@ class ModelWrapperTests(TimerTestCase):
         train_data = data.drop(columns=target_variable)
         evaluators = [MaeScore(), RmseScore()]
         tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=LassoRegressor(),
-                                                                      model_transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
-                                                                                             CenterScaleTransformer()],  # noqa
+                                                                      transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
+                                                                                       CenterScaleTransformer()],  # noqa
                                                                       scores=evaluators),
                            hyper_param_object=LassoRegressorHP())
         grid = HyperParamsGrid(params_dict={'alpha': [0.1, 0.5, 1]})
@@ -782,8 +782,8 @@ class ModelWrapperTests(TimerTestCase):
         train_data = data.drop(columns=target_variable)
         evaluators = [MaeScore(), RmseScore()]
         tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=ElasticNetRegressor(),
-                                                                      model_transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
-                                                                                             CenterScaleTransformer()],  # noqa
+                                                                      transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
+                                                                                       CenterScaleTransformer()],  # noqa
                                                                       scores=evaluators),
                            hyper_param_object=ElasticNetRegressorHP())
         grid = HyperParamsGrid(params_dict={'alpha': [0.1, 0.5, 1], 'l1_ratio': [0.2, 0.6]})

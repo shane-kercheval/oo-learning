@@ -36,8 +36,8 @@ class ResamplerTests(TimerTestCase):
 
         resampler = RepeatedCrossValidationResampler(
             model=LinearRegressor(),
-            model_transformations=[ImputationTransformer(),
-                                   DummyEncodeTransformer(CategoricalEncoding.DUMMY)],
+            transformations=[ImputationTransformer(),
+                             DummyEncodeTransformer(CategoricalEncoding.DUMMY)],
             scores=[RmseScore(),
                     MaeScore()],
             folds=5,
@@ -84,8 +84,8 @@ class ResamplerTests(TimerTestCase):
 
         resampler = RepeatedCrossValidationResampler(
             model=MockRegressionModelWrapper(data_y=data.strength),
-            model_transformations=[ImputationTransformer(),
-                                   DummyEncodeTransformer(CategoricalEncoding.DUMMY)],
+            transformations=[ImputationTransformer(),
+                             DummyEncodeTransformer(CategoricalEncoding.DUMMY)],
             scores=[RmseScore(),
                     MaeScore()],
             folds=5,
@@ -127,7 +127,7 @@ class ResamplerTests(TimerTestCase):
 
         resampler = RepeatedCrossValidationResampler(
             model=MockClassificationModelWrapper(data_y=data.Survived),
-            model_transformations=None,
+            transformations=None,
             scores=score_list,
             folds=5,
             repeats=5)
@@ -172,7 +172,7 @@ class ResamplerTests(TimerTestCase):
         transformations = [RemoveColumnsTransformer(['coarseagg', 'fineagg']), ImputationTransformer(), DummyEncodeTransformer()]  # noqa
         resampler = RepeatedCrossValidationResampler(
             model=RandomForestClassifier(),
-            model_transformations=transformations,
+            transformations=transformations,
             scores=score_list,
             folds=5,
             repeats=5,
@@ -236,7 +236,7 @@ class ResamplerTests(TimerTestCase):
         transformations = [RemoveColumnsTransformer(['coarseagg', 'fineagg']), ImputationTransformer(), DummyEncodeTransformer()]  # noqa
         resampler = RepeatedCrossValidationResampler(
             model=MockRegressionModelWrapper(data_y=data_y),
-            model_transformations=transformations,
+            transformations=transformations,
             scores=score_list,
             folds=5,
             repeats=5,
@@ -277,7 +277,7 @@ class ResamplerTests(TimerTestCase):
         decorator = TempDecorator()
         resampler = RepeatedCrossValidationResampler(
             model=MockClassificationModelWrapper(data_y=data.Survived),
-            model_transformations=None,
+            transformations=None,
             scores=score_list,
             folds=5,
             repeats=2,
@@ -317,7 +317,7 @@ class ResamplerTests(TimerTestCase):
         decorator = TempDecorator()
         resampler = RepeatedCrossValidationResampler(
             model=MockClassificationModelWrapper(data_y=data.Survived),
-            model_transformations=None,
+            transformations=None,
             scores=score_list,
             folds=5,
             repeats=2,
@@ -351,7 +351,7 @@ class ResamplerTests(TimerTestCase):
         cache_directory = TestHelper.ensure_test_directory('data/test_Resamplers/cached_test_models/test_resamplers_RandomForest_classification')  # noqa
         resampler = RepeatedCrossValidationResampler(
             model=RandomForestClassifier(),
-            model_transformations=transformations,
+            transformations=transformations,
             scores=score_list,
             persistence_manager=LocalCacheManager(cache_directory=cache_directory),
             folds=5,
@@ -421,7 +421,7 @@ class ResamplerTests(TimerTestCase):
         score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
         resampler = RepeatedCrossValidationResampler(
             model=RandomForestClassifier(),
-            model_transformations=transformations,
+            transformations=transformations,
             scores=score_list,
             folds=5,
             repeats=1,
@@ -453,7 +453,7 @@ class ResamplerTests(TimerTestCase):
         score_list = [AucRocScore(positive_class=1)]
         resampler = RepeatedCrossValidationResampler(
             model=RandomForestClassifier(),
-            model_transformations=transformations,
+            transformations=transformations,
             scores=score_list,
             folds=2,
             repeats=1,
@@ -478,7 +478,7 @@ class ResamplerTests(TimerTestCase):
         score_list = [AucRocScore(positive_class=1)]
         resampler = RepeatedCrossValidationResampler(
             model=DummyClassifier(strategy=DummyClassifierStrategy.MOST_FREQUENT),
-            model_transformations=transformations,
+            transformations=transformations,
             scores=score_list,
             folds=2,
             repeats=1,

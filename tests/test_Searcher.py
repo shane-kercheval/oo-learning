@@ -50,7 +50,7 @@ class SearcherTests(TimerTestCase):
                                                     holdout_ratio=0.25),  # noqa
                                                 resampler_function=lambda m, mt: RepeatedCrossValidationResampler(  # noqa
                                                     model=m,
-                                                    model_transformations=mt,
+                                                    transformations=mt,
                                                     scores=score_list,
                                                     folds=num_folds,
                                                     repeats=num_repeats,
@@ -76,7 +76,7 @@ class SearcherTests(TimerTestCase):
                       splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                       resampler_function=lambda m, mt: RepeatedCrossValidationResampler(
                           model=m,
-                          model_transformations=mt,
+                          transformations=mt,
                           scores=score_list,
                           folds=num_folds,
                           repeats=num_repeats,
@@ -109,7 +109,7 @@ class SearcherTests(TimerTestCase):
                       splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                       resampler_function=lambda m, mt: RepeatedCrossValidationResampler(
                           model=m,
-                          model_transformations=mt,
+                          transformations=mt,
                           scores=score_list,
                           folds=num_folds,
                           repeats=num_repeats,
@@ -146,7 +146,7 @@ class SearcherTests(TimerTestCase):
                       splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                       resampler_function=lambda m, mt: RepeatedCrossValidationResampler(
                           model=m,
-                          model_transformations=mt,
+                          transformations=mt,
                           scores=score_list,
                           folds=num_folds,
                           repeats=num_repeats,
@@ -173,7 +173,7 @@ class SearcherTests(TimerTestCase):
                                                 splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),  # noqa
                                                 resampler_function=lambda m, mt: RepeatedCrossValidationResampler(  # noqa
                                                     model=m,
-                                                    model_transformations=mt,
+                                                    transformations=mt,
                                                     scores=score_list,
                                                     folds=num_folds,
                                                     repeats=num_repeats)).search(data=data,
@@ -191,7 +191,7 @@ class SearcherTests(TimerTestCase):
                                                 splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),  # noqa
                                                 resampler_function=lambda m, mt: RepeatedCrossValidationResampler(  # noqa
                                                     model=m,
-                                                    model_transformations=mt,
+                                                    transformations=mt,
                                                     scores=score_list,
                                                     folds=num_folds,
                                                     repeats=num_repeats)).search(data=data,
@@ -238,7 +238,7 @@ class SearcherTests(TimerTestCase):
                                                 splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),  # noqa
                                                 resampler_function=lambda m, mt: RepeatedCrossValidationResampler(  # noqa
                                                     model=m,
-                                                    model_transformations=mt,
+                                                    transformations=mt,
                                                     scores=score_list,
                                                     folds=num_folds,
                                                     repeats=num_repeats),
@@ -275,7 +275,7 @@ class SearcherTests(TimerTestCase):
                                  splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                                  resampler_function=lambda m, mt: RepeatedCrossValidationResampler(
                                      model=m,
-                                     model_transformations=mt,
+                                     transformations=mt,
                                      scores=score_list,
                                      folds=num_folds,
                                      repeats=num_repeats),

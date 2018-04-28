@@ -244,7 +244,7 @@ class ModelStacker(ModelWrapperBase):
 
             resampler = RepeatedCrossValidationResampler(
                 model=model_info.model,
-                model_transformations=model_info.transformations,  # transformations specific to base-model
+                transformations=model_info.transformations,  # transformations specific to base-model
                 scores=[score.clone() for score in self._scores],
                 folds=5,
                 repeats=1,

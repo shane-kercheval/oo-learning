@@ -19,9 +19,9 @@ class MockResampler(ResamplerBase):
     """
     def __init__(self,
                  model: ModelWrapperBase,
-                 model_transformations: List[TransformerBase],
+                 transformations: List[TransformerBase],
                  scores: List[ScoreBase]):
-        super().__init__(model=model, model_transformations=model_transformations, scores=scores)
+        super().__init__(model=model, transformations=transformations, scores=scores)
         # load actual data from a RandomForestClassifier Tuner/Resampler (test_ModelTuner_RandomForest_classification)
         # so that we can build up the necessary ResamplerResults object based on the saved data.
         file = os.path.join(os.getcwd(), 'tests/data/test_ModelTuner_classification_mock.pkl')

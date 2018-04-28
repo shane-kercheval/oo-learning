@@ -18,19 +18,20 @@ from oolearning.transformers.TransformerBase import TransformerBase
 class ResamplerBase(metaclass=ABCMeta):
     """
     A Resampler is an object that defines how to 'resample' a data set, for example 'repeated
-        cross-validation'
+        cross-validation', and provides information about the performance of the model fit on the resampled
+        data.
     """
 
     def __init__(self,
                  model: ModelWrapperBase,
-                 model_transformations: List[TransformerBase],
+                 transformations: List[TransformerBase],
                  scores: List[ScoreBase],
                  persistence_manager: PersistenceManagerBase = None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None):
         """
         :param model:
-        :param model_transformations:
+        :param transformations:
         :param scores: a `list` of `Evaluator` objects.
             For example, if Kappa and AUC are both metrics of
             interest when resampling, use `holdout_scores=[KappaScore, AucRocScore]`;
@@ -45,12 +46,12 @@ class ResamplerBase(metaclass=ABCMeta):
             from this capability to also peak at the data that is being trained.
         """
         assert isinstance(model, ModelWrapperBase)
-        if model_transformations is not None:
-            assert isinstance(model_transformations, list)
+        if transformations is not None:
+            assert isinstance(transformations, list)
         assert isinstance(scores, list)
 
         self._model = model
-        self._model_transformations = model_transformations
+        self._transformations = transformations
         self._scores = scores
         self._results = None
         self._persistence_manager = persistence_manager
