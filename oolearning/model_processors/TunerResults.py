@@ -104,7 +104,11 @@ class TunerResults:
             return None
 
     @staticmethod
-    def columnwise_conditional_format(df, hyper_params, tuned_hyper_params, minimizers: List[bool]):
+    def columnwise_conditional_format(df,
+                                      hyper_params,
+                                      tuned_hyper_params,
+                                      minimizers: List[bool],
+                                      font_size: int=8):
         """
         # TODO: document... minimizers i.e. CostFunction are blue ... maximizers i.e. UtilityFunctions
         # are green..... darker colors are "better".. so for "maximizers" it will be higher numbers
@@ -142,14 +146,27 @@ class TunerResults:
             colors = colors if not is_minimizer and not is_std_or_cv else colors + '_r'
             ax.pcolormesh(color_values, cmap=colors)
 
-        for y in range(score_values.shape[0]):
-            for x in range(score_values.shape[1]):
-                plt.text(x + .5, y + .5, '%.3f' % score_values.ix[y, x],
+        # outer dict is higher/lower than mean (true/false); inner dict is minimizer/maximizer;
+        # minimizer has dark color for low value
+        cell_color_chart = {True: {True: 'black', False: 'w'}, False: {True: 'w', False: 'black'}}
+        for column in range(score_values.shape[1]):
+            # if the column is a standard deviation or coefficient of variation, it is a minimizer by
+            # definition; if it's not, we need to see if the specific Score is a minimizer/maximizer
+            is_column_minimizer = '_st_dev' in score_columns[column] or '_cv' in score_columns[column]
+            if not is_column_minimizer:
+                is_column_minimizer = minimizers[int(math.floor(column/n))]
+
+            column_mean = score_values[score_columns[column]].mean()
+            for row in range(score_values.shape[0]):
+                cell_value = score_values.ix[row, column]
+                plt.text(column + .5, row + .5, '%.3f' % cell_value,
+                         fontsize=font_size,
                          horizontalalignment='center',
-                         verticalalignment='center')
+                         verticalalignment='center',
+                         color=cell_color_chart[cell_value > column_mean][is_column_minimizer])
 
         ax.set_xticks(np.arange(start=0.5, stop=len(score_columns), step=1))
-        ax.set_xticklabels(score_columns, rotation=35, ha='right')
+        ax.set_xticklabels(score_columns, rotation=35, ha='right', fontsize=font_size)
 
         param_combos = df.loc[:, tuned_hyper_params]
         labels = []
@@ -158,12 +175,19 @@ class TunerResults:
 
         y_tick_positions = np.arange(start=0, stop=len(param_combos)) + 0.5
         ax.set_yticks(y_tick_positions)
-        ax.set_yticklabels(labels)
+        ax.set_yticklabels(labels, fontsize=font_size)
+
+        # the first Score (and therefore the first item in `minimizers`, and first column in score_values
+        # determines what params are considered the "best"
+        minimizer = minimizers[0]
+        best = min if minimizer else max
+        index_of_best_mean = list(score_values[score_columns[0]]).index(best(score_values[score_columns[0]]))
+        plt.gca().get_yticklabels()[index_of_best_mean].set_color('red')
         ax.invert_yaxis()
         plt.tight_layout()
         return plt
 
-    def get_heatmap(self):
+    def get_heatmap(self, font_size: int=8):
         """
         NOTE: only shows the "tuned" hyper-params i.e. hyper-params that were tuned over >1 values.
         :return:
@@ -178,7 +202,8 @@ class TunerResults:
         self.columnwise_conditional_format(df=self.tune_results,
                                            hyper_params=self._params_grid.hyper_params,
                                            tuned_hyper_params=self._params_grid.tuned_hyper_params,
-                                           minimizers=minimizers)
+                                           minimizers=minimizers,
+                                           font_size=font_size)
 
     def get_cross_validation_boxplots(self, metric: Metric):
         """

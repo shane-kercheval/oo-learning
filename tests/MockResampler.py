@@ -11,6 +11,7 @@ from oolearning.model_processors.ResamplerBase import ResamplerBase
 from oolearning.model_processors.ResamplerResults import ResamplerResults
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.transformers.TransformerBase import TransformerBase
+from tests.TestHelper import TestHelper
 
 
 class MockResampler(ResamplerBase):
@@ -24,7 +25,7 @@ class MockResampler(ResamplerBase):
         super().__init__(model=model, transformations=transformations, scores=scores)
         # load actual data from a RandomForestClassifier Tuner/Resampler (test_ModelTuner_RandomForest_classification)
         # so that we can build up the necessary ResamplerResults object based on the saved data.
-        file = os.path.join(os.getcwd(), 'tests/data/test_ModelTuner_classification_mock.pkl')
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelTuner_classification_mock.pkl'))  # noqa
         with open(file, 'rb') as saved_object:
             self._tune_results = pickle.load(saved_object)
 

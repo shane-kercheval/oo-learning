@@ -227,7 +227,7 @@ class TunerTests(TimerTestCase):
         # Test Heatmap
         ######################################################################################################
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_heatmap.png',  # noqa
-                              lambda: tuner.results.get_heatmap())
+                              lambda: tuner.results.get_heatmap(font_size=None))
 
         ######################################################################################################
         # Test Box-Plots
