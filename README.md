@@ -57,7 +57,7 @@ https://github.com/shane-kercheval/oo-learning/tree/master/examples/classificati
 	* [Classification](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/3-Resampling.ipynb)
 	* Regression (TBD)
 * Tuning Data
-	* Classification (TBD)
+	* [Classification](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/4-Tuning.ipynb)
 	* Regression (TBD)
 * Searching Models
 	* Classification (TBD)
