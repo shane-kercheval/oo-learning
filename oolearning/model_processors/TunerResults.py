@@ -92,7 +92,7 @@ class TunerResults:
 
     @property
     def resampler_decorators(self):
-        # todo document, for each hyper-param combo that was resampled, return the associated decorats
+        # todo document, for each hyper-param combo that was resampled, return the associated decorators
         return [self._tune_results_objects.iloc[i].resampler_object.decorators for i in np.arange(0, self.num_param_combos)]  # noqa
 
     @property
@@ -175,10 +175,10 @@ class TunerResults:
         minimizers = [isinstance(x, CostFunctionMixin) for x in scores]
 
         # .tuned_hyper_params ensures only hyper-params with >1 values
-        return self.columnwise_conditional_format(df=self.tune_results,
-                                                  hyper_params=self._params_grid.hyper_params,
-                                                  tuned_hyper_params=self._params_grid.tuned_hyper_params,
-                                                  minimizers=minimizers)
+        self.columnwise_conditional_format(df=self.tune_results,
+                                           hyper_params=self._params_grid.hyper_params,
+                                           tuned_hyper_params=self._params_grid.tuned_hyper_params,
+                                           minimizers=minimizers)
 
     def get_cross_validation_boxplots(self, metric: Metric):
         """
@@ -222,14 +222,13 @@ class TunerResults:
         best = min if minimizer else max
         index_of_best_mean = resample_means.index(best(resample_means))
 
-        resample_boxplot = resamples.boxplot(vert=False, figsize=(10, 10))
+        resamples.boxplot(vert=False, figsize=(10, 10))
         plt.xlim(0.0, 1.0)
         plt.title('{0} ({1})'.format('Cross-Validation Scores Per Resampled Hyper-parameter', metric.name),
                   loc='right')
         plt.tight_layout()
         plt.gca().get_yticklabels()[index_of_best_mean].set_color('red')
         plt.gca().invert_yaxis()
-        return resample_boxplot
 
     def get_profile_hyper_params(self, metric: Metric, x_axis, line=None, grid=None):
         if grid is not None:
@@ -240,7 +239,7 @@ class TunerResults:
         if line is None:  # then we also know grid is None as well
             hyper_params = [x_axis]
             df = self.tune_results[hyper_params + [metric_value]]
-            return df.groupby(hyper_params).mean().plot(figsize=(10, 7))
+            df.groupby(hyper_params).mean().plot(figsize=(10, 7))
 
         elif grid is None:  # then we know line is NOT None, but grid is,
             hyper_params = [x_axis, line]
@@ -249,7 +248,6 @@ class TunerResults:
             plot_df = df_grouped.unstack(line).loc[:, metric_value]
             ax = plot_df.plot(figsize=(10, 7))
             ax.set_ylabel(metric_value)
-            return plot_df
 
         else:  # line and grid are not None
             hyper_params = [grid, line, x_axis]
@@ -275,4 +273,3 @@ class TunerResults:
                 ax.remove()
 
             plt.tight_layout()
-            return plt
