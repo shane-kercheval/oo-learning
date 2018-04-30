@@ -109,15 +109,15 @@ transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'C
 
 # define the scores, which will be used to compare the performance across hyper-param combinations
 # the scores need a Converter, which contains the logic necessary to convert the predicted values to a predicted class.
-evaluator_list = [AucRocScore(positive_class='lived'),
-                  SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived')),
-                  SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived')),
-                  ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived'))]
+score_list = [AucRocScore(positive_class='lived'),
+              SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived')),
+              SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived')),
+              ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived'))]
 
 # define/configure the resampler
 resampler = RepeatedCrossValidationResampler(model=RandomForestClassifier(),  # using a Random Forest model
                                              transformations=transformations,
-                                             scores=evaluator_list,
+                                             scores=score_list,
                                              folds=5,
                                              repeats=5)
 # define/configure the ModelTuner
@@ -131,7 +131,11 @@ params_dict = dict(criterion='gini',
 grid = HyperParamsGrid(params_dict=params_dict)
 
 tuner.tune(data_x=training_x, data_y=training_y, params_grid=grid)
+tuner.results.get_heatmap()
 ```
+
+*Code Snippet from [Tuning](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/4-Tuning.ipynb) notebook.*
+
 ### ModelSearcher Snippet
 
 ```python
