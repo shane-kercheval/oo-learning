@@ -101,7 +101,36 @@ trainer.holdout_evaluator.all_quality_metrics
 ### ModelTuner Snippet
 
 ```python
-TBD
+# define the transformations
+transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                   CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                   ImputationTransformer(),
+                   DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+# define the scores, which will be used to compare the performance across hyper-param combinations
+# the scores need a Converter, which contains the logic necessary to convert the predicted values to a predicted class.
+evaluator_list = [AucRocScore(positive_class='lived'),
+                  SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived')),
+                  SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived')),
+                  ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived'))]
+
+# define/configure the resampler
+resampler = RepeatedCrossValidationResampler(model=RandomForestClassifier(),  # using a Random Forest model
+                                             transformations=transformations,
+                                             scores=evaluator_list,
+                                             folds=5,
+                                             repeats=5)
+# define/configure the ModelTuner
+tuner = ModelTuner(resampler=resampler,
+                   hyper_param_object=RandomForestHP())  # Hyper-Parameter object specific to RFTBD
+
+params_dict = dict(criterion='gini',
+                   max_features=[1, 5, 10],
+                   n_estimators=[10, 100, 500],
+                   min_samples_leaf=[1, 50, 100])
+grid = HyperParamsGrid(params_dict=params_dict)
+
+tuner.tune(data_x=training_x, data_y=training_y, params_grid=grid)
 ```
 ### ModelSearcher Snippet
 
