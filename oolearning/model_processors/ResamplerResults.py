@@ -9,13 +9,17 @@ from oolearning.model_processors.DecoratorBase import DecoratorBase
 
 
 class ResamplerResults:
+    """
+    Class that encapsulates the results of resampling a model.
+    """
     def __init__(self, scores: List[List[ScoreBase]], decorators: Union[List[DecoratorBase], None]):
         """
         :param scores: a list of list of holdout_scores.
             each outer list represents a resampling result (e.g. a single fold for a single repeat in repeated
                 k-fold cross validation);
             each element of the inner list represents a specific score for the single resampling result
-        #TODO: decorators are a list of decorators passed into the Resampler
+        :param decorators: the list of decorators passed into the Resampler and evaluated after each
+            model is trained
         """
         self._scores = scores
         self._decorators = decorators
@@ -32,22 +36,44 @@ class ResamplerResults:
 
     @property
     def metrics(self) -> List[str]:
+        """
+        :return: the names of the metrics being evaluated
+        """
         assert self._cross_validation_scores is not None
         return list(self._cross_validation_scores[0].keys())
 
     @property
     def num_resamples(self) -> int:
+        """
+        :return: the number of resamples i.e. number of times model was trained on resampled data
+        """
         return len(self.cross_validation_scores)
 
     @property
     def scores(self) -> List[List[ScoreBase]]:
+        """
+        :return: a list of list of holdout_scores.
+            each outer list represents a resampling result (e.g. a single fold for a single repeat in repeated
+                k-fold cross validation);
+            each element of the inner list represents a specific score for the single resampling result
+        """
         return self._scores
 
     @property
     def cross_validation_scores(self) -> pd.DataFrame:
+        """
+        :return: a DataFrame showing the resampled scores for each Score object, per resample.
+            For example, for a `RepeatedCrossValidationResampler` there should be 1 row for each fold,
+            multiplied by the number of repeats (e.g. a 5-fold, 5-repeat cross validation resampler would have
+             25 rows; with each column corresponding to the Score objects that were passed in as a list to the
+             Resampler.
+        """
         return pd.DataFrame(self._cross_validation_scores, columns=self.metrics)
 
     def cross_validation_score_boxplot(self):
+        """
+        :return: boxplot visualization for each
+        """
         plt.ylim(0.0, 1.0)
         self.cross_validation_scores.boxplot()
         plt.title('Cross-Validation Scores')
@@ -55,22 +81,21 @@ class ResamplerResults:
     @property
     def metric_means(self) -> dict:
         """
-        :return: mean i.e. average for each metric/Evaluator
-        :return:
+        :return: mean for each metric/Score across all the resampled results
         """
         return {metric: self.cross_validation_scores[metric].mean() for metric in self.metrics}
 
     @property
     def metric_standard_deviations(self) -> dict:
         """
-        :return: standard deviation for each metric/Evaluator
+        :return: standard deviation for each metric/Score across all the resampled results
         """
         return {metric: self.cross_validation_scores[metric].std() for metric in self.metrics}
 
     @property
     def metric_coefficient_of_variation(self) -> dict:
         """
-        :return: `coefficient of variation` for each metric/Evaluator
+        :return: `coefficient of variation` for each metric/Score across all the resampled results
 
          If `sample A` has a CV of 0.12 and `sample B` has a CV of 0.25, you would say that `sample B` has
             more variation, relative to its mean.
@@ -83,13 +108,16 @@ class ResamplerResults:
 
     @property
     def decorators(self) -> List[DecoratorBase]:
+        """
+        :return: the list of decorators passed into the Resampler and evaluated after each model is trained
+        """
         return self._decorators
 
     def __lt__(self, other):
         """
-        # TODO: update documentation
-        basically, i'm utilizing the `better_than` function passed to the Evaluator, in order to compare
-            the means of all the Evaluators, in order to properly sort
+        this method is used to sort Resampled results based on the whether the Score object (and therefore,
+            how we would define the "best" results, as well as how we would sort them) is based on a `utility`
+            function or a `cost` function.
              e.g. when comparing Kappas the larger number is "better", when comparing RMSE smaller numbers are
                 "better"
         """
