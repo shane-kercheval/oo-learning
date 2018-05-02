@@ -26,9 +26,9 @@ class TunerResults:
             metric_dictionary = OrderedDict()
             for metric in resampler_result.metrics:
                 metric_dictionary.update(
-                    {metric + '_mean': resampler_result.metric_means[metric],
-                     metric + '_st_dev': resampler_result.metric_standard_deviations[metric],
-                     metric + '_cv': resampler_result.metric_coefficient_of_variation[metric]})
+                    {metric + '_mean': resampler_result.score_means[metric],
+                     metric + '_st_dev': resampler_result.score_standard_deviations[metric],
+                     metric + '_cv': resampler_result.score_coefficient_of_variations[metric]})
             results_list.append(metric_dictionary)
 
         # noinspection PyUnresolvedReferences

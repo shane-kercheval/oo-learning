@@ -79,21 +79,21 @@ class ResamplerResults:
         plt.title('Resampled Scores')
 
     @property
-    def metric_means(self) -> dict:
+    def score_means(self) -> dict:
         """
         :return: mean for each metric/Score across all the resampled results
         """
         return {metric: self.resampled_scores[metric].mean() for metric in self.metrics}
 
     @property
-    def metric_standard_deviations(self) -> dict:
+    def score_standard_deviations(self) -> dict:
         """
         :return: standard deviation for each metric/Score across all the resampled results
         """
         return {metric: self.resampled_scores[metric].std() for metric in self.metrics}
 
     @property
-    def metric_coefficient_of_variation(self) -> dict:
+    def score_coefficient_of_variations(self) -> dict:
         """
         :return: `coefficient of variation` for each metric/Score across all the resampled results
 
@@ -126,8 +126,8 @@ class ResamplerResults:
         # noinspection PyProtectedMember
         better_than_function = self._scores[0][0]._better_than
         # get the mean of the first (i.e. main) metric for *this* ResamplerResult
-        this_mean = self.metric_means[self.metrics[0]]
+        this_mean = self.score_means[self.metrics[0]]
         # get the mean of the first (i.e. main) metric for the *other* ResamplerResult
-        other_mean = other.metric_means[other.metrics[0]]
+        other_mean = other.score_means[other.metrics[0]]
 
         return better_than_function(this_mean, other_mean)

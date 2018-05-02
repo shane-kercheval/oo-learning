@@ -195,32 +195,32 @@ class TunerTests(TimerTestCase):
                                                    'min_samples_leaf': 1}
 
         for index in range(len(tuner.results.tune_results)):
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_means['kappa'],  # noqa
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_means['kappa'],  # noqa
                            tuner.results.tune_results.iloc[index]['kappa_mean'])
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_standard_deviations['kappa'],  # noqa
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_standard_deviations['kappa'],  # noqa
                            tuner.results.tune_results.iloc[index]['kappa_st_dev'])
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_coefficient_of_variation['kappa'],  # noqa
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_coefficient_of_variations['kappa'],  # noqa
                            tuner.results.tune_results.iloc[index]['kappa_cv'])
 
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_means['sensitivity'],  # noqa
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_means['sensitivity'],  # noqa
                            tuner.results.tune_results.iloc[index]['sensitivity_mean'])
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_standard_deviations['sensitivity'],  # noqa
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_standard_deviations['sensitivity'],  # noqa
                            tuner.results.tune_results.iloc[index]['sensitivity_st_dev'])
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_coefficient_of_variation['sensitivity'],  # noqa
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_coefficient_of_variations['sensitivity'],  # noqa
                            tuner.results.tune_results.iloc[index]['sensitivity_cv'])
 
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_means['specificity'],  # noqa
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_means['specificity'],  # noqa
                            tuner.results.tune_results.iloc[index]['specificity_mean'])
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_standard_deviations['specificity'],  # noqa
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_standard_deviations['specificity'],  # noqa
                            tuner.results.tune_results.iloc[index]['specificity_st_dev'])
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_coefficient_of_variation['specificity'],  # noqa
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_coefficient_of_variations['specificity'],  # noqa
                            tuner.results.tune_results.iloc[index]['specificity_cv'])
 
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_means['error_rate'],  # noqa
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_means['error_rate'],  # noqa
                            tuner.results.tune_results.iloc[index]['error_rate_mean'])
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_standard_deviations['error_rate'],  # noqa
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_standard_deviations['error_rate'],  # noqa
                            tuner.results.tune_results.iloc[index]['error_rate_st_dev'])
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.metric_coefficient_of_variation['error_rate'],  # noqa
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_coefficient_of_variations['error_rate'],  # noqa
                            tuner.results.tune_results.iloc[index]['error_rate_cv'])
 
         ######################################################################################################
@@ -286,10 +286,10 @@ class TunerTests(TimerTestCase):
                     for x in tuner.results._tune_results_objects.iloc[0].resampler_object._scores])
         assert tuner.results._tune_results_objects.iloc[0].resampler_object.num_resamples == 25
         assert tuner.results._tune_results_objects.iloc[0].resampler_object.metrics == ['RMSE', 'MAE']
-        assert isclose(tuner.results._tune_results_objects.iloc[0].resampler_object.metric_means['RMSE'], 10.459344010622544)  # noqa
-        assert isclose(tuner.results._tune_results_objects.iloc[0].resampler_object.metric_means['MAE'], 8.2855537849498742)  # noqa
-        assert isclose(tuner.results._tune_results_objects.iloc[0].resampler_object.metric_standard_deviations['RMSE'], 0.5716680069548794)  # noqa
-        assert isclose(tuner.results._tune_results_objects.iloc[0].resampler_object.metric_standard_deviations['MAE'], 0.46714447004190812)  # noqa
+        assert isclose(tuner.results._tune_results_objects.iloc[0].resampler_object.score_means['RMSE'], 10.459344010622544)  # noqa
+        assert isclose(tuner.results._tune_results_objects.iloc[0].resampler_object.score_means['MAE'], 8.2855537849498742)  # noqa
+        assert isclose(tuner.results._tune_results_objects.iloc[0].resampler_object.score_standard_deviations['RMSE'], 0.5716680069548794)  # noqa
+        assert isclose(tuner.results._tune_results_objects.iloc[0].resampler_object.score_standard_deviations['MAE'], 0.46714447004190812)  # noqa
 
         assert isclose(tuner.results.tune_results.iloc[0].RMSE_mean, 10.459344010622544)
         assert isclose(tuner.results.tune_results.iloc[0].MAE_mean, 8.2855537849498742)
