@@ -694,13 +694,11 @@ class ModelWrapperTests(TimerTestCase):
         assert len(tuner.results._tune_results_objects) == 3
         assert tuner.results.num_param_combos == 3
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Ridge_can_tune.pkl'))  # noqa
-        # with open(file, 'wb') as output:
-        #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
-            tune_results = pickle.load(saved_object)
-            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.tune_results,
+            saved_results = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.tune_results,
                                                       data_frame2=tuner.results.tune_results)
-            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
+            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.sorted_best_models,
                                                       data_frame2=tuner.results.sorted_best_models)
 
     def test_LassoRegression(self):
@@ -742,13 +740,11 @@ class ModelWrapperTests(TimerTestCase):
         assert len(tuner.results._tune_results_objects) == 3
         assert tuner.results.num_param_combos == 3
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Lasso_can_tune.pkl'))  # noqa
-        # with open(file, 'wb') as output:
-        #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
-            tune_results = pickle.load(saved_object)
-            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.tune_results,
+            saved_results = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.tune_results,
                                                       data_frame2=tuner.results.tune_results)
-            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
+            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.sorted_best_models,
                                                       data_frame2=tuner.results.sorted_best_models)
 
     def test_ElasticNetRegressor(self):
@@ -791,13 +787,11 @@ class ModelWrapperTests(TimerTestCase):
         assert len(tuner.results._tune_results_objects) == 6
         assert tuner.results.num_param_combos == 6
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ElasticNet_can_tune.pkl'))  # noqa
-        # with open(file, 'wb') as output:
-        #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
-            tune_results = pickle.load(saved_object)
-            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.tune_results,
+            saved_results = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.tune_results,
                                                       data_frame2=tuner.results.tune_results)
-            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
+            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.sorted_best_models,
                                                       data_frame2=tuner.results.sorted_best_models)
 
     def test_ModelFitter_callback(self):

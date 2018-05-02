@@ -132,7 +132,7 @@ class SearcherResults:
         # build the dataframe that will be used to generate the boxplot; 1 column per "best" model
         resamples = pd.DataFrame()
         for index in range(len(self.model_names)):
-            cross_val_scores = self.tuner_results[index].best_model_resampler_object.cross_validation_scores[metric_name]
+            cross_val_scores = self.tuner_results[index].best_model_resampler_object.resampled_scores[metric_name]
             column_name = '{0}: {1}'.format(self.model_names[index],
                                             self.model_descriptions[index])
             resamples[column_name] = pd.Series(data=cross_val_scores)
@@ -141,7 +141,7 @@ class SearcherResults:
         assert resamples.shape[1] == len(self.model_names)
         # ensure correct number of resamples (rows in `resamples`, and row in `the underlying cross validation
         # scores (of resampled hyper-param))
-        assert resamples.shape[0] == len(self.tuner_results[0].best_model_resampler_object.cross_validation_scores[metric_name])  # noqa
+        assert resamples.shape[0] == len(self.tuner_results[0].best_model_resampler_object.resampled_scores[metric_name])  # noqa
 
         # get the means to determine the 'best' hyper-param combo
         resample_means = [resamples[column].mean() for column in resamples.columns.values]

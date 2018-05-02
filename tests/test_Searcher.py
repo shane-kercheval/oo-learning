@@ -318,7 +318,7 @@ class SearcherTests(TimerTestCase):
 
         # each tuner results (grab the best model) should have num_folds * num_repeats resamples
         for index in range(len(infos)):
-            assert len(searcher.results.tuner_results[index].best_model_resampler_object.cross_validation_scores) == 6  # noqa
+            assert len(searcher.results.tuner_results[index].best_model_resampler_object.resampled_scores) == 6  # noqa
 
         # same tuner should have the same results as test_resamplers_Mock_classification because of the
         # mock object, but third/fourth will be different because of dummy

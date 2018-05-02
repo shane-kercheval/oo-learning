@@ -167,7 +167,7 @@ class ModelStacker(ModelWrapperBase):
             raise ModelNotFittedError()
 
         model_index = [x.description for x in self._base_models].index(model_description)
-        return self._resampler_results[model_index].cross_validation_scores
+        return self._resampler_results[model_index].resampled_scores
 
     def get_resample_means(self) -> pd.DataFrame:
         """

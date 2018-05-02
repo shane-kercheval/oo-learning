@@ -25,29 +25,29 @@ class ResamplerResults:
         self._decorators = decorators
 
         # for each score, add the metric name/value to a dict to add to the ResamplerResults
-        self._cross_validation_scores = list()
+        self._resampled_scores = list()
 
         for resample_eval_list in scores:
             results_dict = dict()
             for temp_eval in resample_eval_list:
                 results_dict[temp_eval.name] = temp_eval.value
 
-            self._cross_validation_scores.append(results_dict)
+            self._resampled_scores.append(results_dict)
 
     @property
     def metrics(self) -> List[str]:
         """
         :return: the names of the metrics being evaluated
         """
-        assert self._cross_validation_scores is not None
-        return list(self._cross_validation_scores[0].keys())
+        assert self._resampled_scores is not None
+        return list(self._resampled_scores[0].keys())
 
     @property
     def num_resamples(self) -> int:
         """
         :return: the number of resamples i.e. number of times model was trained on resampled data
         """
-        return len(self.cross_validation_scores)
+        return len(self.resampled_scores)
 
     @property
     def scores(self) -> List[List[ScoreBase]]:
@@ -60,7 +60,7 @@ class ResamplerResults:
         return self._scores
 
     @property
-    def cross_validation_scores(self) -> pd.DataFrame:
+    def resampled_scores(self) -> pd.DataFrame:
         """
         :return: a DataFrame showing the resampled scores for each Score object, per resample.
             For example, for a `RepeatedCrossValidationResampler` there should be 1 row for each fold,
@@ -68,29 +68,29 @@ class ResamplerResults:
              25 rows; with each column corresponding to the Score objects that were passed in as a list to the
              Resampler.
         """
-        return pd.DataFrame(self._cross_validation_scores, columns=self.metrics)
+        return pd.DataFrame(self._resampled_scores, columns=self.metrics)
 
-    def cross_validation_score_boxplot(self):
+    def resampled_scores_boxplot(self):
         """
         :return: boxplot visualization for each
         """
         plt.ylim(0.0, 1.0)
-        self.cross_validation_scores.boxplot()
-        plt.title('Cross-Validation Scores')
+        self.resampled_scores.boxplot()
+        plt.title('Resampled Scores')
 
     @property
     def metric_means(self) -> dict:
         """
         :return: mean for each metric/Score across all the resampled results
         """
-        return {metric: self.cross_validation_scores[metric].mean() for metric in self.metrics}
+        return {metric: self.resampled_scores[metric].mean() for metric in self.metrics}
 
     @property
     def metric_standard_deviations(self) -> dict:
         """
         :return: standard deviation for each metric/Score across all the resampled results
         """
-        return {metric: self.cross_validation_scores[metric].std() for metric in self.metrics}
+        return {metric: self.resampled_scores[metric].std() for metric in self.metrics}
 
     @property
     def metric_coefficient_of_variation(self) -> dict:
@@ -101,9 +101,9 @@ class ResamplerResults:
             more variation, relative to its mean.
         """
         return {metric:
-                np.nan if self.cross_validation_scores[metric].mean() == 0
-                else round((self.cross_validation_scores[metric].std() /
-                            self.cross_validation_scores[metric].mean()), 2)
+                np.nan if self.resampled_scores[metric].mean() == 0
+                else round((self.resampled_scores[metric].std() /
+                            self.resampled_scores[metric].mean()), 2)
                 for metric in self.metrics}
 
     @property

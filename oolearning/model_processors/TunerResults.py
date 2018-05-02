@@ -218,7 +218,7 @@ class TunerResults:
         resamples = pd.DataFrame()
         for index in range(self.num_param_combos):
             cross_val_scores = self._tune_results_objects.iloc[index].loc['resampler_object'].\
-                cross_validation_scores[metric_name]
+                resampled_scores[metric_name]
             # column name should be the hyper_params & values
             column_name_dict = dict()
             # .tuned_hyper_params ensures only hyper-params with >1 values
@@ -231,7 +231,7 @@ class TunerResults:
         assert resamples.shape[1] == len(self.tune_results)
         # ensure correct number of resamples (rows in `resamples`, and row in `the underlying cross validation
         # scores (of resampled hyper-param))
-        assert resamples.shape[0] == len(self._tune_results_objects.iloc[0].loc['resampler_object'].cross_validation_scores)  # noqa
+        assert resamples.shape[0] == len(self._tune_results_objects.iloc[0].loc['resampler_object'].resampled_scores)  # noqa
 
         # get the means to determine the 'best' hyper-param combo
         resample_means = [resamples[column].mean() for column in resamples.columns.values]
