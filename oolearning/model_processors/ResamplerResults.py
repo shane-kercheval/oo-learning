@@ -14,7 +14,7 @@ class ResamplerResults:
     """
     def __init__(self, scores: List[List[ScoreBase]], decorators: Union[List[DecoratorBase], None]):
         """
-        :param scores: a list of list of holdout_scores.
+        :param scores: a list of list of holdout_score_objects.
             each outer list represents a resampling result (e.g. a single fold for a single repeat in repeated
                 k-fold cross validation);
             each element of the inner list represents a specific score for the single resampling result
@@ -24,7 +24,7 @@ class ResamplerResults:
         self._scores = scores
         self._decorators = decorators
 
-        # for each score, add the metric name/value to a dict to add to the ResamplerResults
+        # for each score, add the score name/value to a dict to add to the ResamplerResults
         self._resampled_scores = list()
 
         for resample_eval_list in scores:
@@ -35,9 +35,9 @@ class ResamplerResults:
             self._resampled_scores.append(results_dict)
 
     @property
-    def metrics(self) -> List[str]:
+    def score_names(self) -> List[str]:
         """
-        :return: the names of the metrics being evaluated
+        :return: the names of the score_names being evaluated
         """
         assert self._resampled_scores is not None
         return list(self._resampled_scores[0].keys())
@@ -52,7 +52,7 @@ class ResamplerResults:
     @property
     def scores(self) -> List[List[ScoreBase]]:
         """
-        :return: a list of list of holdout_scores.
+        :return: a list of list of holdout_score_objects.
             each outer list represents a resampling result (e.g. a single fold for a single repeat in repeated
                 k-fold cross validation);
             each element of the inner list represents a specific score for the single resampling result
@@ -68,11 +68,11 @@ class ResamplerResults:
              25 rows; with each column corresponding to the Score objects that were passed in as a list to the
              Resampler.
         """
-        return pd.DataFrame(self._resampled_scores, columns=self.metrics)
+        return pd.DataFrame(self._resampled_scores, columns=self.score_names)
 
-    def resampled_scores_boxplot(self):
+    def plot_resampled_scores(self):
         """
-        :return: boxplot visualization for each
+        :return: boxplot visualization for Score
         """
         plt.ylim(0.0, 1.0)
         self.resampled_scores.boxplot()
@@ -81,30 +81,38 @@ class ResamplerResults:
     @property
     def score_means(self) -> dict:
         """
-        :return: mean for each metric/Score across all the resampled results
+        :return: mean for each Score across all the resampled results
         """
-        return {metric: self.resampled_scores[metric].mean() for metric in self.metrics}
+        return {score: self.resampled_scores[score].mean() for score in self.score_names}
 
     @property
     def score_standard_deviations(self) -> dict:
         """
-        :return: standard deviation for each metric/Score across all the resampled results
+        :return: standard deviation for each Score across all the resampled results
         """
-        return {metric: self.resampled_scores[metric].std() for metric in self.metrics}
+        return {score: self.resampled_scores[score].std() for score in self.score_names}
 
     @property
-    def score_coefficient_of_variations(self) -> dict:
+    def score_coefficients_of_variation(self) -> dict:
         """
-        :return: `coefficient of variation` for each metric/Score across all the resampled results
+        :return: `coefficient of variation` for each Score across all the resampled results
 
          If `sample A` has a CV of 0.12 and `sample B` has a CV of 0.25, you would say that `sample B` has
             more variation, relative to its mean.
         """
-        return {metric:
-                np.nan if self.resampled_scores[metric].mean() == 0
-                else round((self.resampled_scores[metric].std() /
-                            self.resampled_scores[metric].mean()), 2)
-                for metric in self.metrics}
+        return {score:
+                np.nan if self.resampled_scores[score].mean() == 0
+                else round((self.resampled_scores[score].std() /
+                            self.resampled_scores[score].mean()), 2)
+                for score in self.score_names}
+
+    @property
+    def score_stats(self) -> pd.DataFrame:
+        stats = pd.DataFrame([self.score_means,
+                              self.score_standard_deviations,
+                              self.score_coefficients_of_variation],
+                             index=['means', 'standard deviations', 'coefficients of variation'])
+        return stats.reindex(columns=self.score_names)
 
     @property
     def decorators(self) -> List[DecoratorBase]:
@@ -125,9 +133,9 @@ class ResamplerResults:
         # first score
         # noinspection PyProtectedMember
         better_than_function = self._scores[0][0]._better_than
-        # get the mean of the first (i.e. main) metric for *this* ResamplerResult
-        this_mean = self.score_means[self.metrics[0]]
-        # get the mean of the first (i.e. main) metric for the *other* ResamplerResult
-        other_mean = other.score_means[other.metrics[0]]
+        # get the mean of the first (i.e. main) score for *this* ResamplerResult
+        this_mean = self.score_means[self.score_names[0]]
+        # get the mean of the first (i.e. main) score for the *other* ResamplerResult
+        other_mean = other.score_means[other.score_names[0]]
 
         return better_than_function(this_mean, other_mean)

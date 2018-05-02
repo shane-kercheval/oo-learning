@@ -28,10 +28,13 @@ class SearcherResults:
 
     @property
     def tuner_results(self) -> List[TunerResults]:
+        """
+        :return: a list of TunerResult objects
+        """
         return self._tuner_results
 
     @property
-    def holdout_scores(self) ->List[List[ScoreBase]]:
+    def holdout_score_objects(self) ->List[List[ScoreBase]]:
         """
         :return: List of Lists of Scores. Each item in the outer list corresponds to a specific model/
             model-description.  Each of those items has a list of Scores, corresponding to the
@@ -48,9 +51,9 @@ class SearcherResults:
         return self._model_descriptions
 
     @property
-    def holdout_score_values(self) -> pd.DataFrame:
+    def holdout_scores(self) -> pd.DataFrame:
         """
-        Evaluator values for the holdout sets
+        Score values for the holdout sets
         # TODO: update documentation
         """
         # get all the scores for each model (each model will have the same Evaluators)
@@ -68,7 +71,7 @@ class SearcherResults:
         :return: a dataframe with each model + best tuned result as a row
         """
         # get all the scores for each model (each model will have the same Evaluators)
-        scores = self.holdout_scores[0]
+        scores = self.holdout_score_objects[0]
         # get all the columns that the tuner_results will have
         score_columns = [(x.name + '_mean', x.name + '_st_dev', x.name + '_cv')
                              for x in scores]
@@ -101,7 +104,7 @@ class SearcherResults:
         """
         :return: returns the index of the best model based on the holdout accuracies (i.e. based on the first
             Score specified when creating the Resampler passed into the ModelSearcher constructor.
-            This index can then be used to index on the `tuner_results` and `holdout_scores` properties
+            This index can then be used to index on the `tuner_results` and `holdout_score_objects` properties
         """
 
         # get the first score in each list (1 list per model)
@@ -118,11 +121,11 @@ class SearcherResults:
 # each model has a "best" hyper-params sub-model based on the tuned/resampled results
     # found in `best_tuned_results`, which the the best submodel per model, with associated holdout scores
     # after each "model" has tuned across all sub-model/hyper-param-combos, the best model is chosen, and the model & best hyper-params are refit on all of the training data, and scored on a holdout set
-        # these holdout scores are found in `holdout_score_values`, these are single values so no mean/standard-dev associated with them
+        # these holdout scores are found in `holdout_scores`, these are single values so no mean/standard-dev associated with them
 # each sub-model has been resampled, so the "best model" for the sub-model has associated resampled data (i.e. all the cross validation scores for each score)
     #
 
-    def get_resamples_boxplot(self, metric: Metric):
+    def plot_resampled_scores(self, metric: Metric):
         """
         for each "best" model, show the resamples via boxplot
         :param metric:
@@ -137,7 +140,7 @@ class SearcherResults:
                                             self.model_descriptions[index])
             resamples[column_name] = pd.Series(data=cross_val_scores)
 
-        # ensure correct number of models (columns in `resamples`, and rows in `tune_results`
+        # ensure correct number of models (columns in `resamples`, and rows in `resampled_stats`
         assert resamples.shape[1] == len(self.model_names)
         # ensure correct number of resamples (rows in `resamples`, and row in `the underlying cross validation
         # scores (of resampled hyper-param))
@@ -148,7 +151,7 @@ class SearcherResults:
         assert len(resample_means) == resamples.shape[1]
 
         # get the current score object so we can determine if it is a minimizer or maximizer
-        score = [x for x in self.holdout_scores[0] if x.name == metric_name]
+        score = [x for x in self.holdout_score_objects[0] if x.name == metric_name]
         assert len(score) == 1  # we should just get the current score
         # if the `better_than` function returns True, 0 is "better than" 1 and we have a minimizer
         # for minimizers, we want to return the min, which is the best value, otherwise, return the max
@@ -164,17 +167,17 @@ class SearcherResults:
         plt.gca().invert_yaxis()
         return resample_boxplot
 
-    def get_holdout_score_heatmap(self):
+    def plot_holdout_scores(self):
         """
         NOTE: only shows the "tuned" hyper-params i.e. hyper-params that were tuned over >1 values.
         :return:
         """
-        scores = self.holdout_scores[0]
+        scores = self.holdout_score_objects[0]
         # if the Score is a Cost Function it is a 'minimizer'
         minimizers = [isinstance(x, CostFunctionMixin) for x in scores]
 
         score_columns = [x.name for x in scores]
-        score_values = self.holdout_score_values.loc[:, score_columns]
+        score_values = self.holdout_scores.loc[:, score_columns]
 
         num_rows = len(score_values)
         num_cols = len(score_values.columns)
@@ -196,7 +199,7 @@ class SearcherResults:
         ax.set_xticks(np.arange(start=0.5, stop=len(score_columns), step=1))
         ax.set_xticklabels(score_columns, rotation=35, ha='right')
 
-        labels = self.holdout_score_values.index.values
+        labels = self.holdout_scores.index.values
 
         y_tick_positions = np.arange(start=0, stop=len(labels)) + 0.5
         ax.set_yticks(y_tick_positions)

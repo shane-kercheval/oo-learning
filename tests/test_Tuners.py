@@ -50,8 +50,8 @@ class TunerTests(TimerTestCase):
     def test_ModelTuner_RandomForest_classification(self):
         """
         I want to keep this to run manually in the future, but running the Tuner/Resampler for a
-        RandomForestClassifier model takes several minutes, and is not practical. I've saved the tune_results
-        to a file and use a Mock Resampler to Mock out this test.
+        RandomForestClassifier model takes several minutes, and is not practical. I've saved the
+        resampled_stats to a file and use a Mock Resampler to Mock out this test.
         """
         data = TestHelper.get_titanic_data()
 
@@ -97,24 +97,24 @@ class TunerTests(TimerTestCase):
                     for x in tuner.results._tune_results_objects.resampler_object])
 
         # evaluator columns should be in the same order as specificied in the list
-        assert all(tuner.results.tune_results.columns.values == ['criterion', 'max_features', 'n_estimators',
-                                                                 'min_samples_leaf', 'kappa_mean',
-                                                                 'kappa_st_dev', 'kappa_cv',
-                                                                 'sensitivity_mean', 'sensitivity_st_dev',
-                                                                 'sensitivity_cv', 'specificity_mean',
-                                                                 'specificity_st_dev', 'specificity_cv',
-                                                                 'error_rate_mean', 'error_rate_st_dev',
-                                                                 'error_rate_cv'])
+        assert all(tuner.results.resampled_stats.columns.values == ['criterion', 'max_features',
+                                                                    'n_estimators', 'min_samples_leaf',
+                                                                    'kappa_mean', 'kappa_st_dev', 'kappa_cv',
+                                                                    'sensitivity_mean', 'sensitivity_st_dev',
+                                                                    'sensitivity_cv', 'specificity_mean',
+                                                                    'specificity_st_dev', 'specificity_cv',
+                                                                    'error_rate_mean', 'error_rate_st_dev',
+                                                                    'error_rate_cv'])
 
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelTuner_classification_mock.pkl'))  # noqa
         with open(file, 'wb') as output:
             pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             tune_results = pickle.load(saved_object)
-            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.tune_results,
-                                                      data_frame2=tuner.results.tune_results)
-            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.time_results,
-                                                      data_frame2=tuner.results.time_results)
+            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.resampled_stats,
+                                                      data_frame2=tuner.results.resampled_stats)
+            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.resampler_times,
+                                                      data_frame2=tuner.results.resampler_times)
             assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
                                                       data_frame2=tuner.results.sorted_best_models)
 
@@ -173,15 +173,15 @@ class TunerTests(TimerTestCase):
         #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             tune_results = pickle.load(saved_object)
-            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.tune_results,
-                                                      data_frame2=tuner.results.tune_results)
+            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.resampled_stats,
+                                                      data_frame2=tuner.results.resampled_stats)
             assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
                                                       data_frame2=tuner.results.sorted_best_models)
 
-        assert all(tuner.results.time_results.columns.values ==
+        assert all(tuner.results.resampler_times.columns.values ==
                    ['criterion', 'max_features', 'n_estimators', 'min_samples_leaf', 'execution_time'])
-        assert len(tuner.results.time_results) == len(tuner.results.tune_results)
-        assert tuner.results.time_results.isnull().sum().sum() == 0
+        assert len(tuner.results.resampler_times) == len(tuner.results.resampled_stats)
+        assert tuner.results.resampler_times.isnull().sum().sum() == 0
 
         ######################################################################################################
         # Test Best Model
@@ -194,68 +194,68 @@ class TunerTests(TimerTestCase):
                                                    'n_estimators': 500,
                                                    'min_samples_leaf': 1}
 
-        for index in range(len(tuner.results.tune_results)):
+        for index in range(len(tuner.results.resampled_stats)):
             assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_means['kappa'],  # noqa
-                           tuner.results.tune_results.iloc[index]['kappa_mean'])
+                           tuner.results.resampled_stats.iloc[index]['kappa_mean'])
             assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_standard_deviations['kappa'],  # noqa
-                           tuner.results.tune_results.iloc[index]['kappa_st_dev'])
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_coefficient_of_variations['kappa'],  # noqa
-                           tuner.results.tune_results.iloc[index]['kappa_cv'])
+                           tuner.results.resampled_stats.iloc[index]['kappa_st_dev'])
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_coefficients_of_variation['kappa'],  # noqa
+                           tuner.results.resampled_stats.iloc[index]['kappa_cv'])
 
             assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_means['sensitivity'],  # noqa
-                           tuner.results.tune_results.iloc[index]['sensitivity_mean'])
+                           tuner.results.resampled_stats.iloc[index]['sensitivity_mean'])
             assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_standard_deviations['sensitivity'],  # noqa
-                           tuner.results.tune_results.iloc[index]['sensitivity_st_dev'])
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_coefficient_of_variations['sensitivity'],  # noqa
-                           tuner.results.tune_results.iloc[index]['sensitivity_cv'])
+                           tuner.results.resampled_stats.iloc[index]['sensitivity_st_dev'])
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_coefficients_of_variation['sensitivity'],  # noqa
+                           tuner.results.resampled_stats.iloc[index]['sensitivity_cv'])
 
             assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_means['specificity'],  # noqa
-                           tuner.results.tune_results.iloc[index]['specificity_mean'])
+                           tuner.results.resampled_stats.iloc[index]['specificity_mean'])
             assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_standard_deviations['specificity'],  # noqa
-                           tuner.results.tune_results.iloc[index]['specificity_st_dev'])
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_coefficient_of_variations['specificity'],  # noqa
-                           tuner.results.tune_results.iloc[index]['specificity_cv'])
+                           tuner.results.resampled_stats.iloc[index]['specificity_st_dev'])
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_coefficients_of_variation['specificity'],  # noqa
+                           tuner.results.resampled_stats.iloc[index]['specificity_cv'])
 
             assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_means['error_rate'],  # noqa
-                           tuner.results.tune_results.iloc[index]['error_rate_mean'])
+                           tuner.results.resampled_stats.iloc[index]['error_rate_mean'])
             assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_standard_deviations['error_rate'],  # noqa
-                           tuner.results.tune_results.iloc[index]['error_rate_st_dev'])
-            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_coefficient_of_variations['error_rate'],  # noqa
-                           tuner.results.tune_results.iloc[index]['error_rate_cv'])
+                           tuner.results.resampled_stats.iloc[index]['error_rate_st_dev'])
+            assert isclose(tuner.results._tune_results_objects.iloc[index].resampler_object.score_coefficients_of_variation['error_rate'],  # noqa
+                           tuner.results.resampled_stats.iloc[index]['error_rate_cv'])
 
         ######################################################################################################
         # Test Heatmap
         ######################################################################################################
-        TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_heatmap.png',  # noqa
-                              lambda: tuner.results.get_heatmap())
+        TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_heatmap.png',
+                              lambda: tuner.results.plot_resampled_stats())
 
         ######################################################################################################
         # Test Box-Plots
         ######################################################################################################
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_boxplot_kappa.png',
-                              lambda: tuner.results.get_cross_validation_boxplots(metric=Metric.KAPPA))
+                              lambda: tuner.results.plot_resampled_scores(metric=Metric.KAPPA))
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_boxplot_sens.png',
-                              lambda: tuner.results.get_cross_validation_boxplots(metric=Metric.SENSITIVITY))
+                              lambda: tuner.results.plot_resampled_scores(metric=Metric.SENSITIVITY))
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_boxplot_spec.png',
-                              lambda: tuner.results.get_cross_validation_boxplots(metric=Metric.SPECIFICITY))
+                              lambda: tuner.results.plot_resampled_scores(metric=Metric.SPECIFICITY))
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_boxplot_error.png',
-                              lambda: tuner.results.get_cross_validation_boxplots(metric=Metric.ERROR_RATE))
+                              lambda: tuner.results.plot_resampled_scores(metric=Metric.ERROR_RATE))
 
         x_axis = 'max_features'
         line = 'n_estimators'
         grid = 'min_samples_leaf'
         metric = Metric.KAPPA
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_profile_hyper_params_3.png',  # noqa
-                              lambda: tuner.results.get_profile_hyper_params(metric=metric, x_axis=x_axis, line=line, grid=grid))  # noqa
+                              lambda: tuner.results.plot_hyper_params_profile(metric=metric, x_axis=x_axis, line=line, grid=grid))  # noqa
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_profile_hyper_params_2.png',  # noqa
-                              lambda: tuner.results.get_profile_hyper_params(metric=metric, x_axis=x_axis, line=line, grid=None))  # noqa
+                              lambda: tuner.results.plot_hyper_params_profile(metric=metric, x_axis=x_axis, line=line, grid=None))  # noqa
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_profile_hyper_params_1.png',  # noqa
-                              lambda: tuner.results.get_profile_hyper_params(metric=metric, x_axis=x_axis, line=None, grid=None))  # noqa
+                              lambda: tuner.results.plot_hyper_params_profile(metric=metric, x_axis=x_axis, line=None, grid=None))  # noqa
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_profile_hyper_params_1_ne.png',  # noqa
-                              lambda: tuner.results.get_profile_hyper_params(metric=metric, x_axis='n_estimators', line=None, grid=None))  # noqa
+                              lambda: tuner.results.plot_hyper_params_profile(metric=metric, x_axis='n_estimators', line=None, grid=None))  # noqa
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_profile_hyper_params_1_msl.png',  # noqa
-                              lambda: tuner.results.get_profile_hyper_params(metric=metric, x_axis='min_samples_leaf', line=None, grid=None))  # noqa
-        self.assertRaises(AssertionError, lambda: tuner.results.get_profile_hyper_params(metric=metric, x_axis=x_axis, line=None, grid=grid))  # noqa
+                              lambda: tuner.results.plot_hyper_params_profile(metric=metric, x_axis='min_samples_leaf', line=None, grid=None))  # noqa
+        self.assertRaises(AssertionError, lambda: tuner.results.plot_hyper_params_profile(metric=metric, x_axis=x_axis, line=None, grid=grid))  # noqa
 
     def test_tuner_with_no_hyper_params(self):
         data = TestHelper.get_cement_data()
@@ -285,18 +285,18 @@ class TunerTests(TimerTestCase):
                     isinstance(x[1], MaeScore)
                     for x in tuner.results._tune_results_objects.iloc[0].resampler_object._scores])
         assert tuner.results._tune_results_objects.iloc[0].resampler_object.num_resamples == 25
-        assert tuner.results._tune_results_objects.iloc[0].resampler_object.metrics == ['RMSE', 'MAE']
+        assert tuner.results._tune_results_objects.iloc[0].resampler_object.score_names == ['RMSE', 'MAE']
         assert isclose(tuner.results._tune_results_objects.iloc[0].resampler_object.score_means['RMSE'], 10.459344010622544)  # noqa
         assert isclose(tuner.results._tune_results_objects.iloc[0].resampler_object.score_means['MAE'], 8.2855537849498742)  # noqa
         assert isclose(tuner.results._tune_results_objects.iloc[0].resampler_object.score_standard_deviations['RMSE'], 0.5716680069548794)  # noqa
         assert isclose(tuner.results._tune_results_objects.iloc[0].resampler_object.score_standard_deviations['MAE'], 0.46714447004190812)  # noqa
 
-        assert isclose(tuner.results.tune_results.iloc[0].RMSE_mean, 10.459344010622544)
-        assert isclose(tuner.results.tune_results.iloc[0].MAE_mean, 8.2855537849498742)
-        assert isclose(tuner.results.tune_results.iloc[0].RMSE_st_dev, 0.5716680069548794)
-        assert isclose(tuner.results.tune_results.iloc[0].MAE_st_dev, 0.46714447004190812)
+        assert isclose(tuner.results.resampled_stats.iloc[0].RMSE_mean, 10.459344010622544)
+        assert isclose(tuner.results.resampled_stats.iloc[0].MAE_mean, 8.2855537849498742)
+        assert isclose(tuner.results.resampled_stats.iloc[0].RMSE_st_dev, 0.5716680069548794)
+        assert isclose(tuner.results.resampled_stats.iloc[0].MAE_st_dev, 0.46714447004190812)
 
-        assert tuner.results.time_results.isnull().sum().sum() == 0
+        assert tuner.results.resampler_times.isnull().sum().sum() == 0
 
         ######################################################################################################
         # Test Best Model
@@ -309,8 +309,8 @@ class TunerTests(TimerTestCase):
         ######################################################################################################
         # Test Heatmap
         ######################################################################################################
-        assert tuner.results.get_heatmap() is None
-        assert tuner.results.get_cross_validation_boxplots(metric=Metric.KAPPA) is None
+        assert tuner.results.plot_resampled_stats() is None
+        assert tuner.results.plot_resampled_scores(metric=Metric.KAPPA) is None
 
     def test_tuner_resampler_decorators(self):
         decorator = TwoClassThresholdDecorator()

@@ -12,7 +12,7 @@ from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 class AucPrecisionRecallScore(UtilityFunctionMixin, TwoClassScoreBase):
     """
     Calculates the AUC of the precision/recall curve as defined by sklearn's `average_precision_score()`
-        http://scikit-learn.org/stable/modules/generated/sklearn.metrics.average_precision_score.html
+        http://scikit-learn.org/stable/modules/generated/sklearn.score_names.average_precision_score.html
     """
 
     @property

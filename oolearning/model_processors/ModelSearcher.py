@@ -146,7 +146,7 @@ class ModelSearcher:
             tuner.tune(data_x=train_data_x_not_transformed,
                        data_y=train_data_y,
                        params_grid=local_model_params_grid)
-            tuner_results.append(tuner.results)  # TunerResults.tune_results will have resampled means/st_devs
+            tuner_results.append(tuner.results)  # TunerResults.resampled_stats will have resampled means/st_devs
 
             # set prefix rather than sub_structure for refitting model on all data
             local_persistence_manager = self._persistence_manager.clone() if self._persistence_manager else None  # noqa

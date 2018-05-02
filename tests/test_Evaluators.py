@@ -263,10 +263,10 @@ class EvaluatorTests(TimerTestCase):
                               lambda: evaluator.plot_all_quality_metrics())
 
         TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_probabilities_custom_thr_ROC.png',
-                              lambda: evaluator.get_roc_curve())
+                              lambda: evaluator.plot_roc_curve())
 
         TestHelper.check_plot('data/test_Evaluators/test_TwoClassEvaluator_probabilities_custom_thr_ppv_tpr.png',  # noqa
-                              lambda: evaluator.get_ppv_tpr_curve())
+                              lambda: evaluator.plot_ppv_tpr_curve())
 
     # noinspection SpellCheckingInspection
     # noinspection PyTypeChecker
@@ -320,9 +320,9 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator.confusion_matrix.matrix_proportions.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']  # noqa
 
         TestHelper.check_plot('data/test_Evaluators/test_confusion_matrix_heatmap_no_totals.png',
-                              lambda: evaluator.confusion_matrix.get_heatmap(include_totals=False))
+                              lambda: evaluator.confusion_matrix.plot(include_totals=False))
         TestHelper.check_plot('data/test_Evaluators/test_confusion_matrix_heatmap_with_totals.png',
-                              lambda: evaluator.confusion_matrix.get_heatmap(include_totals=True))
+                              lambda: evaluator.confusion_matrix.plot(include_totals=True))
 
     # noinspection SpellCheckingInspection
     def test_ConfusionMatrix_MultiClass_scores(self):

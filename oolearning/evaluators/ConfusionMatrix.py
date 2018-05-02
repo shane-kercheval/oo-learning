@@ -65,7 +65,7 @@ class ConfusionMatrix:
         """
         return self.matrix.loc['Total', 'Total']
 
-    def get_heatmap(self, include_totals: bool=False):
+    def plot(self, include_totals: bool=False):
         """
         :param include_totals: if `include_totals` is True, it includes a row and column for totals
         :return: a heatmap plot of the confusion matrix

@@ -55,7 +55,7 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
 
         super().evaluate(actual_values=actual_values, predicted_values=predicted_classes)
 
-    def get_roc_curve(self):
+    def plot_roc_curve(self):
         """
         :return: an ROC curve, indicating the point (threshold) that has the minimum distance to the
             upper left corner (i.e. a perfect predictor). If a threshold is specified in the
@@ -78,13 +78,13 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
                            y_label='True Positive Rate',
                            corner='Left')
 
-    def get_precision_recall_curve(self):
+    def plot_precision_recall_curve(self):
         """
         # TODO document
         """
-        return self.get_ppv_tpr_curve()
+        return self.plot_ppv_tpr_curve()
 
-    def get_ppv_tpr_curve(self):
+    def plot_ppv_tpr_curve(self):
         """
         # TODO document
         """

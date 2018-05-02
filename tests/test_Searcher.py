@@ -203,7 +203,7 @@ class SearcherTests(TimerTestCase):
                                   CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
                                   ImputationTransformer(),
                                   DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
-        # Evaluators are the metrics we want to use to understand the value of our trained models.
+        # Evaluators are the score_names we want to use to understand the value of our trained models.
         score_list = [KappaScore(converter=TwoClassThresholdConverter(positive_class=1)),
                       SensitivityScore(converter=TwoClassThresholdConverter(positive_class=1)),
                       SpecificityScore(converter=TwoClassThresholdConverter(positive_class=1)),
@@ -310,11 +310,11 @@ class SearcherTests(TimerTestCase):
 
         # TEST TUNER RESULTS
         assert len(searcher.results.tuner_results) == 4
-        assert len(searcher.results.holdout_scores) == 4
+        assert len(searcher.results.holdout_score_objects) == 4
 
         # just one Tune result because no hyper_params
-        assert len(searcher.results.tuner_results[0].tune_results) == 1
-        assert len(searcher.results.tuner_results[0].time_results) == 1
+        assert len(searcher.results.tuner_results[0].resampled_stats) == 1
+        assert len(searcher.results.tuner_results[0].resampler_times) == 1
 
         # each tuner results (grab the best model) should have num_folds * num_repeats resamples
         for index in range(len(infos)):
@@ -322,86 +322,86 @@ class SearcherTests(TimerTestCase):
 
         # same tuner should have the same results as test_resamplers_Mock_classification because of the
         # mock object, but third/fourth will be different because of dummy
-        assert isclose(searcher.results.tuner_results[0].tune_results['kappa_mean'][0], -0.0024064499043792644)  # noqa
-        assert isclose(searcher.results.tuner_results[0].tune_results['sensitivity_mean'][0], 0.371085500282958)  # noqa
-        assert isclose(searcher.results.tuner_results[0].tune_results['specificity_mean'][0], 0.62814778309576369)  # noqa
-        assert isclose(searcher.results.tuner_results[0].tune_results['error_rate_mean'][0], 0.47136871395048691)  # noqa
+        assert isclose(searcher.results.tuner_results[0].resampled_stats['kappa_mean'][0], -0.0024064499043792644)  # noqa
+        assert isclose(searcher.results.tuner_results[0].resampled_stats['sensitivity_mean'][0], 0.371085500282958)  # noqa
+        assert isclose(searcher.results.tuner_results[0].resampled_stats['specificity_mean'][0], 0.62814778309576369)  # noqa
+        assert isclose(searcher.results.tuner_results[0].resampled_stats['error_rate_mean'][0], 0.47136871395048691)  # noqa
 
-        assert isclose(searcher.results.tuner_results[0].tune_results['kappa_st_dev'][0], 0.090452035113464016)  # noqa
-        assert isclose(searcher.results.tuner_results[0].tune_results['sensitivity_st_dev'][0], 0.061218590474225211)  # noqa
-        assert isclose(searcher.results.tuner_results[0].tune_results['specificity_st_dev'][0], 0.031785029143322603)  # noqa
-        assert isclose(searcher.results.tuner_results[0].tune_results['error_rate_st_dev'][0], 0.052884252590516621)  # noqa
+        assert isclose(searcher.results.tuner_results[0].resampled_stats['kappa_st_dev'][0], 0.090452035113464016)  # noqa
+        assert isclose(searcher.results.tuner_results[0].resampled_stats['sensitivity_st_dev'][0], 0.061218590474225211)  # noqa
+        assert isclose(searcher.results.tuner_results[0].resampled_stats['specificity_st_dev'][0], 0.031785029143322603)  # noqa
+        assert isclose(searcher.results.tuner_results[0].resampled_stats['error_rate_st_dev'][0], 0.052884252590516621)  # noqa
 
         # stratified
-        assert isclose(searcher.results.tuner_results[2].tune_results['kappa_mean'][0], -0.007662320952155299)  # noqa
-        assert isclose(searcher.results.tuner_results[2].tune_results['sensitivity_mean'][0], 0.4099493507956116)  # noqa
-        assert isclose(searcher.results.tuner_results[2].tune_results['specificity_mean'][0], 0.5827856898426659)  # noqa
-        assert isclose(searcher.results.tuner_results[2].tune_results['error_rate_mean'][0], 0.48359594883324886)  # noqa
+        assert isclose(searcher.results.tuner_results[2].resampled_stats['kappa_mean'][0], -0.007662320952155299)  # noqa
+        assert isclose(searcher.results.tuner_results[2].resampled_stats['sensitivity_mean'][0], 0.4099493507956116)  # noqa
+        assert isclose(searcher.results.tuner_results[2].resampled_stats['specificity_mean'][0], 0.5827856898426659)  # noqa
+        assert isclose(searcher.results.tuner_results[2].resampled_stats['error_rate_mean'][0], 0.48359594883324886)  # noqa
 
-        assert isclose(searcher.results.tuner_results[2].tune_results['kappa_st_dev'][0], 0.048189576735635876)  # noqa
-        assert isclose(searcher.results.tuner_results[2].tune_results['sensitivity_st_dev'][0], 0.03162499210785438)  # noqa
-        assert isclose(searcher.results.tuner_results[2].tune_results['specificity_st_dev'][0], 0.01751233547463586)  # noqa
-        assert isclose(searcher.results.tuner_results[2].tune_results['error_rate_st_dev'][0], 0.02628308134935678)  # noqa
+        assert isclose(searcher.results.tuner_results[2].resampled_stats['kappa_st_dev'][0], 0.048189576735635876)  # noqa
+        assert isclose(searcher.results.tuner_results[2].resampled_stats['sensitivity_st_dev'][0], 0.03162499210785438)  # noqa
+        assert isclose(searcher.results.tuner_results[2].resampled_stats['specificity_st_dev'][0], 0.01751233547463586)  # noqa
+        assert isclose(searcher.results.tuner_results[2].resampled_stats['error_rate_st_dev'][0], 0.02628308134935678)  # noqa
 
         # frequent
-        assert isclose(searcher.results.tuner_results[3].tune_results['kappa_mean'][0], 0)
-        assert isclose(searcher.results.tuner_results[3].tune_results['sensitivity_mean'][0], 0)
-        assert isclose(searcher.results.tuner_results[3].tune_results['specificity_mean'][0], 1.0)
-        assert isclose(searcher.results.tuner_results[3].tune_results['error_rate_mean'][0], 0.38334207853184576)  # noqa
+        assert isclose(searcher.results.tuner_results[3].resampled_stats['kappa_mean'][0], 0)
+        assert isclose(searcher.results.tuner_results[3].resampled_stats['sensitivity_mean'][0], 0)
+        assert isclose(searcher.results.tuner_results[3].resampled_stats['specificity_mean'][0], 1.0)
+        assert isclose(searcher.results.tuner_results[3].resampled_stats['error_rate_mean'][0], 0.38334207853184576)  # noqa
 
-        assert isclose(searcher.results.tuner_results[3].tune_results['kappa_st_dev'][0], 0)
-        assert isclose(searcher.results.tuner_results[3].tune_results['sensitivity_st_dev'][0], 0)
-        assert isclose(searcher.results.tuner_results[3].tune_results['specificity_st_dev'][0], 0)
-        assert isclose(searcher.results.tuner_results[3].tune_results['error_rate_st_dev'][0], 0.044852752350113725)  # noqa
+        assert isclose(searcher.results.tuner_results[3].resampled_stats['kappa_st_dev'][0], 0)
+        assert isclose(searcher.results.tuner_results[3].resampled_stats['sensitivity_st_dev'][0], 0)
+        assert isclose(searcher.results.tuner_results[3].resampled_stats['specificity_st_dev'][0], 0)
+        assert isclose(searcher.results.tuner_results[3].resampled_stats['error_rate_st_dev'][0], 0.044852752350113725)  # noqa
 
         # should match the number of hyper-params passed in
-        assert len(searcher.results.tuner_results[0].tune_results) == 1
-        assert len(searcher.results.tuner_results[0].time_results) == 1
-        assert len(searcher.results.tuner_results[1].tune_results) == len(grid.params_grid)
-        assert len(searcher.results.tuner_results[1].time_results) == len(grid.params_grid)
-        assert len(searcher.results.tuner_results[2].tune_results) == 1
-        assert len(searcher.results.tuner_results[2].time_results) == 1
-        assert len(searcher.results.tuner_results[3].tune_results) == 1
-        assert len(searcher.results.tuner_results[3].time_results) == 1
+        assert len(searcher.results.tuner_results[0].resampled_stats) == 1
+        assert len(searcher.results.tuner_results[0].resampler_times) == 1
+        assert len(searcher.results.tuner_results[1].resampled_stats) == len(grid.params_grid)
+        assert len(searcher.results.tuner_results[1].resampler_times) == len(grid.params_grid)
+        assert len(searcher.results.tuner_results[2].resampled_stats) == 1
+        assert len(searcher.results.tuner_results[2].resampler_times) == 1
+        assert len(searcher.results.tuner_results[3].resampled_stats) == 1
+        assert len(searcher.results.tuner_results[3].resampler_times) == 1
 
         # same values as above (i.e. from mock ModelWrapper), but more values because we tuned across
         # many hyper-params
-        assert all([isclose(x, -0.0024064499043792644) for x in searcher.results.tuner_results[1].tune_results['kappa_mean']])  # noqa
-        assert all([isclose(x, 0.371085500282958) for x in searcher.results.tuner_results[1].tune_results['sensitivity_mean']])  # noqa
-        assert all([isclose(x, 0.62814778309576369) for x in searcher.results.tuner_results[1].tune_results['specificity_mean']])  # noqa
-        assert all([isclose(x, 0.47136871395048691) for x in searcher.results.tuner_results[1].tune_results['error_rate_mean']])  # noqa
+        assert all([isclose(x, -0.0024064499043792644) for x in searcher.results.tuner_results[1].resampled_stats['kappa_mean']])  # noqa
+        assert all([isclose(x, 0.371085500282958) for x in searcher.results.tuner_results[1].resampled_stats['sensitivity_mean']])  # noqa
+        assert all([isclose(x, 0.62814778309576369) for x in searcher.results.tuner_results[1].resampled_stats['specificity_mean']])  # noqa
+        assert all([isclose(x, 0.47136871395048691) for x in searcher.results.tuner_results[1].resampled_stats['error_rate_mean']])  # noqa
 
-        assert all([isclose(x, 0.090452035113464016) for x in searcher.results.tuner_results[1].tune_results['kappa_st_dev']])  # noqa
-        assert all([isclose(x, 0.061218590474225211) for x in searcher.results.tuner_results[1].tune_results['sensitivity_st_dev']])  # noqa
-        assert all([isclose(x, 0.031785029143322603) for x in searcher.results.tuner_results[1].tune_results['specificity_st_dev']])  # noqa
-        assert all([isclose(x, 0.052884252590516621) for x in searcher.results.tuner_results[1].tune_results['error_rate_st_dev']])  # noqa
+        assert all([isclose(x, 0.090452035113464016) for x in searcher.results.tuner_results[1].resampled_stats['kappa_st_dev']])  # noqa
+        assert all([isclose(x, 0.061218590474225211) for x in searcher.results.tuner_results[1].resampled_stats['sensitivity_st_dev']])  # noqa
+        assert all([isclose(x, 0.031785029143322603) for x in searcher.results.tuner_results[1].resampled_stats['specificity_st_dev']])  # noqa
+        assert all([isclose(x, 0.052884252590516621) for x in searcher.results.tuner_results[1].resampled_stats['error_rate_st_dev']])  # noqa
 
         # TEST HOLDOUT SCORES
-        assert len(searcher.results.holdout_scores) == 4  # 4 models
-        assert len(searcher.results.holdout_scores[0]) == 4  # 4 Evaluators
-        assert len(searcher.results.holdout_scores[1]) == 4  # 4 Evaluators
-        assert len(searcher.results.holdout_scores[2]) == 4  # 4 Evaluators
-        assert len(searcher.results.holdout_scores[3]) == 4  # 4 Evaluators
-        assert all([x == y for x, y in zip([x.name for x in searcher.results.holdout_scores[0]], ['kappa', 'sensitivity', 'specificity', 'error_rate'])])  # noqa
-        assert all([x == y for x, y in zip([x.name for x in searcher.results.holdout_scores[1]], ['kappa', 'sensitivity', 'specificity', 'error_rate'])])  # noqa
-        assert all([x == y for x, y in zip([x.name for x in searcher.results.holdout_scores[2]], ['kappa', 'sensitivity', 'specificity', 'error_rate'])])  # noqa
-        assert all([x == y for x, y in zip([x.name for x in searcher.results.holdout_scores[3]], ['kappa', 'sensitivity', 'specificity', 'error_rate'])])  # noqa
+        assert len(searcher.results.holdout_score_objects) == 4  # 4 models
+        assert len(searcher.results.holdout_score_objects[0]) == 4  # 4 Evaluators
+        assert len(searcher.results.holdout_score_objects[1]) == 4  # 4 Evaluators
+        assert len(searcher.results.holdout_score_objects[2]) == 4  # 4 Evaluators
+        assert len(searcher.results.holdout_score_objects[3]) == 4  # 4 Evaluators
+        assert all([x == y for x, y in zip([x.name for x in searcher.results.holdout_score_objects[0]], ['kappa', 'sensitivity', 'specificity', 'error_rate'])])  # noqa
+        assert all([x == y for x, y in zip([x.name for x in searcher.results.holdout_score_objects[1]], ['kappa', 'sensitivity', 'specificity', 'error_rate'])])  # noqa
+        assert all([x == y for x, y in zip([x.name for x in searcher.results.holdout_score_objects[2]], ['kappa', 'sensitivity', 'specificity', 'error_rate'])])  # noqa
+        assert all([x == y for x, y in zip([x.name for x in searcher.results.holdout_score_objects[3]], ['kappa', 'sensitivity', 'specificity', 'error_rate'])])  # noqa
 
-        assert all([isclose(x, y) for x, y in zip([x.value for x in searcher.results.holdout_scores[0]], [0.02628424657534245, 0.38372093023255816, 0.6423357664233577, 0.45739910313901344])])  # noqa
-        assert all([isclose(x, y) for x, y in zip([x.value for x in searcher.results.holdout_scores[1]], [0.02628424657534245, 0.38372093023255816, 0.6423357664233577, 0.45739910313901344])])  # noqa
+        assert all([isclose(x, y) for x, y in zip([x.value for x in searcher.results.holdout_score_objects[0]], [0.02628424657534245, 0.38372093023255816, 0.6423357664233577, 0.45739910313901344])])  # noqa
+        assert all([isclose(x, y) for x, y in zip([x.value for x in searcher.results.holdout_score_objects[1]], [0.02628424657534245, 0.38372093023255816, 0.6423357664233577, 0.45739910313901344])])  # noqa
         # same values that are in `fitter.training_evaluator.all_quality_metrics` in test_ModelWrappers
-        assert all([isclose(x, y) for x, y in zip([x.value for x in searcher.results.holdout_scores[2]], [0.10655528087972044, 0.4418604651162791, 0.6642335766423357, 0.42152466367713004])])  # noqa
-        assert all([isclose(x, y) for x, y in zip([x.value for x in searcher.results.holdout_scores[3]], [0.0, 0.0, 1.0, 0.38565022421524664])])  # noqa
+        assert all([isclose(x, y) for x, y in zip([x.value for x in searcher.results.holdout_score_objects[2]], [0.10655528087972044, 0.4418604651162791, 0.6642335766423357, 0.42152466367713004])])  # noqa
+        assert all([isclose(x, y) for x, y in zip([x.value for x in searcher.results.holdout_score_objects[3]], [0.0, 0.0, 1.0, 0.38565022421524664])])  # noqa
         # same values for indexes 2,3 (DummyClassifiers) that are in
         # `fitter.training_evaluator.all_quality_metrics` in test_ModelWrappers
-        assert all(searcher.results.holdout_score_values.index.values == model_descriptions)
-        assert all(searcher.results.holdout_score_values.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])
-        assert all([isclose(x, y) for x, y in zip(list(searcher.results.holdout_score_values.kappa), [0.02628424657534245, 0.02628424657534245, 0.10655528087972044, 0.0])])  # noqa
-        assert all([isclose(x, y) for x, y in zip(list(searcher.results.holdout_score_values.sensitivity), [0.38372093023255816, 0.38372093023255816, 0.4418604651162791, 0.0])])  # noqa
-        assert all([isclose(x, y) for x, y in zip(list(searcher.results.holdout_score_values.specificity), [0.6423357664233577, 0.6423357664233577, 0.6642335766423357, 1.0])])  # noqa
-        assert all([isclose(x, y) for x, y in zip(list(searcher.results.holdout_score_values.error_rate), [0.45739910313901344, 0.45739910313901344, 0.42152466367713004, 0.38565022421524664])])  # noqa
+        assert all(searcher.results.holdout_scores.index.values == model_descriptions)
+        assert all(searcher.results.holdout_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])
+        assert all([isclose(x, y) for x, y in zip(list(searcher.results.holdout_scores.kappa), [0.02628424657534245, 0.02628424657534245, 0.10655528087972044, 0.0])])  # noqa
+        assert all([isclose(x, y) for x, y in zip(list(searcher.results.holdout_scores.sensitivity), [0.38372093023255816, 0.38372093023255816, 0.4418604651162791, 0.0])])  # noqa
+        assert all([isclose(x, y) for x, y in zip(list(searcher.results.holdout_scores.specificity), [0.6423357664233577, 0.6423357664233577, 0.6642335766423357, 1.0])])  # noqa
+        assert all([isclose(x, y) for x, y in zip(list(searcher.results.holdout_scores.error_rate), [0.45739910313901344, 0.45739910313901344, 0.42152466367713004, 0.38565022421524664])])  # noqa
 
-        values = list(searcher.results.holdout_score_values.kappa)
+        values = list(searcher.results.holdout_scores.kappa)
         highest_kappa = values.index(max(values))
         assert searcher.results.best_model_index == highest_kappa
 
@@ -426,12 +426,12 @@ class SearcherTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip(searcher.results.best_tuned_results.error_rate_cv, [0.11, 0.11, 0.05, 0.12])])  # noqa
 
         TestHelper.check_plot('data/test_Searcher/test_get_holdout_score_heatmap.png',
-                              lambda: searcher.results.get_holdout_score_heatmap())
+                              lambda: searcher.results.plot_holdout_scores())
         TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_KAPPA.png',
-                              lambda: searcher.results.get_resamples_boxplot(Metric.KAPPA))
+                              lambda: searcher.results.plot_resampled_scores(Metric.KAPPA))
         TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_SENSITIVITY.png',
-                              lambda: searcher.results.get_resamples_boxplot(Metric.SENSITIVITY))
+                              lambda: searcher.results.plot_resampled_scores(Metric.SENSITIVITY))
         TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_SPECIFICITY.png',
-                              lambda: searcher.results.get_resamples_boxplot(Metric.SPECIFICITY))
+                              lambda: searcher.results.plot_resampled_scores(Metric.SPECIFICITY))
         TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_ERROR_RATE.png',
-                              lambda: searcher.results.get_resamples_boxplot(Metric.ERROR_RATE))
+                              lambda: searcher.results.plot_resampled_scores(Metric.ERROR_RATE))

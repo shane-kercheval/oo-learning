@@ -16,7 +16,7 @@ from tests.TestHelper import TestHelper
 
 class MockResampler(ResamplerBase):
     """
-    This object mocks the tune_results from a previously ran RandomForestClassifier Tuner/Resampler
+    This object mocks the resampled_stats from a previously ran RandomForestClassifier Tuner/Resampler
     """
     def __init__(self,
                  model: ModelWrapperBase,
@@ -34,7 +34,7 @@ class MockResampler(ResamplerBase):
     def _resample(self, data_x: pd.DataFrame, data_y: np.ndarray,
                   hyper_params: HyperParamsBase = None) -> ResamplerResults:
 
-        lookup_df = self._tune_results._tune_results_objects  # get the actual tune_results table
+        lookup_df = self._tune_results._tune_results_objects  # get the actual resampled_stats table
         params_dict = hyper_params.params_dict  # get the dictionary associated with the current hyper-params
 
         # find the result index based off of the current hyper-params
@@ -43,7 +43,7 @@ class MockResampler(ResamplerBase):
                        (lookup_df['n_estimators'] == params_dict['n_estimators']) & \
                        (lookup_df['min_samples_leaf'] == params_dict['min_samples_leaf'])
 
-        mock_results = lookup_df[mock_matches]  # get the row that has the tune_results
-        assert len(mock_results) == 1  # should only have one tune_results for a given set of hyper-parameters
+        mock_results = lookup_df[mock_matches]  # get the row that has the resampled_stats
+        assert len(mock_results) == 1  # should only have one resampled_stats for a given set of hyper-parameters
 
         return mock_results.iloc[0].resampler_object

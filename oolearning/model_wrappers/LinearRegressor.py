@@ -140,7 +140,7 @@ class LinearRegressor(ModelWrapperBase):
     @property
     def results_summary(self) -> pd.DataFrame:
         """
-        :return: a traditional view of the regression tune_results (feature coefficient estimates, p-values,
+        :return: a traditional view of the regression resampled_stats (feature coefficient estimates, p-values,
             etc.)
         """
         summary = pd.DataFrame(OrderedDict(zip(['(intercept)'] + self.feature_names,

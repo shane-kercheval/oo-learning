@@ -129,7 +129,7 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
     @property
     def all_quality_metrics(self) -> dict:
         """
-        :return: dictionary with all the metrics and associated values
+        :return: dictionary with all the score_names and associated values
         """
         return {'Kappa': self.kappa,
                 'F1 Score': self.f1_score,
@@ -147,9 +147,9 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
 
     def plot_all_quality_metrics(self, comparison_matrix: "TwoClassConfusionMatrix"=None):
         """
-        Creates a plot that shows all of the quality metrics in this class.
+        Creates a plot that shows all of the quality score_names in this class.
 
-        :param comparison_matrix: adds additional points to the plot for the metrics associated with the
+        :param comparison_matrix: adds additional points to the plot for the score_names associated with the
             `comparison_matrix`; allows the user to compare two different confusion matrices (e.g. from two
             different models
         """

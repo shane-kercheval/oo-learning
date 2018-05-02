@@ -92,7 +92,7 @@ trainer = ModelTrainer(model=LogisticClassifier(),
                        evaluator=evaluator)
 trainer.train(data=data, target_variable='Survived', hyper_params=LogisticClassifierHP())
 
-# access the holdout metrics
+# access holdout metricsscore_names
 trainer.holdout_evaluator.all_quality_metrics
 ```
 

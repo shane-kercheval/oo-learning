@@ -696,8 +696,8 @@ class ModelWrapperTests(TimerTestCase):
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Ridge_can_tune.pkl'))  # noqa
         with open(file, 'rb') as saved_object:
             saved_results = pickle.load(saved_object)
-            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.tune_results,
-                                                      data_frame2=tuner.results.tune_results)
+            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.resampled_stats,
+                                                      data_frame2=tuner.results.resampled_stats)
             assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.sorted_best_models,
                                                       data_frame2=tuner.results.sorted_best_models)
 
@@ -742,8 +742,8 @@ class ModelWrapperTests(TimerTestCase):
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Lasso_can_tune.pkl'))  # noqa
         with open(file, 'rb') as saved_object:
             saved_results = pickle.load(saved_object)
-            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.tune_results,
-                                                      data_frame2=tuner.results.tune_results)
+            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.resampled_stats,
+                                                      data_frame2=tuner.results.resampled_stats)
             assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.sorted_best_models,
                                                       data_frame2=tuner.results.sorted_best_models)
 
@@ -789,8 +789,8 @@ class ModelWrapperTests(TimerTestCase):
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ElasticNet_can_tune.pkl'))  # noqa
         with open(file, 'rb') as saved_object:
             saved_results = pickle.load(saved_object)
-            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.tune_results,
-                                                      data_frame2=tuner.results.tune_results)
+            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.resampled_stats,
+                                                      data_frame2=tuner.results.resampled_stats)
             assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.sorted_best_models,
                                                       data_frame2=tuner.results.sorted_best_models)
 
@@ -1064,9 +1064,9 @@ class ModelWrapperTests(TimerTestCase):
             assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
             assert isclose(round(fitter.training_evaluator.auc_roc, 4), round(0.860346942351498, 4))
             TestHelper.check_plot('data/test_ModelWrappers/test_LogisticMW_training_ROC.png',
-                                  lambda: fitter.training_evaluator.get_roc_curve())
+                                  lambda: fitter.training_evaluator.plot_roc_curve())
             TestHelper.check_plot('data/test_ModelWrappers/test_LogisticMW_training_PrecRecal.png',
-                                  lambda: fitter.training_evaluator.get_ppv_tpr_curve())
+                                  lambda: fitter.training_evaluator.plot_ppv_tpr_curve())
 
             con_matrix = fitter.holdout_evaluator._confusion_matrix
             assert con_matrix.matrix.loc[:, 0].values.tolist() == [98, 22, 120]
@@ -1076,9 +1076,9 @@ class ModelWrapperTests(TimerTestCase):
             assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
             assert isclose(fitter.holdout_evaluator.auc_roc, 0.8454545454545455)
             TestHelper.check_plot('data/test_ModelWrappers/test_LogisticMW_holdout_ROC.png',
-                                  lambda: fitter.holdout_evaluator.get_roc_curve())
+                                  lambda: fitter.holdout_evaluator.plot_roc_curve())
             TestHelper.check_plot('data/test_ModelWrappers/test_LogisticMW_holdout_PrecRecal.png',
-                                  lambda: fitter.holdout_evaluator.get_ppv_tpr_curve())
+                                  lambda: fitter.holdout_evaluator.plot_ppv_tpr_curve())
 
             actual_metrics = fitter.training_evaluator.all_quality_metrics
             expected_metrics = {'AUC ROC': 0.860346942351498, 'AUC Precision/Recall': 0.838905616498307, 'Kappa': 0.5807869204973077, 'F1 Score': 0.7315175097276264, 'Two-Class Accuracy': 0.8061797752808989, 'Error Rate': 0.19382022471910113, 'True Positive Rate': 0.6886446886446886, 'True Negative Rate': 0.8792710706150342, 'False Positive Rate': 0.12072892938496584, 'False Negative Rate': 0.31135531135531136, 'Positive Predictive Value': 0.7800829875518672, 'Negative Predictive Value': 0.8195329087048833, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
@@ -1145,7 +1145,7 @@ class ModelWrapperTests(TimerTestCase):
         self.assertRaises(AssertionError, lambda: RandomForestHP(criterion='gini',
                                                                  num_features=100,
                                                                  max_features=100))
-        # ensure invalid criterion tune_results in assertion error
+        # ensure invalid criterion resampled_stats in assertion error
         self.assertRaises(ValueError, lambda: RandomForestHP(criterion='adsf'))
 
         assert ~RandomForestHP(criterion='gini').is_regression
@@ -1197,7 +1197,7 @@ class ModelWrapperTests(TimerTestCase):
         self.assertRaises(AssertionError, lambda: RandomForestHP(criterion='mse',
                                                                  num_features=100,
                                                                  max_features=100))
-        # ensure invalid criterion tune_results in assertion error
+        # ensure invalid criterion resampled_stats in assertion error
         self.assertRaises(ValueError, lambda: RandomForestHP(criterion='adsf'))
 
         assert RandomForestHP(criterion='MSE').is_regression

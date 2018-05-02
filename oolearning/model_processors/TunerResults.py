@@ -21,15 +21,15 @@ class TunerResults:
         self._tune_results_objects = tune_results
 
         results_list = list()
-        # for each metric, add the mean and standard deviation as a diction to the tune_results list
+        # for each score, add the mean and standard deviation as a diction to the resampled_stats list
         for resampler_result in tune_results.resampler_object.tolist():
-            metric_dictionary = OrderedDict()
-            for metric in resampler_result.metrics:
-                metric_dictionary.update(
-                    {metric + '_mean': resampler_result.score_means[metric],
-                     metric + '_st_dev': resampler_result.score_standard_deviations[metric],
-                     metric + '_cv': resampler_result.score_coefficient_of_variations[metric]})
-            results_list.append(metric_dictionary)
+            score_dictionary = OrderedDict()
+            for score in resampler_result.score_names:
+                score_dictionary.update(
+                    {score + '_mean': resampler_result.score_means[score],
+                     score + '_st_dev': resampler_result.score_standard_deviations[score],
+                     score + '_cv': resampler_result.score_coefficients_of_variation[score]})
+            results_list.append(score_dictionary)
 
         # noinspection PyUnresolvedReferences
         self._tune_results_values = pd.concat([tune_results.copy().drop(columns='resampler_object'),
@@ -42,11 +42,11 @@ class TunerResults:
         return self._tune_results_objects.shape[0]
 
     @property
-    def tune_results(self) -> pd.DataFrame:
+    def resampled_stats(self) -> pd.DataFrame:
         """
-        :return: dataframe that has metrics for each tuned model (rows), the means, standard deviations, and
-            coefficient of variations for the corresponding resampler results (e.g. cross validation results),
-            which are represented in the DataFrame columns.
+        :return: dataframe that has score_names for each tuned model (rows), the means, standard deviations,
+            and coefficient of variations for the corresponding resampler results (e.g. cross validation
+            results), which are represented in the DataFrame columns.
 
         `_mean`: mean i.e. average of the resampler results
         `_st_dev`: standard deviation of resampler results
@@ -59,7 +59,7 @@ class TunerResults:
         return self._tune_results_values
 
     @property
-    def time_results(self) -> pd.DataFrame:
+    def resampler_times(self) -> pd.DataFrame:
         return self._time_results
 
     @property
@@ -73,7 +73,7 @@ class TunerResults:
 
     @property
     def sorted_best_models(self) -> pd.DataFrame:
-        return self.tune_results.iloc[self.sorted_best_indexes]
+        return self.resampled_stats.iloc[self.sorted_best_indexes]
 
     @property
     def best_model_resampler_object(self):
@@ -123,7 +123,7 @@ class TunerResults:
         num_rows = len(score_values)
         num_cols = len(score_values.columns)
 
-        n = 3  # i.e. number of metrics e.g. _mean, _st_dev, _cv
+        n = 3  # i.e. number of score_names e.g. _mean, _st_dev, _cv
         fig, ax = plt.subplots(figsize=(10, 10))
         for i in range(num_cols):
             truths = [True] * num_cols
@@ -132,8 +132,8 @@ class TunerResults:
             color_values = np.ma.masked_where(mask, score_values)
             # TODO document this behavior
             # a smaller number for standard deviation and coefficient of variation is ALWAYS better,
-            # regardless if the associated metric is a minimizer or maximizer (i.e. CostFunction or
-            # UtilityFunction). In other words, smaller variation means more 'confidence' in the metric.
+            # regardless if the associated score is a minimizer or maximizer (i.e. CostFunction or
+            # UtilityFunction). In other words, smaller variation means more 'confidence' in the score.
             # If you have a slightly higher mean, but the numbers are much more variable than another sample
             # with a slightly lower mean with more less variation, it may be desirable to choose the slightly
             # lower mean that has less variation.
@@ -158,7 +158,7 @@ class TunerResults:
 
             column_mean = score_values[score_columns[column]].mean()
             for row in range(score_values.shape[0]):
-                cell_value = score_values.ix[row, column]
+                cell_value = score_values.iloc[row, column]
                 plt.text(column + .5, row + .5, '%.3f' % cell_value,
                          fontsize=font_size,
                          horizontalalignment='center',
@@ -187,7 +187,7 @@ class TunerResults:
         plt.tight_layout()
         return plt
 
-    def get_heatmap(self, font_size: int=8):
+    def plot_resampled_stats(self, font_size: int=8):
         """
         NOTE: only shows the "tuned" hyper-params i.e. hyper-params that were tuned over >1 values.
         :return:
@@ -199,13 +199,13 @@ class TunerResults:
         minimizers = [isinstance(x, CostFunctionMixin) for x in scores]
 
         # .tuned_hyper_params ensures only hyper-params with >1 values
-        self.columnwise_conditional_format(df=self.tune_results,
+        self.columnwise_conditional_format(df=self.resampled_stats,
                                            hyper_params=self._params_grid.hyper_params,
                                            tuned_hyper_params=self._params_grid.tuned_hyper_params,
                                            minimizers=minimizers,
                                            font_size=font_size)
 
-    def get_cross_validation_boxplots(self, metric: Metric):
+    def plot_resampled_scores(self, metric: Metric):
         """
         NOTE: only shows the "tuned" hyper-params i.e. hyper-params that were tuned over >1 values.
         :return:
@@ -213,12 +213,12 @@ class TunerResults:
         if self._params_grid is None:  # if there are no hyper-params, no need for a heatmap.
             return None
 
-        metric_name = metric.value
+        score_name = metric.value
         # build the dataframe that will be used to generate the boxplot; 1 column per resampled hyper-params
         resamples = pd.DataFrame()
         for index in range(self.num_param_combos):
             cross_val_scores = self._tune_results_objects.iloc[index].loc['resampler_object'].\
-                resampled_scores[metric_name]
+                resampled_scores[score_name]
             # column name should be the hyper_params & values
             column_name_dict = dict()
             # .tuned_hyper_params ensures only hyper-params with >1 values
@@ -227,8 +227,8 @@ class TunerResults:
 
             resamples[str(column_name_dict)] = pd.Series(data=cross_val_scores)
 
-        # ensure correct number of models (columns in `resamples`, and rows in `tune_results`
-        assert resamples.shape[1] == len(self.tune_results)
+        # ensure correct number of models (columns in `resamples`, and rows in `resampled_stats`
+        assert resamples.shape[1] == len(self.resampled_stats)
         # ensure correct number of resamples (rows in `resamples`, and row in `the underlying cross validation
         # scores (of resampled hyper-param))
         assert resamples.shape[0] == len(self._tune_results_objects.iloc[0].loc['resampler_object'].resampled_scores)  # noqa
@@ -239,7 +239,7 @@ class TunerResults:
 
         # get the current score object so we can determine if it is a minimizer or maximizer
         score = [x for x in self._tune_results_objects.iloc[0].resampler_object.scores[0]
-                     if x.name == metric_name]
+                 if x.name == score_name]
         assert len(score) == 1  # we should just get the current score
         # if the `better_than` function returns True, 0 is "better than" 1 and we have a minimizer
         # for minimizers, we want to return the min, which is the best value, otherwise, return the max
@@ -255,29 +255,29 @@ class TunerResults:
         plt.gca().get_yticklabels()[index_of_best_mean].set_color('red')
         plt.gca().invert_yaxis()
 
-    def get_profile_hyper_params(self, metric: Metric, x_axis, line=None, grid=None):
+    def plot_hyper_params_profile(self, metric: Metric, x_axis, line=None, grid=None):
         if grid is not None:
             assert line is not None  # can't have grid without line
 
-        metric_value = metric.value + '_mean'
+        score_value = metric.value + '_mean'
 
         if line is None:  # then we also know grid is None as well
             hyper_params = [x_axis]
-            df = self.tune_results[hyper_params + [metric_value]]
+            df = self.resampled_stats[hyper_params + [score_value]]
             df.groupby(hyper_params).mean().plot(figsize=(10, 7))
 
         elif grid is None:  # then we know line is NOT None, but grid is,
             hyper_params = [x_axis, line]
-            df = self.tune_results[hyper_params + [metric_value]]
+            df = self.resampled_stats[hyper_params + [score_value]]
             df_grouped = df.groupby(hyper_params).mean()
-            plot_df = df_grouped.unstack(line).loc[:, metric_value]
+            plot_df = df_grouped.unstack(line).loc[:, score_value]
             ax = plot_df.plot(figsize=(10, 7))
-            ax.set_ylabel(metric_value)
+            ax.set_ylabel(score_value)
 
         else:  # line and grid are not None
             hyper_params = [grid, line, x_axis]
-            df = self.tune_results
-            df_grouped = df.groupby(hyper_params)[[metric_value]].mean()
+            df = self.resampled_stats
+            df_grouped = df.groupby(hyper_params)[[score_value]].mean()
 
             # We can ask for ALL THE AXES and put them into axes
             num_rows = math.ceil(len(hyper_params) / 2)
@@ -287,8 +287,8 @@ class TunerResults:
 
             for index in df_grouped.index.levels[0].values:
                 ax = axes_list.pop(0)
-                df_grouped.loc[index].unstack(line).loc[:, metric_value].plot(ax=ax)
-                ax.set_ylabel(metric_value)
+                df_grouped.loc[index].unstack(line).loc[:, score_value].plot(ax=ax)
+                ax.set_ylabel(score_value)
                 ax.set_title('{0}={1}'.format(grid, index))
                 # ax.tick_params(axis='both', which='both')
 
