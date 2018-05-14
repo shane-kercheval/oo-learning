@@ -12,9 +12,19 @@ class DummyClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
     def __init__(self, strategy: DummyClassifierStrategy):
         """
         Uses sklearn's DummyClassifier 
-        :param strategy: how to 
 
-        https://www.google.com/search?q=sklearn+dummy+classifier&rlz=1C5CHFA_enUS693US694&oq=Sklearn+DUmmy+Class&aqs=chrome.0.0j69i57j0.4456j0j1&sourceid=chrome&ie=UTF-8
+        Supported strategies:
+
+        ```
+            “stratified”: generates predictions by respecting the training set’s class distribution.
+            “most_frequent”: always predicts the most frequent label in the training set.
+            “prior”: always predicts the class that maximizes the class prior (like “most_frequent”) and predict_proba returns the class prior.
+            “uniform”: generates predictions uniformly at random.
+        ```
+
+        - http://scikit-learn.org/stable/modules/generated/sklearn.dummy.DummyClassifier.html
+
+        :param strategy: A DummyClassifierStrategy enum. 
         """
         super().__init__()
         self._strategy = strategy
