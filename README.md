@@ -138,8 +138,71 @@ tuner.results.get_heatmap()
 ### ModelSearcher Snippet
 
 ```python
-TBD
+# Logistic Regression Hyper-Param Grid
+log_grid = HyperParamsGrid(params_dict=dict(penalty=['l1', 'l2'],
+                                            regularization_inverse=[0.001, 0.01, 0.1, 1, 100, 1000]))
+
+# get the expected columns at the time we do the training, based on the transformations 
+columns = TransformerPipeline.get_expected_columns(transformations=global_transformations, data=explore.dataset.drop(columns=[target_variable]))
+# Random Forest Hyper-Param Grid
+rm_grid = HyperParamsGrid(params_dict=dict(criterion='gini',
+                                           max_features=[int(round(len(columns) ** (1 / 2.0))),
+                                                         int(round(len(columns) / 2)),
+                                                         len(columns) - 1],
+                                           n_estimators=[10, 100, 500],
+                                           min_samples_leaf=[1, 50, 100]))
+
+# define the models and hyper-parameters that we want to search through
+infos = [ModelInfo(description='dummy_stratified',
+                   model=DummyClassifier(DummyClassifierStrategy.STRATIFIED),
+                   transformations=None,
+                   hyper_params=None,
+                   hyper_params_grid=None),
+         ModelInfo(description='dummy_frequent',
+                   model=DummyClassifier(DummyClassifierStrategy.MOST_FREQUENT),
+                   transformations=None,
+                   hyper_params=None,
+                   hyper_params_grid=None),
+         ModelInfo(description='Logistic Regression',
+                   model=LogisticClassifier(),
+                   # transformations specific to this model
+                   transformations=[CenterScaleTransformer(),
+                                    RemoveCorrelationsTransformer()],
+                   hyper_params=LogisticClassifierHP(),
+                   hyper_params_grid=log_grid),
+         ModelInfo(description='Random Forest',
+                   model=RandomForestClassifier(),
+                   transformations=None,
+                   hyper_params=RandomForestHP(),
+                   hyper_params_grid=rm_grid)]
+
+# define the transformations that will be applied to ALL models
+global_transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                          CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                          ImputationTransformer(),
+                          DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+# define the Score objects, which will be used to choose the "best" hyper-parameters for a particular model,
+# and compare the performance across model/hyper-params, 
+score_list = [AucRocScore(positive_class='lived'),
+# the SensitivityScore needs a Converter, 
+# which contains the logic necessary to convert the predicted values to a predicted class.
+              SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived'))]
+
+# create the ModelSearcher object
+searcher = ModelSearcher(global_transformations=global_transformations,
+                         model_infos=infos,
+                         splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
+                         resampler_function=lambda m, mt: RepeatedCrossValidationResampler(
+                             model=m,
+                             transformations=mt,
+                             scores=score_list,
+                             folds=5,
+                             repeats=3))
+searcher.search(data=explore.dataset, target_variable='Survived')
 ```
+
+*Code Snippet from [Searcher](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/5-Searching.ipynb) notebook.*
 
 # Available Models
 

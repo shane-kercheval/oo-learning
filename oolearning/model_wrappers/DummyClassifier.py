@@ -11,8 +11,10 @@ from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictClassifi
 class DummyClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
     def __init__(self, strategy: DummyClassifierStrategy):
         """
-        need to set fit_intercept to False if using One-Hot-Encoding
-        strategy:
+        Uses sklearn's DummyClassifier 
+        :param strategy: how to 
+
+        https://www.google.com/search?q=sklearn+dummy+classifier&rlz=1C5CHFA_enUS693US694&oq=Sklearn+DUmmy+Class&aqs=chrome.0.0j69i57j0.4456j0j1&sourceid=chrome&ie=UTF-8
         """
         super().__init__()
         self._strategy = strategy
