@@ -165,7 +165,6 @@ class SearcherResults:
         plt.tight_layout()
         plt.gca().get_yticklabels()[index_of_best_mean].set_color('red')
         plt.gca().invert_yaxis()
-        return resample_boxplot
 
     def plot_holdout_scores(self):
         """
@@ -206,4 +205,3 @@ class SearcherResults:
         ax.set_yticklabels(labels)
         ax.invert_yaxis()
         plt.tight_layout()
-        return ax

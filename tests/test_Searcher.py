@@ -395,7 +395,7 @@ class SearcherTests(TimerTestCase):
         # same values for indexes 2,3 (DummyClassifiers) that are in
         # `fitter.training_evaluator.all_quality_metrics` in test_ModelWrappers
         assert all(searcher.results.holdout_scores.index.values == model_descriptions)
-        assert all(searcher.results.holdout_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])
+        assert all(searcher.results.holdout_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])  # noqa
         assert all([isclose(x, y) for x, y in zip(list(searcher.results.holdout_scores.kappa), [0.02628424657534245, 0.02628424657534245, 0.10655528087972044, 0.0])])  # noqa
         assert all([isclose(x, y) for x, y in zip(list(searcher.results.holdout_scores.sensitivity), [0.38372093023255816, 0.38372093023255816, 0.4418604651162791, 0.0])])  # noqa
         assert all([isclose(x, y) for x, y in zip(list(searcher.results.holdout_scores.specificity), [0.6423357664233577, 0.6423357664233577, 0.6642335766423357, 1.0])])  # noqa

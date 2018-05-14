@@ -40,7 +40,7 @@ After model selection, if implementing the model in a production system, the use
 - `Stacker`: This class implements a simple 'Model Stacker', taking the predictions of base models and feeding the values into a 'stacking' model.
 - `Resampler`: A Resampler accesses the accuracy of the model by training the model many times via a particular resampling strategy.
 - `Tuner`:  A ModelTuner uses a Resampler for tuning a single model across various hyper-parameters, finding the "best" hyper-parameters supplied as well as related information.
-- `Searcher`: A Searcher searches across different models and hyper-params, with the goal of finding the "best" ideal model candidates for further tuning and optimization.
+- `Searcher`: A "Searcher" searches across different models and hyper-parameters (or the same models and hyper-parameters with different tranformations, for example) with the goal of finding the "best" or ideal model candidates for further tuning and optimization.
 - `Decorator`: Intent is to add responsibility objects dynamically. (For example, to piggy-back off of the Resampler and do a calculation or capture data at the end of each fold.)
     
 # Examples
@@ -81,9 +81,7 @@ transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'C
                    DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
 
 # Define how we want to evaluate (and convert the probabilities DataFrame to predicted classes)
-evaluator = TwoClassProbabilityEvaluator(converter=
-                                         TwoClassThresholdConverter(threshold=0.5,
-                                                                    positive_class='lived'))
+evaluator = TwoClassProbabilityEvaluator(...)
 
 # give the objects, which encapsulate the behavior of everything involved with training the model, to our ModelTrainer
 trainer = ModelTrainer(model=LogisticClassifier(),
@@ -110,9 +108,9 @@ transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'C
 # define the scores, which will be used to compare the performance across hyper-param combinations
 # the scores need a Converter, which contains the logic necessary to convert the predicted values to a predicted class.
 score_list = [AucRocScore(positive_class='lived'),
-              SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived')),
-              SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived')),
-              ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived'))]
+              SensitivityScore(...),
+              SpecificityScore(...),
+              ErrorRateScore(...)]
 
 # define/configure the resampler
 resampler = RepeatedCrossValidationResampler(model=RandomForestClassifier(),  # using a Random Forest model
@@ -124,6 +122,7 @@ resampler = RepeatedCrossValidationResampler(model=RandomForestClassifier(),  # 
 tuner = ModelTuner(resampler=resampler,
                    hyper_param_object=RandomForestHP())  # Hyper-Parameter object specific to RFTBD
 
+# define the parameter values (and, therefore, combinations) we want to try 
 params_dict = dict(criterion='gini',
                    max_features=[1, 5, 10],
                    n_estimators=[10, 100, 500],

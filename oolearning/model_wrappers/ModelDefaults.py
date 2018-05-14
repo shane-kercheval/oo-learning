@@ -239,7 +239,7 @@ class ModelDefaults:
                          transformations=transformations,
                          hyper_params=LogisticClassifierHP(),
                          hyper_params_grid={'penalty': ['l1', 'l2'],
-                                            'C': [0.001, 0.01, 0.1, 1, 100, 1000]})
+                                            'regularization_inverse': [0.001, 0.01, 0.1, 1, 100, 1000]})
 
     @staticmethod
     def get_CartDecisionTreeClassifier() -> ModelInfo:

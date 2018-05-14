@@ -25,22 +25,37 @@ class ModelSearcher:
                  resampler_decorators: List[DecoratorBase] = None,
                  persistence_manager: PersistenceManagerBase = None):
         """
-        # TODO document
-        # TODO document: resampler_decordators is a list of decorators, the decorates are cloned for each
-        model i.e. each model uses the same list of decorators
+        A "Searcher" searches across different models and hyper-parameters (or the same models and
+            hyper-parameters with different transformations, for example) with the goal of finding the "best"
+            or ideal model candidates for further tuning and optimization.
+
+        The data is split (via a Splitter) into training and holding sets. The training set will be
+            used for selecting the "best" hyper parameters via (Tuner & Resampler) and then the model will be
+            retrained and evaluated with selected hyper parameters with the holdout set.
+
+        :param model_infos: modelInfo object (i.e. wraps/encapsulates model information)
+        :param splitter: defines how to split the data. The training set will be used for selecting the
+            "best" hyper parameters via resampling and then the model will be retrained with selected
+            hyper parameters over holdout set.
+        :param resampler_function: For each model, the Searcher will use a ModelTuner for selecting the "best"
+            hyper parameters, using the resampler_function to define the Resampler. 
+
+            The reason we use a function rather than passing in the object itself is that not everything that
+            is passed into the Resampler (at the time we are creating the Searcher) is defined at that point.
+            So the Searcher passes the necessary  information/objects into the resampler_function, which then
+            creates and returns a Resampler for each model when needed, also creating copies/clones of the
+            models, transformations, hyper-parameters, decorators, etc., before passing in to the 
+            resampler_function.
+        :param global_transformations: transformations to apply to all the data, regardless of the type of
+            model. For example, regardless of the model, we might want to remove the PassengerId and Name
+            fields from the Titanic dataset. 
+        :param resampler_decorators: list of decorators, the decorates are cloned for each model i.e. each
+            model uses the same list of decorators.
         :param persistence_manager: a PersistenceManager defining how the underlying models should be cached,
-            optional.
-            NOTE: a unique key is built up by prefixing the key with the model description
-        # TODO: document: we can't define the model and model transformations, everything else we can
-        # TODO: document why the lamdba, basically, we can't instantiate a Resampler at this point, and to get around this would probably cause more confusion
+            optional. It is closed for each model, 
 
-        # TODO: document, the persistence_manger is cloned for each model, and when tuning, the substructure is set to "tune_[model description]" and when fitting on the entire dataset, the prefix is set to "final_[model description]"
-
-        # global_transformations are transformations you want to apply to all the data, regardless of the
-        # type of model. For example, regardless of the model, we want to remove the PassengerId and Name
-        # fields. These just don't make sense to use as predictors. On the other hand, perhaps for Logistic
-        # Regression we also want to Center/Scale the data, but for RandomForestClassifier we don't. In those
-        # cases, we would want to model specific transformations.
+            When tuning, the substructure is set to "tune_[model description]" and when fitting on the entire
+            dataset, the prefix is set to "final_[model description]"
         """
         model_descriptions = [x.description for x in model_infos]
         models = [x.model for x in model_infos]
@@ -65,14 +80,11 @@ class ModelSearcher:
         self._persistence_manager = persistence_manager
 
     def search(self, data: pd.DataFrame, target_variable: str):
-        # split the data into training and holdout data
-        # for each model, run a ModelTuner using the resampler_function, creating copies of shit when
-        # necessary store each of the TuningResults for each model. Take the best hyper params (if the model
-        # has hyper-params), and retrain the model on the entire training set (retrain on entire training set
-        # even if no hyper-params), and then get the holdout set value. We will want to track the
-        # mean/st_dev resampling value vs the holdout value.
+        data_x = data.drop(columns=target_variable)
+        data_y = data[target_variable]
 
-        # we don't need the holdout data.. we will send the data to the ModelTrainer which will use the same
+        training_indexes, _ = self._splitter.split(target_values=data_y)
+        # we don't need the holdout data.. we will send the data to the ModelTrainer which will use the sameee
         # splitter and will use the training/holdout data appropriately
         # so, we will only get the training data, use that with the tuner, then the tuner's best model, refit
         # the entire training set with the specific model/hyper-params (same training set is used under the
@@ -85,10 +97,6 @@ class ModelSearcher:
         # A) the resampler only sees the training set and handles this problem itself and B) the fitter
         # sees ALL the data, but makes the same split on the holdout data, ensuring the holdout data was never
         # used by the Resampler, and also handles the problem itself.)
-        data_x = data.drop(columns=target_variable)
-        data_y = data[target_variable]
-
-        training_indexes, _ = self._splitter.split(target_values=data_y)
 
         # pre-transformed training/holdout sets
         train_data_x_not_transformed = data_x.iloc[training_indexes]
@@ -126,12 +134,6 @@ class ModelSearcher:
 
             # clone all the objects to be reused with the ModelTrainer after tuning
             tuner = ModelTuner(resampler=self._resampler_function(local_model.clone(),
-# we want to train the transformations only on the training data and transform accordingly.
-# Then, when we make predictions, we will transform the "unseen" data based based on the
-# transformations fitted on the training set
-# this is the best way to simulate never-before-seen data with the holdout set.
-# we will do this approach both for the resampler and
-#TODO document or make note to self that the resampler will transform the data according to each fold (e.g. fit/transform on training folds and transform on holdout fold)
                                                                   None if local_model_trans is None else
                                                                   [x.clone() for x in local_model_trans]),
                                hyper_param_object=None if local_model_params_object is None else local_model_params_object.clone(),  # noqa
@@ -139,14 +141,15 @@ class ModelSearcher:
                                persistence_manager=local_persistence_manager)
 
             # noinspection PyProtectedMember
-            # before we tune, we need to steel i.e. clone the Scores from the resampler so we can use the
+            # before we tune, we need to steel (i.e. clone) the Scores from the resampler so we can use the
             # same ones on the holdout set
             scores = [x.clone() for x in tuner._resampler._scores]
 
             tuner.tune(data_x=train_data_x_not_transformed,
                        data_y=train_data_y,
                        params_grid=local_model_params_grid)
-            tuner_results.append(tuner.results)  # TunerResults.resampled_stats will have resampled means/st_devs
+            # TunerResults.resampled_stats will have resampled means/st_devs
+            tuner_results.append(tuner.results)
 
             # set prefix rather than sub_structure for refitting model on all data
             local_persistence_manager = self._persistence_manager.clone() if self._persistence_manager else None  # noqa
@@ -163,9 +166,7 @@ class ModelSearcher:
 
             # do not have to clone these objects again, since they won't be reused after this
             fitter = ModelTrainer(model=local_model,
-                                  # TODO document or make note to self that the resampler will transform the data according to each fold (e.g. fit/transform on training folds and transform on holdout fold)
                                   model_transformations=local_model_trans,
-                                  # TODO note (and verify to self) that splitter will split in the same way as above, so we don't really need the holdout data above, Fitter will train on the same dataset that the resampler used, and predict on the holdout set, which the resampler did not see
                                   splitter=self._splitter,
                                   scores=scores,
                                   persistence_manager=local_persistence_manager,

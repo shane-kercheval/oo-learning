@@ -35,8 +35,8 @@ class ModelTuner:
             e.g if we are tuning a Random Forest classification model over `max_features`, we might pass in
             `RandomForestHP()` to retain all the defaults, or we could pass in
             `RandomForestHP(n_estimators=20)`, since `n_estimators` is not being tuned (i.e. over-written)
-        #TODO: resampler decorators is a list of decorators that will be passed into the resampler object.
-        # they will be cloned for each resampler object.
+        :param resampler_decorators: a list of decorators that will be passed into the resampler object.
+            They will be cloned for each resampler object.
         :param persistence_manager: a PersistenceManager defining how the underlying models should be cached,
             optional.
             NOTE: for each resampling (i.e. each set of hyper-params being resampled) the persistence_manager
@@ -70,7 +70,8 @@ class ModelTuner:
         :return: None
         """
         # single row DataFrame if no params, or DataFrame of each combination of hyper-parameters
-        params_combinations = pd.DataFrame({'hyper_params': ['None']}) if params_grid is None else params_grid.params_grid  # noqa
+        params_combinations = pd.DataFrame({'hyper_params': ['None']}) \
+            if params_grid is None else params_grid.params_grid
         assert len(params_combinations) > 0
         results_list = list()
         time_duration_list = list()
