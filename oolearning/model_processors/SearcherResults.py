@@ -160,7 +160,10 @@ class SearcherResults:
         index_of_best_mean = resample_means.index(best(resample_means))
 
         resample_boxplot = resamples.boxplot(vert=False, figsize=(10, 10))
-        plt.xlim(0.0, 1.0)
+
+        # noinspection PyTypeChecker,PyUnresolvedReferences
+        if (resamples <= 1).all().all():
+            plt.xlim(0.0, 1.0)
         plt.title('{0} ({1})'.format('Resampling Scores Per `Best` Models', metric.name), loc='right')
         plt.tight_layout()
         plt.gca().get_yticklabels()[index_of_best_mean].set_color('red')
