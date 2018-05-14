@@ -74,7 +74,10 @@ class ResamplerResults:
         """
         :return: boxplot visualization for Score
         """
-        plt.ylim(0.0, 1.0)
+        # noinspection PyTypeChecker,PyUnresolvedReferences
+        # if all scores are >=1 (e.g. classification) then place on 0-1 scale
+        if (self.resampled_scores <= 1).all().all():
+            plt.ylim(0.0, 1.0)
         self.resampled_scores.boxplot()
         plt.title('Resampled Scores')
 
