@@ -248,7 +248,9 @@ class TunerResults:
         index_of_best_mean = resample_means.index(best(resample_means))
 
         resamples.boxplot(vert=False, figsize=(10, 10))
-        plt.xlim(0.0, 1.0)
+        # noinspection PyTypeChecker,PyUnresolvedReferences
+        if (resamples <= 1).all().all():
+            plt.xlim(0.0, 1.0)
         plt.title('{0} ({1})'.format('Cross-Validation Scores Per Resampled Hyper-parameter', metric.name),
                   loc='right')
         plt.tight_layout()

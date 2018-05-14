@@ -49,19 +49,19 @@ https://github.com/shane-kercheval/oo-learning/tree/master/examples/classificati
 
 * Exploring a dataset
 	* [Classification](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/1-Exploring%20the%20Titanic%20Dataset.ipynb)
-	* Regression (TBD)
+	* [Regression](https://github.com/shane-kercheval/oo-learning/blob/master/examples/regression-insurance/1-Exploring.ipynb)
 * Training a model
 	* [Classification](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/2-Basic%20Modeling.ipynb)
-	* Regression (TBD)
+	* [Regression](https://github.com/shane-kercheval/oo-learning/blob/master/examples/regression-insurance/2-Basic%20Modeling.ipynb)
 * Resampling data
 	* [Classification](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/3-Resampling.ipynb)
-	* Regression (TBD)
+	* [Regression](https://github.com/shane-kercheval/oo-learning/blob/master/examples/regression-insurance/3-Resampling.ipynb)
 * Tuning Data
 	* [Classification](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/4-Tuning.ipynb)
-	* Regression (TBD)
+	* [Regression](https://github.com/shane-kercheval/oo-learning/blob/master/examples/regression-insurance/4-Tuning.ipynb)
 * Searching Models
 	* [Classification](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/5-Searching.ipynb)
-	* Regression (TBD)
+	* [Regression](https://github.com/shane-kercheval/oo-learning/blob/master/examples/regression-insurance/5-Searching.ipynb)
 * Advanced Topics
 	* Model Aggregation and Stacking (TBD)
 	* "resampling decorators" 
