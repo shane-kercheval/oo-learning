@@ -64,8 +64,8 @@ https://github.com/shane-kercheval/oo-learning/tree/master/examples/classificati
 	* [Regression](https://github.com/shane-kercheval/oo-learning/blob/master/examples/regression-insurance/5-Searching.ipynb)
 * Advanced Topics
 	* Model Aggregation and Stacking (TBD)
-	* "resampling decorators" 
-		* resample the ideal ROC threshold (TBD)
+	* "resampling decorators" (see [Classification Resampling]((https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/3-Resampling.ipynb)) example)
+		* resample the ideal ROC threshold (see link above)
 	* Caching Models via `PersistenceManager` (TBD)
  
 ### ModelTrainer Snippet
