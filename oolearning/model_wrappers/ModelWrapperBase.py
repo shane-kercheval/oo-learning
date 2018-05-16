@@ -8,7 +8,6 @@ import pandas as pd
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError, ModelAlreadyFittedError, \
     ModelCachedAlreadyConfigured
-from oolearning.persistence.AlwaysFetchManager import AlwaysFetchManager
 
 
 class ModelWrapperBase(metaclass=ABCMeta):
@@ -101,7 +100,10 @@ class ModelWrapperBase(metaclass=ABCMeta):
         self._feature_names = data_x.columns.values.tolist()
 
         if self._persistence_manager:
-            self._model_object = self._persistence_manager.get_object(fetch_function=lambda: self._train(data_x=data_x, data_y=data_y, hyper_params=hyper_params))  # noqa
+            self._model_object = self._persistence_manager.\
+                get_object(fetch_function=lambda:self._train(data_x=data_x,
+                                                             data_y=data_y,
+                                                             hyper_params=hyper_params))
         else:
             self._model_object = self._train(data_x=data_x, data_y=data_y, hyper_params=hyper_params)
 

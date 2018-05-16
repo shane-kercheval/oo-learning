@@ -45,13 +45,15 @@ class ModelDefaults:
         transformations = [ImputationTransformer(),
                            CenterScaleTransformer(),
                            RemoveNZVTransformer(),
-                           RemoveCorrelationsTransformer(),
-                           DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
+                           RemoveCorrelationsTransformer()]
 
         if degrees is not None:
             # assumes center/scaling data should be done before the polynomial transformation
             description = '{0}_{1}_{2}'.format(description, 'polynomial', str(degrees))
             transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
+
+        # PolynomialFeaturesTransformer, if used, must be performed before adding dummy variables
+        transformations.append(DummyEncodeTransformer(CategoricalEncoding.DUMMY))
 
         return ModelInfo(description=description,
                          model=model_wrapper,
@@ -191,13 +193,15 @@ class ModelDefaults:
         # TODO: fill out rest of recommended transformations, verify order
         transformations = [ImputationTransformer(),
                            CenterScaleTransformer(),
-                           RemoveNZVTransformer(),
-                           DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
+                           RemoveNZVTransformer()]
 
         if degrees is not None:
             # assumes center/scaling data should be done before the polynomial transformation
             description = '{0}_{1}_{2}'.format(description, 'polynomial', str(degrees))
             transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
+
+        # PolynomialFeaturesTransformer, if used, must be performed before adding dummy variables
+        transformations.append(DummyEncodeTransformer(CategoricalEncoding.DUMMY))
 
         return ModelInfo(description=description,
                          model=model_wrapper,
@@ -226,13 +230,15 @@ class ModelDefaults:
         transformations = [ImputationTransformer(),
                            CenterScaleTransformer(),
                            RemoveNZVTransformer(),
-                           RemoveCorrelationsTransformer(),
-                           DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
+                           RemoveCorrelationsTransformer()]
 
         if degrees is not None:
             # assumes center/scaling data should be done before the polynomial transformation
             description = '{0}_{1}_{2}'.format(description, 'polynomial', str(degrees))
             transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
+
+        # PolynomialFeaturesTransformer, if used, must be performed before adding dummy variables
+        transformations.append(DummyEncodeTransformer(CategoricalEncoding.DUMMY))
 
         return ModelInfo(description=description,
                          model=model_wrapper,
@@ -359,13 +365,15 @@ class ModelDefaults:
         transformations = [ImputationTransformer(),
                            CenterScaleTransformer(),
                            RemoveNZVTransformer(),
-                           RemoveCorrelationsTransformer(),
-                           DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
+                           RemoveCorrelationsTransformer()]
 
         if degrees is not None:
             # assumes center/scaling data should be done before the polynomial transformation
             description = '{0}_{1}_{2}'.format(description, 'polynomial', str(degrees))
             transformations.append(PolynomialFeaturesTransformer(degrees=degrees))
+
+        # PolynomialFeaturesTransformer, if used, must be performed before adding dummy variables
+        transformations.append(DummyEncodeTransformer(CategoricalEncoding.DUMMY))
 
         return ModelInfo(description=description,
                          model=model_wrapper,

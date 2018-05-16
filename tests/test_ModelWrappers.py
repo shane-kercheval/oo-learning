@@ -2083,7 +2083,10 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # VotingStrategy.SOFT
         ######################################################################################################
-        model_aggregator = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
+        model_infos = [ModelInfo(model=RandomForestClassifier(), hyper_params=RandomForestHP()),
+                       ModelInfo(model=CartDecisionTreeClassifier(), hyper_params=CartDecisionTreeHP()),
+                       ModelInfo(model=AdaBoostClassifier(), hyper_params=AdaBoostClassifierHP())]
+        model_aggregator = ModelAggregator(base_models=model_infos,
                                            aggregation_strategy=SoftVotingAggregationStrategy())
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
         # automatically calls `train()
@@ -2112,7 +2115,10 @@ class ModelWrapperTests(TimerTestCase):
         # for HARD voting, need to pass converters as well
         converter = TwoClassThresholdConverter(positive_class=1)
         # noinspection PyUnusedLocal
-        model_aggregator = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
+        model_infos = [ModelInfo(model=RandomForestClassifier(), hyper_params=RandomForestHP()),
+                       ModelInfo(model=CartDecisionTreeClassifier(), hyper_params=CartDecisionTreeHP()),
+                       ModelInfo(model=AdaBoostClassifier(), hyper_params=AdaBoostClassifierHP())]
+        model_aggregator = ModelAggregator(base_models=model_infos,
                                            aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for x in range(0, 3)]))  # noqa
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
         # automatically calls `train()
@@ -2177,7 +2183,10 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # VotingStrategy.SOFT
         ######################################################################################################
-        model_aggregator = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
+        model_infos = [ModelInfo(model=RandomForestClassifier(), hyper_params=RandomForestHP()),
+                       ModelInfo(model=CartDecisionTreeClassifier(), hyper_params=CartDecisionTreeHP()),
+                       ModelInfo(model=AdaBoostClassifier(), hyper_params=AdaBoostClassifierHP())]
+        model_aggregator = ModelAggregator(base_models=model_infos,
                                            aggregation_strategy=SoftVotingAggregationStrategy())
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
         # automatically calls `train()
@@ -2209,7 +2218,10 @@ class ModelWrapperTests(TimerTestCase):
         # for HARD voting, need to pass converters as well
         converter = HighestValueConverter()
         # noinspection PyUnusedLocal
-        model_aggregator = ModelAggregator(models=[model_random_forest, model_decision_tree, model_adaboost],
+        model_infos = [ModelInfo(model=RandomForestClassifier(), hyper_params=RandomForestHP()),
+                       ModelInfo(model=CartDecisionTreeClassifier(), hyper_params=CartDecisionTreeHP()),
+                       ModelInfo(model=AdaBoostClassifier(), hyper_params=AdaBoostClassifierHP())]
+        model_aggregator = ModelAggregator(base_models=model_infos,
                                            aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for x in range(0, 3)]))  # noqa
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
         # automatically calls `train()
@@ -2256,7 +2268,10 @@ class ModelWrapperTests(TimerTestCase):
 
         expected_aggregation = (predictions_linear_regression + predictions_cart + predictions_adaboost) / 3
 
-        model_aggregator = ModelAggregator(models=[model_linear_regression, model_cart, model_adaboost],
+        model_infos = [ModelInfo(model=LinearRegressor(), hyper_params=None),
+                       ModelInfo(model=CartDecisionTreeRegressor(), hyper_params=CartDecisionTreeHP(criterion='mse')),  # noqa
+                       ModelInfo(model=AdaBoostRegressor(), hyper_params=AdaBoostRegressorHP())]
+        model_aggregator = ModelAggregator(base_models=model_infos,
                                            aggregation_strategy=MeanAggregationStrategy())
         model_aggregator.train(data_x=train_x, data_y=train_y)
         predictions_aggregation = model_aggregator.predict(data_x=holdout_x)
@@ -2269,6 +2284,10 @@ class ModelWrapperTests(TimerTestCase):
         with open(file, 'rb') as saved_object:
             expected_predictions = pickle.load(saved_object)
             assert all([isclose(x, y) for x, y in zip(expected_predictions, predictions_aggregation)])
+
+    def test_ModelAggregator_regression_different_transformations(self):
+        assert False
+
 
     def helper_test_ModelStacker_Classification(self, data, positive_class, cache_directory=None):
         """
@@ -2563,9 +2582,9 @@ class ModelWrapperTests(TimerTestCase):
         # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
         assert predict_callback_called == ['predict_called_train', 'predict_called_holdout']
 
-        expected_training_evaluator_metrics = {'Mean Absolute Error (MAE)': 2076.786737970561, 'Mean Squared Error (MSE)': 14253435.121538397, 'Root Mean Squared Error (RMSE)': 3775.372183181202, 'RMSE to Standard Deviation of Target': 0.31371673938056, 'Total Observations': 1070}  # noqa
+        expected_training_evaluator_metrics = {'Mean Absolute Error (MAE)': 1986.2912789878249, 'Mean Squared Error (MSE)': 13417752.365422385, 'Root Mean Squared Error (RMSE)': 3663.0250293196723, 'RMSE to Standard Deviation of Target': 0.3043811875255302, 'Total Observations': 1070}  # noqa
         assert all([isclose(expected_training_evaluator_metrics[key], fitter.training_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
-        expected_holdout_evaluator_metrics = {'Mean Absolute Error (MAE)': 2578.4603370617365, 'Mean Squared Error (MSE)': 22314572.10651289, 'Root Mean Squared Error (RMSE)': 4723.830236843074, 'RMSE to Standard Deviation of Target': 0.3814308387480915, 'Total Observations': 268}  # noqa
+        expected_holdout_evaluator_metrics = {'Mean Absolute Error (MAE)': 2540.1233867075684, 'Mean Squared Error (MSE)': 22559042.48804891, 'Root Mean Squared Error (RMSE)': 4749.63603742949, 'RMSE to Standard Deviation of Target': 0.3835145563392683, 'Total Observations': 268}  # noqa
         assert all([isclose(expected_holdout_evaluator_metrics[key], fitter.holdout_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
 
         assert [x.description for x in model_stacker._base_models] == ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor']  # noqa
@@ -2678,9 +2697,9 @@ class ModelWrapperTests(TimerTestCase):
         # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
         assert predict_callback_called == ['predict_called_train', 'predict_called_holdout']
 
-        expected_training_evaluator_metrics = {'Mean Absolute Error (MAE)': 2199.9677284425243, 'Mean Squared Error (MSE)': 11793128.871692684, 'Root Mean Squared Error (RMSE)': 3434.112530435292, 'RMSE to Standard Deviation of Target': 0.28535957077648894, 'Total Observations': 1070}  # noqa
+        expected_training_evaluator_metrics = {'Mean Absolute Error (MAE)': 2352.581933713817, 'Mean Squared Error (MSE)': 12286239.244358376, 'Root Mean Squared Error (RMSE)': 3505.173211748369, 'RMSE to Standard Deviation of Target': 0.29126439926969333, 'Total Observations': 1070}  # noqa
         assert all([isclose(expected_training_evaluator_metrics[key], fitter.training_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
-        expected_holdout_evaluator_metrics = {'Mean Absolute Error (MAE)': 2998.721845738518, 'Mean Squared Error (MSE)': 24415070.16514672, 'Root Mean Squared Error (RMSE)': 4941.16081150439, 'RMSE to Standard Deviation of Target': 0.3989794336853368, 'Total Observations': 268}  # noqa
+        expected_holdout_evaluator_metrics = {'Mean Absolute Error (MAE)': 3130.3878123286368, 'Mean Squared Error (MSE)': 25683778.713447947, 'Root Mean Squared Error (RMSE)': 5067.916604823717, 'RMSE to Standard Deviation of Target': 0.40921446884491564, 'Total Observations': 268}  # noqa
         assert all([isclose(expected_holdout_evaluator_metrics[key], fitter.holdout_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
         assert all([x == y for x, y in zip([x.description for x in model_stacker._base_models], ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor'])])  # noqa
         # test resample data

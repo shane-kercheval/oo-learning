@@ -9,6 +9,8 @@ class PolynomialFeaturesTransformer(TransformerBase):
     """
     Generates polynomial and interactions features for numeric features; retains categoric features.
 
+    NOTE: must be used BEFORE DummyEncodeTransformer
+
     Utilizes `sklearn.PolynomialFeatures`:
         http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.PolynomialFeatures.html
     """

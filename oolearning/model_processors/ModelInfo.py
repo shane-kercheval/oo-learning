@@ -13,8 +13,8 @@ class ModelInfo:
         processors, such as the ModelSearcher
     """
     def __init__(self,
-                 description: str,
                  model: ModelWrapperBase,
+                 description: str=None,
                  transformations: List[TransformerBase]=None,
                  hyper_params: HyperParamsBase=None,
                  hyper_params_grid: HyperParamsGrid=None,
