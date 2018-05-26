@@ -6,9 +6,9 @@ import pandas as pd
 from oolearning import AggregationStrategyBase
 
 
-class MeanAggregationStrategy(AggregationStrategyBase):
+class MedianAggregationStrategy(AggregationStrategyBase):
     """
-    Voting strategy for regression problems. Takes the mean of all the models' predictions.
+    Voting strategy for regression problems. Takes the median of all the models' predictions.
     """
 
     def aggregate(self, model_predictions: List[Union[pd.DataFrame, np.ndarray]]) -> \
@@ -16,4 +16,4 @@ class MeanAggregationStrategy(AggregationStrategyBase):
         assert isinstance(model_predictions, list)
         assert all([isinstance(x, np.ndarray) for x in model_predictions])
 
-        return np.asarray([np.mean(x) for x in zip(*model_predictions)])
+        return np.asarray([np.median(x) for x in zip(*model_predictions)])

@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 import warnings
+
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=Warning)
     import statsmodels.api as sm  # https://github.com/statsmodels/statsmodels/issues/3814
@@ -2327,6 +2328,43 @@ class ModelWrapperTests(TimerTestCase):
         evaluator.evaluate(actual_values=holdout_y, predicted_values=predictions_aggregation)
         TestHelper.ensure_values_numeric_dictionary(dictionary_1=evaluator.all_quality_metrics,
                                                     dictionary_2={'Mean Absolute Error (MAE)': 2929.902780386074, 'Mean Squared Error (MSE)': 26119870.737061337, 'Root Mean Squared Error (RMSE)': 5110.7602895324035, 'RMSE to Standard Deviation of Target': 0.4126739290232337, 'Total Observations': 268})  # noqa
+
+    def test_ModelAggregator_regression_median_transformations(self):
+        """
+        Make sure transformations work as expected for each
+        """
+        data = TestHelper.get_insurance_data()
+        target_variable = 'expenses'
+        train_x, train_y, holdout_x, holdout_y = TestHelper.split_train_holdout_regression(data,
+                                                                                           target_variable)
+        model_infos = [ModelInfo(model=LinearRegressor(),
+                                 hyper_params=None,
+                                 transformations=[PolynomialFeaturesTransformer(degrees=3),
+                                                  DummyEncodeTransformer(CategoricalEncoding.DUMMY)]),
+                       ModelInfo(model=CartDecisionTreeRegressor(),
+                                 hyper_params=CartDecisionTreeHP(criterion='mse'),
+                                 transformations=[CenterScaleTransformer(),
+                                                  DummyEncodeTransformer(CategoricalEncoding.DUMMY)]),
+                       ModelInfo(model=AdaBoostRegressor(), hyper_params=AdaBoostRegressorHP(),
+                                 transformations=[DummyEncodeTransformer(CategoricalEncoding.DUMMY)])]
+        model_aggregator = ModelAggregator(base_models=model_infos,
+                                           aggregation_strategy=MedianAggregationStrategy())
+        model_aggregator.train(data_x=train_x, data_y=train_y)
+
+        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_LinearRegressor.pkl'),  # noqa
+                                                     expected_dataframe=model_aggregator._base_models[0].model.data_x_trained_head)  # noqa
+
+        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_CartDecisionTreeRegressor.pkl'),  # noqa
+                                                     expected_dataframe=model_aggregator._base_models[1].model.data_x_trained_head)  # noqa
+
+        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_AdaBoostRegressor.pkl'),  # noqa
+                                                     expected_dataframe=model_aggregator._base_models[2].model.data_x_trained_head)  # noqa
+
+        predictions_aggregation = model_aggregator.predict(data_x=holdout_x)
+        evaluator = RegressionEvaluator()
+        evaluator.evaluate(actual_values=holdout_y, predicted_values=predictions_aggregation)
+        TestHelper.ensure_values_numeric_dictionary(dictionary_1=evaluator.all_quality_metrics,
+                                                    dictionary_2={'Mean Absolute Error (MAE)': 2219.7179684340335, 'Mean Squared Error (MSE)': 24703837.75169208, 'Root Mean Squared Error (RMSE)': 4970.295539672876, 'RMSE to Standard Deviation of Target': 0.4013319491748498, 'Total Observations': 268})  # noqa
 
     def helper_test_ModelStacker_Classification(self, data, positive_class, cache_directory=None):
         """
