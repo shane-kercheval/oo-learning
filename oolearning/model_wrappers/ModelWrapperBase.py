@@ -22,6 +22,7 @@ class ModelWrapperBase(metaclass=ABCMeta):
         self._feature_names = None
         self._hyper_params = None
         self._persistence_manager = None
+        self._data_x_trained_head = None
 
     def clone(self):
         """
@@ -67,6 +68,16 @@ class ModelWrapperBase(metaclass=ABCMeta):
         return self._feature_names
 
     @property
+    def data_x_trained_head(self):
+        """
+        :return: the first X rows of the dataset that was trained
+        """
+        if self._model_object is None:
+            raise ModelNotFittedError()
+
+        return self._data_x_trained_head
+
+    @property
     @abstractmethod
     def feature_importance(self):
         pass
@@ -98,6 +109,7 @@ class ModelWrapperBase(metaclass=ABCMeta):
 
         self._hyper_params = hyper_params
         self._feature_names = data_x.columns.values.tolist()
+        self._data_x_trained_head = data_x.head(n=30)
 
         if self._persistence_manager:
             self._model_object = self._persistence_manager.\

@@ -272,6 +272,10 @@ class ModelWrapperTests(TimerTestCase):
         mock_y = np.random.choice(a=np.arange(0, 3), p=[0.1, 0.3, 0.6], size=1000)  # random target values
         mock_model = MockClassificationModelWrapper(data_y=mock_y)
         mock_model.train(data_x=data, data_y=data.Survived)
+
+        assert TestHelper.ensure_all_values_equal(data_frame1=data.head(n=30),
+                                                  data_frame2=mock_model.data_x_trained_head)
+
         assert mock_model._unique_targets == [2, 1, 0]
         assert mock_model._target_probabilities == [0.596, 0.306, 0.098]
 
@@ -2285,9 +2289,42 @@ class ModelWrapperTests(TimerTestCase):
             expected_predictions = pickle.load(saved_object)
             assert all([isclose(x, y) for x, y in zip(expected_predictions, predictions_aggregation)])
 
-    def test_ModelAggregator_regression_different_transformations(self):
-        assert False
+    def test_ModelAggregator_regression_transformations(self):
+        """
+        Make sure transformations work as expected for each
+        """
+        data = TestHelper.get_insurance_data()
+        target_variable = 'expenses'
+        train_x, train_y, holdout_x, holdout_y = TestHelper.split_train_holdout_regression(data,
+                                                                                           target_variable)
+        model_infos = [ModelInfo(model=LinearRegressor(),
+                                 hyper_params=None,
+                                 transformations=[PolynomialFeaturesTransformer(degrees=3),
+                                                  DummyEncodeTransformer(CategoricalEncoding.DUMMY)]),
+                       ModelInfo(model=CartDecisionTreeRegressor(),
+                                 hyper_params=CartDecisionTreeHP(criterion='mse'),
+                                 transformations=[CenterScaleTransformer(),
+                                                  DummyEncodeTransformer(CategoricalEncoding.DUMMY)]),
+                       ModelInfo(model=AdaBoostRegressor(), hyper_params=AdaBoostRegressorHP(),
+                                 transformations=[DummyEncodeTransformer(CategoricalEncoding.DUMMY)])]
+        model_aggregator = ModelAggregator(base_models=model_infos,
+                                           aggregation_strategy=MeanAggregationStrategy())
+        model_aggregator.train(data_x=train_x, data_y=train_y)
 
+        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_LinearRegressor.pkl'),  # noqa
+                                                     expected_dataframe=model_aggregator._base_models[0].model.data_x_trained_head)  # noqa
+
+        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_CartDecisionTreeRegressor.pkl'),  # noqa
+                                                     expected_dataframe=model_aggregator._base_models[1].model.data_x_trained_head)  # noqa
+
+        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_AdaBoostRegressor.pkl'),  # noqa
+                                                     expected_dataframe=model_aggregator._base_models[2].model.data_x_trained_head)  # noqa
+
+        predictions_aggregation = model_aggregator.predict(data_x=holdout_x)
+        evaluator = RegressionEvaluator()
+        evaluator.evaluate(actual_values=holdout_y, predicted_values=predictions_aggregation)
+        TestHelper.ensure_values_numeric_dictionary(dictionary_1=evaluator.all_quality_metrics,
+                                                    dictionary_2={'Mean Absolute Error (MAE)': 2929.902780386074, 'Mean Squared Error (MSE)': 26119870.737061337, 'Root Mean Squared Error (RMSE)': 5110.7602895324035, 'RMSE to Standard Deviation of Target': 0.4126739290232337, 'Total Observations': 268})  # noqa
 
     def helper_test_ModelStacker_Classification(self, data, positive_class, cache_directory=None):
         """
