@@ -2122,6 +2122,7 @@ class ModelWrapperTests(TimerTestCase):
         model_infos = [ModelInfo(model=RandomForestClassifier(), hyper_params=RandomForestHP()),
                        ModelInfo(model=CartDecisionTreeClassifier(), hyper_params=CartDecisionTreeHP()),
                        ModelInfo(model=AdaBoostClassifier(), hyper_params=AdaBoostClassifierHP())]
+        # noinspection PyUnusedLocal
         model_aggregator = ModelAggregator(base_models=model_infos,
                                            aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for x in range(0, 3)]))  # noqa
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
@@ -2225,6 +2226,7 @@ class ModelWrapperTests(TimerTestCase):
         model_infos = [ModelInfo(model=RandomForestClassifier(), hyper_params=RandomForestHP()),
                        ModelInfo(model=CartDecisionTreeClassifier(), hyper_params=CartDecisionTreeHP()),
                        ModelInfo(model=AdaBoostClassifier(), hyper_params=AdaBoostClassifierHP())]
+        # noinspection PyUnusedLocal
         model_aggregator = ModelAggregator(base_models=model_infos,
                                            aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for x in range(0, 3)]))  # noqa
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
