@@ -30,6 +30,9 @@ class CartDecisionTreeHP(HyperParamsBase):
         super().__init__()
 
         self._is_regression = None
+
+        criterion = criterion.lower()
+
         if criterion == 'gini' or criterion == 'entropy':
             self._is_regression = False
         elif criterion == 'mse' or criterion == 'mae':
