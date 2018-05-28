@@ -2119,13 +2119,11 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # for HARD voting, need to pass converters as well
         converter = TwoClassThresholdConverter(positive_class=1)
-        # noinspection PyUnusedLocal
         model_infos = [ModelInfo(model=RandomForestClassifier(), hyper_params=RandomForestHP()),
                        ModelInfo(model=CartDecisionTreeClassifier(), hyper_params=CartDecisionTreeHP()),
                        ModelInfo(model=AdaBoostClassifier(), hyper_params=AdaBoostClassifierHP())]
-        # noinspection PyUnusedLocal
         model_aggregator = ModelAggregator(base_models=model_infos,
-                                           aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for x in range(0, 3)]))  # noqa
+                                           aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for _ in range(0, 3)]))  # noqa
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
         # automatically calls `train()
         model_aggregator.train(data_x=train_x, data_y=train_y)
@@ -2223,13 +2221,11 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # for HARD voting, need to pass converters as well
         converter = HighestValueConverter()
-        # noinspection PyUnusedLocal
         model_infos = [ModelInfo(model=RandomForestClassifier(), hyper_params=RandomForestHP()),
                        ModelInfo(model=CartDecisionTreeClassifier(), hyper_params=CartDecisionTreeHP()),
                        ModelInfo(model=AdaBoostClassifier(), hyper_params=AdaBoostClassifierHP())]
-        # noinspection PyUnusedLocal
         model_aggregator = ModelAggregator(base_models=model_infos,
-                                           aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for x in range(0, 3)]))  # noqa
+                                           aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for _ in range(0, 3)]))  # noqa
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
         # automatically calls `train()
         model_aggregator.train(data_x=train_x, data_y=train_y)
