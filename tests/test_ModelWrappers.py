@@ -4,6 +4,8 @@ import os.path
 import pickle
 import shutil
 import time
+import unittest
+
 from math import isclose
 from typing import Callable
 
@@ -2054,6 +2056,85 @@ class ModelWrapperTests(TimerTestCase):
         assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
         assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
 
+    def test_XGBoostClassifier(self):
+        data = TestHelper.get_titanic_data()
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+        fitter = ModelTrainer(model=XGBoostClassifier(),
+                              model_transformations=transformations,
+                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                              evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=1)))
+        fitter.train(data=data, target_variable='Survived', hyper_params=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC))  # noqa
+        assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+        assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+        assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'random_state': 42, 'seed': None, 'missing': None}  # noqa
+
+        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9417006683521489, 'AUC Precision/Recall': 0.9272598185475496, 'Kappa': 0.7441018663517572, 'F1 Score': 0.8352941176470589, 'Two-Class Accuracy': 0.8820224719101124, 'Error Rate': 0.11797752808988764, 'True Positive Rate': 0.7802197802197802, 'True Negative Rate': 0.9453302961275627, 'False Positive Rate': 0.05466970387243736, 'False Negative Rate': 0.21978021978021978, 'Positive Predictive Value': 0.8987341772151899, 'Negative Predictive Value': 0.8736842105263158, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.807707509881423, 'AUC Precision/Recall': 0.7851617329684761, 'Kappa': 0.5343009722032042, 'F1 Score': 0.6935483870967741, 'Two-Class Accuracy': 0.7877094972067039, 'Error Rate': 0.2122905027932961, 'True Positive Rate': 0.6231884057971014, 'True Negative Rate': 0.8909090909090909, 'False Positive Rate': 0.10909090909090909, 'False Negative Rate': 0.37681159420289856, 'Positive Predictive Value': 0.7818181818181819, 'Negative Predictive Value': 0.7903225806451613, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+
+    def test_XGBoostRegressor_linear(self):
+        data = TestHelper.get_cement_data()
+        transformations = None
+
+        fitter = ModelTrainer(model=XGBoostRegressor(),
+                              model_transformations=transformations,
+                              splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
+                              evaluator=RegressionEvaluator())
+        ######################################################################################################
+        # test default hyper-parameters
+        ######################################################################################################
+        fitter.train(data=data, target_variable='strength', hyper_params=XGBoostLinearHP(objective=XGBObjective.REG_LINEAR))  # noqa
+        assert isinstance(fitter.training_evaluator, RegressionEvaluator)
+        assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+
+        assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'reg:linear', 'booster': 'gblinear', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'random_state': 42, 'seed': None, 'missing': None}  # noqa
+
+        keys = fitter.training_evaluator.all_quality_metrics.keys()
+        expected_values = {'Mean Absolute Error (MAE)': 9.1510853668324,
+                           'Mean Squared Error (MSE)': 131.3990827046262,
+                           'Root Mean Squared Error (RMSE)': 11.462943893460624,
+                           'RMSE to Standard Deviation of Target': 0.6836513461822706,
+                           'Total Observations': 824}
+        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+        expected_values = {'Mean Absolute Error (MAE)': 8.902524983859756,
+                           'Mean Squared Error (MSE)': 122.6195118156708,
+                           'Root Mean Squared Error (RMSE)': 11.073369487905243,
+                           'RMSE to Standard Deviation of Target': 0.6745645845967496,
+                           'Total Observations': 206}  # noqa
+        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+    def test_XGBoostRegressor_tree(self):
+        data = TestHelper.get_cement_data()
+        transformations = None
+
+        fitter = ModelTrainer(model=XGBoostRegressor(),
+                              model_transformations=transformations,
+                              splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
+                              evaluator=RegressionEvaluator())
+        ######################################################################################################
+        # test default hyper-parameters
+        ######################################################################################################
+        fitter.train(data=data, target_variable='strength', hyper_params=XGBoostTreeHP(objective=XGBObjective.REG_LINEAR))  # noqa
+        assert isinstance(fitter.training_evaluator, RegressionEvaluator)
+        assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+
+        assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'reg:linear', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'random_state': 42, 'seed': None, 'missing': None}  # noqa
+
+        keys = fitter.training_evaluator.all_quality_metrics.keys()
+        expected_values = {'Mean Absolute Error (MAE)': 2.8658370747265303, 'Mean Squared Error (MSE)': 14.912708706965894, 'Root Mean Squared Error (RMSE)': 3.861697645720842, 'RMSE to Standard Deviation of Target': 0.2303121099242278, 'Total Observations': 824}  # noqa
+        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+        expected_values = {'Mean Absolute Error (MAE)': 3.8831358670725407, 'Mean Squared Error (MSE)': 26.19099478429751, 'Root Mean Squared Error (RMSE)': 5.117713823993826, 'RMSE to Standard Deviation of Target': 0.31175953295318953, 'Total Observations': 206}  # noqa
+        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
     def test_ModelAggregator(self):
         data = TestHelper.get_titanic_data()
         data.drop(columns=['PassengerId', 'Name', 'Ticket', 'Cabin', 'Age', 'Embarked'], inplace=True)
@@ -2813,3 +2894,82 @@ class ModelWrapperTests(TimerTestCase):
         shutil.rmtree(cache_directory)
         assert 6 < fit_time_not_previously_cached < 8  # looks like around ~7 seconds on average
         assert fit_time_previously_cached < 2  # improves to less than 2 with caching
+
+    @unittest.skip("experimenting")
+    def test_temp(self):
+        data = TestHelper.get_insurance_data()
+        target_variable = 'expenses'
+        train_x, train_y, holdout_x, holdout_y = TestHelper.split_train_holdout_regression(data,
+                                                                                           target_variable)
+
+        pipeline = TransformerPipeline(transformations=[DummyEncodeTransformer(CategoricalEncoding.DUMMY)])
+        train_x_transformed = pipeline.fit_transform(data_x=train_x)
+        holdout_x_transformed = pipeline.transform(data_x=holdout_x)
+        model_infos = [ModelInfo(model=LinearRegressor(),
+                                 hyper_params=None,
+                                 transformations=[PolynomialFeaturesTransformer(degrees=3),
+                                                  DummyEncodeTransformer(CategoricalEncoding.DUMMY)]),
+                       ModelInfo(model=CartDecisionTreeRegressor(),
+                                 hyper_params=CartDecisionTreeHP(criterion='mse'),
+                                 transformations=[CenterScaleTransformer(),
+                                                  DummyEncodeTransformer(CategoricalEncoding.DUMMY)]),
+                       ModelInfo(model=AdaBoostRegressor(), hyper_params=AdaBoostRegressorHP(),
+                                 transformations=[DummyEncodeTransformer(CategoricalEncoding.DUMMY)])]
+
+        def train(args):
+
+            model = args[0]
+            data_x = args[1]
+            data_y = args[2]
+            hyper_params = args[3]
+            model.train(data_x=data_x,
+                        data_y=data_y,
+                        hyper_params=hyper_params)
+            return model
+
+        import time
+
+        results = map(train, [[RandomForestRegressor(), train_x_transformed, train_y, RandomForestHP(criterion='MAE')],
+                              [RandomForestRegressor(), train_x_transformed, train_y, RandomForestHP(criterion='MAE')],
+                              [RandomForestRegressor(), train_x_transformed, train_y, RandomForestHP(criterion='MAE')]])
+        started_at = time.time()
+        list(results)
+        elapsed = time.time() - started_at
+        print(elapsed)
+
+        from multiprocessing.dummy import Pool as ThreadPool
+        pool = ThreadPool(4)
+        results = pool.map(train,
+                           [[RandomForestRegressor(_num_jobs_in_parallel=1), train_x_transformed, train_y, RandomForestHP(criterion='MAE')],
+                            [RandomForestRegressor(_num_jobs_in_parallel=1), train_x_transformed, train_y, RandomForestHP(criterion='MAE')],
+                            [RandomForestRegressor(_num_jobs_in_parallel=1), train_x_transformed, train_y, RandomForestHP(criterion='MAE')]])
+        started_at = time.time()
+        list(results)
+        elapsed = time.time() - started_at
+        print(elapsed)
+
+
+        from multiprocessing.dummy import Pool as ThreadPool
+        pool = ThreadPool(4)
+        results = pool.map(train,
+                           [[LinearRegressor(), train_x_transformed, train_y, None],
+                            [LinearRegressor(), train_x_transformed, train_y, None],
+                            [LinearRegressor(), train_x_transformed, train_y, None]])
+        started_at = time.time()
+        list(results)
+        elapsed = time.time() - started_at
+        print(elapsed)
+
+
+
+        results = map(np.sqrt, [1, 2, 3, 4])
+        list(results)
+
+
+        import multiprocessing as mp
+        pool = mp.Pool(processes=4)
+        results = [pool.apply_async(lambda model, data_x, data_y, hyper_params: model.train(data_x=data_x,
+                        data_y=data_y,
+                        hyper_params=hyper_params), args=(LinearRegressor, train_x, train_y, None))]
+        output = [p.get() for p in results]
+        print(output)
