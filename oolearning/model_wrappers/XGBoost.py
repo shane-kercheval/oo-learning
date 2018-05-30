@@ -1,16 +1,14 @@
+from enum import unique, Enum
 from typing import Union
 
 import numpy as np
 import pandas as pd
-
 from xgboost import XGBRegressor, XGBClassifier
 
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictRegressorMixin, \
     SklearnPredictClassifierMixin
-from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
-
-from enum import unique, Enum
 
 
 # noinspection SpellCheckingInspection
@@ -43,6 +41,41 @@ class XGBObjective(Enum):
     MULTI_SOFTMAX = 'multi:softmax'
     MULTI_SOFTPROB = 'multi:softprob'
     RANK_PAIRWISE = 'rank:pairwise'
+
+
+# noinspection SpellCheckingInspection
+@unique
+class XGBEvalMetric(Enum):
+    """
+    Not all options are included. See http://xgboost.readthedocs.io/en/latest/parameter.html for all options
+
+    “rmse”: root mean square error
+    “mae”: mean absolute error
+    “logloss”: negative log-likelihood
+    “error”: Binary classification error rate. It is calculated as #(wrong cases)/#(all cases). For the
+        predictions, the evaluation will regard the instances with prediction value larger than 0.5 as
+        positive instances, and the others as negative instances.
+    “error@t”: a different than 0.5 binary classification threshold value could be specified by providing a
+        numerical value through ‘t’.
+    “merror”: Multiclass classification error rate. It is calculated as #(wrong cases)/#(all cases).
+    “mlogloss”: Multiclass logloss
+    “auc”: Area under the curve for ranking evaluation.
+    “ndcg”:Normalized Discounted Cumulative Gain
+    “map”:Mean average precision
+    “ndcg@n”,”map@n”: n can be assigned as an integer to cut off the top positions in the lists for evaluation.
+    “ndcg-”,”map-”,”ndcg@n-”,”map@n-”: In XGBoost, NDCG and MAP will evaluate the score of a list without any
+        positive samples as 1. By adding “-” in the evaluation metric XGBoost will evaluate these score as 0
+        to be consistent under some conditions. training repeatedly
+    """
+    RMSE = 'rmse'
+    MAE = 'mae'
+    LOGLOSS = 'logloss'
+    ERROR = 'error'
+    MERROR = 'merror'
+    MLOGLOSS = 'mlogloss'
+    AUC = 'auc'
+    NDCG = 'ndcg'
+    MAP = 'map'
 
 
 class XGBoostLinearHP(HyperParamsBase):
@@ -86,8 +119,6 @@ class XGBoostLinearHP(HyperParamsBase):
                                  reg_lambda=lambda_r,
                                  scale_pos_weight=1,
                                  base_score=0.5,
-                                 random_state=42,
-                                 seed=None,
                                  missing=None)
 
 
@@ -111,8 +142,6 @@ class XGBoostTreeHP(HyperParamsBase):
                  reg_lambda: float=1,
                  scale_pos_weight: float=1,
                  base_score: float=0.5,
-                 random_state: int=42,
-                 seed: int=None,
                  missing: float=None):
         """
         See
@@ -139,8 +168,6 @@ class XGBoostTreeHP(HyperParamsBase):
                                  reg_lambda=reg_lambda,
                                  scale_pos_weight=scale_pos_weight,
                                  base_score=base_score,
-                                 random_state=random_state,
-                                 seed=seed,
                                  missing=missing)
 
 
@@ -153,8 +180,69 @@ class XGBoostDartHP(HyperParamsBase):
         self._params_dict = dict(booster='dart')
 
 
+# noinspection SpellCheckingInspection,PyAbstractClass
+class XGBoostBase(ModelWrapperBase):
+    def __init__(self,
+                 early_stopping_rounds: int=None,
+                 eval_metric: Union[XGBEvalMetric, str, callable, None]=None,
+                 eval_set: Union[list, None]=None):
+        """
+
+
+        Note: sklearn takes an additional parameter (in the fit method) called eval_set. I simply set the
+            eval set to the training set based to `train()`.
+
+        param descriptions from: https://github.com/dmlc/xgboost/blob/master/python-package/xgboost/sklearn.py
+
+        :param eval_metric:
+            If a str, should be a built-in evaluation metric to use. See
+            doc/parameter.md. If callable, a custom evaluation metric. The call
+            signature is func(y_predicted, y_true) where y_true will be a
+            DMatrix object such that you may need to call the get_label
+            method. It must return a str, value pair where the str is a name
+            for the evaluation and value is the value of the evaluation
+            function. This objective is always minimized.
+        :param early_stopping_rounds:
+            Activates early stopping. Validation error needs to decrease at
+            least every <early_stopping_rounds> round(s) to continue training.
+            Requires at least one item in evals.  If there's more than one,
+            will use the last. Returns the model from the last iteration
+            (not the best one). If early stopping occurs, the model will
+            have three additional fields: bst.best_score, bst.best_iteration
+            and bst.best_ntree_limit.
+            (Use bst.best_ntree_limit to get the correct value if num_parallel_tree
+            and/or num_class appears in the parameters)
+        :param eval_set:
+            A list of (X, y) tuple pairs to use as a validation set for
+            early-stopping
+
+            If eval_set is not supplied, but the other early stopping parameters are, then the `data_x` &
+                `data_y` datasets that are passed to `train()` are used.
+        """
+        super().__init__()
+
+        # must pass both parameters or neither
+        assert (early_stopping_rounds is None and eval_metric is None) or \
+               (early_stopping_rounds is not None and eval_metric is not None)
+
+        self._early_stopping_rounds = early_stopping_rounds
+        self._eval_metric = eval_metric.value if isinstance(eval_metric, XGBEvalMetric) else eval_metric
+        self._eval_set = eval_set
+
+    def xgb_fit(self, model, data_x, data_y):
+        if self._eval_metric is not None and self._eval_set is None:  # if early stopping but not eval set
+            self._eval_set = [(data_x, data_y)]
+        model.fit(X=data_x,
+                  y=data_y,
+                  early_stopping_rounds=self._early_stopping_rounds,
+                  eval_metric=self._eval_metric,
+                  eval_set=self._eval_set)
+
+        return model
+
+
 # noinspection SpellCheckingInspection
-class XGBoostRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
+class XGBoostRegressor(SklearnPredictRegressorMixin, XGBoostBase):
 
     @property
     def feature_importance(self):
@@ -170,7 +258,6 @@ class XGBoostRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
         assert isinstance(hyper_params, XGBoostLinearHP) or isinstance(hyper_params, XGBoostTreeHP)
 
         param_dict = hyper_params.params_dict
-
         model = XGBRegressor(max_depth=param_dict['max_depth'],
                              learning_rate=param_dict['learning_rate'],
                              n_estimators=param_dict['n_estimators'],
@@ -189,18 +276,15 @@ class XGBoostRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
                              reg_lambda=param_dict['reg_lambda'],
                              scale_pos_weight=param_dict['scale_pos_weight'],
                              base_score=param_dict['base_score'],
-                             random_state=param_dict['random_state'],
-                             seed=param_dict['seed'],
+                             random_state=42,
+                             # seed=param_dict['seed'],
                              missing=param_dict['missing'])
 
-        model.fit(X=data_x, y=data_y)
-
-        return model
+        return self.xgb_fit(model=model, data_x=data_x, data_y=data_y)
 
 
 # noinspection SpellCheckingInspection
-class XGBoostClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
-
+class XGBoostClassifier(SklearnPredictClassifierMixin, XGBoostBase):
     @property
     def feature_importance(self):
         pass
@@ -215,7 +299,6 @@ class XGBoostClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
         assert isinstance(hyper_params, XGBoostTreeHP)
 
         param_dict = hyper_params.params_dict
-
         model = XGBClassifier(max_depth=param_dict['max_depth'],
                               learning_rate=param_dict['learning_rate'],
                               n_estimators=param_dict['n_estimators'],
@@ -234,10 +317,8 @@ class XGBoostClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
                               reg_lambda=param_dict['reg_lambda'],
                               scale_pos_weight=param_dict['scale_pos_weight'],
                               base_score=param_dict['base_score'],
-                              random_state=param_dict['random_state'],
-                              seed=param_dict['seed'],
+                              random_state=42,
+                              # seed=param_dict['seed'],
                               missing=param_dict['missing'])
 
-        model.fit(X=data_x, y=data_y)
-
-        return model
+        return self.xgb_fit(model=model, data_x=data_x, data_y=data_y)

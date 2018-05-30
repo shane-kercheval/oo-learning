@@ -7,6 +7,9 @@ import seaborn as sns
 import numpy as np
 import pandas as pd
 
+from oolearning.transformers.StatelessTransformer import StatelessTransformer
+from oolearning.transformers.TransformerPipeline import TransformerPipeline
+
 
 class OOLearningHelpers:
 
@@ -57,3 +60,53 @@ class OOLearningHelpers:
                         center=0)
             plt.xticks(rotation=20, ha='right')
             plt.title(title)
+
+    @staticmethod
+    def get_final_datasets(data, target_variable, splitter, transformations):
+
+        # if we have a splitter, split into training and holdout, else just do transformations on all data
+        if splitter:
+            training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
+        else:
+            training_indexes, holdout_indexes = range(len(data)), []
+
+        training_y = data.iloc[training_indexes][target_variable]
+        training_x = data.iloc[training_indexes].drop(columns=target_variable)
+
+        holdout_y = data.iloc[holdout_indexes][target_variable]
+        holdout_x = data.iloc[holdout_indexes].drop(columns=target_variable)
+
+        # transform on training data
+        if transformations is not None:
+            # before we train the data, we actually want to 'snoop' at what the expected columns will be with
+            # ALL the data. The reason is that if we so some sort of dummy encoding, but not all the
+            # categories are included in the training set (i.e. maybe only a small number of observations have
+            # the categoric value), then we can still ensure that we will be giving the same expected columns/
+            # encodings to the predict method with the holdout set.
+            # noinspection PyTypeChecker
+            expected_columns = TransformerPipeline.get_expected_columns(data=data.drop(columns=target_variable),  # noqa
+                                                                        transformations=transformations)
+            transformer = StatelessTransformer(custom_function=lambda x_df: x_df.reindex(columns=expected_columns,  # noqa
+                                                                                         fill_value=0))
+            transformations = transformations + [transformer]
+
+        pipeline = TransformerPipeline(transformations=transformations)
+        # before we fit the data, we actually want to 'peak' at what the expected columns will be with
+        # ALL the data. The reason is that if we so some sort of encoding (dummy/one-hot), but not all
+        # of the categories are included in the training set (i.e. maybe only a small number of
+        # observations have the categoric value), then we can still ensure that we will be giving the
+        # same expected columns/encodings to the `predict` method with the holdout set.
+
+        # peak at all the data (except for the target variable of course)
+        # noinspection PyTypeChecker
+        pipeline.peak(data_x=data.drop(columns=target_variable))
+
+        # fit on only the train data-set (and also transform)
+        transformed_training_x = pipeline.fit_transform(training_x)
+
+        if holdout_indexes:
+            transformed_holdout_x = pipeline.transform(holdout_x)
+        else:
+            transformed_holdout_x = holdout_x
+
+        return transformed_training_x, training_y, transformed_holdout_x, holdout_y, pipeline

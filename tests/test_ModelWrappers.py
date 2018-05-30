@@ -50,6 +50,8 @@ class MockDevice:
     """
     def write(self, s): pass
 
+    def flush(self): pass
+
 
 class MockPersistenceManagerBase(PersistenceManagerBase):
     def set_key_prefix(self, prefix: str):
@@ -259,6 +261,54 @@ class ModelWrapperTests(TimerTestCase):
             flatten_transform=True)
         eclf3 = eclf3.fit(X, y)
         print(eclf3.predict(X))
+
+    def test_OOLearningHelpers_get_final_datasets(self):
+        data = TestHelper.get_titanic_data()
+
+        ######################################################################################################
+        # test without Splitter
+        ######################################################################################################
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        t_x, t_y, h_x, h_y, pipeline = OOLearningHelpers.get_final_datasets(data=data,
+                                                                            target_variable='Survived',
+                                                                            splitter=None,
+                                                                            transformations=transformations)
+        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_Modelwrappers/test_OOLearningHelpers_get_final_datasets_no_splitter_train_x.pkl'),  # noqa
+                                                     expected_dataframe=t_x)
+        assert list(t_y) == [0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0]  # noqa
+        assert all(t_y.index.values == t_x.index.values)
+        assert h_x.shape == (0, 11)
+        assert all(h_x.columns.values == ['PassengerId', 'Pclass', 'Name', 'Sex', 'Age', 'SibSp', 'Parch', 'Ticket', 'Fare', 'Cabin', 'Embarked'])  # noqa
+        assert len(h_y) == 0
+        assert all(h_y.index.values == h_x.index.values)
+        assert [x.state for x in pipeline.transformations] == [{}, {'Pclass': [1, 2, 3], 'SibSp': [0, 1, 2, 3, 4, 5, 8], 'Parch': [0, 1, 2, 3, 4, 5, 6]}, {'Age': 28.0, 'Fare': 14.4542, 'Pclass': 3, 'Sex': 'male', 'SibSp': 0, 'Parch': 0, 'Embarked': 'S'}, {'Pclass': [1, 2, 3], 'Sex': ['female', 'male'], 'SibSp': [0, 1, 2, 3, 4, 5, 8], 'Parch': [0, 1, 2, 3, 4, 5, 6], 'Embarked': ['C', 'Q', 'S']}, {}]  # noqa
+
+        ######################################################################################################
+        # test with Splitter
+        ######################################################################################################
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        t_x, t_y, h_x, h_y, pipeline = OOLearningHelpers.get_final_datasets(data=data,
+                                                                            target_variable='Survived',
+                                                                            splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),  # noqa
+                                                                            transformations=transformations)
+        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_Modelwrappers/test_OOLearningHelpers_get_final_datasets_with_splitter_train_x.pkl'),  # noqa
+                                                     expected_dataframe=t_x)
+        assert list(t_y) == [1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1]  # noqa
+        assert all(t_y.index.values == t_x.index.values)
+        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_Modelwrappers/test_OOLearningHelpers_get_final_datasets_with_splitter_holdout_x.pkl'),  # noqa
+                                                     expected_dataframe=h_x)
+
+        assert list(h_y) == [0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0]  # noqa
+        assert all(h_y.index.values == h_x.index.values)
+        assert [x.state for x in pipeline.transformations] == [{}, {'Pclass': [1, 2, 3], 'SibSp': [0, 1, 2, 3, 4, 5, 8], 'Parch': [0, 1, 2, 3, 4, 5, 6]}, {'Age': 28.5, 'Fare': 14.4542, 'Pclass': 3, 'Sex': 'male', 'SibSp': 0, 'Parch': 0, 'Embarked': 'S'}, {'Pclass': [1, 2, 3], 'Sex': ['female', 'male'], 'SibSp': [0, 1, 2, 3, 4, 5, 8], 'Parch': [0, 1, 2, 3, 4, 5, 6], 'Embarked': ['C', 'Q', 'S']}, {}]  # noqa
 
     def test_MockModelWrapper(self):
         ######################################################################################################
@@ -2072,10 +2122,94 @@ class ModelWrapperTests(TimerTestCase):
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
         assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
-        assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'random_state': 42, 'seed': None, 'missing': None}  # noqa
+        assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
 
         assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9417006683521489, 'AUC Precision/Recall': 0.9272598185475496, 'Kappa': 0.7441018663517572, 'F1 Score': 0.8352941176470589, 'Two-Class Accuracy': 0.8820224719101124, 'Error Rate': 0.11797752808988764, 'True Positive Rate': 0.7802197802197802, 'True Negative Rate': 0.9453302961275627, 'False Positive Rate': 0.05466970387243736, 'False Negative Rate': 0.21978021978021978, 'Positive Predictive Value': 0.8987341772151899, 'Negative Predictive Value': 0.8736842105263158, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.807707509881423, 'AUC Precision/Recall': 0.7851617329684761, 'Kappa': 0.5343009722032042, 'F1 Score': 0.6935483870967741, 'Two-Class Accuracy': 0.7877094972067039, 'Error Rate': 0.2122905027932961, 'True Positive Rate': 0.6231884057971014, 'True Negative Rate': 0.8909090909090909, 'False Positive Rate': 0.10909090909090909, 'False Negative Rate': 0.37681159420289856, 'Positive Predictive Value': 0.7818181818181819, 'Negative Predictive Value': 0.7903225806451613, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+
+    def test_XGBoostClassifier_early_stopping(self):
+        warnings.filterwarnings("ignore")
+        # noinspection PyUnusedLocal
+        with patch('sys.stdout', new=MockDevice()) as fake_out:  # suppress output of early stopping
+            ##################################################################################################
+            # early stopping with 100 estimators (default), using training set; stops at 100
+            ##################################################################################################
+            data = TestHelper.get_titanic_data()
+            transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                               CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                               ImputationTransformer(),
+                               DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+            fitter = ModelTrainer(model=XGBoostClassifier(early_stopping_rounds=10,
+                                                          eval_metric=XGBEvalMetric.AUC),
+                                  model_transformations=transformations,
+                                  splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                                  evaluator=TwoClassProbabilityEvaluator(
+                                     converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                          positive_class=1)))
+            fitter.train(data=data, target_variable='Survived', hyper_params=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC,  # noqa
+                                                                                           n_estimators=100))
+            assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+            assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+            assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+            assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
+
+            assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9417006683521489, 'AUC Precision/Recall': 0.9272598185475496, 'Kappa': 0.7441018663517572, 'F1 Score': 0.8352941176470589, 'Two-Class Accuracy': 0.8820224719101124, 'Error Rate': 0.11797752808988764, 'True Positive Rate': 0.7802197802197802, 'True Negative Rate': 0.9453302961275627, 'False Positive Rate': 0.05466970387243736, 'False Negative Rate': 0.21978021978021978, 'Positive Predictive Value': 0.8987341772151899, 'Negative Predictive Value': 0.8736842105263158, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+            assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.807707509881423, 'AUC Precision/Recall': 0.7851617329684761, 'Kappa': 0.5343009722032042, 'F1 Score': 0.6935483870967741, 'Two-Class Accuracy': 0.7877094972067039, 'Error Rate': 0.2122905027932961, 'True Positive Rate': 0.6231884057971014, 'True Negative Rate': 0.8909090909090909, 'False Positive Rate': 0.10909090909090909, 'False Negative Rate': 0.37681159420289856, 'Positive Predictive Value': 0.7818181818181819, 'Negative Predictive Value': 0.7903225806451613, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+
+            ##################################################################################################
+            # early stopping with 1000 estimators, using training set
+            ##################################################################################################
+            transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                               CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                               ImputationTransformer(),
+                               DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+            fitter = ModelTrainer(model=XGBoostClassifier(early_stopping_rounds=10,
+                                                          eval_metric=XGBEvalMetric.AUC),
+                                  model_transformations=transformations,
+                                  splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                                  evaluator=TwoClassProbabilityEvaluator(
+                                     converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                          positive_class=1)))
+            fitter.train(data=data, target_variable='Survived', hyper_params=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC,  # noqa
+                                                                                           n_estimators=1000))
+            assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+            assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+            assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+            assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 1000, 'silent': True, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
+
+            assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9923402337980926, 'AUC Precision/Recall': 0.9889225248783634, 'Kappa': 0.8981581980799489, 'F1 Score': 0.9363295880149812, 'Two-Class Accuracy': 0.952247191011236, 'Error Rate': 0.047752808988764044, 'True Positive Rate': 0.9157509157509157, 'True Negative Rate': 0.9749430523917996, 'False Positive Rate': 0.025056947608200455, 'False Negative Rate': 0.08424908424908426, 'Positive Predictive Value': 0.9578544061302682, 'Negative Predictive Value': 0.9490022172949002, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+            assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.7806324110671937, 'AUC Precision/Recall': 0.7587379947914017, 'Kappa': 0.5685014061872238, 'F1 Score': 0.7272727272727272, 'Two-Class Accuracy': 0.7988826815642458, 'Error Rate': 0.2011173184357542, 'True Positive Rate': 0.6956521739130435, 'True Negative Rate': 0.8636363636363636, 'False Positive Rate': 0.13636363636363635, 'False Negative Rate': 0.30434782608695654, 'Positive Predictive Value': 0.7619047619047619, 'Negative Predictive Value': 0.8189655172413793, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+
+            ##################################################################################################
+            # early stopping with 1000 estimators, using holdout set
+            ##################################################################################################
+            transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                               CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                               ImputationTransformer(),
+                               DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+            _, _, h_x, h_y, _ = OOLearningHelpers.get_final_datasets(data=data,
+                                                                    target_variable='Survived',
+                                                                    splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),  # noqa
+                                                                    transformations=[x.clone() for x in transformations])  # noqa
+
+            fitter = ModelTrainer(model=XGBoostClassifier(early_stopping_rounds=10,
+                                                          eval_metric=XGBEvalMetric.AUC,
+                                                          eval_set=[(h_x, h_y)]),  # training
+                                  model_transformations=transformations,
+                                  splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                                  evaluator=TwoClassProbabilityEvaluator(
+                                     converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                          positive_class=1)))
+            fitter.train(data=data, target_variable='Survived', hyper_params=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC,  # noqa
+                                                                                           n_estimators=1000))
+            assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+            assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+            assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+            assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 1000, 'silent': True, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
+
+            assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.8956002236184468, 'AUC Precision/Recall': 0.8667526900645599, 'Kappa': 0.6360745115856429, 'F1 Score': 0.7567567567567567, 'Two-Class Accuracy': 0.8356741573033708, 'Error Rate': 0.16432584269662923, 'True Positive Rate': 0.6666666666666666, 'True Negative Rate': 0.9407744874715261, 'False Positive Rate': 0.05922551252847381, 'False Negative Rate': 0.3333333333333333, 'Positive Predictive Value': 0.875, 'Negative Predictive Value': 0.8194444444444444, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+            assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8242424242424243, 'AUC Precision/Recall': 0.7825084027943098, 'Kappa': 0.5124659543264193, 'F1 Score': 0.6666666666666667, 'Two-Class Accuracy': 0.7821229050279329, 'Error Rate': 0.21787709497206703, 'True Positive Rate': 0.5652173913043478, 'True Negative Rate': 0.9181818181818182, 'False Positive Rate': 0.08181818181818182, 'False Negative Rate': 0.43478260869565216, 'Positive Predictive Value': 0.8125, 'Negative Predictive Value': 0.7709923664122137, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
 
     def test_XGBoostRegressor_linear(self):
         data = TestHelper.get_cement_data()
@@ -2089,11 +2223,12 @@ class ModelWrapperTests(TimerTestCase):
         # test default hyper-parameters
         ######################################################################################################
         fitter.train(data=data, target_variable='strength', hyper_params=XGBoostLinearHP(objective=XGBObjective.REG_LINEAR))  # noqa
+
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
 
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
-        assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'reg:linear', 'booster': 'gblinear', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'random_state': 42, 'seed': None, 'missing': None}  # noqa
+        assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'reg:linear', 'booster': 'gblinear', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
 
         keys = fitter.training_evaluator.all_quality_metrics.keys()
         expected_values = {'Mean Absolute Error (MAE)': 9.1510853668324,
@@ -2126,7 +2261,7 @@ class ModelWrapperTests(TimerTestCase):
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
 
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
-        assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'reg:linear', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'random_state': 42, 'seed': None, 'missing': None}  # noqa
+        assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'reg:linear', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
 
         keys = fitter.training_evaluator.all_quality_metrics.keys()
         expected_values = {'Mean Absolute Error (MAE)': 2.8658370747265303, 'Mean Squared Error (MSE)': 14.912708706965894, 'Root Mean Squared Error (RMSE)': 3.861697645720842, 'RMSE to Standard Deviation of Target': 0.2303121099242278, 'Total Observations': 824}  # noqa

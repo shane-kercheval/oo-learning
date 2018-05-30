@@ -108,8 +108,8 @@ from .model_wrappers.SupportVectorMachines import SvmPolynomialRegressor
 from .model_wrappers.SupportVectorMachines import SvmPolynomialRegressorHP
 from .model_wrappers.SupportVectorMachines import SvmLinearRegressor
 from .model_wrappers.SupportVectorMachines import SvmLinearRegressorHP
-from .model_wrappers.XGBoost import XGBObjective, XGBoostLinearHP, XGBoostTreeHP, XGBoostClassifier,\
-    XGBoostRegressor
+from .model_wrappers.XGBoost import XGBObjective, XGBEvalMetric, XGBoostLinearHP, XGBoostTreeHP, \
+    XGBoostClassifier, XGBoostRegressor
 from oolearning.model_aggregation.ModelAggregator import ModelAggregator
 
 from .persistence.AlwaysFetchManager import AlwaysFetchManager
