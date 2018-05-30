@@ -2318,6 +2318,17 @@ class ModelWrapperTests(TimerTestCase):
         # `train()` does nothing, but make sure it doesn't explode in case it is used in a process that
         # automatically calls `train()
         model_aggregator.train(data_x=train_x, data_y=train_y)
+
+        assert isinstance(model_aggregator._base_models[0].model, RandomForestClassifier)
+        assert isinstance(model_aggregator._base_models[1].model, CartDecisionTreeClassifier)
+        assert isinstance(model_aggregator._base_models[2].model, AdaBoostClassifier)
+        assert isinstance(model_aggregator._base_models[0].hyper_params, RandomForestHP)
+        assert isinstance(model_aggregator._base_models[1].hyper_params, CartDecisionTreeHP)
+        assert isinstance(model_aggregator._base_models[2].hyper_params, AdaBoostClassifierHP)
+        assert model_aggregator._base_transformation_pipeline[0].transformations is None
+        assert model_aggregator._base_transformation_pipeline[1].transformations is None
+        assert model_aggregator._base_transformation_pipeline[2].transformations is None
+
         voting_predictions = model_aggregator.predict(data_x=holdout_x)
 
         assert all(voting_predictions.index.values == holdout_x.index.values)
@@ -2532,12 +2543,28 @@ class ModelWrapperTests(TimerTestCase):
                                            aggregation_strategy=MeanAggregationStrategy())
         model_aggregator.train(data_x=train_x, data_y=train_y)
 
+        # check that all the models and transformations are the types (in the order) expected
+        assert isinstance(model_aggregator._base_models[0].model, LinearRegressor)
+        assert isinstance(model_aggregator._base_models[1].model, CartDecisionTreeRegressor)
+        assert isinstance(model_aggregator._base_models[2].model, AdaBoostRegressor)
+        assert model_aggregator._base_models[0].hyper_params is None
+        assert isinstance(model_aggregator._base_models[1].hyper_params, CartDecisionTreeHP)
+        assert isinstance(model_aggregator._base_models[2].hyper_params, AdaBoostRegressorHP)
+        assert isinstance(model_aggregator._base_transformation_pipeline[0].transformations[0], PolynomialFeaturesTransformer)  # noqa
+        assert isinstance(model_aggregator._base_transformation_pipeline[0].transformations[1], DummyEncodeTransformer)  # noqa
+        assert isinstance(model_aggregator._base_transformation_pipeline[1].transformations[0], CenterScaleTransformer)  # noqa
+        assert isinstance(model_aggregator._base_transformation_pipeline[1].transformations[1], DummyEncodeTransformer)  # noqa
+        assert isinstance(model_aggregator._base_transformation_pipeline[2].transformations[0], DummyEncodeTransformer)  # noqa
+
+        # check polynomial fields
         TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_LinearRegressor.pkl'),  # noqa
                                                      expected_dataframe=model_aggregator._base_models[0].model.data_x_trained_head)  # noqa
 
+        # check center/scale values
         TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_CartDecisionTreeRegressor.pkl'),  # noqa
                                                      expected_dataframe=model_aggregator._base_models[1].model.data_x_trained_head)  # noqa
 
+        # ensure transformations other than Dummy Encoding
         TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_AdaBoostRegressor.pkl'),  # noqa
                                                      expected_dataframe=model_aggregator._base_models[2].model.data_x_trained_head)  # noqa
 
@@ -3070,20 +3097,41 @@ class ModelWrapperTests(TimerTestCase):
 
         import time
 
-        results = map(train, [[RandomForestRegressor(), train_x_transformed, train_y, RandomForestHP(criterion='MAE')],
-                              [RandomForestRegressor(), train_x_transformed, train_y, RandomForestHP(criterion='MAE')],
-                              [RandomForestRegressor(), train_x_transformed, train_y, RandomForestHP(criterion='MAE')]])
+        results = map(train, [[GradientBoostingRegressor(), train_x_transformed, train_y, GradientBoostingRegressorHP()],
+                              [GradientBoostingRegressor(), train_x_transformed, train_y, GradientBoostingRegressorHP()],
+                              [GradientBoostingRegressor(), train_x_transformed, train_y, GradientBoostingRegressorHP()]])
         started_at = time.time()
         list(results)
         elapsed = time.time() - started_at
         print(elapsed)
 
+
+
+        from multiprocessing.dummy import Pool as ThreadPool
+        pool = ThreadPool(4)
+        results = pool.map(train, [[GradientBoostingRegressor(), train_x_transformed, train_y, GradientBoostingRegressorHP()],
+                              [GradientBoostingRegressor(), train_x_transformed, train_y, GradientBoostingRegressorHP()],
+                              [GradientBoostingRegressor(), train_x_transformed, train_y, GradientBoostingRegressorHP()]])
+        started_at = time.time()
+        list(results)
+        elapsed = time.time() - started_at
+        print(elapsed)
+
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+        t_x, t_y, _, _, _ = OOLearningHelpers.get_final_datasets(TestHelper.get_titanic_data(),
+                                                                 target_variable='Survived',
+                                                                 splitter=None,
+                                                                 transformations=transformations)
+
+
+
         from multiprocessing.dummy import Pool as ThreadPool
         pool = ThreadPool(4)
         results = pool.map(train,
-                           [[RandomForestRegressor(_num_jobs_in_parallel=1), train_x_transformed, train_y, RandomForestHP(criterion='MAE')],
-                            [RandomForestRegressor(_num_jobs_in_parallel=1), train_x_transformed, train_y, RandomForestHP(criterion='MAE')],
-                            [RandomForestRegressor(_num_jobs_in_parallel=1), train_x_transformed, train_y, RandomForestHP(criterion='MAE')]])
+                           [[RandomForestClassifier(_num_jobs_in_parallel=1), t_x, t_y, RandomForestHP(criterion='gini')]])
         started_at = time.time()
         list(results)
         elapsed = time.time() - started_at
@@ -3101,6 +3149,14 @@ class ModelWrapperTests(TimerTestCase):
         elapsed = time.time() - started_at
         print(elapsed)
 
+        results = map(train,
+                           [[LinearRegressor(), train_x_transformed, train_y, None],
+                            [LinearRegressor(), train_x_transformed, train_y, None],
+                            [LinearRegressor(), train_x_transformed, train_y, None]])
+        started_at = time.time()
+        list(results)
+        elapsed = time.time() - started_at
+        print(elapsed)
 
 
         results = map(np.sqrt, [1, 2, 3, 4])

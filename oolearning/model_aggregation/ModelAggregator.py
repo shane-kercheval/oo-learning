@@ -1,4 +1,6 @@
 from typing import Union, List
+from multiprocessing.dummy import Pool as ThreadPool
+from multiprocessing import cpu_count
 
 import numpy as np
 import pandas as pd
@@ -15,16 +17,23 @@ class ModelAggregator(ModelWrapperBase):
     Simple Bridge Between ModelWrapperBase and AggregationStrategyBase. Allows this object to be treated
         like any other model.
     """
-    def __init__(self, base_models: List[ModelInfo], aggregation_strategy: AggregationStrategyBase):
+    def __init__(self,
+                 base_models: List[ModelInfo],
+                 aggregation_strategy: AggregationStrategyBase,
+                 parallelization_cores: int=-1):
         """
-        :param base_models: pre-trained base_models used to predict on `data_x` (predictions will be aggregated
-            according to child objects
+
+        :param base_models: list of ModelInfos describing the models to train
+        :param aggregation_strategy: object defines how the the final predictions from the base_models should
+            be aggregated
+        :param parallelization_cores: the number of cores to use for parallelization. -1 is all, 0 is "off"
         """
         super().__init__()
         assert len(base_models) >= 3
         self._base_models = base_models
         self._base_transformation_pipeline = list()
         self._aggregation_strategy = aggregation_strategy
+        self._parallelization_cores = parallelization_cores
 
     @property
     def feature_importance(self):
@@ -35,17 +44,54 @@ class ModelAggregator(ModelWrapperBase):
                data_y: np.ndarray,
                hyper_params: HyperParamsBase = None) -> object:
 
-        for index, model_info in enumerate(self._base_models):
+        assert hyper_params is None  # not used in Aggregator
+
+        if self._parallelization_cores == 0:
+            map_function = map
+        else:
+            cores = cpu_count() if self._parallelization_cores == -1 else self._parallelization_cores
+            pool = ThreadPool(cores)
+            map_function = pool.map
+
+        def train(args):
+            model_info = args[0]
+            data_x_local = args[1]
+            data_y_local = args[2]
             if model_info.transformations:
                 # ensure none of the Transformers have been used.
                 assert all([x.state is None for x in model_info.transformations])
 
-            self._base_transformation_pipeline.append(TransformerPipeline(model_info.transformations))
-            transformed_data_x = self._base_transformation_pipeline[index].fit_transform(data_x=data_x)
-
-            model_info.model.train(data_x=transformed_data_x,
-                                   data_y=data_y,
+            # List of Pipelines to cache for `predict()`
+            pipeline = TransformerPipeline(model_info.transformations)
+            # fit/transform with current pipeline
+            transformed_data_x_local = pipeline.fit_transform(data_x=data_x_local)
+            model_info.model.train(data_x=transformed_data_x_local,
+                                   data_y=data_y_local,
                                    hyper_params=model_info.hyper_params)
+
+            return model_info, pipeline
+
+        infos = [(model_info, data_x, data_y) for model_info in self._base_models]
+        results = list(map_function(train, infos))
+
+        self._base_models = [x[0] for x in results]
+        # List of Pipelines to cache for `predict()`
+        self._base_transformation_pipeline = [x[1] for x in results]
+
+        # for index, model_info in enumerate(self._base_models):
+        #
+        #     if model_info.transformations:
+        #         # ensure none of the Transformers have been used.
+        #         assert all([x.state is None for x in model_info.transformations])
+        #
+        #     # List of Pipelines to cache for `predict()`
+        #     self._base_transformation_pipeline.append(TransformerPipeline(model_info.transformations))
+        #     # fit/transform with current pipeline
+        #     transformed_data_x = self._base_transformation_pipeline[index].fit_transform(data_x=data_x)
+        #
+        #     model_info.model.train(data_x=transformed_data_x,
+        #                            data_y=data_y,
+        #                            hyper_params=model_info.hyper_params)
 
         return ''
 
