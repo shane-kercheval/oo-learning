@@ -2127,6 +2127,12 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9417006683521489, 'AUC Precision/Recall': 0.9272598185475496, 'Kappa': 0.7441018663517572, 'F1 Score': 0.8352941176470589, 'Two-Class Accuracy': 0.8820224719101124, 'Error Rate': 0.11797752808988764, 'True Positive Rate': 0.7802197802197802, 'True Negative Rate': 0.9453302961275627, 'False Positive Rate': 0.05466970387243736, 'False Negative Rate': 0.21978021978021978, 'Positive Predictive Value': 0.8987341772151899, 'Negative Predictive Value': 0.8736842105263158, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.807707509881423, 'AUC Precision/Recall': 0.7851617329684761, 'Kappa': 0.5343009722032042, 'F1 Score': 0.6935483870967741, 'Two-Class Accuracy': 0.7877094972067039, 'Error Rate': 0.2122905027932961, 'True Positive Rate': 0.6231884057971014, 'True Negative Rate': 0.8909090909090909, 'False Positive Rate': 0.10909090909090909, 'False Negative Rate': 0.37681159420289856, 'Positive Predictive Value': 0.7818181818181819, 'Negative Predictive Value': 0.7903225806451613, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
 
+        assert all(fitter.model.feature_importance.index.values == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S'])  # noqa
+        assert all([isclose(round(x, 5), round(y, 5)) for x, y in zip(fitter.model.feature_importance.weights, [0.31304348, 0.3704348, 0.03304348, 0.01043478, 0.07304348, 0.07304348, 0.0, 0.01217391, 0.01565217, 0.0, 0.00869565, 0.00869565, 0.0, 0.0, 0.00869565, 0.00347826, 0.01565217, 0.0, 0.0, 0.0, 0.0, 0.01043478, 0.00347826, 0.04])])  # noqa
+
+        TestHelper.check_plot('data/test_ModelWrappers/test_XGBoostClassifier_plot_feature_importance.png',
+                              lambda: fitter.model.plot_feature_importance())
+
     def test_XGBoostClassifier_early_stopping(self):
         warnings.filterwarnings("ignore")
         # noinspection PyUnusedLocal

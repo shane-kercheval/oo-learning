@@ -4,6 +4,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 from xgboost import XGBRegressor, XGBClassifier
+from xgboost import plot_importance
 
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
@@ -229,7 +230,20 @@ class XGBoostBase(ModelWrapperBase):
         self._eval_metric = eval_metric.value if isinstance(eval_metric, XGBEvalMetric) else eval_metric
         self._eval_set = eval_set
 
+        self._data_x_columns = None
+
+    @property
+    def feature_importance(self):
+        return pd.DataFrame(self.model_object.feature_importances_,
+                            columns=['weights'],
+                            index=self._data_x_columns)
+
+    def plot_feature_importance(self):
+        return plot_importance(self.model_object)
+
     def xgb_fit(self, model, data_x, data_y):
+        self._data_x_columns = data_x.columns.values
+
         if self._eval_metric is not None and self._eval_set is None:  # if early stopping but not eval set
             self._eval_set = [(data_x, data_y)]
         model.fit(X=data_x,
@@ -243,11 +257,6 @@ class XGBoostBase(ModelWrapperBase):
 
 # noinspection SpellCheckingInspection
 class XGBoostRegressor(SklearnPredictRegressorMixin, XGBoostBase):
-
-    @property
-    def feature_importance(self):
-        pass
-
     # noinspection PyTypeChecker
     def _train(self,
                data_x: pd.DataFrame,
@@ -285,10 +294,6 @@ class XGBoostRegressor(SklearnPredictRegressorMixin, XGBoostBase):
 
 # noinspection SpellCheckingInspection
 class XGBoostClassifier(SklearnPredictClassifierMixin, XGBoostBase):
-    @property
-    def feature_importance(self):
-        pass
-
     # noinspection PyTypeChecker
     def _train(self,
                data_x: pd.DataFrame,
