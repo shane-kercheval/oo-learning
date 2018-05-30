@@ -7,14 +7,17 @@ from oolearning.OOLearningHelpers import OOLearningHelpers
 from oolearning.transformers.TransformerBase import TransformerBase
 
 
+def value_counts(x):
+    return pd.value_counts(x).index.values[0]
+
+
 class ImputationTransformer(TransformerBase):
     """
     Imputes the value for numerical columns based on the median value of that column.
     """
     def __init__(self,
                  numeric_imputation_function: Callable[[pd.Series], pd.Series]=np.nanmedian,
-                 categoric_imputation_function: Callable[[pd.Series], pd.Series]=
-                    lambda x: pd.value_counts(x).index.values[0],
+                 categoric_imputation_function: Callable[[pd.Series], pd.Series]=None,
                  group_by_column: str=None,
                  treat_zeros_as_na: bool=False,
                  columns_explicit: List[str]=None,
@@ -44,6 +47,9 @@ class ImputationTransformer(TransformerBase):
             with the imputed value, but also values of `0` with the imputed value.
         """
         super().__init__()
+
+        if categoric_imputation_function is None:
+            categoric_imputation_function = value_counts
 
         assert not (columns_explicit and columns_to_ignore)  # cannot use both parameters simultaneously
 
@@ -76,6 +82,7 @@ class ImputationTransformer(TransformerBase):
             # in the event that we are imputing a value based on column X, and X's value is missing,
             # we will simply calculate the value to impute on all of the data (from the column belonging to
             # the value we are imputing)
+            # noinspection PyUnresolvedReferences
             imputation_value['all'] = imputation_function(data_x[column])
         else:
             imputation_value = imputation_function(data_x[column])

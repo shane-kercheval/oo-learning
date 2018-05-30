@@ -1,6 +1,8 @@
-import time
 from typing import List
+from multiprocessing import Pool as ThreadPool
+from multiprocessing import cpu_count
 
+import time
 import numpy as np
 import pandas as pd
 
@@ -13,6 +15,36 @@ from oolearning.model_processors.TunerResults import TunerResults
 from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError
 
 
+def single_tune(args):
+    params_combo_index = args['params_combo_index']
+    has_params = args['has_params']
+    hyper_param_object = args['hyper_param_object']
+    # we are going to reuse the resampler and hyper_params for each combination, so clone first
+    resampler_copy = args['resampler_copy']
+    decorators = args['decorators']
+    persistence_manager = args['persistence_manager']
+    data_x = args['data_x']
+    data_y = args['data_y']
+
+    if decorators:
+        resampler_copy.set_decorators(decorators=decorators)
+
+    if persistence_manager is not None:
+        resampler_copy.set_persistence_manager(persistence_manager=persistence_manager.clone())
+
+    if has_params and hyper_param_object is not None:
+        # if we are tuning over hyper-params, update the params object with the current params
+        params_dict = params_combo_index.to_dict()  # dict of the current combination
+        # print(params_dict)
+        hyper_param_object.update_dict(params_dict)  # default params, updated based on combo
+
+    start_time_individual = time.time()
+    resampler_copy.resample(data_x=data_x, data_y=data_y, hyper_params=hyper_param_object)
+    execution_time_individual = "{0} seconds".format(round(time.time() - start_time_individual))
+    # print(execution_time)
+    return resampler_copy.results, execution_time_individual
+
+
 class ModelTuner:
     """
     A ModelTuner uses a Resampler for tuning a single model across various hyper-parameters.
@@ -23,7 +55,8 @@ class ModelTuner:
                  resampler: ResamplerBase,
                  hyper_param_object: HyperParamsBase,
                  resampler_decorators: List[DecoratorBase] = None,
-                 persistence_manager: PersistenceManagerBase = None):
+                 persistence_manager: PersistenceManagerBase = None,
+                 parallelization_cores: int=-1):
         """
         :param resampler:
         :param hyper_param_object: an object containing the default values for the corresponding
@@ -42,6 +75,7 @@ class ModelTuner:
             NOTE: for each resampling (i.e. each set of hyper-params being resampled) the persistence_manager
             is cloned and passed to the resampler. The resampler already differentiates the file name based on
             the hyper-parameters (and e.g. repeat/fold indexes which should make it unique)
+        :param parallelization_cores: the number of cores to use for parallelization. -1 is all, 0 is "off"
         """
         assert isinstance(resampler, ResamplerBase)
 
@@ -50,6 +84,8 @@ class ModelTuner:
         self._results = None
         self._persistence_manager = persistence_manager
         self._resampler_decorators = resampler_decorators
+        self._parallelization_cores = parallelization_cores
+        self._total_tune_time = None
 
     @property
     def results(self):
@@ -57,6 +93,16 @@ class ModelTuner:
             raise ModelNotFittedError()
 
         return self._results
+
+    @property
+    def total_tune_time(self):
+        """
+        :return: total time
+        """
+        if self._results is None:
+            raise ModelNotFittedError()
+
+        return self._total_tune_time
 
     def tune(self, data_x: pd.DataFrame, data_y: np.ndarray, params_grid: HyperParamsGrid):
         """
@@ -73,33 +119,56 @@ class ModelTuner:
         params_combinations = pd.DataFrame({'hyper_params': ['None']}) \
             if params_grid is None else params_grid.params_grid
         assert len(params_combinations) > 0
-        results_list = list()
-        time_duration_list = list()
 
-        for index in range(len(params_combinations)):
-            # we are going to reuse the resampler and hyper_params for each combination, so clone first
-            resampler_copy = self._resampler.clone()
+        if self._parallelization_cores == 0:
+            map_function = map
+        else:
+            cores = cpu_count() if self._parallelization_cores == -1 else self._parallelization_cores
+            pool = ThreadPool(cores)
+            map_function = pool.map
 
-            if self._resampler_decorators:
-                resampler_copy.set_decorators(decorators=[x.clone() for x in self._resampler_decorators])
+        combo_list = [dict(
+                        params_combo_index=params_combinations.iloc[x, :],  # parameter combination
+                        has_params=params_grid is not None,
+                        hyper_param_object=self._hyper_param_object.clone() if self._hyper_param_object else None,  # noqa
+                        resampler_copy=self._resampler.clone(),  # resampler
+                        decorators=[y.clone() for y in self._resampler_decorators] if self._resampler_decorators else None,  # noqa
+                        persistence_manager=self._persistence_manager,
+                        data_x=data_x,
+                        data_y=data_y)  # decorators
+                      for x in range(len(params_combinations))]
 
-            if self._persistence_manager is not None:
-                resampler_copy.set_persistence_manager(persistence_manager=self._persistence_manager.clone())
-            hyper_params_copy = None if self._hyper_param_object is None else self._hyper_param_object.clone()
+        start_time = time.time()
+        results = list(map_function(single_tune, combo_list))
+        self._total_tune_time = time.time() - start_time
 
-            if params_grid is not None and self._hyper_param_object is not None:
-                # if we are tuning over hyper-params, update the params object with the current params
-                params_dict = params_combinations.iloc[index, :].to_dict()  # dict of the current combination
-                # print(params_dict)
-                hyper_params_copy.update_dict(params_dict)  # default params, updated based on combo
+        results_list = [x[0] for x in results]
+        time_duration_list = [x[1] for x in results]
 
-            start_time = time.time()
-            resampler_copy.resample(data_x=data_x, data_y=data_y, hyper_params=hyper_params_copy)
-            execution_time = "{0} seconds".format(round(time.time() - start_time))
-            # print(execution_time)
-            time_duration_list.append(execution_time)
-
-            results_list.append(resampler_copy.results)
+        # for index in range(len(params_combinations)):
+        #     # we are going to reuse the resampler and hyper_params for each combination, so clone first
+        #     resampler_copy = self._resampler.clone()
+        #
+        #     if self._resampler_decorators:
+        #         resampler_copy.set_decorators(decorators=[x.clone() for x in self._resampler_decorators])
+        #
+        #     if self._persistence_manager is not None:
+        #         resampler_copy.set_persistence_manager(persistence_manager=self._persistence_manager.clone())
+        #     hyper_params_copy = None if self._hyper_param_object is None else self._hyper_param_object.clone()
+        #
+        #     if params_grid is not None and self._hyper_param_object is not None:
+        #         # if we are tuning over hyper-params, update the params object with the current params
+        #         params_dict = params_combinations.iloc[index, :].to_dict()  # dict of the current combination
+        #         # print(params_dict)
+        #         hyper_params_copy.update_dict(params_dict)  # default params, updated based on combo
+        #
+        #     start_time = time.time()
+        #     resampler_copy.resample(data_x=data_x, data_y=data_y, hyper_params=hyper_params_copy)
+        #     execution_time = "{0} seconds".format(round(time.time() - start_time))
+        #     # print(execution_time)
+        #     time_duration_list.append(execution_time)
+        #
+        #     results_list.append(resampler_copy.results)
 
         tune_results = pd.concat([params_combinations.copy(),
                                   pd.DataFrame(results_list, columns=['resampler_object'])], axis=1)

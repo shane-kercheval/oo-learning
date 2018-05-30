@@ -3093,6 +3093,7 @@ class ModelWrapperTests(TimerTestCase):
             model.train(data_x=data_x,
                         data_y=data_y,
                         hyper_params=hyper_params)
+            time.sleep(3)
             return model
 
         import time
@@ -3108,12 +3109,15 @@ class ModelWrapperTests(TimerTestCase):
 
 
         from multiprocessing.dummy import Pool as ThreadPool
+        map_function = pool.map
+        #map_function = map
         pool = ThreadPool(4)
         results = pool.map(train, [[GradientBoostingRegressor(), train_x_transformed, train_y, GradientBoostingRegressorHP()],
                               [GradientBoostingRegressor(), train_x_transformed, train_y, GradientBoostingRegressorHP()],
                               [GradientBoostingRegressor(), train_x_transformed, train_y, GradientBoostingRegressorHP()]])
         started_at = time.time()
         list(results)
+
         elapsed = time.time() - started_at
         print(elapsed)
 

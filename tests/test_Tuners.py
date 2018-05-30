@@ -88,10 +88,8 @@ class TunerTests(TimerTestCase):
         # import time
         # t0 = time.time()
         tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
-        # t1 = time.time()
-        # total_execution_time = t1 - t0
-        # print(total_execution_time)
 
+        assert os.path.isdir(cache_directory)
         assert len(tuner.results._tune_results_objects) == 27
         assert all([isinstance(x, ResamplerResults)
                     for x in tuner.results._tune_results_objects.resampler_object])
@@ -148,7 +146,8 @@ class TunerTests(TimerTestCase):
         tuner = ModelTuner(resampler=MockResampler(model=MockClassificationModelWrapper(data_y=data.Survived),
                                                    transformations=transformations,
                                                    scores=evaluators),
-                           hyper_param_object=MockHyperParams())
+                           hyper_param_object=MockHyperParams(),
+                           parallelization_cores=0)
 
         columns = TransformerPipeline.get_expected_columns(transformations=transformations, data=train_data)
         assert len(columns) == 24
@@ -178,8 +177,7 @@ class TunerTests(TimerTestCase):
             assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
                                                       data_frame2=tuner.results.sorted_best_models)
 
-        assert all(tuner.results.resampler_times.columns.values ==
-                   ['criterion', 'max_features', 'n_estimators', 'min_samples_leaf', 'execution_time'])
+        assert all(tuner.results.resampler_times.columns.values == ['criterion', 'max_features', 'n_estimators', 'min_samples_leaf', 'execution_time'])  # noqa
         assert len(tuner.results.resampler_times) == len(tuner.results.resampled_stats)
         assert tuner.results.resampler_times.isnull().sum().sum() == 0
 
@@ -256,6 +254,80 @@ class TunerTests(TimerTestCase):
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_profile_hyper_params_1_msl.png',  # noqa
                               lambda: tuner.results.plot_hyper_params_profile(metric=metric, x_axis='min_samples_leaf', line=None, grid=None))  # noqa
         self.assertRaises(AssertionError, lambda: tuner.results.plot_hyper_params_profile(metric=metric, x_axis=x_axis, line=None, grid=grid))  # noqa
+
+    def test_ModelTuner_GradientBoosting_classification(self):
+        data = TestHelper.get_titanic_data()
+
+        train_data = data
+        train_data_y = train_data.Survived
+        train_data = train_data.drop(columns='Survived')
+
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        evaluator_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                          SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
+
+        cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/cached_test_models/test_ModelTuner_GradientBoostingClassifier')  # noqa
+        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=GradientBoostingClassifier(),
+                                                                      transformations=transformations,
+                                                                      scores=evaluator_list),
+                           hyper_param_object=GradientBoostingClassifierHP(),
+                           persistence_manager=LocalCacheManager(cache_directory=cache_directory),
+                           parallelization_cores=-1)
+
+        columns = TransformerPipeline.get_expected_columns(transformations=transformations, data=train_data)
+        params_dict = dict(max_features=[int(round(len(columns) ** (1 / 2.0))),
+                                         #int(round(len(columns) / 2)),
+                                         len(columns)],
+                           n_estimators=[10,
+                                         #100,
+                                         500],
+                           min_samples_leaf=[1,
+                                             #50,
+                                             100])
+        grid = HyperParamsGrid(params_dict=params_dict)
+
+        tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
+
+        assert tuner.total_tune_time < 20  # ensure less than 20 seconds
+        assert os.path.isdir(cache_directory)
+
+        assert len(tuner.results._tune_results_objects) == len(grid.params_grid)
+        assert all([isinstance(x, ResamplerResults)
+                    for x in tuner.results._tune_results_objects.resampler_object])
+
+        # evaluator columns should be in the same order as specificied in the list
+        assert all(tuner.results.resampled_stats.columns.values == ['max_features',
+                                                                    'n_estimators', 'min_samples_leaf',
+                                                                    'kappa_mean', 'kappa_st_dev', 'kappa_cv',
+                                                                    'sensitivity_mean', 'sensitivity_st_dev',
+                                                                    'sensitivity_cv', 'specificity_mean',
+                                                                    'specificity_st_dev', 'specificity_cv',
+                                                                    'error_rate_mean', 'error_rate_st_dev',
+                                                                    'error_rate_cv'])
+
+        assert all(tuner.results.resampler_times.max_features.values == [5, 5,  5,  5, 24, 24, 24, 24])
+        assert all(tuner.results.resampler_times.n_estimators.values == [10, 10, 500, 500, 10, 10, 500, 500])
+        assert all(tuner.results.resampler_times.min_samples_leaf.values == [1, 100, 1, 100, 1, 100, 1, 100])
+        # assert all(tuner.results.resampler_times.execution_time.values == ['7 seconds', '7 seconds', '15 seconds', '13 seconds', '7 seconds', '7 seconds', '18 seconds', '16 seconds'])  # noqa
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelTuner_GradientBoosting_results.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            tune_results = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.resampled_stats,
+                                                      data_frame2=tuner.results.resampled_stats)
+            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
+                                                      data_frame2=tuner.results.sorted_best_models)
+
+        assert all(tuner.results.sorted_best_models.index.values == [7, 2, 6, 3, 4, 0, 5, 1])
+        shutil.rmtree(cache_directory)
 
     def test_tuner_with_no_hyper_params(self):
         data = TestHelper.get_cement_data()
