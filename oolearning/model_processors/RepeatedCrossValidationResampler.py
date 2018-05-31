@@ -190,15 +190,21 @@ class RepeatedCrossValidationResampler(ResamplerBase):
         assert isinstance(folds, int)
         assert isinstance(repeats, int)
 
+        self._folds = folds
+        self._repeats = repeats
+        self._decorators = fold_decorators
+
         # if there is a callback and we are using parallelization, raise error
         if self._train_callback is not None and (parallelization_cores != 0 and
                                                       parallelization_cores != 1):
             raise CallbackUsedWithParallelizationError()
 
-        self._folds = folds
-        self._repeats = repeats
-        self._decorators = fold_decorators
-        self._parallelization_cores = parallelization_cores
+        if parallelization_cores == 0 or parallelization_cores == 1:
+            self._map_function = map
+        else:
+            cores = cpu_count() if parallelization_cores == -1 else parallelization_cores
+            pool = ThreadPool(cores)
+            self._map_function = pool.map
 
     @property
     def fold_decorators(self):
@@ -238,14 +244,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                               decorators=self._decorators)
                          for x in range(self._repeats)]
 
-        if self._parallelization_cores == 0 or self._parallelization_cores == 1:
-            map_function = map
-        else:
-            cores = cpu_count() if self._parallelization_cores == -1 else self._parallelization_cores
-            pool = ThreadPool(cores)
-            map_function = pool.map
-
-        results = list(map_function(resample_repeat, resample_args))
+        results = list(self._map_function(resample_repeat, resample_args))
 
         result_scores = [x[0] for x in results]
         # flatten out so there are folds*repeats number of list items

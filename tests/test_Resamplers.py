@@ -678,7 +678,11 @@ class ResamplerTests(TimerTestCase):
             folds=5,
             repeats=1,
             fold_decorators=[decorator])  # parallelization won't speed this up because we only use 1 repeats
+
+        start_time = time.time()
         resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
+        resample_time = time.time() - start_time
+        assert resample_time < 15  # Non-Parallelization: ~31 seconds; Parallelization: ~12 seconds
 
         expected_roc_thresholds = [0.43, 0.31, 0.47, 0.59, 0.48]
         expected_precision_recall_thresholds = [0.43, 0.53, 0.64, 0.59, 0.6]

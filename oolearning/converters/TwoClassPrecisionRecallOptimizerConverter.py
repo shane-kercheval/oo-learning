@@ -1,4 +1,6 @@
 import math
+from multiprocessing import Pool as ThreadPool
+from multiprocessing import cpu_count
 from typing import Tuple, Union
 
 import numpy as np
@@ -9,6 +11,24 @@ from oolearning.converters.TwoClassThresholdConverter import TwoClassThresholdCo
 from oolearning.evaluators.TwoClassConfusionMatrix import TwoClassConfusionMatrix
 
 
+def get_ppv_tpr(args: dict):
+    """
+    helper function that calculates the ideal threshold
+    """
+    threshold = args['threshold']
+    positive_class = args['positive_class']
+    predicted_probabilities = args['predicted_probabilities']
+    actual_classes = args['actual_classes']
+
+    converter = TwoClassThresholdConverter(threshold=threshold, positive_class=positive_class)
+    converted_classes = converter.convert(values=predicted_probabilities)
+    matrix = TwoClassConfusionMatrix(actual_classes=actual_classes,
+                                     predicted_classes=converted_classes,
+                                     positive_class=positive_class)
+
+    return matrix.positive_predictive_value, matrix.true_positive_rate
+
+
 class TwoClassPrecisionRecallOptimizerConverter(TwoClassConverterBase):
     """
     Converts continuous values to classes by calculating the value that minimizes the distance to the
@@ -17,12 +37,20 @@ class TwoClassPrecisionRecallOptimizerConverter(TwoClassConverterBase):
         class) is greater than or equal to the threshold, otherwise as the negative class. The class names are
         the names of the columns in the `values` DataFrame passed to `.convert()`
     """
-    def __init__(self, positive_class: Union[str, int], actual_classes: np.ndarray):
+    def __init__(self, positive_class: Union[str, int], actual_classes: np.ndarray,
+                 parallelization_cores: int=-1):
         super().__init__(positive_class=positive_class)
         self._ideal_threshold = None
         self._positive_predictive_value = None
         self._true_positive_rates = None
         self._actual_classes = actual_classes
+
+        if parallelization_cores == 0 or parallelization_cores == 1:
+            self._map_function = map
+        else:
+            cores = cpu_count() if parallelization_cores == -1 else parallelization_cores
+            pool = ThreadPool(cores)
+            self._map_function = pool.map
 
     @property
     def ideal_threshold(self) -> float:
@@ -53,7 +81,8 @@ class TwoClassPrecisionRecallOptimizerConverter(TwoClassConverterBase):
         :return: an array of class predictions.
         """
         self._positive_predictive_value, self._true_positive_rates, self._ideal_threshold = \
-            self._calculate_ppv_tpr_ideal_threshold(potential_cutoff_values=np.arange(0.0, 1.01, 0.01),
+            self._calculate_ppv_tpr_ideal_threshold(map_function=self._map_function,
+                                                    potential_cutoff_values=np.arange(0.0, 1.01, 0.01),
                                                     actual_classes=self._actual_classes,
                                                     predicted_probabilities=values,
                                                     positive_class=self.positive_class)
@@ -61,25 +90,23 @@ class TwoClassPrecisionRecallOptimizerConverter(TwoClassConverterBase):
                                           positive_class=self.positive_class).convert(values=values)
 
     @staticmethod
-    def _calculate_ppv_tpr_ideal_threshold(potential_cutoff_values: np.ndarray,
+    def _calculate_ppv_tpr_ideal_threshold(map_function: callable,
+                                           potential_cutoff_values: np.ndarray,
                                            actual_classes: np.ndarray,
                                            predicted_probabilities: pd.DataFrame,
                                            positive_class: Union[str, int]) -> Tuple[np.ndarray,
                                                                                      np.ndarray,
                                                                                      float]:
-        """
-        helper function that calculates the ideal threshold
-        """
-        def get_ppv_tpr(threshold: float):
-            converter = TwoClassThresholdConverter(threshold=threshold, positive_class=positive_class)
-            converted_classes = converter.convert(values=predicted_probabilities)
-            matrix = TwoClassConfusionMatrix(actual_classes=actual_classes,
-                                             predicted_classes=converted_classes,
-                                             positive_class=positive_class)
 
-            return matrix.positive_predictive_value, matrix.true_positive_rate
+        get_ppv_tpr_args = [dict(threshold=x,
+                                 positive_class=positive_class,
+                                 predicted_probabilities=predicted_probabilities,
+                                 actual_classes=actual_classes)
+                            for x in potential_cutoff_values]
 
-        ppv_tpr_tuple = [get_ppv_tpr(threshold=x) for x in potential_cutoff_values]  # list of rates
+        ppv_tpr_tuple = list(map_function(get_ppv_tpr, get_ppv_tpr_args))
+        # ppv_tpr_tuple = [get_ppv_tpr(threshold=x) for x in potential_cutoff_values]  # list of rates
+
         # remove Nones caused by divide by zero for e.g. FPR/TPR
         ppv_tpr_tuple = [x for x in ppv_tpr_tuple if x[0] is not None and x[1] is not None]
         positive_predictive_values, true_positive_rates = zip(*ppv_tpr_tuple)

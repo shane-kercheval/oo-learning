@@ -285,7 +285,8 @@ class SearcherTests(TimerTestCase):
                                      scores=score_list,
                                      folds=num_folds,
                                      repeats=num_repeats),
-                                 persistence_manager=LocalCacheManager(cache_directory=cache_directory))
+                                 persistence_manager=LocalCacheManager(cache_directory=cache_directory),
+                                 parallelization_cores=-1)
         searcher.search(data=data, target_variable='Survived')
 
         # check persistence

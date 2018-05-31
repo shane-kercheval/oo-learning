@@ -295,12 +295,14 @@ class TunerTests(TimerTestCase):
 
         tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
 
-        assert tuner.total_tune_time < 20  # ensure less than 20 seconds
+        assert tuner.total_tune_time < 20  # Non-Parallelization: ~26 seconds; Parallelization: ~7 seconds
+
         assert os.path.isdir(cache_directory)
 
         assert len(tuner.results._tune_results_objects) == len(grid.params_grid)
         assert all([isinstance(x, ResamplerResults)
                     for x in tuner.results._tune_results_objects.resampler_object])
+        assert tuner.results._tune_results_objects.iloc[0].resampler_object.score_means == {'kappa': 0.5239954603575802, 'sensitivity': 0.5187339582751682, 'specificity': 0.9639047970435495, 'error_rate': 0.20571868388646114}  # noqa
 
         # evaluator columns should be in the same order as specificied in the list
         assert all(tuner.results.resampled_stats.columns.values == ['max_features',

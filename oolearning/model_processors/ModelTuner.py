@@ -86,7 +86,6 @@ class ModelTuner:
         self._results = None
         self._persistence_manager = persistence_manager
         self._resampler_decorators = resampler_decorators
-        self._parallelization_cores = parallelization_cores
         self._total_tune_time = None
 
         # noinspection PyProtectedMember
@@ -94,6 +93,14 @@ class ModelTuner:
         if resampler._train_callback is not None and (parallelization_cores != 0 and
                                                       parallelization_cores != 1):
             raise CallbackUsedWithParallelizationError()
+
+        # save the map_function based on parallelization or not
+        if parallelization_cores == 0 or parallelization_cores == 1:
+            self._map_function = map
+        else:
+            cores = cpu_count() if parallelization_cores == -1 else parallelization_cores
+            pool = ThreadPool(cores)
+            self._map_function = pool.map
 
     @property
     def results(self):
@@ -128,13 +135,6 @@ class ModelTuner:
             if params_grid is None else params_grid.params_grid
         assert len(params_combinations) > 0
 
-        if self._parallelization_cores == 0 or self._parallelization_cores == 1:
-            map_function = map
-        else:
-            cores = cpu_count() if self._parallelization_cores == -1 else self._parallelization_cores
-            pool = ThreadPool(cores)
-            map_function = pool.map
-
         # map_function rather than a for loop so we can switch between parallelization and non-parallelization
         single_tune_args = [dict(params_combo_index=params_combinations.iloc[x, :],  # parameter combination
                                  has_params=params_grid is not None,
@@ -146,7 +146,7 @@ class ModelTuner:
                                  data_y=data_y)  # decorators
                             for x in range(len(params_combinations))]
         start_time = time.time()
-        results = list(map_function(single_tune, single_tune_args))
+        results = list(self._map_function(single_tune, single_tune_args))
         self._total_tune_time = time.time() - start_time
 
         results_list = [x[0] for x in results]
