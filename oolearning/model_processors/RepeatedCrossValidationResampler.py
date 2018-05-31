@@ -224,6 +224,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
             transformer = StatelessTransformer(custom_function=temp.helper)
             self._transformations = self._transformations + [transformer]
 
+        # map_function rather than a for loop so we can switch between parallelization and non-parallelization
         resample_args = [dict(folds=self._folds,
                               repeat_index=x,
                               data_x=data_x,

@@ -73,8 +73,9 @@ class ModelAggregator(ModelWrapperBase):
             pool = ThreadPool(cores)
             map_function = pool.map
 
-        infos = [(model_info, data_x, data_y) for model_info in self._base_models]
-        results = list(map_function(train_aggregator, infos))
+        # map_function rather than a for loop so we can switch between parallelization and non-parallelization
+        aggregator_args = [(model_info, data_x, data_y) for model_info in self._base_models]
+        results = list(map_function(train_aggregator, aggregator_args))
 
         self._base_models = [x[0] for x in results]
         # List of Pipelines to cache for `predict()`

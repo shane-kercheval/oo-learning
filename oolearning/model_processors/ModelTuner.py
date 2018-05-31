@@ -135,19 +135,18 @@ class ModelTuner:
             pool = ThreadPool(cores)
             map_function = pool.map
 
-        combo_list = [dict(
-                        params_combo_index=params_combinations.iloc[x, :],  # parameter combination
-                        has_params=params_grid is not None,
-                        hyper_param_object=self._hyper_param_object.clone() if self._hyper_param_object else None,  # noqa
-                        resampler_copy=self._resampler.clone(),  # resampler
-                        decorators=[y.clone() for y in self._resampler_decorators] if self._resampler_decorators else None,  # noqa
-                        persistence_manager=self._persistence_manager,
-                        data_x=data_x,
-                        data_y=data_y)  # decorators
-                      for x in range(len(params_combinations))]
-
+        # map_function rather than a for loop so we can switch between parallelization and non-parallelization
+        single_tune_args = [dict(params_combo_index=params_combinations.iloc[x, :],  # parameter combination
+                                 has_params=params_grid is not None,
+                                 hyper_param_object=self._hyper_param_object.clone() if self._hyper_param_object else None,  # noqa
+                                 resampler_copy=self._resampler.clone(),  # resampler
+                                 decorators=[y.clone() for y in self._resampler_decorators] if self._resampler_decorators else None,  # noqa
+                                 persistence_manager=self._persistence_manager,
+                                 data_x=data_x,
+                                 data_y=data_y)  # decorators
+                            for x in range(len(params_combinations))]
         start_time = time.time()
-        results = list(map_function(single_tune, combo_list))
+        results = list(map_function(single_tune, single_tune_args))
         self._total_tune_time = time.time() - start_time
 
         results_list = [x[0] for x in results]
