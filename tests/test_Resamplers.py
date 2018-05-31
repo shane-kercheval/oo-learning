@@ -14,6 +14,21 @@ from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 
 
+class TempDecorator(DecoratorBase):
+    def __init__(self):
+        self._repeat_index = list()
+        self._fold_index = list()
+        self._holdout_indexes = list()
+        self._holdout_predicted_values = pd.DataFrame()
+
+    def decorate(self, **kwargs):
+        self._repeat_index.append(kwargs['repeat_index'])
+        self._fold_index.append(kwargs['fold_index'])
+        self._holdout_indexes.extend(kwargs['holdout_indexes'])
+        self._holdout_predicted_values = self._holdout_predicted_values.append(
+            kwargs['holdout_predicted_values'])  # noqa
+
+
 # noinspection SpellCheckingInspection,PyMethodMayBeStatic
 class ResamplerTests(TimerTestCase):
 
@@ -35,13 +50,14 @@ class ResamplerTests(TimerTestCase):
         # test_data = test_data.drop(columns='strength')
 
         resampler = RepeatedCrossValidationResampler(
-            model=LinearRegressor(),
+            model=LinearRegressorSK(),
             transformations=[ImputationTransformer(),
                              DummyEncodeTransformer(CategoricalEncoding.DUMMY)],
             scores=[RmseScore(),
                     MaeScore()],
             folds=5,
-            repeats=5)
+            repeats=5,
+            parallelization_cores=-1)
 
         self.assertRaises(ModelNotFittedError, lambda: resampler.results)
 
@@ -89,7 +105,8 @@ class ResamplerTests(TimerTestCase):
             scores=[RmseScore(),
                     MaeScore()],
             folds=5,
-            repeats=5)
+            repeats=5,
+            parallelization_cores=-1)
 
         self.assertRaises(ModelNotFittedError, lambda: resampler.results)
 
@@ -130,7 +147,8 @@ class ResamplerTests(TimerTestCase):
             transformations=None,
             scores=score_list,
             folds=5,
-            repeats=5)
+            repeats=5,
+            parallelization_cores=-1)
 
         self.assertRaises(ModelNotFittedError, lambda: resampler.results)
 
@@ -192,6 +210,22 @@ class ResamplerTests(TimerTestCase):
 
         # should raise an error from the callback definition above
         self.assertRaises(NotImplementedError, lambda: resampler.resample(data_x=data.drop(columns=target_variable), data_y=data[target_variable], hyper_params=None))  # noqa
+
+        ######################################################################################################
+        # With parallelization, the Resampler should fail with CallbackUsedWithParallelizationError
+        ######################################################################################################
+        score_list = [RmseScore(), MaeScore()]
+        transformations = [RemoveColumnsTransformer(['coarseagg', 'fineagg']), ImputationTransformer(),
+                           DummyEncodeTransformer()]  # noqa
+
+        self.assertRaises(CallbackUsedWithParallelizationError,
+                          lambda: RepeatedCrossValidationResampler(model=RandomForestClassifier(),
+                                                                   transformations=transformations,
+                                                                   scores=score_list,
+                                                                   folds=5,
+                                                                   repeats=5,
+                                                                   train_callback=train_callback,
+                                                                   parallelization_cores=-1))
 
     def test_Resampler_transformations(self):
         # intent of this test is to ensure that the data is being transformed according to the
@@ -261,19 +295,6 @@ class ResamplerTests(TimerTestCase):
     def test_Resampler_fold_indexes(self):
         # test that the resampler uses the same fold index across objects. Test that the indexes are
         # maintained in the predicted values (only applicable for dataframes i.e. classification)
-        class TempDecorator(DecoratorBase):
-            def __init__(self):
-                self._repeat_index = list()
-                self._fold_index = list()
-                self._holdout_indexes = list()
-                self._holdout_predicted_values = pd.DataFrame()
-
-            def decorate(self, **kwargs):
-                self._repeat_index.append(kwargs['repeat_index'])
-                self._fold_index.append(kwargs['fold_index'])
-                self._holdout_indexes.extend(kwargs['holdout_indexes'])
-                self._holdout_predicted_values = self._holdout_predicted_values.append(kwargs['holdout_predicted_values'])  # noqa
-
         data = TestHelper.get_titanic_data()
 
         # main reason we want to split the data is to get the means/st_devs so that we can confirm with
@@ -337,6 +358,76 @@ class ResamplerTests(TimerTestCase):
         resampler.resample(data_x=train_data, data_y=train_data_y)
         # test that NEW decorator object's predicted value dataframe has the same indexes it previously did
         assert all(decorator._holdout_predicted_values.index.values == holdout_indexes)
+
+    def test_Resampler_fold_indexes_parallelized(self):
+        # NOTE: when using parallelization, the decorator is copied to the process, so the original object
+        # will not retain data, like it does in non-parllelization
+        # need to use the decorators passed back in `.fold_decorators` property
+        data = TestHelper.get_titanic_data()
+
+        # main reason we want to split the data is to get the means/st_devs so that we can confirm with
+        # e.g. the Searcher
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+        training_indexes, _ = splitter.split(target_values=data.Survived)
+
+        train_data_y = data.iloc[training_indexes].Survived
+        train_data = data.iloc[training_indexes].drop(columns='Survived')
+
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
+
+        decorator = TempDecorator()
+        resampler = RepeatedCrossValidationResampler(
+            model=MockClassificationModelWrapper(data_y=data.Survived),
+            transformations=None,
+            scores=score_list,
+            folds=5,
+            repeats=2,
+            fold_decorators=[decorator],
+            parallelization_cores=-1)
+        resampler.resample(data_x=train_data, data_y=train_data_y)
+
+        # decorator object is not used directly when using parallization, it is copied
+        assert len(decorator._repeat_index) == 0
+        assert len(decorator._fold_index) == 0
+
+        assert len(resampler.fold_decorators) == 2  # 2 because we have 2 repeats
+        assert resampler.fold_decorators[0]._repeat_index == [0, 0, 0, 0, 0]
+        assert resampler.fold_decorators[0]._fold_index == [0, 1, 2, 3, 4]
+        assert resampler.fold_decorators[1]._repeat_index == [1, 1, 1, 1, 1]
+        assert resampler.fold_decorators[1]._fold_index == [0, 1, 2, 3, 4]
+        # The _holdout_indexes should have twice the number of indexes as training_indexes because of
+        # `repeats=2`
+        num_holdout_indexes = len(resampler.fold_decorators[0]._holdout_indexes) + len(resampler.fold_decorators[1]._holdout_indexes)  # noqa
+        num_training_indexes = len(training_indexes)
+        assert num_training_indexes * 2 == num_holdout_indexes
+        assert len(set(training_indexes)) == num_training_indexes
+
+        # get the holdout indexes from the first repeat. This should contain exactly 1 to 1 indexes with the
+        # original training indexes, although not in the same order
+
+        repeat_0_holdout_indexes = resampler.fold_decorators[0]._holdout_indexes
+        assert len(repeat_0_holdout_indexes) == num_training_indexes
+        # check that the training indexes and holdout indexes from the first repeat contain the same values
+        assert set(training_indexes) == set(repeat_0_holdout_indexes)
+
+        repeat_1_holdout_indexes = resampler.fold_decorators[1]._holdout_indexes
+        assert len(repeat_1_holdout_indexes) == num_training_indexes
+        # check that the training indexes and holdout indexes from the second repeat contain the same values
+        assert set(training_indexes) == set(repeat_1_holdout_indexes)
+
+        # at this point we know that both repeats contain the indexes from the original training set
+        # this should correspond to the indexes of the predicted values DataFrame
+        # first, lets merge the indexes from repeats, and assign into a different list, also used below
+        repeat_0_holdout_indexes.extend(repeat_1_holdout_indexes)
+        holdout_indexes = repeat_0_holdout_indexes
+
+        holdout_df = pd.concat([resampler.fold_decorators[0]._holdout_predicted_values,
+                                resampler.fold_decorators[1]._holdout_predicted_values],
+                               axis=0)
+
+        assert len(holdout_df.values) == len(holdout_indexes)
+        # noinspection PyTypeChecker
+        assert all(holdout_df.index.values == holdout_indexes)
 
     def test_resamplers_RandomForest_classification(self):
         data = TestHelper.get_titanic_data()
@@ -437,7 +528,7 @@ class ResamplerTests(TimerTestCase):
             scores=score_list,
             folds=5,
             repeats=1,
-            fold_decorators=[decorator])
+            fold_decorators=[decorator])  # parallelization won't speed this up because we only use 1 repeats
         resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
 
         expected_roc_thresholds = [0.43, 0.31, 0.47, 0.59, 0.48]

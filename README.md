@@ -212,6 +212,7 @@ searcher.search(data=explore.dataset, target_variable='Survived')
   - issue with parallelization when used with `LinearRegressor`
     - need to use `LinearRegressorSK`
   - cannot use parallelization with callbacks (e.g. RepeatedCrossValidationResampler init's `train_callback` parameter because it cannot be pickled i.e. serialized)
+  - parallelization used with RepeatedCrossValidationResampler & Decorators that are meant (i.e. the information retained in the Decorator is meant) to persist across repeats will not work.
 
 
 # Available Models

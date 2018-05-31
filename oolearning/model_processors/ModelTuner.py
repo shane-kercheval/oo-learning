@@ -6,7 +6,7 @@ import time
 import numpy as np
 import pandas as pd
 
-from oolearning.model_processors.ProcessingExceptions import CallbackUsedWithParallelization
+from oolearning.model_processors.ProcessingExceptions import CallbackUsedWithParallelizationError
 from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
@@ -93,7 +93,7 @@ class ModelTuner:
         # if there is a callback and we are using parallelization, raise error
         if resampler._train_callback is not None and (parallelization_cores != 0 and
                                                       parallelization_cores != 1):
-            raise CallbackUsedWithParallelization()
+            raise CallbackUsedWithParallelizationError()
 
     @property
     def results(self):

@@ -62,7 +62,7 @@ from .model_processors.ResamplerResults import ResamplerResults
 from .model_processors.SearcherResults import SearcherResults
 from .model_processors.StratifiedMonteCarloResampler import StratifiedMonteCarloResampler
 from .model_processors.TunerResults import TunerResults
-from .model_processors.ProcessingExceptions import CallbackUsedWithParallelization
+from .model_processors.ProcessingExceptions import CallbackUsedWithParallelizationError
 
 from .model_wrappers.AdaBoost import AdaBoostClassifier
 from .model_wrappers.AdaBoost import AdaBoostClassifierHP

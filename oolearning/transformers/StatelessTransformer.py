@@ -8,12 +8,12 @@ class StatelessTransformer(TransformerBase):
     """
     Provides a way to pass functions (i.e. custom transformations) that do not need to save any type of
     state, so transformations are limited to those that do not require retaining any information (as required
-    by, for example, imputation transformations). An example of a stateless transformation would be to remove
+    by, for example, imputation transformations). An example of a helper transformation would be to remove
     certain columns. The transformation is done without any prior state or values/information.
     """
     def __init__(self, custom_function: Callable):
         """
-        :param custom_function: a function that takes a pandas DataFrame, does a stateless transformation,
+        :param custom_function: a function that takes a pandas DataFrame, does a helper transformation,
             and returns a pandas DataFrame
         """
         super().__init__()
