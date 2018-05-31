@@ -54,12 +54,7 @@ class ModelAggregator(ModelWrapperBase):
         self._base_transformation_pipeline = list()
         self._aggregation_strategy = aggregation_strategy
 
-        if parallelization_cores == 0 or parallelization_cores == 1:
-            self._map_function = map
-        else:
-            cores = cpu_count() if parallelization_cores == -1 else parallelization_cores
-            pool = ThreadPool(cores)
-            self._map_function = pool.map
+        self._parallelization_cores = parallelization_cores
 
     @property
     def feature_importance(self):
@@ -74,7 +69,13 @@ class ModelAggregator(ModelWrapperBase):
 
         # map_function rather than a for loop so we can switch between parallelization and non-parallelization
         aggregator_args = [(model_info, data_x, data_y) for model_info in self._base_models]
-        results = list(self._map_function(train_aggregator, aggregator_args))
+
+        if self._parallelization_cores == 0 or self._parallelization_cores == 1:
+            results = list(map(train_aggregator, aggregator_args))
+        else:
+            cores = cpu_count() if self._parallelization_cores == -1 else self._parallelization_cores
+            with ThreadPool(cores) as pool:
+                results = list(pool.map(train_aggregator, aggregator_args))
 
         self._base_models = [x[0] for x in results]
         # List of Pipelines to cache for `predict()`

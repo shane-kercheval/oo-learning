@@ -87,20 +87,13 @@ class ModelTuner:
         self._persistence_manager = persistence_manager
         self._resampler_decorators = resampler_decorators
         self._total_tune_time = None
+        self._parallelization_cores = parallelization_cores
 
         # noinspection PyProtectedMember
         # if there is a callback and we are using parallelization, raise error
         if resampler._train_callback is not None and (parallelization_cores != 0 and
                                                       parallelization_cores != 1):
             raise CallbackUsedWithParallelizationError()
-
-        # save the map_function based on parallelization or not
-        if parallelization_cores == 0 or parallelization_cores == 1:
-            self._map_function = map
-        else:
-            cores = cpu_count() if parallelization_cores == -1 else parallelization_cores
-            pool = ThreadPool(cores)
-            self._map_function = pool.map
 
     @property
     def results(self):
@@ -145,8 +138,14 @@ class ModelTuner:
                                  data_x=data_x,
                                  data_y=data_y)  # decorators
                             for x in range(len(params_combinations))]
+
         start_time = time.time()
-        results = list(self._map_function(single_tune, single_tune_args))
+        if self._parallelization_cores == 0 or self._parallelization_cores == 1:
+            results = list(map(single_tune, single_tune_args))
+        else:
+            cores = cpu_count() if self._parallelization_cores == -1 else self._parallelization_cores
+            with ThreadPool(cores) as pool:
+                results = list(pool.map(single_tune, single_tune_args))
         self._total_tune_time = time.time() - start_time
 
         results_list = [x[0] for x in results]

@@ -53,12 +53,7 @@ class TwoClassPrecisionRecallOptimizerConverter(TwoClassConverterBase):
         self._true_positive_rates = None
         self._actual_classes = actual_classes
 
-        if parallelization_cores == 0 or parallelization_cores == 1:
-            self._map_function = map
-        else:
-            cores = cpu_count() if parallelization_cores == -1 else parallelization_cores
-            pool = ThreadPool(cores)
-            self._map_function = pool.map
+        self._parallelization_cores = parallelization_cores
 
     @property
     def ideal_threshold(self) -> float:
@@ -89,7 +84,7 @@ class TwoClassPrecisionRecallOptimizerConverter(TwoClassConverterBase):
         :return: an array of class predictions.
         """
         self._positive_predictive_value, self._true_positive_rates, self._ideal_threshold = \
-            self._calculate_ppv_tpr_ideal_threshold(map_function=self._map_function,
+            self._calculate_ppv_tpr_ideal_threshold(parallelization_cores=self._parallelization_cores,
                                                     potential_cutoff_values=np.arange(0.0, 1.01, 0.01),
                                                     actual_classes=self._actual_classes,
                                                     predicted_probabilities=values,
@@ -98,7 +93,7 @@ class TwoClassPrecisionRecallOptimizerConverter(TwoClassConverterBase):
                                           positive_class=self.positive_class).convert(values=values)
 
     @staticmethod
-    def _calculate_ppv_tpr_ideal_threshold(map_function: callable,
+    def _calculate_ppv_tpr_ideal_threshold(parallelization_cores: int,
                                            potential_cutoff_values: np.ndarray,
                                            actual_classes: np.ndarray,
                                            predicted_probabilities: pd.DataFrame,
@@ -112,7 +107,13 @@ class TwoClassPrecisionRecallOptimizerConverter(TwoClassConverterBase):
                                  actual_classes=actual_classes)
                             for x in potential_cutoff_values]
 
-        ppv_tpr_tuple = list(map_function(get_ppv_tpr, get_ppv_tpr_args))
+        if parallelization_cores == 0 or parallelization_cores == 1:
+            ppv_tpr_tuple = list(map(get_ppv_tpr, get_ppv_tpr_args))
+        else:
+            cores = cpu_count() if parallelization_cores == -1 else parallelization_cores
+            with ThreadPool(cores) as pool:
+                ppv_tpr_tuple = list(pool.map(get_ppv_tpr, get_ppv_tpr_args))
+
         # ppv_tpr_tuple = [get_ppv_tpr(threshold=x) for x in potential_cutoff_values]  # list of rates
 
         # remove Nones caused by divide by zero for e.g. FPR/TPR

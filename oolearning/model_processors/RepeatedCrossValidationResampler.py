@@ -199,12 +199,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                                                       parallelization_cores != 1):
             raise CallbackUsedWithParallelizationError()
 
-        if parallelization_cores == 0 or parallelization_cores == 1:
-            self._map_function = map
-        else:
-            cores = cpu_count() if parallelization_cores == -1 else parallelization_cores
-            pool = ThreadPool(cores)
-            self._map_function = pool.map
+        self._parallelization_cores = parallelization_cores
 
     @property
     def fold_decorators(self):
@@ -244,7 +239,12 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                               decorators=self._decorators)
                          for x in range(self._repeats)]
 
-        results = list(self._map_function(resample_repeat, resample_args))
+        if self._parallelization_cores == 0 or self._parallelization_cores == 1:
+            results = list(map(resample_repeat, resample_args))
+        else:
+            cores = cpu_count() if self._parallelization_cores == -1 else self._parallelization_cores
+            with ThreadPool(cores) as pool:
+                results = list(pool.map(resample_repeat, resample_args))
 
         result_scores = [x[0] for x in results]
         # flatten out so there are folds*repeats number of list items
