@@ -1,5 +1,6 @@
 import os
 import pickle
+import time
 from math import isclose
 
 import numpy as np
@@ -503,6 +504,154 @@ class ResamplerTests(TimerTestCase):
         plt.gcf().clear()
         TestHelper.check_plot('data/test_Resamplers/test_resamplers_RandomForest_classification_cv_boxplot.png',  # noqa
                               lambda: resampler.results.plot_resampled_scores())
+
+    def test_resamplers_RandomForest_classification_cached_parallization(self):
+        data = TestHelper.get_titanic_data()
+
+        # main reason we want to split the data is to get the means/st_devs so that we can confirm with
+        # e.g. the Searcher
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+        training_indexes, test_indexes = splitter.split(target_values=data.Survived)
+
+        train_data = data.iloc[training_indexes]
+        train_data_y = train_data.Survived
+        train_data = train_data.drop(columns='Survived')
+
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                          SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
+
+        cache_directory = TestHelper.ensure_test_directory('data/test_Resamplers/cached_test_models/test_resamplers_RandomForest_classification')  # noqa
+        resampler = RepeatedCrossValidationResampler(
+            model=RandomForestClassifier(),
+            transformations=transformations,
+            scores=score_list,
+            persistence_manager=LocalCacheManager(cache_directory=cache_directory),
+            folds=5,
+            repeats=5,
+            parallelization_cores=-1)
+
+        self.assertRaises(ModelNotFittedError, lambda: resampler.results)
+
+        time_start = time.time()
+        resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
+        time_stop = time.time()
+        assert (time_stop - time_start) < 3
+
+        assert len(resampler.results._scores) == 25
+        assert all([len(x) == 4 and
+                    isinstance(x[0], KappaScore) and
+                    isinstance(x[1], SensitivityScore) and
+                    isinstance(x[2], SpecificityScore) and
+                    isinstance(x[3], ErrorRateScore)
+                    for x in resampler.results._scores])
+        assert resampler.results.num_resamples == 25
+
+        # noinspection SpellCheckingInspection
+        expected_file = 'repeat{0}_fold{1}_RandomForestClassifier_n_estimators500_criteriongini_max_featuresNone_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_min_impurity_decrease0_bootstrapTrue_oob_scoreFalse.pkl'  # noqa
+        for fold_index in range(5):
+            for repeat_index in range(5):
+                assert os.path.isfile(os.path.join(cache_directory,
+                                                   expected_file.format(fold_index, repeat_index)))
+
+        assert resampler.results.score_names == ['kappa', 'sensitivity', 'specificity', 'error_rate']
+
+        # make sure the order of the resampled_scores is the same order as Evaluators passed in
+        assert all(resampler.results.resampled_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])  # noqa
+
+        # score_means and score_standard_deviations comes from resampled_scores, so testing both
+        assert isclose(resampler.results.score_means['kappa'], 0.586495320545703)
+        assert isclose(resampler.results.score_means['sensitivity'], 0.721899136052689)
+        assert isclose(resampler.results.score_means['specificity'], 0.8617441563168404)
+        assert isclose(resampler.results.score_means['error_rate'], 0.192053148900336)
+
+        assert isclose(resampler.results.score_standard_deviations['kappa'], 0.06833478821655113)
+        assert isclose(resampler.results.score_standard_deviations['sensitivity'], 0.06706830388930413)
+        assert isclose(resampler.results.score_standard_deviations['specificity'], 0.03664756028501139)
+        assert isclose(resampler.results.score_standard_deviations['error_rate'], 0.031189357324296424)
+
+        assert isclose(resampler.results.score_coefficients_of_variation['kappa'], round(0.06833478821655113 / 0.586495320545703, 2))  # noqa
+        assert isclose(resampler.results.score_coefficients_of_variation['sensitivity'], round(0.06706830388930413 / 0.721899136052689, 2))  # noqa
+        assert isclose(resampler.results.score_coefficients_of_variation['specificity'], round(0.03664756028501139 / 0.8617441563168404, 2))  # noqa
+        assert isclose(resampler.results.score_coefficients_of_variation['error_rate'], round(0.031189357324296424 / 0.192053148900336, 2))  # noqa
+
+        plt.gcf().clear()
+        TestHelper.check_plot('data/test_Resamplers/test_resamplers_RandomForest_classification_cv_boxplot.png',  # noqa
+                              lambda: resampler.results.plot_resampled_scores())
+
+    def test_resamplers_RandomForest_classification_parallization(self):
+        data = TestHelper.get_titanic_data()
+
+        # main reason we want to split the data is to get the means/st_devs so that we can confirm with
+        # e.g. the Searcher
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+        training_indexes, test_indexes = splitter.split(target_values=data.Survived)
+
+        train_data = data.iloc[training_indexes]
+        train_data_y = train_data.Survived
+        train_data = train_data.drop(columns='Survived')
+
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                          SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+                          ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
+
+        resampler = RepeatedCrossValidationResampler(
+            model=RandomForestClassifier(),
+            transformations=transformations,
+            scores=score_list,
+            folds=5,
+            repeats=5,
+            parallelization_cores=-1)
+
+        self.assertRaises(ModelNotFittedError, lambda: resampler.results)
+
+        time_start = time.time()
+        resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
+        time_stop = time.time()
+        assert (time_stop - time_start) < 10   # goes from ~30 sec to < 10 with parallelization
+
+        assert len(resampler.results._scores) == 25
+        assert all([len(x) == 4 and
+                    isinstance(x[0], KappaScore) and
+                    isinstance(x[1], SensitivityScore) and
+                    isinstance(x[2], SpecificityScore) and
+                    isinstance(x[3], ErrorRateScore)
+                    for x in resampler.results._scores])
+        assert resampler.results.num_resamples == 25
+
+        # noinspection SpellCheckingInspection
+        assert resampler.results.score_names == ['kappa', 'sensitivity', 'specificity', 'error_rate']
+
+        # make sure the order of the resampled_scores is the same order as Evaluators passed in
+        assert all(resampler.results.resampled_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])  # noqa
+
+        # score_means and score_standard_deviations comes from resampled_scores, so testing both
+        assert isclose(resampler.results.score_means['kappa'], 0.586495320545703)
+        assert isclose(resampler.results.score_means['sensitivity'], 0.721899136052689)
+        assert isclose(resampler.results.score_means['specificity'], 0.8617441563168404)
+        assert isclose(resampler.results.score_means['error_rate'], 0.192053148900336)
+
+        assert isclose(resampler.results.score_standard_deviations['kappa'], 0.06833478821655113)
+        assert isclose(resampler.results.score_standard_deviations['sensitivity'], 0.06706830388930413)
+        assert isclose(resampler.results.score_standard_deviations['specificity'], 0.03664756028501139)
+        assert isclose(resampler.results.score_standard_deviations['error_rate'], 0.031189357324296424)
+
+        assert isclose(resampler.results.score_coefficients_of_variation['kappa'], round(0.06833478821655113 / 0.586495320545703, 2))  # noqa
+        assert isclose(resampler.results.score_coefficients_of_variation['sensitivity'], round(0.06706830388930413 / 0.721899136052689, 2))  # noqa
+        assert isclose(resampler.results.score_coefficients_of_variation['specificity'], round(0.03664756028501139 / 0.8617441563168404, 2))  # noqa
+        assert isclose(resampler.results.score_coefficients_of_variation['error_rate'], round(0.031189357324296424 / 0.192053148900336, 2))  # noqa
 
     # noinspection PyTypeChecker
     def test_resampling_roc_pr_thresholds(self):

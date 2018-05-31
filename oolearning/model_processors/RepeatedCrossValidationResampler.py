@@ -175,7 +175,8 @@ class RepeatedCrossValidationResampler(ResamplerBase):
             called at the end of each fold and is passed the `scores`, the holdout actual values, and the
             holdout predicted values.
         :param parallelization_cores: the number of cores to use for parallelization. -1 is all, 0 or 1 is
-            "off"
+            "off". Default value is 0 i.e. "off", because parallelization causes different (or unsupported)
+            behavior with `train_callback` and `fold_decorators`. Use with caution.
 
         NOTE: parallelization is per "repeat", not per "fold". This is because decorators can be used
             (and retained/cached) across folds, which would break if we split up and parallelized the logic
