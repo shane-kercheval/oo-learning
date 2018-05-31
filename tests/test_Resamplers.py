@@ -671,13 +671,31 @@ class ResamplerTests(TimerTestCase):
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
         score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
+
+        # this should fail because both the Resampler and the TwoClassThresholdDecorator use parallelization
+        # i.e. AssertionError: daemonic processes are not allowed to have children
         resampler = RepeatedCrossValidationResampler(
             model=RandomForestClassifier(),
             transformations=transformations,
             scores=score_list,
             folds=5,
             repeats=1,
-            fold_decorators=[decorator])  # parallelization won't speed this up because we only use 1 repeats
+            fold_decorators=[decorator],
+            parallelization_cores=-1)  # should fail with AssertionError
+
+        self.assertRaises(AssertionError,
+                          lambda: resampler.resample(data_x=train_data,
+                                                     data_y=train_data_y,
+                                                     hyper_params=RandomForestHP()))
+
+        # redefine resampler without parallelization
+        resampler = RepeatedCrossValidationResampler(
+            model=RandomForestClassifier(),
+            transformations=transformations,
+            scores=score_list,
+            folds=5,
+            repeats=1,
+            fold_decorators=[decorator])
 
         start_time = time.time()
         resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
@@ -744,6 +762,67 @@ class ResamplerTests(TimerTestCase):
         expected_precision_recall_thresholds = [0.0, 0.0]
         assert decorator.roc_ideal_thresholds == expected_roc_thresholds
         assert decorator.precision_recall_ideal_thresholds == expected_precision_recall_thresholds
+
+        # the object should be stored in the results as the first and only decorator element
+        assert len(resampler.results.decorators) == 1
+        assert resampler.results.decorators[0] is decorator  # should be the same objects
+
+    # noinspection PyTypeChecker
+    def test_resampling_roc_pr_thresholds_resampler_parallelization(self):
+        ######################################################################################################
+        # turn off parallelization for TwoClassThresholdDecorator and on for RepeatedCrossValidationResampler
+        ######################################################################################################
+        decorator = TwoClassThresholdDecorator(parallelization_cores=0)  # turn off parallelization
+        # resampler gets the positive class from either the score directly, or the score._converter; test
+        # using both score types (e.g. AucX & Kappa)
+        data = TestHelper.get_titanic_data()
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+        training_indexes, test_indexes = splitter.split(target_values=data.Survived)
+
+        train_data_y = data.iloc[training_indexes].Survived
+        train_data = data.iloc[training_indexes].drop(columns='Survived')
+
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
+        resampler = RepeatedCrossValidationResampler(
+            model=RandomForestClassifier(),
+            transformations=transformations,
+            scores=score_list,
+            folds=5,
+            repeats=1,
+            fold_decorators=[decorator],
+            parallelization_cores=-1)  # turn on parallelization, even though it won't help because 1 repeat
+
+        # start_time = time.time()
+        resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
+        # resample_time = time.time() - start_time
+
+        expected_roc_thresholds = [0.43, 0.31, 0.47, 0.59, 0.48]
+        expected_precision_recall_thresholds = [0.43, 0.53, 0.64, 0.59, 0.6]
+
+        ######################################################################################################
+        # NOTE: because we used parallelization with the resampler, the original decorator was not used;
+        # it was copied into the process, so we have to get the saved decorators (per fold) from
+        # `fold_decorators`
+        # Because only 1 repeat was used, there is only 1 and it should match what we expected from the
+        # decorator object had we not used parallelization; if there were multiple repeats, we'd have
+        # multiple fold_decorator items that we would have to concatenate (or flatten) to get the equivalent
+        # of the non-parallelization scenario
+        ######################################################################################################
+        decorator = resampler.fold_decorators[0]
+
+        assert decorator.roc_ideal_thresholds == expected_roc_thresholds
+        assert decorator.precision_recall_ideal_thresholds == expected_precision_recall_thresholds
+        assert isclose(decorator.roc_ideal_thresholds_mean, np.mean(expected_roc_thresholds))
+        assert isclose(decorator.resampled_precision_recall_mean, np.mean(expected_precision_recall_thresholds))  # noqa
+        assert isclose(decorator.roc_ideal_thresholds_st_dev, np.std(expected_roc_thresholds))
+        assert isclose(decorator.resampled_precision_recall_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
+        assert isclose(decorator.roc_ideal_thresholds_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
+        assert isclose(decorator.resampled_precision_recall_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa
 
         # the object should be stored in the results as the first and only decorator element
         assert len(resampler.results.decorators) == 1

@@ -40,8 +40,16 @@ class TwoClassRocOptimizerConverter(TwoClassConverterBase):
         class) is greater than or equal to the threshold, otherwise as the negative class. The class names are
         the names of the columns in the `values` DataFrame passed to `.convert()`
     """
-    def __init__(self, positive_class: Union[str, int], actual_classes: np.ndarray,
+    def __init__(self,
+                 positive_class: Union[str, int],
+                 actual_classes: np.ndarray,
                  parallelization_cores: int = -1):
+        """
+        :param positive_class: the positive class (string or int)
+        :param actual_classes: array of actual classes.
+        :param parallelization_cores: the number of cores to use for parallelization. -1 is all, 0 or 1 is
+            "off".
+        """
         super().__init__(positive_class=positive_class)
         self._ideal_threshold = None
         self._false_positive_rates = None

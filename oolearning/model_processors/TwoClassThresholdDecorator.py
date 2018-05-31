@@ -18,10 +18,15 @@ class TwoClassThresholdDecorator(DecoratorBase):
         distance to the upper left corner for the ROC curve, and minimizes the distance to the upper right
         corner for the Precision/Recall curve (i.e. balancing the inherent trade-offs in both curves.
     """
-    def __init__(self):
+    def __init__(self, parallelization_cores: int = -1):
+        """
+        :param parallelization_cores: the number of cores to use for parallelization. -1 is all, 0 or 1 is
+            "off".
+        """
         super().__init__()
         self._roc_ideal_thresholds = list()
         self._precision_recall_ideal_thresholds = list()
+        self._parallelization_cores = parallelization_cores
 
     # noinspection PyProtectedMember
     def decorate(self, **kwargs):
@@ -48,12 +53,14 @@ class TwoClassThresholdDecorator(DecoratorBase):
             raise ValueError("Cannot find positive class in Score or Score's Converter")
 
         converter = TwoClassRocOptimizerConverter(actual_classes=holdout_actual_values,
-                                                  positive_class=positive_class)
+                                                  positive_class=positive_class,
+                                                  parallelization_cores=self._parallelization_cores)
         converter.convert(values=holdout_predicted_values)
         self._roc_ideal_thresholds.append(converter.ideal_threshold)  # TODO: rename roc_ideal_thresholds to something like resampled_roc_ideal_threshold ... shitty name.
 
         converter = TwoClassPrecisionRecallOptimizerConverter(actual_classes=holdout_actual_values,
-                                                              positive_class=positive_class)
+                                                              positive_class=positive_class,
+                                                              parallelization_cores=self._parallelization_cores)  # noqa
         converter.convert(values=holdout_predicted_values)
         self._precision_recall_ideal_thresholds.append(converter.ideal_threshold)
 
