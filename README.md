@@ -204,6 +204,16 @@ searcher.search(data=explore.dataset, target_variable='Survived')
 
 *Code Snippet from [Searcher](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/5-Searching.ipynb) notebook.*
 
+# Known Issues
+
+- Parallelization
+  - issue with parallelization when used with RandomForestClassifier or RandomForestRegressor
+    - seems to be related to https://github.com/scikit-learn/scikit-learn/issues/7346#event-1241008914
+  - issue with parallelization when used with `LinearRegressor`
+    - need to use `LinearRegressorSK`
+  - cannot use parallelization with callbacks (e.g. RepeatedCrossValidationResampler init's `train_callback` parameter because it cannot be pickled i.e. serialized)
+
+
 # Available Models
 
 `R = Regression; 2C = Two-class Classification; MC = Multi-class Classification`

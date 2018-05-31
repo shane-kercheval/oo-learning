@@ -2490,7 +2490,7 @@ class ModelWrapperTests(TimerTestCase):
         target_variable = 'strength'
         train_x, train_y, holdout_x, holdout_y = TestHelper.split_train_holdout_regression(data, target_variable)  # noqa
 
-        model_linear_regression = LinearRegressor()
+        model_linear_regression = LinearRegressorSK()
         model_linear_regression.train(data_x=train_x, data_y=train_y)
         predictions_linear_regression = model_linear_regression.predict(data_x=holdout_x)
 
@@ -2504,7 +2504,7 @@ class ModelWrapperTests(TimerTestCase):
 
         expected_aggregation = (predictions_linear_regression + predictions_cart + predictions_adaboost) / 3
 
-        model_infos = [ModelInfo(model=LinearRegressor(), hyper_params=None),
+        model_infos = [ModelInfo(model=LinearRegressorSK(), hyper_params=None),
                        ModelInfo(model=CartDecisionTreeRegressor(), hyper_params=CartDecisionTreeHP(criterion='mse')),  # noqa
                        ModelInfo(model=AdaBoostRegressor(), hyper_params=AdaBoostRegressorHP())]
         model_aggregator = ModelAggregator(base_models=model_infos,
@@ -2529,7 +2529,7 @@ class ModelWrapperTests(TimerTestCase):
         target_variable = 'expenses'
         train_x, train_y, holdout_x, holdout_y = TestHelper.split_train_holdout_regression(data,
                                                                                            target_variable)
-        model_infos = [ModelInfo(model=LinearRegressor(),
+        model_infos = [ModelInfo(model=LinearRegressorSK(),
                                  hyper_params=None,
                                  transformations=[PolynomialFeaturesTransformer(degrees=3),
                                                   DummyEncodeTransformer(CategoricalEncoding.DUMMY)]),
@@ -2540,11 +2540,12 @@ class ModelWrapperTests(TimerTestCase):
                        ModelInfo(model=AdaBoostRegressor(), hyper_params=AdaBoostRegressorHP(),
                                  transformations=[DummyEncodeTransformer(CategoricalEncoding.DUMMY)])]
         model_aggregator = ModelAggregator(base_models=model_infos,
-                                           aggregation_strategy=MeanAggregationStrategy())
+                                           aggregation_strategy=MeanAggregationStrategy(),
+                                           parallelization_cores=-1)
         model_aggregator.train(data_x=train_x, data_y=train_y)
 
         # check that all the models and transformations are the types (in the order) expected
-        assert isinstance(model_aggregator._base_models[0].model, LinearRegressor)
+        assert isinstance(model_aggregator._base_models[0].model, LinearRegressorSK)
         assert isinstance(model_aggregator._base_models[1].model, CartDecisionTreeRegressor)
         assert isinstance(model_aggregator._base_models[2].model, AdaBoostRegressor)
         assert model_aggregator._base_models[0].hyper_params is None
@@ -2582,7 +2583,7 @@ class ModelWrapperTests(TimerTestCase):
         target_variable = 'expenses'
         train_x, train_y, holdout_x, holdout_y = TestHelper.split_train_holdout_regression(data,
                                                                                            target_variable)
-        model_infos = [ModelInfo(model=LinearRegressor(),
+        model_infos = [ModelInfo(model=LinearRegressorSK(),
                                  hyper_params=None,
                                  transformations=[PolynomialFeaturesTransformer(degrees=3),
                                                   DummyEncodeTransformer(CategoricalEncoding.DUMMY)]),

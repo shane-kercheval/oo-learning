@@ -17,7 +17,7 @@ class ImputationTransformer(TransformerBase):
     """
     def __init__(self,
                  numeric_imputation_function: Callable[[pd.Series], pd.Series]=np.nanmedian,
-                 categoric_imputation_function: Callable[[pd.Series], pd.Series]=None,
+                 categoric_imputation_function: Callable[[pd.Series], pd.Series]=value_counts,
                  group_by_column: str=None,
                  treat_zeros_as_na: bool=False,
                  columns_explicit: List[str]=None,
@@ -47,9 +47,6 @@ class ImputationTransformer(TransformerBase):
             with the imputed value, but also values of `0` with the imputed value.
         """
         super().__init__()
-
-        if categoric_imputation_function is None:
-            categoric_imputation_function = value_counts
 
         assert not (columns_explicit and columns_to_ignore)  # cannot use both parameters simultaneously
 

@@ -74,7 +74,8 @@ class TunerTests(TimerTestCase):
                                                                       transformations=transformations,
                                                                       scores=evaluator_list),
                            hyper_param_object=RandomForestHP(),
-                           persistence_manager=LocalCacheManager(cache_directory=cache_directory))
+                           persistence_manager=LocalCacheManager(cache_directory=cache_directory),
+                           parallelization_cores=0)
 
         columns = TransformerPipeline.get_expected_columns(transformations=transformations, data=train_data)
         params_dict = dict(criterion='gini',
@@ -336,7 +337,7 @@ class TunerTests(TimerTestCase):
         train_data_y = train_data.strength
         train_data = train_data.drop(columns='strength')
 
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=LinearRegressor(),
+        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=LinearRegressorSK(),
                                                                       transformations=[ImputationTransformer(),  # noqa
                                                                                        DummyEncodeTransformer(CategoricalEncoding.DUMMY)],  # noqa
                                                                       scores=[RmseScore(),
@@ -407,7 +408,9 @@ class TunerTests(TimerTestCase):
                                                      folds=2,
                                                      repeats=1,
                                                      fold_decorators=[decorator])
-        tuner = ModelTuner(resampler=resampler, hyper_param_object=RandomForestHP())
+        tuner = ModelTuner(resampler=resampler,
+                           hyper_param_object=RandomForestHP(),
+                           parallelization_cores=0)
 
         params_dict = {'criterion': 'gini', 'max_features': [5]}
         grid = HyperParamsGrid(params_dict=params_dict)

@@ -6,6 +6,7 @@ import time
 import numpy as np
 import pandas as pd
 
+from oolearning.model_processors.ProcessingExceptions import CallbackUsedWithParallelization
 from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
@@ -75,7 +76,8 @@ class ModelTuner:
             NOTE: for each resampling (i.e. each set of hyper-params being resampled) the persistence_manager
             is cloned and passed to the resampler. The resampler already differentiates the file name based on
             the hyper-parameters (and e.g. repeat/fold indexes which should make it unique)
-        :param parallelization_cores: the number of cores to use for parallelization. -1 is all, 0 is "off"
+        :param parallelization_cores: the number of cores to use for parallelization. -1 is all, 0 or 1 is
+            "off"
         """
         assert isinstance(resampler, ResamplerBase)
 
@@ -86,6 +88,12 @@ class ModelTuner:
         self._resampler_decorators = resampler_decorators
         self._parallelization_cores = parallelization_cores
         self._total_tune_time = None
+
+        # noinspection PyProtectedMember
+        # if there is a callback and we are using parallelization, raise error
+        if resampler._train_callback is not None and (parallelization_cores != 0 and
+                                                      parallelization_cores != 1):
+            raise CallbackUsedWithParallelization()
 
     @property
     def results(self):
@@ -120,7 +128,7 @@ class ModelTuner:
             if params_grid is None else params_grid.params_grid
         assert len(params_combinations) > 0
 
-        if self._parallelization_cores == 0:
+        if self._parallelization_cores == 0 or self._parallelization_cores == 1:
             map_function = map
         else:
             cores = cpu_count() if self._parallelization_cores == -1 else self._parallelization_cores

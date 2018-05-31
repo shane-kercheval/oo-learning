@@ -23,7 +23,8 @@ class ModelSearcher:
                  resampler_function: Callable[[ModelWrapperBase, List[TransformerBase]], ResamplerBase],
                  global_transformations: Union[List[TransformerBase], None] = None,
                  resampler_decorators: List[DecoratorBase] = None,
-                 persistence_manager: PersistenceManagerBase = None):
+                 persistence_manager: PersistenceManagerBase = None,
+                 parallelization_cores: int=-1):
         """
         A "Searcher" searches across different models and hyper-parameters (or the same models and
             hyper-parameters with different transformations, for example) with the goal of finding the "best"
@@ -56,6 +57,8 @@ class ModelSearcher:
 
             When tuning, the substructure is set to "tune_[model description]" and when fitting on the entire
             dataset, the prefix is set to "final_[model description]"
+        :param parallelization_cores: the number of cores to use for parallelization (via underlying
+            ModelTuner). -1 is all, 0 or 1 is "off"
         """
         model_descriptions = [x.description for x in model_infos]
         models = [x.model for x in model_infos]
@@ -78,6 +81,7 @@ class ModelSearcher:
         self._results = None
         self._resampler_decorators = resampler_decorators
         self._persistence_manager = persistence_manager
+        self._parallelization_cores = parallelization_cores
 
     def search(self, data: pd.DataFrame, target_variable: str):
         data_x = data.drop(columns=target_variable)
@@ -138,7 +142,8 @@ class ModelSearcher:
                                                                   [x.clone() for x in local_model_trans]),
                                hyper_param_object=None if local_model_params_object is None else local_model_params_object.clone(),  # noqa
                                resampler_decorators=self._resampler_decorators,
-                               persistence_manager=local_persistence_manager)
+                               persistence_manager=local_persistence_manager,
+                               parallelization_cores=self._parallelization_cores)
 
             # noinspection PyProtectedMember
             # before we tune, we need to steel (i.e. clone) the Scores from the resampler so we can use the

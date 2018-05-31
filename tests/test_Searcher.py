@@ -17,7 +17,7 @@ class SearcherTests(TimerTestCase):
     def setUpClass(cls):
         pass
 
-    def test_modelSeracher_transformations(self):
+    def test_modelSearcher_transformations(self):
         # we will have both global and model specific transformations. Need to make sure both work correctly
         # and independently in the Searcher.
         data = TestHelper.get_titanic_data()
@@ -54,7 +54,8 @@ class SearcherTests(TimerTestCase):
                                                     scores=score_list,
                                                     folds=num_folds,
                                                     repeats=num_repeats,
-                                                    train_callback=train_callback)).\
+                                                    train_callback=train_callback),
+                                                parallelization_cores=0).\
                           search(data=data, target_variable='Survived'))
         ######################################################################################################
         # test Global and Model specific transformations - no global transformations, just model trans
@@ -80,7 +81,8 @@ class SearcherTests(TimerTestCase):
                           scores=score_list,
                           folds=num_folds,
                           repeats=num_repeats,
-                          train_callback=train_callback)).search(data=data, target_variable='Survived')
+                          train_callback=train_callback),
+                      parallelization_cores=0).search(data=data, target_variable='Survived')
         ######################################################################################################
         # test Global and Model transformations - no global transformations, just model trans
         ######################################################################################################
@@ -113,7 +115,8 @@ class SearcherTests(TimerTestCase):
                           scores=score_list,
                           folds=num_folds,
                           repeats=num_repeats,
-                          train_callback=train_callback)).search(data=data, target_variable='Survived')
+                          train_callback=train_callback),
+                      parallelization_cores=0).search(data=data, target_variable='Survived')
 
         ######################################################################################################
         # test both Global and Model transformations
@@ -150,7 +153,8 @@ class SearcherTests(TimerTestCase):
                           scores=score_list,
                           folds=num_folds,
                           repeats=num_repeats,
-                          train_callback=train_callback)).search(data=data, target_variable='Survived')
+                          train_callback=train_callback),
+                      parallelization_cores=0).search(data=data, target_variable='Survived')
 
         ######################################################################################################
         # now i want to make sure if i have multiple models, each specific model transformation will be used
@@ -176,8 +180,9 @@ class SearcherTests(TimerTestCase):
                                                     transformations=mt,
                                                     scores=score_list,
                                                     folds=num_folds,
-                                                    repeats=num_repeats)).search(data=data,
-                                                                                 target_variable='Survived'))
+                                                    repeats=num_repeats),
+                                                parallelization_cores=0).search(data=data,
+                                                                                target_variable='Survived'))
 
         infos = [ModelInfo(description='description1',
                            model=MockClassificationModelWrapper(data_y=data.Survived),
@@ -194,8 +199,9 @@ class SearcherTests(TimerTestCase):
                                                     transformations=mt,
                                                     scores=score_list,
                                                     folds=num_folds,
-                                                    repeats=num_repeats)).search(data=data,
-                                                                                 target_variable='Survived'))
+                                                    repeats=num_repeats),
+                                                parallelization_cores=0).search(data=data,
+                                                                                target_variable='Survived'))
 
     def test_ModelSearcher_cache(self):
         data = TestHelper.get_titanic_data()

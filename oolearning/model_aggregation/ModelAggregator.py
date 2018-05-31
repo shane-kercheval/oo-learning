@@ -1,5 +1,5 @@
 from typing import Union, List
-from multiprocessing.dummy import Pool as ThreadPool
+from multiprocessing import Pool as ThreadPool
 from multiprocessing import cpu_count
 
 import numpy as np
@@ -10,6 +10,25 @@ from oolearning.model_aggregation.AggregationStrategyBase import AggregationStra
 from oolearning.model_processors.ModelInfo import ModelInfo
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
+
+
+def train_aggregator(args):
+    model_info = args[0]
+    data_x_local = args[1]
+    data_y_local = args[2]
+
+    if model_info.transformations:
+        # ensure none of the Transformers have been used.
+        assert all([x.state is None for x in model_info.transformations])
+
+    # List of Pipelines to cache for `predict()`
+    pipeline = TransformerPipeline(model_info.transformations)
+    # fit/transform with current pipeline
+    transformed_data_x_local = pipeline.fit_transform(data_x=data_x_local)
+    model_info.model.train(data_x=transformed_data_x_local,
+                           data_y=data_y_local,
+                           hyper_params=model_info.hyper_params)
+    return model_info, pipeline
 
 
 class ModelAggregator(ModelWrapperBase):
@@ -26,7 +45,8 @@ class ModelAggregator(ModelWrapperBase):
         :param base_models: list of ModelInfos describing the models to train
         :param aggregation_strategy: object defines how the the final predictions from the base_models should
             be aggregated
-        :param parallelization_cores: the number of cores to use for parallelization. -1 is all, 0 is "off"
+        :param parallelization_cores: the number of cores to use for parallelization. -1 is all, 0 or 1 is 
+            "off"
         """
         super().__init__()
         assert len(base_models) >= 3
@@ -46,33 +66,15 @@ class ModelAggregator(ModelWrapperBase):
 
         assert hyper_params is None  # not used in Aggregator
 
-        if self._parallelization_cores == 0:
+        if self._parallelization_cores == 0 or self._parallelization_cores == 1:
             map_function = map
         else:
             cores = cpu_count() if self._parallelization_cores == -1 else self._parallelization_cores
             pool = ThreadPool(cores)
             map_function = pool.map
 
-        def train(args):
-            model_info = args[0]
-            data_x_local = args[1]
-            data_y_local = args[2]
-            if model_info.transformations:
-                # ensure none of the Transformers have been used.
-                assert all([x.state is None for x in model_info.transformations])
-
-            # List of Pipelines to cache for `predict()`
-            pipeline = TransformerPipeline(model_info.transformations)
-            # fit/transform with current pipeline
-            transformed_data_x_local = pipeline.fit_transform(data_x=data_x_local)
-            model_info.model.train(data_x=transformed_data_x_local,
-                                   data_y=data_y_local,
-                                   hyper_params=model_info.hyper_params)
-
-            return model_info, pipeline
-
         infos = [(model_info, data_x, data_y) for model_info in self._base_models]
-        results = list(map_function(train, infos))
+        results = list(map_function(train_aggregator, infos))
 
         self._base_models = [x[0] for x in results]
         # List of Pipelines to cache for `predict()`
