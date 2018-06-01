@@ -179,10 +179,53 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         ax.figure.set_size_inches(10, 6)
         plt.suptitle('Histogram of Predicted Probabilities, by Actual Outcome', fontsize=12)
 
+    @staticmethod
+    def _create_gain_lift_data(predicted_probabilities, actual_classes, positive_class):
+
+        raw_data = pd.concat([predicted_probabilities[positive_class],
+                              actual_classes], axis=1)
+        raw_data.columns = ['probabilities', 'actual_classes']
+        raw_data.sort_values(['probabilities'], ascending=False)
+
+        # .qcut gets percentiles
+        bins = pd.qcut(x=raw_data['probabilities'], q=10, labels=list(range(100, 0, -10)))
+
+        raw_data['percentiles'] = bins
+        # probabilities_classes.sort_values('probabilities')
+
+        def gain_grouping(x):
+            # noinspection PyTypeChecker
+            number_positive_events = sum(x.actual_classes == positive_class)
+            d = {'Number of Observations': len(x.actual_classes),
+                 'Number of Positive Events': number_positive_events
+                 }
+            return pd.Series(d, index=['Number of Observations', 'Number of Positive Events'])
+
+        # noinspection PyTypeChecker
+        number_of_positive_events = sum(actual_classes == positive_class)
+        gain_lift_data = raw_data.groupby('percentiles').apply(gain_grouping)
+
+        temp = pd.DataFrame({'Number of Observations': 0, 'Number of Positive Events': 0}, index=[0],)
+        temp.index.names = ['percentiles']
+        gain_lift_data = pd.concat([gain_lift_data, temp])
+        gain_lift_data.sort_index(ascending=True, inplace=True)
+        gain_lift_data['Cumulative Observations'] = gain_lift_data['Number of Observations'].cumsum()
+        gain_lift_data['Cumulative Positive Events'] = gain_lift_data['Number of Positive Events'].cumsum()
+        gain_lift_data['Percentage of Positive Events'] = gain_lift_data['Cumulative Positive Events'] / \
+                                                           number_of_positive_events
+        gain_lift_data['Random Gain'] = gain_lift_data.index.values
+        gain_lift_data['Model Gain'] = gain_lift_data['Percentage of Positive Events'] * 100
+
+        total_observations = len(actual_classes)
+
+        gain_lift_data['Model Lift'] = (gain_lift_data['Model Gain'] / 100) / \
+                                  (gain_lift_data['Cumulative Observations'] / total_observations)
+        return gain_lift_data
+
     def plot_gain_chart(self):
         """
-        :return: A Gain Chart shows the % of positive events we have 'captured' i.e. located by looking in x%
-            of population of predictions such that the highest predictions are looked at first.
+        :return: A Gain Chart shows the % of positive events we have 'captured' i.e. located by looking at the
+            top x% of population of predictions such that the highest predictions are looked at first.
             So we can say we've captured X% of all the positive events by searching Y% of highest predictions.
 
             For example, if X (and the x-axis) is 20% and Y (and the y-axis) is 83%, and we are predicting
@@ -192,69 +235,36 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
             looking at)". This gives us an idea of effort vs payoff in sales/marketing/etc. activities.
         """
         # noinspection PyTypeChecker
-        number_of_positive_events = sum(self._actual_classes == self._positive_class)
-        gain_data = pd.concat([self._predicted_probabilities[self._positive_class],
-                               self._actual_classes], axis=1)
-        gain_data.columns = ['probabilities', 'actual_classes']
-        gain_data.sort_values(['probabilities'], ascending=False)
-
-        # .qcut gets percentiles
-        bins = pd.qcut(x=gain_data['probabilities'], q=10, labels=list(range(100, 0, -10)))
-
-        gain_data['percentiles'] = bins
-        # gain_data.sort_values('probabilities')
-
-        def gain_grouping(x):
-            # noinspection PyTypeChecker
-            number_positive_events = sum(x.actual_classes == self._positive_class)
-            d = {'Number of Observations': len(x.actual_classes),
-                 'Number of Positive Events': number_positive_events
-                 }
-            return pd.Series(d, index=['Number of Observations', 'Number of Positive Events'])
-
-        gain_group_data = gain_data.groupby('percentiles').apply(gain_grouping)
-
-        temp = pd.DataFrame({'Number of Observations': 0, 'Number of Positive Events': 0}, index=[0],)
-        temp.index.names = ['percentiles']
-        gain_group_data = pd.concat([gain_group_data, temp])
-        gain_group_data.sort_index(ascending=True, inplace=True)
-        # gain_group_data['Cumulative Observations'] = gain_group_data['Number of Observations'].cumsum()
-        gain_group_data['Cumulative Positive Events'] = gain_group_data['Number of Positive Events'].cumsum()
-        gain_group_data['Percentage of Positive Events'] = gain_group_data['Cumulative Positive Events'] / \
-                                                           number_of_positive_events
-        gain_group_data['Random Gain'] = gain_group_data.index.values
-        gain_group_data['Model Gain'] = gain_group_data['Percentage of Positive Events'] * 100
-
-
-
-        # lift = (gain / 100) / (cumulative_observations / total_observations))
-
-
-
+        gain_lift_group_data = self._create_gain_lift_data(predicted_probabilities=self._predicted_probabilities,  # noqa
+                                                           actual_classes=self._actual_classes,
+                                                           positive_class=self._positive_class)
         # get the percent of positive class proportion, call it X%
         # we want plot X%, such that ideally we've found i.e. predicted 100% of the positive events after
         # only searching X% of the population. In other words, if we ordered our predictions by probability
         # (in descending order) and there were e.g. 40 positive events out of a population of 100, then
         # a model with perfect gain would have all 40 events in the top 40 spots (after ordering by
         # probability)
+        # noinspection PyTypeChecker
+        number_of_positive_events = sum(self._actual_classes == self._positive_class)
         positive_class_proportion = number_of_positive_events / len(self._actual_classes) * 100
         perfect_gain_x_values = sorted(list(range(0, 110, 10)) + [positive_class_proportion])
         perfect_gain_y_values = np.array(perfect_gain_x_values) / positive_class_proportion * 100
         perfect_gain_y_values = [min(x, 100) for x in perfect_gain_y_values]
 
         #####################################
-        gain_group_data[['Model Gain', 'Random Gain']].plot(xticks=range(0, 110, 10), yticks=range(0, 110, 10))  # noqa
+        gain_lift_group_data[['Model Gain', 'Random Gain']].plot(xticks=range(0, 110, 10),
+                                                                 yticks=range(0, 110, 10))
         ax = plt.gca()
         ax.figure.set_size_inches(8, 8)
         ax.set_xticklabels(labels=['{}%'.format(x) for x in range(0, 110, 10)], size=9)
         ax.set_yticklabels(labels=['{}%'.format(x) for x in range(0, 110, 10)], size=9)
         ax.grid(which='major', alpha=10)
         for index in range(10, 110, 10):
-            ax.annotate('{}%'.format(round(gain_group_data.loc[index]['Model Gain'], 1)),
-                        xy=(index + 1, gain_group_data.loc[index]['Model Gain'] - 1),
+            ax.annotate('{}%'.format(round(gain_lift_group_data.loc[index]['Model Gain'], 1)),
+                        xy=(index + 1, gain_lift_group_data.loc[index]['Model Gain'] - 1),
                         size=10)
 
-        ax.scatter(x=range(0, 110, 10), y=gain_group_data['Model Gain'].values, s=10)
+        ax.scatter(x=range(0, 110, 10), y=gain_lift_group_data['Model Gain'].values, s=10)
         line = matplotlib.lines.Line2D(perfect_gain_x_values,
                                        perfect_gain_y_values,
                                        color='green')
@@ -269,7 +279,38 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
                   'ylabel': '% of Positive Events Captured'})
 
     def plot_lift_chart(self):
-        pass
+        """
+        :return: Lift chart shows when we are selecting the top X (x-axis) percent of the predictions such
+            that the highest predictions are looked at first, we can expected Y-times (y-axis) the total
+            number of positive events found than by randomly selecting X% of the data.
+        """
+        gain_lift_group_data = self._create_gain_lift_data(predicted_probabilities=self._predicted_probabilities,  # noqa
+                                                           actual_classes=self._actual_classes,
+                                                           positive_class=self._positive_class)
+        # get the percent of positive class proportion, call it X%
+        # we want plot X%, such that ideally we've found i.e. predicted 100% of the positive events after
+        # only searching X% of the population. In other words, if we ordered our predictions by probability
+        # (in descending order) and there were e.g. 40 positive events out of a population of 100, then
+        # a model with perfect gain would have all 40 events in the top 40 spots (after ordering by
+        # probability)
+        # noinspection PyTypeChecker
+        #####################################
+        lift_data = gain_lift_group_data.loc[range(10, 110, 10)][['Model Lift']]
+        lift_data['Random Lift'] = [1 for _ in range(10, 110, 10)]
+        lift_data.plot(xticks=range(0, 110, 10))
+        ax = plt.gca()
+        ax.figure.set_size_inches(8, 8)
+        ax.set_xticklabels(labels=['{}%'.format(x) for x in range(0, 110, 10)], size=9)
+        ax.grid(which='major', alpha=10)
+        for index in range(10, 110, 10):
+            ax.annotate(round(gain_lift_group_data.loc[index]['Model Lift'], 1),
+                        xy=(index - 1.5, gain_lift_group_data.loc[index]['Model Lift'] + 0.02),
+                        size=10)
+
+        ax.scatter(x=range(0, 110, 10), y=gain_lift_group_data['Model Lift'].values, s=10)
+        ax.set(**{'title': 'Lift Chart',
+                  'xlabel': 'Percentile (lower percentiles contain higher predicted probabilities)',
+                  'ylabel': 'Lift'})
 
     @staticmethod
     def _create_curve(x_coordinates, y_coordinates, threshold, ideal_threshold,

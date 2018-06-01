@@ -231,6 +231,9 @@ class EvaluatorTests(TimerTestCase):
         TestHelper.check_plot('data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_holdout_gain.png',  # noqa
                               lambda: trainer.holdout_evaluator.plot_gain_chart())
 
+        TestHelper.check_plot('data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_holdout_lift.png',  # noqa
+                              lambda: trainer.holdout_evaluator.plot_lift_chart())
+
     def test_TwoClassEvaluator_plot_all_quality_metrics_comparison(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
         # threshold of 0.5
