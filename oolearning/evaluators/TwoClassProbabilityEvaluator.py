@@ -105,6 +105,58 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
                            y_label='Positive Predictive Value',
                            corner='Right')
 
+    def plot_calibration(self):
+        """
+        :return: calibration plot. Predicted probabilities are matched with the actual class and binned by
+            the prediction in intervals of 0.1. i.e. all probabilities/classes that have a prediction between
+            0 to 0.1 are grouped together, > 0.1 <= 0.2 are grouped together, and so on. For each group, the
+            percent of positive classes found is calculated. For example, in the group that has predicted
+            probabilities between 0 and 0.1, we would expect the average probability to be 0.05, and therefore
+            we would expect about 0.05 (i.e. 5%) of the group to be a positive class. The percentage of
+            positive classes for each bin is plotted. If the points fall along a 45 degree line, the model
+            has produced well-calibrated probabilities.
+        """
+        calibration_data = pd.concat([self._predicted_probabilities[self._positive_class],
+                                      self._actual_classes], axis=1)
+        calibration_data.columns = ['probabilities', 'actual_classes']
+        bin_labels = ['[0, 0.1]', '(0.1, 0.2]', '(0.2, 0.3]', '(0.3, 0.4]', '(0.4, 0.5]', '(0.5, 0.6]',
+                      '(0.6, 0.7]', '(0.7, 0.8]', '(0.8, 0.9]', '(0.9, 1.0]']
+        bins = pd.cut(calibration_data.probabilities,
+                      bins=np.arange(0.0, 1.1, 0.1),
+                      include_lowest=True,
+                      labels=bin_labels)
+        calibration_data['bins'] = bins
+        # calibration_data.bins.value_counts(ascending=True)
+        # calibration_data.head()
+        # calibration_data.sort_values(['bins', 'actual_classes'])
+
+        def calibration_grouping(x):
+            d = {'Events Found': x.actual_classes.sum(),
+                 'Total Observations': x.actual_classes.count(),
+                 'Actual Calibration': x.actual_classes.sum() / x.actual_classes.count()}
+            return pd.Series(d, index=['Events Found', 'Total Observations', 'Actual Calibration'])
+
+        calibration_group_data = calibration_data.groupby('bins').apply(calibration_grouping)
+        calibration_group_data['Perfect Calibration'] = np.arange(0.05, 1.05, 0.10)
+
+        calibration_group_data[['Actual Calibration', 'Perfect Calibration']].plot(yticks=np.arange(0.0, 1.1, 0.1))  # noqa
+        ax = plt.gca()
+        ax.set_xticks(np.arange(len(bin_labels)))
+        ax.set_xticklabels(labels=bin_labels, rotation=20, ha='right', size=9)
+        ax.figure.set_size_inches(8, 8)
+        ax.grid(which='major', alpha=0.1)
+        for index in range(10):
+            text = '({}/{} = {:.1%})'.format(calibration_group_data.iloc[index]['Events Found'],
+                                             calibration_group_data.iloc[index]['Total Observations'],
+                                             calibration_group_data.iloc[index]['Actual Calibration'])
+            ax.annotate(text,
+                        xy=(index+0.15, calibration_group_data.iloc[index]['Actual Calibration'] - 0.005),
+                        size=7)
+        ax.scatter(x=np.arange(len(bin_labels)), y=calibration_group_data['Actual Calibration'].values, s=10)
+        ax.set(**{'title': 'Calibration Chart',
+                  'xlabel': 'Binned Probabilities',
+                  'ylabel': 'Percent of Positive (Actual) Events in Bin'})
+
     @staticmethod
     def _create_curve(x_coordinates, y_coordinates, threshold, ideal_threshold,
                       title, x_label, y_label, corner):
@@ -141,6 +193,3 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         metrics = {'AUC ROC': self.auc_roc, 'AUC Precision/Recall': self.auc_precision_recall}
         metrics.update(super().all_quality_metrics)
         return metrics
-
-    # def plot_all_quality_metrics(self):
-    #     return self._confusion_matrix.plot_all_quality_metrics()
