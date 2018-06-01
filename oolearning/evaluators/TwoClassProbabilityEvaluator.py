@@ -157,6 +157,22 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
                   'xlabel': 'Binned Probabilities',
                   'ylabel': 'Percent of Positive (Actual) Events in Bin'})
 
+    def plot_predicted_probability_hist(self):
+        calibration_data = pd.concat([self._predicted_probabilities[self._positive_class],
+                                      self._actual_classes], axis=1)
+        calibration_data.columns = ['Predicted Probabilities', 'Actual Classes']
+
+        calibration_data['Predicted Probabilities'].hist(by=calibration_data['Actual Classes'],
+                                                         bins=20)
+        axes = plt.gcf().get_axes()
+        for ax in axes:
+            ax.set_xticks(np.arange(0.0, 1.1, 0.1))
+            ax.set(**{'xlabel': 'Predicted Probability (Positive Event)',
+                      'ylabel': 'Count'})
+        ax = plt.gca()
+        ax.figure.set_size_inches(10, 6)
+        plt.suptitle('Histogram of Predicted Probabilities, by Actual Outcome', fontsize=12)
+
     @staticmethod
     def _create_curve(x_coordinates, y_coordinates, threshold, ideal_threshold,
                       title, x_label, y_label, corner):
