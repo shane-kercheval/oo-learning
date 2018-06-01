@@ -210,11 +210,11 @@ class EvaluatorTests(TimerTestCase):
                            DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
         evaluator = TwoClassProbabilityEvaluator(converter=TwoClassThresholdConverter(threshold=0.5,
                                                                                       positive_class='lived'))
-        trainer = ModelTrainer(model=LogisticClassifier(),
+        trainer = ModelTrainer(model=RandomForestClassifier(),
                                model_transformations=transformations,
                                splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                                evaluator=evaluator)
-        trainer.train(data=explore.dataset, target_variable='Survived', hyper_params=LogisticClassifierHP())
+        trainer.train(data=explore.dataset, target_variable='Survived', hyper_params=RandomForestHP())
 
         TestHelper.check_plot('data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_train_calibration.png',  # noqa
                               lambda: trainer.training_evaluator.plot_calibration())
@@ -227,6 +227,9 @@ class EvaluatorTests(TimerTestCase):
 
         TestHelper.check_plot('data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_holdout_hist.png',  # noqa
                               lambda: trainer.holdout_evaluator.plot_predicted_probability_hist())
+
+        TestHelper.check_plot('data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_holdout_gain.png',  # noqa
+                              lambda: trainer.holdout_evaluator.plot_gain_chart())
 
     def test_TwoClassEvaluator_plot_all_quality_metrics_comparison(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
