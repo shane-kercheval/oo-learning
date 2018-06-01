@@ -187,7 +187,7 @@ class EvaluatorTests(TimerTestCase):
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['No Information Rate'], 0.5938375350140056)  # noqa
         assert isclose(evaluator._confusion_matrix.all_quality_metrics['Total Observations'], len(mock_data))
 
-        # NOTE: will not have auc's, because this is confusion matrix, not evaluator
+        # NOTE: will not have AUC values, because this is confusion matrix, not evaluator
         TestHelper.check_plot('data/test_Evaluators/test_confusion_matrix_plot_metrics.png',
                               lambda: evaluator._confusion_matrix.plot_all_quality_metrics())
 
@@ -196,6 +196,37 @@ class EvaluatorTests(TimerTestCase):
 
         TestHelper.check_plot('data/test_Evaluators/test_TwoClassProbabilityEvaluator_plot_predicted_probability_hist.png',  # noqa
                               lambda: evaluator.plot_predicted_probability_hist())
+
+    def test_TwoClassProbabilityEvaluator_plots_string_positive_class(self):
+        target_variable = 'Survived'
+        explore = ExploreClassificationDataset(dataset=TestHelper.get_titanic_data(),
+                                               target_variable=target_variable,
+                                               map_numeric_target={0: 'died', 1: 'lived'})
+
+        # noinspection SpellCheckingInspection
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.DUMMY)]
+        evaluator = TwoClassProbabilityEvaluator(converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                                      positive_class='lived'))
+        trainer = ModelTrainer(model=LogisticClassifier(),
+                               model_transformations=transformations,
+                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                               evaluator=evaluator)
+        trainer.train(data=explore.dataset, target_variable='Survived', hyper_params=LogisticClassifierHP())
+
+        TestHelper.check_plot('data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_train_calibration.png',  # noqa
+                              lambda: trainer.training_evaluator.plot_calibration())
+
+        TestHelper.check_plot('data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_holdout_calibration.png',  # noqa
+                              lambda: trainer.holdout_evaluator.plot_calibration())
+
+        TestHelper.check_plot('data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_train_hist.png',  # noqa
+                              lambda: trainer.training_evaluator.plot_predicted_probability_hist())
+
+        TestHelper.check_plot('data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_holdout_hist.png',  # noqa
+                              lambda: trainer.holdout_evaluator.plot_predicted_probability_hist())
 
     def test_TwoClassEvaluator_plot_all_quality_metrics_comparison(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa

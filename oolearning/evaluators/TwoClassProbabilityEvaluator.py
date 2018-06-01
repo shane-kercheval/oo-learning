@@ -131,10 +131,13 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         # calibration_data.sort_values(['bins', 'actual_classes'])
 
         def calibration_grouping(x):
-            d = {'Events Found': x.actual_classes.sum(),
-                 'Total Observations': x.actual_classes.count(),
-                 'Actual Calibration': x.actual_classes.sum() / x.actual_classes.count()}
-            return pd.Series(d, index=['Events Found', 'Total Observations', 'Actual Calibration'])
+            number_positive_events = sum(x.actual_classes == self._positive_class)
+            total_observations = len(x.actual_classes)
+            d = {'Positive Events Found': number_positive_events,
+                 'Total Observations': total_observations,
+                 'Actual Calibration': 0 if total_observations == 0
+                                         else number_positive_events / total_observations}
+            return pd.Series(d, index=['Positive Events Found', 'Total Observations', 'Actual Calibration'])
 
         calibration_group_data = calibration_data.groupby('bins').apply(calibration_grouping)
         calibration_group_data['Perfect Calibration'] = np.arange(0.05, 1.05, 0.10)
@@ -146,7 +149,7 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         ax.figure.set_size_inches(8, 8)
         ax.grid(which='major', alpha=0.1)
         for index in range(10):
-            text = '({}/{} = {:.1%})'.format(calibration_group_data.iloc[index]['Events Found'],
+            text = '({}/{} = {:.1%})'.format(calibration_group_data.iloc[index]['Positive Events Found'],
                                              calibration_group_data.iloc[index]['Total Observations'],
                                              calibration_group_data.iloc[index]['Actual Calibration'])
             ax.annotate(text,
