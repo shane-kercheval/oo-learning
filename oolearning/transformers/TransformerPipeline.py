@@ -111,7 +111,7 @@ class TransformerPipeline:
 
     @classmethod
     def get_expected_columns(cls, transformations: List[TransformerBase], data: pd.DataFrame) -> List[str]:
-        trans_copy = [x.clone() for x in transformations]
+        trans_copy = [x.clone() for x in transformations] if transformations else None
         pipeline = cls(transformations=trans_copy)
         transformed_data = pipeline.fit_transform(data_x=data)
         return transformed_data.columns.values.tolist()
