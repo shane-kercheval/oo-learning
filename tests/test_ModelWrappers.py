@@ -4,7 +4,6 @@ import os.path
 import pickle
 import shutil
 import time
-import unittest
 
 from math import isclose
 from typing import Callable
@@ -73,6 +72,21 @@ class ModelWrapperTests(TimerTestCase):
     @classmethod
     def setUpClass(cls):
         pass
+
+    # noinspection PyPep8Naming
+    @staticmethod
+    def get_GradientBoostingRegressor() -> ModelInfo:
+        model_wrapper = GradientBoostingRegressor()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=[ImputationTransformer(),
+                                          DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                         hyper_params=GradientBoostingRegressorHP(),
+                         hyper_params_grid=dict(learning_rate=[0.1, 0.5, 1],
+                                                n_estimators=[50, 100, 5000],
+                                                max_depth=[1, 5, 9],
+                                                min_samples_leaf=[1, 10, 20]))
 
     # noinspection PyArgumentList
     def play_time(self):
@@ -2038,7 +2052,8 @@ class ModelWrapperTests(TimerTestCase):
                                                          'max_depth': 3,
                                                          'min_samples_split': 2,
                                                          'min_samples_leaf': 1,
-                                                         'max_features': None}
+                                                         'max_features': None,
+                                                         'subsample': 1.0}
 
         keys = fitter.training_evaluator.all_quality_metrics.keys()
         expected_values = {'Mean Absolute Error (MAE)': 2.921039389435212, 'Mean Squared Error (MSE)': 14.909877151863128, 'Root Mean Squared Error (RMSE)': 3.861331007808464, 'RMSE to Standard Deviation of Target': 0.23029024359523864, 'Total Observations': 824}  # noqa
@@ -2069,7 +2084,8 @@ class ModelWrapperTests(TimerTestCase):
                                                          'max_depth': 3,
                                                          'min_samples_split': 2,
                                                          'min_samples_leaf': 1,
-                                                         'max_features': None}
+                                                         'max_features': None,
+                                                         'subsample': 1.0}
 
         assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9551594950228207, 'AUC Precision/Recall': 0.9422935585546288, 'Kappa': 0.7902449021416128, 'F1 Score': 0.8654970760233918, 'Two-Class Accuracy': 0.9030898876404494, 'Error Rate': 0.09691011235955056, 'True Positive Rate': 0.8131868131868132, 'True Negative Rate': 0.958997722095672, 'False Positive Rate': 0.04100227790432802, 'False Negative Rate': 0.18681318681318682, 'Positive Predictive Value': 0.925, 'Negative Predictive Value': 0.8919491525423728, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8112648221343873, 'AUC Precision/Recall': 0.7673499978743319, 'Kappa': 0.5503428610224728, 'F1 Score': 0.7086614173228347, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.6521739130434783, 'True Negative Rate': 0.8818181818181818, 'False Positive Rate': 0.11818181818181818, 'False Negative Rate': 0.34782608695652173, 'Positive Predictive Value': 0.7758620689655172, 'Negative Predictive Value': 0.8016528925619835, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
@@ -2093,7 +2109,8 @@ class ModelWrapperTests(TimerTestCase):
                                                          'max_depth': 3,
                                                          'min_samples_split': 2,
                                                          'min_samples_leaf': 1,
-                                                         'max_features': None}
+                                                         'max_features': None,
+                                                         'subsample': 1.0}
 
         assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
         assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.9604989604989606, 'Accuracy': 0.9736842105263158, 'Error Rate': 0.02631578947368418, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa
@@ -2217,6 +2234,38 @@ class ModelWrapperTests(TimerTestCase):
             assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.8956002236184468, 'AUC Precision/Recall': 0.8667526900645599, 'Kappa': 0.6360745115856429, 'F1 Score': 0.7567567567567567, 'Two-Class Accuracy': 0.8356741573033708, 'Error Rate': 0.16432584269662923, 'True Positive Rate': 0.6666666666666666, 'True Negative Rate': 0.9407744874715261, 'False Positive Rate': 0.05922551252847381, 'False Negative Rate': 0.3333333333333333, 'Positive Predictive Value': 0.875, 'Negative Predictive Value': 0.8194444444444444, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
             assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8242424242424243, 'AUC Precision/Recall': 0.7825084027943098, 'Kappa': 0.5124659543264193, 'F1 Score': 0.6666666666666667, 'Two-Class Accuracy': 0.7821229050279329, 'Error Rate': 0.21787709497206703, 'True Positive Rate': 0.5652173913043478, 'True Negative Rate': 0.9181818181818182, 'False Positive Rate': 0.08181818181818182, 'False Negative Rate': 0.43478260869565216, 'Positive Predictive Value': 0.8125, 'Negative Predictive Value': 0.7709923664122137, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
 
+    def test_XGBoostClassifier_multiclass(self):
+        data = TestHelper.get_iris_data()
+        target_variable = 'species'
+        fitter = ModelTrainer(model=XGBoostClassifier(),
+                              model_transformations=None,
+                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
+                              evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
+        fitter.train(data=data,
+                     target_variable=target_variable,
+                     hyper_params=XGBoostTreeHP(objective=XGBObjective.MULTI_SOFTMAX))
+        assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
+        assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
+        assert fitter.model.feature_names == ['sepal_length', 'sepal_width', 'petal_length', 'petal_width']
+        assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'multi:softmax', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
+
+        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.8814968814968815, 'Accuracy': 0.9210526315789473, 'Error Rate': 0.07894736842105265, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa
+
+        con_matrix = fitter.holdout_evaluator.matrix
+        assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
+        assert con_matrix['versicolor'].values.tolist() == [0, 12, 2, 14]
+        assert con_matrix['virginica'].values.tolist() == [0, 1, 11, 12]
+        assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
+        assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+
+        assert all(fitter.model.feature_importance.index.values == ['sepal_length', 'sepal_width', 'petal_length', 'petal_width'])  # noqa
+        assert all([isclose(round(x, 5), round(y, 5)) for x, y in zip(fitter.model.feature_importance.weights, [0.11647254, 0.14642262, 0.45424291, 0.2828619])])  # noqa
+
+        TestHelper.check_plot('data/test_ModelWrappers/test_XGBoostClassifier_plot_feature_importance_multi.png',  # noqa
+                              lambda: fitter.model.plot_feature_importance())
+
     def test_XGBoostRegressor_linear(self):
         data = TestHelper.get_cement_data()
         transformations = None
@@ -2234,21 +2283,12 @@ class ModelWrapperTests(TimerTestCase):
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
 
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
-        assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'reg:linear', 'booster': 'gblinear', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
-
+        assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'reg:linear', 'booster': 'gblinear', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 0, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
         keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 9.1510853668324,
-                           'Mean Squared Error (MSE)': 131.3990827046262,
-                           'Root Mean Squared Error (RMSE)': 11.462943893460624,
-                           'RMSE to Standard Deviation of Target': 0.6836513461822706,
-                           'Total Observations': 824}
+        expected_values = {'Mean Absolute Error (MAE)': 9.15756252779544, 'Mean Squared Error (MSE)': 131.63721402456707, 'Root Mean Squared Error (RMSE)': 11.47332619707847, 'RMSE to Standard Deviation of Target': 0.6842705480130379, 'Total Observations': 824}  # noqa
         assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
-        expected_values = {'Mean Absolute Error (MAE)': 8.902524983859756,
-                           'Mean Squared Error (MSE)': 122.6195118156708,
-                           'Root Mean Squared Error (RMSE)': 11.073369487905243,
-                           'RMSE to Standard Deviation of Target': 0.6745645845967496,
-                           'Total Observations': 206}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 8.915862154543978, 'Mean Squared Error (MSE)': 123.05050668005934, 'Root Mean Squared Error (RMSE)': 11.092813289696142, 'RMSE to Standard Deviation of Target': 0.6757490569556269, 'Total Observations': 206}  # noqa
         assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
     def test_XGBoostRegressor_tree(self):
@@ -2885,7 +2925,7 @@ class ModelWrapperTests(TimerTestCase):
 
         model_stacker = ModelStacker(base_models=[ModelDefaults.get_LinearRegressor(degrees=2),
                                                   ModelDefaults.get_CartDecisionTreeRegressor(),
-                                                  ModelDefaults.get_GradientBoostingRegressor()],
+                                                  self.get_GradientBoostingRegressor()],
                                      scores=[MaeScore(), RmseScore()],
                                      stacking_model=ElasticNetRegressor(),
                                      stacking_transformations=None,
@@ -2999,7 +3039,7 @@ class ModelWrapperTests(TimerTestCase):
 
         model_stacker = ModelStacker(base_models=[ModelDefaults.get_LinearRegressor(degrees=2),
                                                   ModelDefaults.get_CartDecisionTreeRegressor(),
-                                                  ModelDefaults.get_GradientBoostingRegressor()],
+                                                  self.get_GradientBoostingRegressor()],
                                      scores=[MaeScore(), RmseScore()],
                                      stacking_model=ElasticNetRegressor(),
                                      stacking_transformations=[CenterScaleTransformer()],
@@ -3063,3 +3103,28 @@ class ModelWrapperTests(TimerTestCase):
         shutil.rmtree(cache_directory)
         assert 6 < fit_time_not_previously_cached < 8  # looks like around ~7 seconds on average
         assert fit_time_previously_cached < 2  # improves to less than 2 with caching
+
+    def test_ModelDefaults(self):
+        ######################################################################################################
+        # Regression
+        ######################################################################################################
+        default_models = ModelDefaults.get_regression_models(4)
+        descriptions = [x.description for x in default_models]
+        # ensure unique descriptions
+        assert len(set(descriptions)) == len(descriptions)  # i.e. # of unique values equals number of values
+
+        ######################################################################################################
+        # Two-class classifiction
+        ######################################################################################################
+        default_models = ModelDefaults.get_twoclass_classification_models(4)
+        descriptions = [x.description for x in default_models]
+        # ensure unique descriptions
+        assert len(set(descriptions)) == len(descriptions)  # i.e. # of unique values equals number of values
+
+        ######################################################################################################
+        # multi-class classifiction
+        ######################################################################################################
+        default_models = ModelDefaults.get_multiclass_classification_models(4)
+        descriptions = [x.description for x in default_models]
+        # ensure unique descriptions
+        assert len(set(descriptions)) == len(descriptions)  # i.e. # of unique values equals number of values

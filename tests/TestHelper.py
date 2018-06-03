@@ -68,12 +68,16 @@ class TestHelper:
     def get_iris_data():
         iris = datasets.load_iris()
         # noinspection SpellCheckingInspection
-        return pd.DataFrame(data=np.c_[iris['data'],
+        iris = pd.DataFrame(data=np.c_[iris['data'],
                                        pd.Categorical.from_codes(iris['target'],
                                                                  ['setosa', 'versicolor', 'virginica'],
                                                                  ordered=False)],
                             columns=[x[0:12].strip().replace(' ', '_') for x in iris['feature_names']] +
                                     ['species'])
+        iris[['sepal_length', 'sepal_width', 'petal_length', 'petal_width']] = \
+            iris[['sepal_length', 'sepal_width', 'petal_length', 'petal_width']].apply(pd.to_numeric)
+
+        return iris
 
     @staticmethod
     def get_insurance_expected_values():
