@@ -19,7 +19,8 @@ class GradientBoostingClassifierHP(HyperParamsBase):
                  max_depth: int=3,
                  min_samples_split: Union[int, float]=2,
                  min_samples_leaf: Union[int, float]=1,
-                 max_features: Union[int, float, str, None]=None):
+                 max_features: Union[int, float, str, None]=None,
+                 subsample: Union[float, None]=1.0):
         """
         for more info, see
             http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingClassifier.html
@@ -31,7 +32,8 @@ class GradientBoostingClassifierHP(HyperParamsBase):
                                  max_depth=max_depth,
                                  min_samples_split=min_samples_split,
                                  min_samples_leaf=min_samples_leaf,
-                                 max_features=max_features)
+                                 max_features=max_features,
+                                 subsample=subsample)
 
 
 class GradientBoostingClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
@@ -55,6 +57,7 @@ class GradientBoostingClassifier(SklearnPredictClassifierMixin, ModelWrapperBase
                                             min_samples_split=param_dict['min_samples_split'],
                                             min_samples_leaf=param_dict['min_samples_leaf'],
                                             max_features=param_dict['max_features'],
+                                            subsample=param_dict['subsample'],
                                             random_state=self._random_state)
         tree.fit(data_x, data_y)
         return tree
@@ -68,7 +71,8 @@ class GradientBoostingRegressorHP(HyperParamsBase):
                  max_depth: int=3,
                  min_samples_split: Union[int, float]=2,
                  min_samples_leaf: Union[int, float]=1,
-                 max_features: Union[int, float, str, None]=None):
+                 max_features: Union[int, float, str, None]=None,
+                 subsample: Union[float, None]=1.0):
         """
         for more info, see
             http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html
@@ -80,7 +84,8 @@ class GradientBoostingRegressorHP(HyperParamsBase):
                                  max_depth=max_depth,
                                  min_samples_split=min_samples_split,
                                  min_samples_leaf=min_samples_leaf,
-                                 max_features=max_features)
+                                 max_features=max_features,
+                                 subsample=subsample)
 
 
 class GradientBoostingRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
@@ -104,6 +109,7 @@ class GradientBoostingRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
                                            min_samples_split=param_dict['min_samples_split'],
                                            min_samples_leaf=param_dict['min_samples_leaf'],
                                            max_features=param_dict['max_features'],
+                                           subsample=param_dict['subsample'],
                                            random_state=self._random_state)
         tree.fit(data_x, data_y)
         return tree

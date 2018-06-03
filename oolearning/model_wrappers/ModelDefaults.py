@@ -23,6 +23,8 @@ from oolearning.model_wrappers.SoftmaxLogisticClassifier import SoftmaxLogisticC
 from oolearning.model_wrappers.SupportVectorMachines import SvmLinearClassifier, SvmLinearClassifierHP, \
     SvmPolynomialClassifier, SvmPolynomialClassifierHP, SvmLinearRegressor, SvmLinearRegressorHP, \
     SvmPolynomialRegressor, SvmPolynomialRegressorHP
+from oolearning.model_wrappers.XGBoost import XGBEvalMetric, XGBObjective, XGBoostClassifier, \
+    XGBoostRegressor, XGBoostDartHP, XGBoostLinearHP, XGBoostTreeHP
 from oolearning.transformers.CenterScaleTransformer import CenterScaleTransformer
 from oolearning.transformers.DummyEncodeTransformer import DummyEncodeTransformer
 from oolearning.transformers.ImputationTransformer import ImputationTransformer
@@ -66,22 +68,22 @@ class ModelDefaults:
         return ModelDefaults._ridge_lasso_elastic_helper(model_wrapper=RidgeRegressor(),
                                                          hyper_params=RidgeRegressorHP(),
                                                          degrees=degrees,
-                                                         params_dict={'alpha': [0, 0.01, 0.1, 1]})
+                                                         params_dict={'alpha': [0, 0.01, 0.1, 1, 20]})
 
     @staticmethod
     def get_LassoRegressor(degrees: Union[int, None] = None) -> ModelInfo:
         return ModelDefaults._ridge_lasso_elastic_helper(model_wrapper=LassoRegressor(),
                                                          hyper_params=LassoRegressorHP(),
                                                          degrees=degrees,
-                                                         params_dict={'alpha': [0, 0.01, 0.1, 1]})
+                                                         params_dict={'alpha': [0, 0.01, 0.1, 1, 20]})
 
     @staticmethod
     def get_ElasticNetRegressor(degrees: Union[int, None] = None) -> ModelInfo:
         return ModelDefaults._ridge_lasso_elastic_helper(model_wrapper=ElasticNetRegressor(),
                                                          hyper_params=ElasticNetRegressorHP(),
                                                          degrees=degrees,
-                                                         params_dict={'alpha': [0.01, 0.1, 1],
-                                                                      'l1_ratio': [0, 0.5, 1]})
+                                                         params_dict={'alpha': [0.01, 0.1, 1, 20],
+                                                                      'l1_ratio': [0, 0.33, 0.5, 0.66, 1]})
 
     @staticmethod
     def get_CartDecisionTreeRegressor() -> ModelInfo:
@@ -149,7 +151,7 @@ class ModelDefaults:
                                                 learning_rate=[0.1, 0.5, 1]))
 
     @staticmethod
-    def get_GradientBoostingRegressor() -> ModelInfo:
+    def get_GradientBoostingRegressor(number_of_features) -> ModelInfo:
         model_wrapper = GradientBoostingRegressor()
         return ModelInfo(description=type(model_wrapper).__name__,
                          model=model_wrapper,
@@ -157,10 +159,53 @@ class ModelDefaults:
                          transformations=[ImputationTransformer(),
                                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
                          hyper_params=GradientBoostingRegressorHP(),
-                         hyper_params_grid=dict(learning_rate=[0.1, 0.5, 1],
-                                                n_estimators=[50, 100, 5000],
-                                                max_depth=[1, 5, 9],
-                                                min_samples_leaf=[1, 10, 20]))
+                         # https://www.analyticsvidhya.com/blog/2016/02/complete-guide-parameter-tuning-gradient-boosting-gbm-python/
+
+                         # consider taking the default learning rate of 0.1 and check the optimum number of
+                         #   trees for that. For this purpose, we can do a grid search and test out values
+                         #   from 20 to 80 in steps of 10.
+                         # The order of tuning variables should be decided carefully.
+                         # You should take the variables with a higher impact on outcome first.
+                         # For instance, max_depth and min_samples_split have a significant impact and we’re
+                         #    tuning those first.
+                         hyper_params_grid=dict(learning_rate=[0.05, 0.1, 0.2],
+                                                n_estimators=[40, 60, 80],
+                                                max_depth=[3, 5, 9],
+                                                min_samples_split=[2, 500],
+                                                #min_samples_leaf=[1, 10, 50],
+                                                max_features=[int(round(number_of_features**(1/2.0)))],
+                                                              # int(round(number_of_features/2)),
+                                                              #number_of_features - 1],
+                                                subsample=[0.8]))
+
+    @staticmethod
+    def get_XGBoostRegressor_linear() -> ModelInfo:
+        model_wrapper = XGBoostRegressor()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=[ImputationTransformer(),
+                                          DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                         hyper_params=XGBoostLinearHP(objective=XGBObjective.REG_LINEAR),
+                         # https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
+                         hyper_params_grid=dict(n_estimators=[10, 50, 100],
+                                                reg_alpha=[0, 0.001, 0.01, 0.05],
+                                                reg_lambda=[0.1, 0.5, 1, 2]))
+
+    @staticmethod
+    def get_XGBoostRegressor_tree() -> ModelInfo:
+        model_wrapper = XGBoostRegressor()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=[ImputationTransformer(),
+                                          DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                         hyper_params=XGBoostTreeHP(objective=XGBObjective.REG_LINEAR),
+                         # https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
+                         hyper_params_grid=dict(learning_rate=[0.05, 0.1, 0.3],
+                                                max_depth=[3, 6, 9],
+                                                min_child_weight=[1, 3, 6]))
+
 
     @staticmethod
     def get_regression_models(number_of_features):
@@ -185,7 +230,9 @@ class ModelDefaults:
                 ModelDefaults.get_SvmLinearRegressor(),
                 ModelDefaults.get_SvmPolynomialRegressor(),
                 ModelDefaults.get_AdaBoostRegressor(),
-                ModelDefaults.get_GradientBoostingRegressor()]
+                ModelDefaults.get_GradientBoostingRegressor(number_of_features=number_of_features),
+                ModelDefaults.get_XGBoostRegressor_linear(),
+                ModelDefaults.get_XGBoostRegressor_tree()]
 
     @staticmethod
     def _ridge_lasso_elastic_helper(model_wrapper, hyper_params, degrees, params_dict):
@@ -320,17 +367,45 @@ class ModelDefaults:
                                                 learning_rate=[0.1, 0.5, 1]))
 
     @staticmethod
-    def get_GradientBoostingClassifier() -> ModelInfo:
+    def get_GradientBoostingClassifier(number_of_features) -> ModelInfo:
         model_wrapper = GradientBoostingClassifier()
         return ModelInfo(description=type(model_wrapper).__name__,
                          model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
                          transformations=None,
                          hyper_params=GradientBoostingClassifierHP(),
-                         hyper_params_grid=dict(learning_rate=[0.1, 0.5, 1],
-                                                n_estimators=[50, 100, 5000],
-                                                max_depth=[1, 5, 9],
-                                                min_samples_leaf=[1, 10, 20]))
+                         # https://www.analyticsvidhya.com/blog/2016/02/complete-guide-parameter-tuning-gradient-boosting-gbm-python/
+
+                         # consider taking the default learning rate of 0.1 and check the optimum number of
+                         #   trees for that. For this purpose, we can do a grid search and test out values
+                         #   from 20 to 80 in steps of 10.
+                         # The order of tuning variables should be decided carefully.
+                         # You should take the variables with a higher impact on outcome first.
+                         # For instance, max_depth and min_samples_split have a significant impact and we’re
+                         #    tuning those first.
+                         hyper_params_grid=dict(learning_rate=[0.05, 0.1, 0.2],
+                                                n_estimators=[40, 60, 80],
+                                                max_depth=[3, 5, 9],
+                                                min_samples_split=[2, 500],
+                                                #min_samples_leaf=[1, 10, 50],
+                                                max_features=[int(round(number_of_features**(1/2.0)))],
+                                                              # int(round(number_of_features/2)),
+                                                              #number_of_features - 1],
+                                                subsample=[0.8]))
+
+    @staticmethod
+    def get_XGBoostClassifier_tree() -> ModelInfo:
+        model_wrapper = XGBoostClassifier()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model=model_wrapper,
+                         # TODO: fill out rest of recommended transformations, verify order
+                         transformations=[ImputationTransformer(),
+                                          DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                         hyper_params=XGBoostTreeHP(objective=XGBObjective.REG_LOGISTIC),
+                         # https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
+                         hyper_params_grid=dict(learning_rate=[0.05, 0.1, 0.3],
+                                                max_depth=[3, 6, 9],
+                                                min_child_weight=[1, 3, 6]))
 
     # noinspection SpellCheckingInspection
     @staticmethod
@@ -351,7 +426,8 @@ class ModelDefaults:
                 ModelDefaults.get_CartDecisionTreeClassifier(),
                 ModelDefaults.get_RandomForestClassifier(number_of_features=number_of_features),
                 ModelDefaults.get_AdaBoostClassifier(),
-                ModelDefaults.get_GradientBoostingClassifier()]
+                ModelDefaults.get_GradientBoostingClassifier(number_of_features=number_of_features),
+                ModelDefaults.get_XGBoostClassifier_tree()]
 
     ###################################################
     # Multi-Classification Models

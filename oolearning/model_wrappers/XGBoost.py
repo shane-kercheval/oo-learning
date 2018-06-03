@@ -80,11 +80,12 @@ class XGBEvalMetric(Enum):
 
 
 class XGBoostLinearHP(HyperParamsBase):
+    # noinspection SpellCheckingInspection
     def __init__(self,
                  objective: XGBObjective,
                  n_estimators: int=100,
-                 alpha: float=0,
-                 lambda_r: float=1):
+                 reg_alpha: float=0,
+                 reg_lambda: float=0):
         """
         See
             https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/
@@ -96,8 +97,8 @@ class XGBoostLinearHP(HyperParamsBase):
 
         :param objective:
         :param n_estimators:
-        :param alpha:
-        :param lambda_r:
+        :param reg_alpha:
+        :param reg_lambda:
         """
         super().__init__()
 
@@ -116,8 +117,8 @@ class XGBoostLinearHP(HyperParamsBase):
                                  subsample=1,
                                  colsample_bytree=1,
                                  colsample_bylevel=1,
-                                 reg_alpha=alpha,
-                                 reg_lambda=lambda_r,
+                                 reg_alpha=reg_alpha,
+                                 reg_lambda=reg_lambda,
                                  scale_pos_weight=1,
                                  base_score=0.5,
                                  missing=None)
