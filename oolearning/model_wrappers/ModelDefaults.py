@@ -1,6 +1,5 @@
 from typing import Union
 
-
 from oolearning.enums.CategoricalEncoding import CategoricalEncoding
 from oolearning.enums.DummyClassifierStrategy import DummyClassifierStrategy
 from oolearning.model_processors.ModelInfo import ModelInfo
@@ -23,8 +22,8 @@ from oolearning.model_wrappers.SoftmaxLogisticClassifier import SoftmaxLogisticC
 from oolearning.model_wrappers.SupportVectorMachines import SvmLinearClassifier, SvmLinearClassifierHP, \
     SvmPolynomialClassifier, SvmPolynomialClassifierHP, SvmLinearRegressor, SvmLinearRegressorHP, \
     SvmPolynomialRegressor, SvmPolynomialRegressorHP
-from oolearning.model_wrappers.XGBoost import XGBEvalMetric, XGBObjective, XGBoostClassifier, \
-    XGBoostRegressor, XGBoostDartHP, XGBoostLinearHP, XGBoostTreeHP
+from oolearning.model_wrappers.XGBoost import XGBObjective, XGBoostClassifier, \
+    XGBoostRegressor, XGBoostLinearHP, XGBoostTreeHP
 from oolearning.transformers.CenterScaleTransformer import CenterScaleTransformer
 from oolearning.transformers.DummyEncodeTransformer import DummyEncodeTransformer
 from oolearning.transformers.ImputationTransformer import ImputationTransformer
@@ -170,10 +169,11 @@ class ModelDefaults:
                          hyper_params_grid=dict(n_estimators=[50, 200, 350],
                                                 max_depth=[2, 5, 8],
                                                 min_samples_leaf=[2, 10, 50],
-                                                max_features=[# int(round(number_of_features**(1/2.0)))],
+                                                max_features=[
+                                                              # int(round(number_of_features**(1/2.0)))],
                                                               # int(round(number_of_features/2)),
+                                                              # number_of_features - 1],
                                                               int(round(number_of_features / 3 * 2))],  # 2/3
-                                                              #number_of_features - 1],
                                                 subsample=[0.3, 0.5, 0.8]))
 
     @staticmethod
@@ -234,9 +234,9 @@ class ModelDefaults:
     @staticmethod
     def _ridge_lasso_elastic_helper(model_wrapper, hyper_params, degrees, params_dict):
         description = type(model_wrapper).__name__
-        # TODO: fill out rest of recommended transformations, verify order
         transformations = [ImputationTransformer(),
                            CenterScaleTransformer(),
+                           RemoveCorrelationsTransformer(),
                            RemoveNZVTransformer()]
 
         if degrees is not None:
