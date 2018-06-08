@@ -55,9 +55,9 @@ class CartDecisionTreeHP(HyperParamsBase):
 
 
 class CartDecisionTreeClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
-    def __init__(self, random_state: int=42):
+    def __init__(self, seed: int=42):
         super().__init__()
-        self._random_state = random_state
+        self._seed = seed
 
     @property
     def feature_importance(self):
@@ -79,15 +79,15 @@ class CartDecisionTreeClassifier(SklearnPredictClassifierMixin, ModelWrapperBase
                                       min_weight_fraction_leaf=param_dict['min_weight_fraction_leaf'],
                                       max_leaf_nodes=param_dict['max_leaf_nodes'],
                                       max_features=param_dict['max_features'],
-                                      random_state=self._random_state)
+                                      random_state=self._seed)
         tree.fit(data_x, data_y)
         return tree
 
 
 class CartDecisionTreeRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
-    def __init__(self, random_state: int=42):
+    def __init__(self, seed: int=42):
         super().__init__()
-        self._random_state = random_state
+        self._seed = seed
 
     @property
     def feature_importance(self):
@@ -109,6 +109,6 @@ class CartDecisionTreeRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
                                      min_weight_fraction_leaf=param_dict['min_weight_fraction_leaf'],
                                      max_leaf_nodes=param_dict['max_leaf_nodes'],
                                      max_features=param_dict['max_features'],
-                                     random_state=self._random_state)
+                                     random_state=self._seed)
         tree.fit(data_x, data_y)
         return tree

@@ -107,10 +107,10 @@ class RandomForestClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
         forest will typically be helpful when we have a large number of correlated features." (ISLR pg
         319-320)
     """
-    def __init__(self, _num_jobs_in_parallel: int=-1, random_state: int=42):
+    def __init__(self, _num_jobs_in_parallel: int=-1, seed: int=42):
         super().__init__()
         self._num_jobs_in_parallel = _num_jobs_in_parallel
-        self._random_state = random_state
+        self._seed = seed
 
     @property
     def feature_importance(self):
@@ -138,16 +138,16 @@ class RandomForestClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
                                                            bootstrap=param_dict['bootstrap'],
                                                            oob_score=param_dict['oob_score'],
                                                            n_jobs=self._num_jobs_in_parallel,
-                                                           random_state=self._random_state)
+                                                           random_state=self._seed)
         rf_model.fit(data_x, data_y)
         return rf_model
 
 
 class RandomForestRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
-    def __init__(self, _num_jobs_in_parallel: int=-1, random_state: int=42):
+    def __init__(self, _num_jobs_in_parallel: int=-1, seed: int=42):
         super().__init__()
         self._num_jobs_in_parallel = _num_jobs_in_parallel
-        self._random_state = random_state
+        self._seed = seed
 
     @property
     def feature_importance(self):
@@ -174,6 +174,6 @@ class RandomForestRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
                                                           bootstrap=param_dict['bootstrap'],
                                                           oob_score=param_dict['oob_score'],
                                                           n_jobs=self._num_jobs_in_parallel,
-                                                          random_state=self._random_state)
+                                                          random_state=self._seed)
         rf_model.fit(data_x, data_y)
         return rf_model

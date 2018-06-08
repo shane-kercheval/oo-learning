@@ -121,6 +121,7 @@ from .persistence.PersistenceManagerBase import PersistenceManagerBase
 from .splitters.ClassificationStratifiedDataSplitter import ClassificationStratifiedDataSplitter
 from .splitters.DataSplitterBase import DataSplitterBase
 from .splitters.RegressionStratifiedDataSplitter import RegressionStratifiedDataSplitter
+from .splitters.RandomShuffleDataSplitter import RandomShuffleDataSplitter
 from .splitters.StratifiedDataSplitter import StratifiedDataSplitter
 
 from .transformers.BoxCoxTransformer import BoxCoxTransformer

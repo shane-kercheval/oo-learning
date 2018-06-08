@@ -28,13 +28,14 @@ class SvmLinearClassifierHP(HyperParamsBase):
 
 
 class SvmLinearClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
-    def __init__(self, fit_intercept=False):
+    def __init__(self, fit_intercept: bool=False, seed: int=42):
         """
         :param fit_intercept: set to False by default, since the expectation is that One-Hot encoding will
             be used
         """
         super().__init__()
         self._fit_intercept = fit_intercept
+        self._seed = seed
 
     @property
     def feature_importance(self):
@@ -61,7 +62,7 @@ class SvmLinearClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
                         # ValueError: Unsupported set of arguments: The combination of penalty=l2 and
                         # loss=hinge are not supported when dual=False, Parameters: penalty=l2, loss=hinge,
                         # dual=False
-                        random_state=42)
+                        random_state=self._seed)
         # SVM classifiers do not output probabilities for each class (but we will convert them to remain
         #
         # https://stackoverflow.com/questions/26478000/converting-linearsvcs-decision-function-to-probabilities-scikit-learn-python
@@ -84,6 +85,14 @@ class SvmPolynomialClassifierHP(HyperParamsBase):
 
 
 class SvmPolynomialClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
+    def __init__(self, seed: int=42):
+        """
+        :param fit_intercept: set to False by default, since the expectation is that One-Hot encoding will
+            be used
+        """
+        super().__init__()
+        self._seed = seed
+
     @property
     def feature_importance(self):
         raise NotImplementedError()
@@ -103,7 +112,7 @@ class SvmPolynomialClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
                   degree=param_dict['degree'],
                   coef0=param_dict['coef0'],
                   C=param_dict['penalty_c'],
-                  random_state=42)
+                  random_state=self._seed)
         # SVM classifiers do not output probabilities for each class (but we will convert them to remain
         # https://stackoverflow.com/questions/26478000/converting-linearsvcs-decision-function-to-probabilities-scikit-learn-python
         model_object = CalibratedClassifierCV(svm)
@@ -130,13 +139,14 @@ class SvmLinearRegressorHP(HyperParamsBase):
 
 
 class SvmLinearRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
-    def __init__(self, fit_intercept=False):
+    def __init__(self, fit_intercept: bool=False, seed: int=42):
         """
         :param fit_intercept: set to False by default, since the expectation is that One-Hot encoding will
             be used
         """
         super().__init__()
         self._fit_intercept = fit_intercept
+        self._seed = seed
 
     @property
     def feature_importance(self):
@@ -155,7 +165,7 @@ class SvmLinearRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
         svm = LinearSVR(fit_intercept=self._fit_intercept,
                         C=param_dict['penalty_c'],
                         epsilon=param_dict['epsilon'],
-                        random_state=42)
+                        random_state=self._seed)
         svm.fit(X=data_x, y=data_y)
         return svm
 

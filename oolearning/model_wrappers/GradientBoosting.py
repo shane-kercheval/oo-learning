@@ -37,9 +37,9 @@ class GradientBoostingClassifierHP(HyperParamsBase):
 
 
 class GradientBoostingClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
-    def __init__(self, random_state: int=42):
+    def __init__(self, seed: int=42):
         super().__init__()
-        self._random_state = random_state
+        self._seed = seed
 
     @property
     def feature_importance(self):
@@ -59,7 +59,7 @@ class GradientBoostingClassifier(SklearnPredictClassifierMixin, ModelWrapperBase
                                             min_samples_leaf=param_dict['min_samples_leaf'],
                                             max_features=param_dict['max_features'],
                                             subsample=param_dict['subsample'],
-                                            random_state=self._random_state)
+                                            random_state=self._seed)
         tree.fit(data_x, data_y)
         return tree
 
@@ -90,9 +90,9 @@ class GradientBoostingRegressorHP(HyperParamsBase):
 
 
 class GradientBoostingRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
-    def __init__(self, random_state: int=42):
+    def __init__(self, seed: int=42):
         super().__init__()
-        self._random_state = random_state
+        self._seed = seed
 
     @property
     def feature_importance(self):
@@ -112,6 +112,6 @@ class GradientBoostingRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
                                            min_samples_leaf=param_dict['min_samples_leaf'],
                                            max_features=param_dict['max_features'],
                                            subsample=param_dict['subsample'],
-                                           random_state=self._random_state)
+                                           random_state=self._seed)
         tree.fit(data_x, data_y)
         return tree

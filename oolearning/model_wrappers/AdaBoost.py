@@ -32,9 +32,9 @@ class AdaBoostClassifierHP(HyperParamsBase):
 
 
 class AdaBoostClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
-    def __init__(self, random_state: int=42):
+    def __init__(self, seed: int=42):
         super().__init__()
-        self._random_state = random_state
+        self._seed = seed
 
     @property
     def feature_importance(self):
@@ -49,7 +49,7 @@ class AdaBoostClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
                                     n_estimators=param_dict['n_estimators'],
                                     learning_rate=param_dict['learning_rate'],
                                     algorithm=param_dict['algorithm'],
-                                    random_state=self._random_state)
+                                    random_state=self._seed)
         tree.fit(data_x, data_y)
         return tree
 
@@ -73,9 +73,9 @@ class AdaBoostRegressorHP(HyperParamsBase):
 
 
 class AdaBoostRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
-    def __init__(self, random_state: int=42):
+    def __init__(self, seed: int=42):
         super().__init__()
-        self._random_state = random_state
+        self._seed = seed
 
     @property
     def feature_importance(self):
@@ -90,6 +90,6 @@ class AdaBoostRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
                                    n_estimators=param_dict['n_estimators'],
                                    learning_rate=param_dict['learning_rate'],
                                    loss=param_dict['loss'],
-                                   random_state=self._random_state)
+                                   random_state=self._seed)
         tree.fit(data_x, data_y)
         return tree

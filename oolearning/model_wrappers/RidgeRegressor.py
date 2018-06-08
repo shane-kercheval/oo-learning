@@ -25,9 +25,10 @@ class RidgeRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
     fits Linear Regression model on the data
     """
 
-    def __init__(self, fit_intercept=True):
+    def __init__(self, fit_intercept: bool=True, seed: int = 42):
         super().__init__()
         self._fit_intercept = fit_intercept
+        self._seed = seed
 
     @property
     def feature_importance(self):
@@ -52,6 +53,6 @@ class RidgeRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
         ridge_reg = Ridge(alpha=param_dict['alpha'],
                           solver=param_dict['solver'],
                           fit_intercept=self._fit_intercept,
-                          random_state=42)
+                          random_state=self._seed)
         ridge_reg.fit(data_x, data_y)
         return ridge_reg

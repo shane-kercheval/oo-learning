@@ -187,10 +187,9 @@ class XGBoostBase(ModelWrapperBase):
     def __init__(self,
                  early_stopping_rounds: int=None,
                  eval_metric: Union[XGBEvalMetric, str, callable, None]=None,
-                 eval_set: Union[list, None]=None):
+                 eval_set: Union[list, None]=None,
+                 seed: int=42):
         """
-
-
         Note: sklearn takes an additional parameter (in the fit method) called eval_set. I simply set the
             eval set to the training set based to `train()`.
 
@@ -232,6 +231,7 @@ class XGBoostBase(ModelWrapperBase):
         self._eval_set = eval_set
 
         self._data_x_columns = None
+        self._seed = seed
 
     @property
     def feature_importance(self):
@@ -286,7 +286,7 @@ class XGBoostRegressor(SklearnPredictRegressorMixin, XGBoostBase):
                              reg_lambda=param_dict['reg_lambda'],
                              scale_pos_weight=param_dict['scale_pos_weight'],
                              base_score=param_dict['base_score'],
-                             random_state=42,
+                             random_state=self._seed,
                              # seed=param_dict['seed'],
                              missing=param_dict['missing'])
 
@@ -323,7 +323,7 @@ class XGBoostClassifier(SklearnPredictClassifierMixin, XGBoostBase):
                               reg_lambda=param_dict['reg_lambda'],
                               scale_pos_weight=param_dict['scale_pos_weight'],
                               base_score=param_dict['base_score'],
-                              random_state=42,
+                              random_state=self._seed,
                               # seed=param_dict['seed'],
                               missing=param_dict['missing'])
 

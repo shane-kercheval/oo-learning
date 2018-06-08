@@ -1,5 +1,6 @@
 import os
 import pickle
+import numpy as np
 from math import isclose
 
 from oolearning import *
@@ -18,6 +19,7 @@ class DataSplittersTests(TimerTestCase):
         holdout_ratio = 0.20
         data = TestHelper.get_housing_data()
         target_variable = 'median_house_value'
+        data.index = data[target_variable]  # change the index to ensure we are using raw index, not named
 
         test_splitter = RegressionStratifiedDataSplitter(holdout_ratio=holdout_ratio)
         training_indexes, test_indexes = test_splitter.split(target_values=data[target_variable])
@@ -29,6 +31,7 @@ class DataSplittersTests(TimerTestCase):
         assert len(training_indexes) == len(data) * 0.8
         assert len(test_indexes) == len(data) * 0.2
         assert set(training_indexes).isdisjoint(test_indexes)  # no overlapping indexes in training/test
+        assert set(training_indexes + test_indexes) == set(range(0, len(data)))
 
         indexes_file_path = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_DataSplitters/RegressionStratifiedDataSplitter_indexes.pkl'))  # noqa
         # with open(indexes_file_path, 'wb') as output:
@@ -47,14 +50,16 @@ class DataSplittersTests(TimerTestCase):
     def test_splitters_ClassificationStratifiedDataSplitter(self):
         holdout_ratio = 0.20
         data = TestHelper.get_titanic_data()
+        data.index = data.Name  # change the index to ensure we are using raw index, not named
         target_variable = 'Survived'
 
         test_splitter = ClassificationStratifiedDataSplitter(holdout_ratio=holdout_ratio)
         training_indexes, test_indexes = test_splitter.split(target_values=data[target_variable])
 
-        assert len(training_indexes) - len(data) * 0.8 < 2  # needs to be very close
-        assert len(test_indexes) - len(data) * 0.2 < 2  # needs to be very close
+        assert isclose(round(len(training_indexes) / len(data), 2), 1 - holdout_ratio)
+        assert isclose(round(len(test_indexes) / len(data), 2), holdout_ratio)
         assert set(training_indexes).isdisjoint(test_indexes)  # no overlapping indexes in training/test
+        assert set(training_indexes + test_indexes) == set(range(0, len(data)))
 
         indexes_file_path = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_DataSplitters/ClassificationStratifiedDataSplitter_indexes.pkl'))  # noqa
         # with open(indexes_file_path, 'wb') as output:
@@ -84,6 +89,7 @@ class DataSplittersTests(TimerTestCase):
         assert isclose(len(training_indexes), len(data) * 0.8)
         assert isclose(len(test_indexes), len(data) * 0.2)
         assert set(training_indexes).isdisjoint(test_indexes)  # no overlapping indexes in training/test
+        assert set(training_indexes + test_indexes) == set(range(0, len(data)))
 
         training_target_proportions = dict(data.iloc[training_indexes].species.value_counts(normalize=True))
         test_target_proportions = dict(data.iloc[test_indexes].species.value_counts(normalize=True))
@@ -96,6 +102,7 @@ class DataSplittersTests(TimerTestCase):
         holdout_ratio = 0.20
         data = TestHelper.get_housing_data()
         target_variable = 'median_house_value'
+        data.index = data[target_variable]  # change the index to ensure we are using raw index, not named
         num_samples = 5
 
         test_splitter = RegressionStratifiedDataSplitter(holdout_ratio=holdout_ratio)
@@ -113,6 +120,7 @@ class DataSplittersTests(TimerTestCase):
             assert len(train_ind) == len(data) * 0.8
             assert len(test_ind) == len(data) * 0.2
             assert set(train_ind).isdisjoint(test_ind)  # no overlapping indexes in training/test
+            assert set(train_ind + test_ind) == set(range(0, len(data)))
 
             indexes_file_path = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_DataSplitters/RegressionStratifiedDataSplitter_monte_indexes_' + str(index) + '.pkl'))  # noqa
             # with open(indexes_file_path, 'wb') as output:
@@ -128,3 +136,24 @@ class DataSplittersTests(TimerTestCase):
 
             TestHelper.check_plot('data/test_DataSplitters/test_splitters_RegressionStratifi_monte_distribution_test_' + str(index) + '.png',  # noqa
                                   lambda: data.iloc[test_ind][target_variable].hist(color='blue', edgecolor='black', grid=None))  # noqa
+
+    def test_splitters_RandomShuffleDataSplitter(self):
+        holdout_ratio = 0.20
+        data = TestHelper.get_titanic_data()
+        data.index = data.Name  # change the index to ensure we are using raw index, not named
+
+        test_splitter = RandomShuffleDataSplitter(holdout_ratio=holdout_ratio)
+        training_indexes, test_indexes = test_splitter.split(target_values=data.Survived)
+
+        assert isclose(round(len(training_indexes) / len(data), 3), 1 - holdout_ratio)
+        assert isclose(round(len(test_indexes) / len(data), 3), holdout_ratio)
+        assert set(training_indexes).isdisjoint(test_indexes)  # no overlapping indexes in training/test
+        assert set(np.concatenate((training_indexes, test_indexes), axis=0)) == set(range(0, len(data)))
+
+        indexes_file_path = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_DataSplitters/RandomShuffleDataSplitter_indexes.pkl'))  # noqa
+        # with open(indexes_file_path, 'wb') as output:
+        #     pickle.dump(np.concatenate((training_indexes,
+        #                                 test_indexes), axis=0), output, pickle.HIGHEST_PROTOCOL)
+        with open(indexes_file_path, 'rb') as saved_object:
+            training_test_indexes = pickle.load(saved_object)
+            assert all(np.concatenate((training_indexes, test_indexes), axis=0) == training_test_indexes)

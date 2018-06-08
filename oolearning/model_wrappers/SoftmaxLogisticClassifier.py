@@ -29,13 +29,14 @@ class SoftmaxLogisticHP(HyperParamsBase):
 
 
 class SoftmaxLogisticClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
-    def __init__(self, fit_intercept=True):
+    def __init__(self, fit_intercept: bool=True, seed: int=42):
         """
         need to set fit_intercept to False if using One-Hot-Encoding
         :param fit_intercept:
         """
         super().__init__()
         self._fit_intercept = fit_intercept
+        self._seed = seed
 
     @property
     def feature_importance(self):
@@ -57,7 +58,7 @@ class SoftmaxLogisticClassifier(SklearnPredictClassifierMixin, ModelWrapperBase)
                                                        penalty='l2',
                                                        C=param_dict['regularization_inverse'],
                                                        solver=param_dict['solver'],
-                                                       random_state=42)
+                                                       random_state=self._seed)
         model_object.fit(X=data_x, y=data_y)
 
         return model_object
