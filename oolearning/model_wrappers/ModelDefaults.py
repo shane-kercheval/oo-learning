@@ -84,7 +84,7 @@ class ModelDefaults:
                                                                       'l1_ratio': [0, 0.33, 0.5, 0.66, 1]})
 
     @staticmethod
-    def get_CartDecisionTreeRegressor() -> ModelInfo:
+    def get_CartDecisionTreeRegressor(number_of_features) -> ModelInfo:
         model_wrapper = CartDecisionTreeRegressor()
         return ModelInfo(description=type(model_wrapper).__name__,
                          model=model_wrapper,
@@ -92,7 +92,15 @@ class ModelDefaults:
                          transformations=[ImputationTransformer(),
                                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
                          hyper_params=CartDecisionTreeHP(criterion='mse'),
-                         hyper_params_grid=dict(max_depth=[3, 10, 30]))
+                         # max_depth: The maximum number of levels in the tree.
+                         # min_samples_leaf: The minimum number of samples allowed in a leaf.
+                         # min_samples_split: The minimum number of samples required to split an internal node.
+                         # max_features : The number of features to consider when looking for the best split.
+                         hyper_params_grid=dict(max_depth=[3, 10, 30],
+                                                min_samples_leaf=[1, 50, 100],
+                                                max_features=[int(round(number_of_features**(1/2.0))),
+                                                              int(round(number_of_features/2)),
+                                                              number_of_features]))
 
     @staticmethod
     def get_RandomForestRegressor(number_of_features: int) -> ModelInfo:
@@ -222,7 +230,7 @@ class ModelDefaults:
                 ModelDefaults.get_ElasticNetRegressor(),
                 ModelDefaults.get_ElasticNetRegressor(degrees=2),
                 ModelDefaults.get_ElasticNetRegressor(degrees=3),
-                ModelDefaults.get_CartDecisionTreeRegressor(),
+                ModelDefaults.get_CartDecisionTreeRegressor(number_of_features=number_of_features),
                 ModelDefaults.get_RandomForestRegressor(number_of_features=number_of_features),
                 ModelDefaults.get_SvmLinearRegressor(),
                 ModelDefaults.get_SvmPolynomialRegressor(),
@@ -292,15 +300,22 @@ class ModelDefaults:
                                             'regularization_inverse': [0.001, 0.01, 0.1, 1, 100, 1000]})
 
     @staticmethod
-    def get_CartDecisionTreeClassifier() -> ModelInfo:
+    def get_CartDecisionTreeClassifier(number_of_features) -> ModelInfo:
         model_wrapper = CartDecisionTreeClassifier()
         return ModelInfo(description=type(model_wrapper).__name__,
                          model=model_wrapper,
                          # TODO: fill out rest of recommended transformations, verify order
                          transformations=None,
-                         hyper_params=RandomForestHP(),
-                         hyper_params_grid=dict(criterion='gini',
-                                                max_depth=[3, 10, 30]))
+                         hyper_params=CartDecisionTreeHP(criterion='gini'),
+                         # max_depth: The maximum number of levels in the tree.
+                         # min_samples_leaf: The minimum number of samples allowed in a leaf.
+                         # min_samples_split: The minimum number of samples required to split an internal node.
+                         # max_features : The number of features to consider when looking for the best split.
+                         hyper_params_grid=dict(max_depth=[3, 10, 30],
+                                                min_samples_leaf=[1, 50, 100],
+                                                max_features=[int(round(number_of_features**(1/2.0))),
+                                                              int(round(number_of_features/2)),
+                                                              number_of_features]))
 
     @staticmethod
     def get_RandomForestClassifier(number_of_features: int) -> ModelInfo:
@@ -421,7 +436,7 @@ class ModelDefaults:
                 ModelDefaults.get_LogisticClassifier(degrees=3),
                 ModelDefaults.get_SvmLinearClassifier(),
                 ModelDefaults.get_SvmPolynomialClassifier(),
-                ModelDefaults.get_CartDecisionTreeClassifier(),
+                ModelDefaults.get_CartDecisionTreeClassifier(number_of_features=number_of_features),
                 ModelDefaults.get_RandomForestClassifier(number_of_features=number_of_features),
                 ModelDefaults.get_AdaBoostClassifier(),
                 ModelDefaults.get_GradientBoostingClassifier(number_of_features=number_of_features),
@@ -466,7 +481,7 @@ class ModelDefaults:
                 ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.STRATIFIED),
                 ModelDefaults.get_DummyClassifier(strategy=DummyClassifierStrategy.UNIFORM),
                 ModelDefaults.get_SoftmaxLogisticClassifier(),
-                ModelDefaults.get_CartDecisionTreeClassifier(),
+                ModelDefaults.get_CartDecisionTreeClassifier(number_of_features=number_of_features),
                 ModelDefaults.get_RandomForestClassifier(number_of_features=number_of_features),
                 ModelDefaults.get_AdaBoostClassifier(),
                 ModelDefaults.get_GradientBoostingClassifier(number_of_features=number_of_features),

@@ -88,6 +88,16 @@ class ModelWrapperTests(TimerTestCase):
                                                 max_depth=[1, 5, 9],
                                                 min_samples_leaf=[1, 10, 20]))
 
+    @staticmethod
+    def get_CartDecisionTreeRegressor() -> ModelInfo:
+        model_wrapper = CartDecisionTreeRegressor()
+        return ModelInfo(description=type(model_wrapper).__name__,
+                         model=model_wrapper,
+                         transformations=[ImputationTransformer(),
+                                          DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                         hyper_params=CartDecisionTreeHP(criterion='mse'),
+                         hyper_params_grid=dict(max_depth=[3, 10, 30]))
+
     # noinspection PyArgumentList
     def play_time(self):
         ######################################################################################################
@@ -2924,7 +2934,7 @@ class ModelWrapperTests(TimerTestCase):
                 raise ValueError()
 
         model_stacker = ModelStacker(base_models=[ModelDefaults.get_LinearRegressor(degrees=2),
-                                                  ModelDefaults.get_CartDecisionTreeRegressor(),
+                                                  self.get_CartDecisionTreeRegressor(),
                                                   self.get_GradientBoostingRegressor()],
                                      scores=[MaeScore(), RmseScore()],
                                      stacking_model=ElasticNetRegressor(),
@@ -3038,7 +3048,7 @@ class ModelWrapperTests(TimerTestCase):
                 raise ValueError()
 
         model_stacker = ModelStacker(base_models=[ModelDefaults.get_LinearRegressor(degrees=2),
-                                                  ModelDefaults.get_CartDecisionTreeRegressor(),
+                                                  self.get_CartDecisionTreeRegressor(),
                                                   self.get_GradientBoostingRegressor()],
                                      scores=[MaeScore(), RmseScore()],
                                      stacking_model=ElasticNetRegressor(),

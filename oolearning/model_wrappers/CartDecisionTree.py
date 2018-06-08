@@ -66,6 +66,7 @@ class CartDecisionTreeClassifier(SklearnPredictClassifierMixin, ModelWrapperBase
     # noinspection PyMethodOverriding
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray, hyper_params: CartDecisionTreeHP) -> object:
         assert hyper_params is not None
+        assert isinstance(hyper_params, CartDecisionTreeHP)
         assert not hyper_params.is_regression
 
         param_dict = hyper_params.params_dict
@@ -95,6 +96,7 @@ class CartDecisionTreeRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
     # noinspection PyMethodOverriding
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray, hyper_params: CartDecisionTreeHP) -> object:
         assert hyper_params is not None
+        assert isinstance(hyper_params, CartDecisionTreeHP)
         assert hyper_params.is_regression
 
         param_dict = hyper_params.params_dict

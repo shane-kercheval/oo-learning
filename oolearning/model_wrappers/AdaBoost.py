@@ -43,6 +43,7 @@ class AdaBoostClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
     # noinspection PyMethodOverriding
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray, hyper_params: AdaBoostClassifierHP) -> object:
         assert hyper_params is not None
+        assert isinstance(hyper_params, AdaBoostClassifierHP)
         param_dict = hyper_params.params_dict
         tree = SkAdaBoostClassifier(base_estimator=DecisionTreeClassifier(max_depth=param_dict['max_depth']),
                                     n_estimators=param_dict['n_estimators'],
@@ -83,6 +84,7 @@ class AdaBoostRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
     # noinspection PyMethodOverriding
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray, hyper_params: AdaBoostRegressorHP) -> object:
         assert hyper_params is not None
+        assert isinstance(hyper_params, AdaBoostRegressorHP)
         param_dict = hyper_params.params_dict
         tree = SkAdaBoostRegressor(base_estimator=DecisionTreeRegressor(max_depth=param_dict['max_depth']),
                                    n_estimators=param_dict['n_estimators'],

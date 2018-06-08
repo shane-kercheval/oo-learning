@@ -49,6 +49,7 @@ class GradientBoostingClassifier(SklearnPredictClassifierMixin, ModelWrapperBase
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray,
                hyper_params: GradientBoostingClassifierHP) -> object:
         assert hyper_params is not None
+        assert isinstance(hyper_params, GradientBoostingClassifierHP)
         param_dict = hyper_params.params_dict
         tree = SkGradientBoostingClassifier(loss=param_dict['loss'],
                                             learning_rate=param_dict['learning_rate'],
@@ -101,6 +102,7 @@ class GradientBoostingRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray,
                hyper_params: GradientBoostingRegressorHP) -> object:
         assert hyper_params is not None
+        assert isinstance(hyper_params, GradientBoostingRegressorHP)
         param_dict = hyper_params.params_dict
         tree = SkGradientBoostingRegressor(loss=param_dict['loss'],
                                            learning_rate=param_dict['learning_rate'],

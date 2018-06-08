@@ -22,8 +22,7 @@ class RegressionEvaluator(EvaluatorBase):
         self._mean_squared_error = None
         self._mean_absolute_error = None
 
-    def evaluate(self, actual_values: np.ndarray, predicted_values: object):
-        # noinspection PyTypeChecker
+    def evaluate(self, actual_values: np.ndarray, predicted_values: np.ndarray):
         assert len(actual_values) == len(predicted_values)
         self._actual_values = actual_values
         self._predicted_values = predicted_values

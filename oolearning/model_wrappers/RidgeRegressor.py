@@ -36,9 +36,10 @@ class RidgeRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
     def _train(self,
                data_x: pd.DataFrame,
                data_y: np.ndarray,
-               hyper_params: HyperParamsBase=None) -> object:
+               hyper_params: RidgeRegressorHP=None) -> object:
 
         assert hyper_params is not None
+        assert isinstance(hyper_params, RidgeRegressorHP)
         param_dict = hyper_params.params_dict
 
         # Regression can't handle missing values

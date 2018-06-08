@@ -119,6 +119,7 @@ class RandomForestClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
     # noinspection PyMethodOverriding
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray, hyper_params: RandomForestHP) -> object:
         assert hyper_params is not None
+        assert isinstance(hyper_params, RandomForestHP)
         assert not hyper_params.is_regression
 
         param_dict = hyper_params.params_dict
@@ -155,6 +156,7 @@ class RandomForestRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
     # noinspection PyMethodOverriding
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray, hyper_params: RandomForestHP) -> object:
         assert hyper_params is not None
+        assert isinstance(hyper_params, RandomForestHP)
         assert hyper_params.is_regression
         param_dict = hyper_params.params_dict
 

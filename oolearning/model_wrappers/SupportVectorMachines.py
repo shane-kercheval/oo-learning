@@ -41,9 +41,10 @@ class SvmLinearClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
         raise NotImplementedError()
 
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray,
-               hyper_params: HyperParamsBase = None) -> object:
+               hyper_params: SvmLinearClassifierHP = None) -> object:
 
         assert hyper_params is not None
+        assert isinstance(hyper_params, SvmLinearClassifierHP)
         param_dict = hyper_params.params_dict
 
         if data_x.isnull().sum().sum() > 0:
@@ -88,9 +89,10 @@ class SvmPolynomialClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
         raise NotImplementedError()
 
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray,
-               hyper_params: HyperParamsBase = None) -> object:
+               hyper_params: SvmPolynomialClassifierHP = None) -> object:
 
         assert hyper_params is not None
+        assert isinstance(hyper_params, SvmPolynomialClassifierHP)
         param_dict = hyper_params.params_dict
 
         if data_x.isnull().sum().sum() > 0:
@@ -141,9 +143,10 @@ class SvmLinearRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
         raise NotImplementedError()
 
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray,
-               hyper_params: HyperParamsBase = None) -> object:
+               hyper_params: SvmLinearRegressorHP = None) -> object:
 
         assert hyper_params is not None
+        assert isinstance(hyper_params, SvmLinearRegressorHP)
         param_dict = hyper_params.params_dict
 
         if data_x.isnull().sum().sum() > 0:

@@ -295,7 +295,7 @@ class TunerTests(TimerTestCase):
 
         tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
 
-        assert tuner.total_tune_time < 20  # Non-Parallelization: ~26 seconds; Parallelization: ~7 seconds
+        assert tuner.total_tune_time < 25  # Non-Parallelization: ~26 seconds; Parallelization: ~7 seconds
 
         assert os.path.isdir(cache_directory)
 

@@ -620,7 +620,7 @@ class ResamplerTests(TimerTestCase):
         time_start = time.time()
         resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
         time_stop = time.time()
-        assert (time_stop - time_start) < 10   # goes from ~30 sec to < 10 with parallelization
+        assert (time_stop - time_start) < 15   # goes from ~30 sec to < 10 with parallelization
 
         assert len(resampler.results._scores) == 25
         assert all([len(x) == 4 and
