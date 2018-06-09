@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import List
+from typing import List, Union
 
 import math
 import matplotlib.pyplot as plt
@@ -85,10 +85,20 @@ class TunerResults:
         return self.sorted_best_models.iloc[0]
 
     @property
-    def best_hyper_params(self) -> dict:
-        return \
-            None if self._params_grid is None \
-            else self.sorted_best_models.loc[:, self._params_grid.hyper_params].iloc[0].to_dict()
+    def best_hyper_params(self) -> Union[dict, None]:
+        if self._params_grid is None:
+            return None
+        else:
+            # get the sorted best parameters, create a copy so when we change the indexes it doesn't change
+            # the original dataframe
+            sorted_best_parameters = self.sorted_best_models.loc[:, self._params_grid.hyper_params].\
+                copy(deep=True)
+            # reindex, so that the top row has index 0; we can't simply use .iloc because if there are a mix
+            # of float/int parameters iloc changes everything to a float, which fucks up the model if this
+            # field is used to pass parameters to a model (e.g. when retraining on entire dataset in Searcher)
+            sorted_best_parameters.index = range(sorted_best_parameters.shape[0])
+            return {param: sorted_best_parameters.at[0, param]
+                    for param in sorted_best_parameters.columns.values}
 
     @property
     def resampler_decorators(self):

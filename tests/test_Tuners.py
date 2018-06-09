@@ -283,13 +283,13 @@ class TunerTests(TimerTestCase):
 
         columns = TransformerPipeline.get_expected_columns(transformations=transformations, data=train_data)
         params_dict = dict(max_features=[int(round(len(columns) ** (1 / 2.0))),
-                                         #int(round(len(columns) / 2)),
+                                         # int(round(len(columns) / 2)),
                                          len(columns)],
                            n_estimators=[10,
-                                         #100,
+                                         # 100,
                                          500],
                            min_samples_leaf=[1,
-                                             #50,
+                                             # 50,
                                              100])
         grid = HyperParamsGrid(params_dict=params_dict)
 
@@ -302,6 +302,8 @@ class TunerTests(TimerTestCase):
         assert len(tuner.results._tune_results_objects) == len(grid.params_grid)
         assert all([isinstance(x, ResamplerResults)
                     for x in tuner.results._tune_results_objects.resampler_object])
+
+        assert tuner.results.best_hyper_params == {'max_features': 24, 'n_estimators': 500, 'min_samples_leaf': 100}  # noqa
 
         # for each row in the underlying results dataframe, make sure the hyper-parameter values in the row
         # correspond to the same hyper_param values found in the Resampler object
@@ -339,6 +341,80 @@ class TunerTests(TimerTestCase):
 
         assert all(tuner.results.sorted_best_models.index.values == [7, 2, 6, 3, 4, 0, 5, 1])
         shutil.rmtree(cache_directory)
+
+    def test_tuner_float_int_param_combos(self):
+        data = TestHelper.get_titanic_data()
+
+        train_data = data
+        train_data_y = train_data.Survived
+        train_data = train_data.drop(columns='Survived')
+
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        evaluator_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+
+        SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+        SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+        ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
+
+        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=XGBoostClassifier(),
+                                                                      transformations=transformations,
+                                                                      scores=evaluator_list,
+                                                                      folds=5,
+                                                                      repeats=2),
+                           hyper_param_object=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC),
+                           parallelization_cores=-1)
+
+        params_dict = dict(colsample_bytree=[0.7, 1.0],
+                           subsample=[0.75, 1.0],
+                           max_depth=[6, 9])
+        grid = HyperParamsGrid(params_dict=params_dict)
+
+        tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
+        assert tuner.results.best_hyper_params == {'colsample_bytree': 0.7, 'subsample': 1.0, 'max_depth': 6}
+        assert isinstance(tuner.results.best_hyper_params['colsample_bytree'], float)
+        assert isinstance(tuner.results.best_hyper_params['subsample'], float)
+        # bug fix where this was changed to a float because we were using .iloc
+        assert isinstance(tuner.results.best_hyper_params['max_depth'], np.int64)  # hmm.. ideally `int`?
+
+        assert len(tuner.results._tune_results_objects) == len(grid.params_grid)
+        assert all([isinstance(x, ResamplerResults)
+                    for x in tuner.results._tune_results_objects.resampler_object])
+
+        # for each row in the underlying results dataframe, make sure the hyper-parameter values in the row
+        # correspond to the same hyper_param values found in the Resampler object
+        for index in range(len(tuner.results._tune_results_objects)):
+            assert tuner.results._tune_results_objects.iloc[index].colsample_bytree == tuner.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['colsample_bytree']  # noqa
+            assert tuner.results._tune_results_objects.iloc[index].subsample == tuner.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['subsample']  # noqa
+            assert tuner.results._tune_results_objects.iloc[index].max_depth == tuner.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['max_depth']  # noqa
+
+        assert tuner.results._tune_results_objects.iloc[0].resampler_object.score_means == {'kappa': 0.5919671489816765, 'sensitivity': 0.6960690967835372, 'specificity': 0.8837468870856553, 'error_rate': 0.18808609351805455}  # noqa
+
+        # evaluator columns should be in the same order as specificied in the list
+        assert all(tuner.results.resampled_stats.columns.values == ['colsample_bytree', 'subsample',
+                                                                    'max_depth', 'kappa_mean',
+                                                                    'kappa_st_dev', 'kappa_cv',
+                                                                    'sensitivity_mean',
+                                                                    'sensitivity_st_dev', 'sensitivity_cv',
+                                                                    'specificity_mean',
+                                                                    'specificity_st_dev', 'specificity_cv',
+                                                                    'error_rate_mean',
+                                                                    'error_rate_st_dev', 'error_rate_cv'])
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelTuner_XGB_results.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            tune_results = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.resampled_stats,
+                                                      data_frame2=tuner.results.resampled_stats)
+            assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
+                                                      data_frame2=tuner.results.sorted_best_models)
+
+        assert all(tuner.results.sorted_best_models.index.values == [2, 5, 4, 1, 6, 3, 0, 7])
 
     def test_tuner_with_no_hyper_params(self):
         data = TestHelper.get_cement_data()
