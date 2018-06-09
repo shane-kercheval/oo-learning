@@ -6,13 +6,17 @@ import numpy as np
 
 from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.model_processors.DecoratorBase import DecoratorBase
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 
 
 class ResamplerResults:
     """
     Class that encapsulates the results of resampling a model.
     """
-    def __init__(self, scores: List[List[ScoreBase]], decorators: Union[List[DecoratorBase], None]):
+    def __init__(self,
+                 scores: List[List[ScoreBase]],
+                 decorators: Union[List[DecoratorBase], None],
+                 hyper_params: Union[HyperParamsBase, None]):
         """
         :param scores: a list of list of holdout_score_objects.
             each outer list represents a resampling result (e.g. a single fold for a single repeat in repeated
@@ -23,6 +27,7 @@ class ResamplerResults:
         """
         self._scores = scores
         self._decorators = decorators
+        self._hyper_params = hyper_params
 
         # for each score, add the score name/value to a dict to add to the ResamplerResults
         self._resampled_scores = list()
@@ -33,6 +38,10 @@ class ResamplerResults:
                 results_dict[temp_eval.name] = temp_eval.value
 
             self._resampled_scores.append(results_dict)
+
+    @property
+    def hyper_params(self):
+        return self._hyper_params
 
     @property
     def score_names(self) -> List[str]:

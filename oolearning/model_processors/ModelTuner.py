@@ -17,7 +17,7 @@ from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError
 
 
 def single_tune(args):
-    params_combo_index = args['params_combo_index']
+    params_combo_index = args['params_combo_index']  # dict
     has_params = args['has_params']
     hyper_param_object = args['hyper_param_object']
     # we are going to reuse the resampler and hyper_params for each combination, so clone first
@@ -35,9 +35,8 @@ def single_tune(args):
 
     if has_params and hyper_param_object is not None:
         # if we are tuning over hyper-params, update the params object with the current params
-        params_dict = params_combo_index.to_dict()  # dict of the current combination
-        # print(params_dict)
-        hyper_param_object.update_dict(params_dict)  # default params, updated based on combo
+        # print(params_combo_index)
+        hyper_param_object.update_dict(params_combo_index)  # default params, updated based on combo
 
     start_time_individual = time.time()
     resampler_copy.resample(data_x=data_x, data_y=data_y, hyper_params=hyper_param_object)
@@ -129,7 +128,12 @@ class ModelTuner:
         assert len(params_combinations) > 0
 
         # map_function rather than a for loop so we can switch between parallelization and non-parallelization
-        single_tune_args = [dict(params_combo_index=params_combinations.iloc[x, :],  # parameter combination
+
+        # for `params_combo_index`, we can't simply use .iloc (which i previously did), because if a
+        # combination happens to have a mix of float/int params types, iloc will convert everything to a
+        # float, which can cause problems if a model expects and checks for an int (e.g. XGBoost); so we
+        # build up a dictionary which retains the original param type.
+        single_tune_args = [dict(params_combo_index={param: params_combinations.at[x, param] for param in params_combinations.columns.values},  # noqa
                                  has_params=params_grid is not None,
                                  hyper_param_object=self._hyper_param_object.clone() if self._hyper_param_object else None,  # noqa
                                  resampler_copy=self._resampler.clone(),  # resampler
@@ -180,6 +184,7 @@ class ModelTuner:
         # NAs; however, if we set a particular hyper-parameter to None, this will cause a false positive
         # so, let's ignore any columns where the hyper-param is specifically set to None
         if params_grid:
+            # noinspection PyProtectedMember
             params_containing_none = [key for key, value in params_grid._params_dict.items() if value is None]
         else:
             params_containing_none = []

@@ -327,4 +327,6 @@ class RepeatedCrossValidationResampler(ResamplerBase):
         # result_scores is a list of list of holdout scores.
         # Each outer list represents a resampling result
         # and each element of the inner list represents a specific score.
-        return ResamplerResults(scores=flattened_scores, decorators=self._decorators)
+        return ResamplerResults(scores=flattened_scores,
+                                decorators=self._decorators,
+                                hyper_params=hyper_params)

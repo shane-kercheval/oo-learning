@@ -302,6 +302,14 @@ class TunerTests(TimerTestCase):
         assert len(tuner.results._tune_results_objects) == len(grid.params_grid)
         assert all([isinstance(x, ResamplerResults)
                     for x in tuner.results._tune_results_objects.resampler_object])
+
+        # for each row in the underlying results dataframe, make sure the hyper-parameter values in the row
+        # correspond to the same hyper_param values found in the Resampler object
+        for index in range(len(tuner.results._tune_results_objects)):
+            assert tuner.results._tune_results_objects.iloc[index].max_features == tuner.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['max_features']  # noqa
+            assert tuner.results._tune_results_objects.iloc[index].n_estimators == tuner.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['n_estimators']  # noqa
+            assert tuner.results._tune_results_objects.iloc[index].min_samples_leaf == tuner.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['min_samples_leaf']  # noqa
+
         assert tuner.results._tune_results_objects.iloc[0].resampler_object.score_means == {'kappa': 0.5239954603575802, 'sensitivity': 0.5187339582751682, 'specificity': 0.9639047970435495, 'error_rate': 0.20571868388646114}  # noqa
 
         # evaluator columns should be in the same order as specificied in the list
