@@ -217,7 +217,10 @@ class SearcherTests(TimerTestCase):
         standard_transformations = [CenterScaleTransformer(),
                                     RemoveCorrelationsTransformer()]
 
-        params_dict = {'criterion': 'gini', 'max_features': ['a', 'b'], 'n_estimators': ['c', 'd'], 'min_samples_leaf': ['e', 'f']}  # noqa
+        params_dict = {'criterion': 'gini',
+                       'max_features': ['a', 'b'],
+                       'n_estimators': ['c', 'd'],
+                       'min_samples_leaf': ['e', 'f']}
         grid = HyperParamsGrid(params_dict=params_dict)
 
         cache_directory = TestHelper.ensure_test_directory('data/test_Searcher/cached_test_models/test_ModelSearcher_cache')  # noqa

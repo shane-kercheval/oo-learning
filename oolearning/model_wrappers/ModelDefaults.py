@@ -114,7 +114,7 @@ class ModelDefaults:
                          hyper_params_grid=dict(max_features=[int(round(number_of_features**(1/2.0))),
                                                               int(round(number_of_features/2)),
                                                               number_of_features],
-                                                n_estimators=[10, 100, 500],
+                                                n_estimators=[100, 500, 1000],
                                                 min_samples_leaf=[1, 50, 100]))
 
     @staticmethod
@@ -153,7 +153,7 @@ class ModelDefaults:
                          transformations=None,
                          hyper_params=AdaBoostRegressorHP(),
                          hyper_params_grid=dict(max_depth=[3, 10, 30],
-                                                n_estimators=[10, 100, 500],
+                                                n_estimators=[100, 500, 1000],
                                                 learning_rate=[0.1, 0.5, 1]))
 
     @staticmethod
@@ -330,7 +330,7 @@ class ModelDefaults:
                                                 max_features=[int(round(number_of_features ** (1 / 2.0))),
                                                               int(round(number_of_features / 2)),
                                                               number_of_features],
-                                                n_estimators=[10, 100, 500],
+                                                n_estimators=[100, 500, 1000],
                                                 min_samples_leaf=[1, 50, 100]))
 
     @staticmethod
@@ -375,7 +375,7 @@ class ModelDefaults:
                          transformations=None,
                          hyper_params=AdaBoostClassifierHP(),
                          hyper_params_grid=dict(max_depth=[3, 10, 30],
-                                                n_estimators=[10, 100, 500],
+                                                n_estimators=[100, 500, 1000],
                                                 learning_rate=[0.1, 0.5, 1]))
 
     @staticmethod

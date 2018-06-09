@@ -176,14 +176,22 @@ class ModelTuner:
         #
         #     results_list.append(resampler_copy.results)
 
+        # as a check, we want to make sure the tune_results and time_results dataframe doesn't contain any
+        # NAs; however, if we set a particular hyper-parameter to None, this will cause a false positive
+        # so, let's ignore any columns where the hyper-param is specifically set to None
+        if params_grid:
+            params_containing_none = [key for key, value in params_grid._params_dict.items() if value is None]
+        else:
+            params_containing_none = []
+
         tune_results = pd.concat([params_combinations.copy(),
                                   pd.DataFrame(results_list, columns=['resampler_object'])], axis=1)
-        assert tune_results.isnull().sum().sum() == 0
+        assert tune_results.drop(columns=params_containing_none).isnull().sum().sum() == 0
 
         time_results = pd.concat([params_combinations.copy(),
                                   pd.DataFrame(time_duration_list, columns=['execution_time'])],
                                  axis=1)
-        assert time_results.isnull().sum().sum() == 0
+        assert time_results.drop(columns=params_containing_none).isnull().sum().sum() == 0
 
         self._results = TunerResults(tune_results=tune_results,
                                      time_results=time_results,
