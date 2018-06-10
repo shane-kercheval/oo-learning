@@ -134,6 +134,7 @@ from .transformers.RemoveColumnsTransformer import RemoveColumnsTransformer
 from .transformers.RemoveCorrelationsTransformer import RemoveCorrelationsTransformer
 from .transformers.RemoveNZVTransformer import RemoveNZVTransformer
 from .transformers.PrincipalComponentAnalysis import PCATransformer
+from .transformers.StatelessColumnTransformer import StatelessColumnTransformer
 from .transformers.StatelessTransformer import StatelessTransformer
 from .transformers.TransformerBase import TransformerBase
 from .transformers.TransformerPipeline import TransformerPipeline

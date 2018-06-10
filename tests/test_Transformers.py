@@ -887,6 +887,43 @@ class TransformerTests(TimerTestCase):
         for index in range(1, len(data.columns.values)):
             test_remove_columns(columns_to_remove=list(data.columns.values[0:(index+1)]))
 
+    def test_StatelessColumnsTransformer(self):
+        data = TestHelper.get_insurance_data()
+        data.expenses.hist(bins=20)
+        data.bmi.hist(bins=20)
+
+        transformer = StatelessColumnTransformer(columns=['expenses', 'bmi'],
+                                                 custom_function=lambda x: np.log(x + 1))
+        transformed_data = transformer.fit_transform(data_x=data)
+        transformed_data.expenses.hist(bins=20)
+        transformed_data.bmi.hist(bins=20)
+
+        # check that column order was retained; (even though in our list we reversed above
+        assert all(data.columns.values == transformed_data.columns.values)
+        # check expected changes
+        assert all([x == y for x, y in zip(transformed_data.expenses.values, np.log(data.expenses.values + 1))])  # noqa
+        assert all([x == y for x, y in zip(transformed_data.bmi.values, np.log(data.bmi.values + 1))])
+        # check that all other columns were not changed
+        assert all([x == y for x, y in zip(data.age.values, transformed_data.age.values)])
+        assert all([x == y for x, y in zip(data.sex.values, transformed_data.sex.values)])
+        assert all([x == y for x, y in zip(data.children.values, transformed_data.children.values)])
+        assert all([x == y for x, y in zip(data.smoker.values, transformed_data.smoker.values)])
+        assert all([x == y for x, y in zip(data.region.values, transformed_data.region.values)])
+
+        # same thing let's transform with `transform` rather than `fit_transform`
+        transformed_data2 = transformer.transform(data)
+        # check that column order was retained; (even though in our list we reversed above
+        assert all(data.columns.values == transformed_data2.columns.values)
+        # check expected changes
+        assert all([x == y for x, y in zip(transformed_data2.expenses.values, np.log(data.expenses.values + 1))])  # noqa
+        assert all([x == y for x, y in zip(transformed_data2.bmi.values, np.log(data.bmi.values + 1))])
+        # check that all other columns were not changed
+        assert all([x == y for x, y in zip(data.age.values, transformed_data2.age.values)])
+        assert all([x == y for x, y in zip(data.sex.values, transformed_data2.sex.values)])
+        assert all([x == y for x, y in zip(data.children.values, transformed_data2.children.values)])
+        assert all([x == y for x, y in zip(data.smoker.values, transformed_data2.smoker.values)])
+        assert all([x == y for x, y in zip(data.region.values, transformed_data2.region.values)])
+
     def test_CenterScaleTransformer(self):
         data = TestHelper.get_housing_data()
         target_variable = 'median_house_value'
