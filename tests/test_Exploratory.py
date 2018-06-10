@@ -349,6 +349,9 @@ class ExploratoryTests(TimerTestCase):
         TestHelper.check_plot('data/test_exploratory/hist_amount.png',
                               lambda: explore.plot_histogram(numeric_feature='amount'))
 
+        TestHelper.check_plot('data/test_exploratory/hist_amount_bins.png',
+                              lambda: explore.plot_histogram(numeric_feature='amount', num_bins=20))
+
         TestHelper.check_plot('data/test_exploratory/hist_years_at_residence.png',
                               lambda: explore.plot_histogram(numeric_feature='years_at_residence'))
 

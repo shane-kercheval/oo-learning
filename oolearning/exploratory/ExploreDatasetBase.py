@@ -307,7 +307,9 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         self._dataset[numeric_feature].plot(kind='box')
         plt.title(numeric_feature)
 
-    def plot_histogram(self, numeric_feature: str):
+    def plot_histogram(self,
+                       numeric_feature: str,
+                       num_bins: int=10):
         """
         Creates a Histogram of the numeric_feature.
         """
@@ -315,7 +317,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         valid_features = self._numeric_features + [self._target_variable] if self._is_target_numeric \
             else self._numeric_features
         assert numeric_feature in valid_features
-        self._dataset[numeric_feature].hist()
+        self._dataset[numeric_feature].hist(bins=num_bins)
         plt.title(numeric_feature)
 
     def plot_scatterplot_numerics(self, numeric_columns=None, figure_size=(12, 8)):
