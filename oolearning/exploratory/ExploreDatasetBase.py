@@ -55,7 +55,10 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         pass
 
     @classmethod
-    def from_csv(cls, csv_file_path: str, target_variable: str) -> 'ExploreDatasetBase':
+    def from_csv(cls,
+                 csv_file_path: str,
+                 target_variable: str,
+                 skip_initial_space: bool=True) -> 'ExploreDatasetBase':
         """
         Instantiates this class (via subclass) by first loading in a csv from `csv_file_path`.
 
@@ -63,9 +66,11 @@ class ExploreDatasetBase(metaclass=ABCMeta):
 
         :param csv_file_path: path to the csv file
         :param target_variable: the name of the target variable/column
+        :param skip_initial_space: Skip spaces after delimiter.
         :return: an instance of this class (i.e. subclass)
         """
-        explore = cls(dataset=pd.read_csv(csv_file_path), target_variable=target_variable)
+        explore = cls(dataset=pd.read_csv(csv_file_path, skipinitialspace=skip_initial_space),
+                      target_variable=target_variable)
 
         _, categoric_features = OOLearningHelpers.get_columns_by_type(data_dtypes=explore.dataset.dtypes,
                                                                       target_variable=target_variable)

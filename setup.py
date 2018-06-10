@@ -3,13 +3,13 @@ from setuptools import find_packages
 setup(
     name='oolearning',
     packages=find_packages(),
-    version='0.2.32',
+    version='0.2.33',
     description='A simple machine learning library based on Object Oriented design principles.',
     author='Shane Kercheval',
     author_email='shane.kercheval@gmail.com',
     license='MIT',
     url='https://github.com/shane-kercheval/oo-learning',
-    download_url='https://github.com/shane-kercheval/oo-learning/archive/0.2.32.tar.gz',
+    download_url='https://github.com/shane-kercheval/oo-learning/archive/0.2.33.tar.gz',
     keywords=['machine-learning', 'data-science', 'object-oriented-programming', 'data-analysis'],
     classifiers=[
         # How mature is this project? Common values are
