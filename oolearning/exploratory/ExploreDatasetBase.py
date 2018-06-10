@@ -295,6 +295,8 @@ class ExploreDatasetBase(metaclass=ABCMeta):
             ax.annotate(freq, (idx, freq), xytext=(-8, 2), textcoords='offset points')
             ax.annotate("{0:.0f}%".format(perc * 100), (idx, 2), xytext=(-8, 0), textcoords='offset points')
 
+        ax.set_xticklabels(labels=unique_values.index.values, rotation=20, ha='right')
+
     def plot_boxplot(self, numeric_feature: str):
         """
         Creates a Box-plot of the numeric_feature.
