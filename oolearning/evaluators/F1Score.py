@@ -5,7 +5,7 @@ import pandas as pd
 
 from oolearning.converters.TwoClassConverterBase import TwoClassConverterBase
 from oolearning.enums.Metric import Metric
-from oolearning.evaluators.TwoClassEvaluator import TwoClassEvaluator
+from oolearning.evaluators.TwoClassConfusionMatrix import TwoClassConfusionMatrix
 from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
@@ -24,6 +24,6 @@ class F1Score(UtilityFunctionMixin, ScoreBase):
                    predicted_values: Union[np.ndarray, pd.DataFrame]) -> float:
         predicted_classes = self._converter.convert(values=predicted_values)
 
-        return TwoClassEvaluator.from_classes(actual_classes=actual_values,
-                                              predicted_classes=predicted_classes,
-                                              positive_class=self._converter.positive_class).f1_score
+        return TwoClassConfusionMatrix(actual_classes=actual_values,
+                                       predicted_classes=predicted_classes,
+                                       positive_class=self._converter.positive_class).f1_score
