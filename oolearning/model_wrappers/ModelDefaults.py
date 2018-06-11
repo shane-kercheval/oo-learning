@@ -94,13 +94,14 @@ class ModelDefaults:
                          hyper_params=CartDecisionTreeHP(criterion='mse'),
                          # max_depth: The maximum number of levels in the tree.
                          # min_samples_leaf: The minimum number of samples allowed in a leaf.
-                         # min_samples_split: The minimum number of samples required to split an internal node.
+                         # min_samples_split: The minimum number of samples required to split an internal node
                          # max_features : The number of features to consider when looking for the best split.
-                         hyper_params_grid=dict(max_depth=[3, 10, 30],
-                                                min_samples_leaf=[1, 50, 100],
-                                                max_features=[int(round(number_of_features**(1/2.0))),
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             max_depth=[3, 10, 30],
+                             min_samples_leaf=[1, 50, 100],
+                             max_features=[int(round(number_of_features**(1/2.0))),
                                                               int(round(number_of_features/2)),
-                                                              number_of_features]))
+                                                              number_of_features])))
 
     @staticmethod
     def get_RandomForestRegressor(number_of_features: int) -> ModelInfo:
@@ -111,11 +112,12 @@ class ModelDefaults:
                          #  https://stackoverflow.com/questions/24715230/can-sklearn-random-forest-directly-handle-categorical-features?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
                          transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
                          hyper_params=RandomForestHP(criterion='gini'),
-                         hyper_params_grid=dict(max_features=[int(round(number_of_features**(1/2.0))),
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             max_features=[int(round(number_of_features**(1/2.0))),
                                                               int(round(number_of_features/2)),
                                                               number_of_features],
-                                                n_estimators=[100, 500, 1000],
-                                                min_samples_leaf=[1, 50, 100]))
+                             n_estimators=[100, 500, 1000],
+                             min_samples_leaf=[1, 50, 100])))
 
     @staticmethod
     def get_SvmLinearRegressor() -> ModelInfo:
@@ -127,8 +129,9 @@ class ModelDefaults:
                                           CenterScaleTransformer(),
                                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
                          hyper_params=SvmLinearRegressorHP(),
-                         hyper_params_grid={'epsilon': [0, 0.1, 1, 3],
-                                            'penalty_c': [0.001, 0.01, 0.1, 1000]})
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             epsilon=[0, 0.1, 1, 3],
+                             penalty_c=[0.001, 0.01, 0.1, 1000])))
 
     @staticmethod
     def get_SvmPolynomialRegressor() -> ModelInfo:
@@ -140,9 +143,10 @@ class ModelDefaults:
                                           CenterScaleTransformer(),
                                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
                          hyper_params=SvmPolynomialRegressorHP(),
-                         hyper_params_grid={'degree': [2, 3],
-                                            'epsilon': [0, 0.1, 1, 3],
-                                            'penalty_c': [0.001, 0.01, 0.1, 1000]})
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             degree=[2, 3],
+                             epsilon=[0, 0.1, 1, 3],
+                             penalty_c=[0.001, 0.01, 0.1, 1000])))
 
     @staticmethod
     def get_AdaBoostRegressor() -> ModelInfo:
@@ -152,9 +156,10 @@ class ModelDefaults:
                          # TODO: fill out rest of recommended transformations, verify order
                          transformations=None,
                          hyper_params=AdaBoostRegressorHP(),
-                         hyper_params_grid=dict(max_depth=[3, 10, 30],
-                                                n_estimators=[100, 500, 1000],
-                                                learning_rate=[0.1, 0.5, 1]))
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             max_depth=[3, 10, 30],
+                             n_estimators=[100, 500, 1000],
+                             learning_rate=[0.1, 0.5, 1])))
 
     @staticmethod
     def get_GradientBoostingRegressor(number_of_features) -> ModelInfo:
@@ -174,15 +179,16 @@ class ModelDefaults:
                          # You should take the variables with a higher impact on outcome first.
                          # For instance, max_depth and min_samples_split have a significant impact and we’re
                          #    tuning those first.
-                         hyper_params_grid=dict(n_estimators=[50, 200, 350],
-                                                max_depth=[2, 5, 8],
-                                                min_samples_leaf=[2, 10, 50],
-                                                max_features=[
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             n_estimators=[50, 200, 350],
+                             max_depth=[2, 5, 8],
+                             min_samples_leaf=[2, 10, 50],
+                             max_features=[
                                                               # int(round(number_of_features**(1/2.0)))],
                                                               # int(round(number_of_features/2)),
                                                               # number_of_features - 1],
                                                               int(round(number_of_features / 3 * 2))],  # 2/3
-                                                subsample=[0.3, 0.5, 0.8]))
+                             subsample=[0.3, 0.5, 0.8])))
 
     @staticmethod
     def get_XGBoostRegressor_linear() -> ModelInfo:
@@ -193,9 +199,10 @@ class ModelDefaults:
                                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
                          hyper_params=XGBoostLinearHP(objective=XGBObjective.REG_LINEAR),
                          # https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
-                         hyper_params_grid=dict(n_estimators=[50, 200, 350],
-                                                reg_alpha=[0, 0.001, 0.01, 0.05],
-                                                reg_lambda=[0.1, 0.5, 1, 2]))
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             n_estimators=[50, 200, 350],
+                             reg_alpha=[0, 0.001, 0.01, 0.05],
+                             reg_lambda=[0.1, 0.5, 1, 2])))
 
     @staticmethod
     def get_XGBoostRegressor_tree() -> ModelInfo:
@@ -208,9 +215,10 @@ class ModelDefaults:
                          hyper_params=XGBoostTreeHP(objective=XGBObjective.REG_LINEAR),
                          # https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
                          # https://machinelearningmastery.com/configure-gradient-boosting-algorithm/
-                         hyper_params_grid=dict(colsample_bytree=[0.4, 0.7, 1.0],
-                                                subsample=[0.5, 0.75, 1.0],
-                                                max_depth=[3, 6, 9]))
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             colsample_bytree=[0.4, 0.7, 1.0],
+                             subsample=[0.5, 0.75, 1.0],
+                             max_depth=[3, 6, 9])))
 
     @staticmethod
     def get_regression_models(number_of_features):
@@ -296,8 +304,9 @@ class ModelDefaults:
                          model=model_wrapper,
                          transformations=transformations,
                          hyper_params=LogisticClassifierHP(),
-                         hyper_params_grid={'penalty': ['l1', 'l2'],
-                                            'regularization_inverse': [0.001, 0.01, 0.1, 1, 100, 1000]})
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             penalty=['l1', 'l2'],
+                             regularization_inverse=[0.001, 0.01, 0.1, 1, 100, 1000])))
 
     @staticmethod
     def get_CartDecisionTreeClassifier(number_of_features) -> ModelInfo:
@@ -309,13 +318,14 @@ class ModelDefaults:
                          hyper_params=CartDecisionTreeHP(criterion='gini'),
                          # max_depth: The maximum number of levels in the tree.
                          # min_samples_leaf: The minimum number of samples allowed in a leaf.
-                         # min_samples_split: The minimum number of samples required to split an internal node.
+                         # min_samples_split: The minimum number of samples required to split an internal node
                          # max_features : The number of features to consider when looking for the best split.
-                         hyper_params_grid=dict(max_depth=[3, 10, 30],
-                                                min_samples_leaf=[1, 50, 100],
-                                                max_features=[int(round(number_of_features**(1/2.0))),
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             max_depth=[3, 10, 30],
+                             min_samples_leaf=[1, 50, 100],
+                             max_features=[int(round(number_of_features**(1/2.0))),
                                                               int(round(number_of_features/2)),
-                                                              number_of_features]))
+                                                              number_of_features])))
 
     @staticmethod
     def get_RandomForestClassifier(number_of_features: int) -> ModelInfo:
@@ -326,12 +336,13 @@ class ModelDefaults:
                          # https://stackoverflow.com/questions/24715230/can-sklearn-random-forest-directly-handle-categorical-features?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
                          transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
                          hyper_params=RandomForestHP(),
-                         hyper_params_grid=dict(criterion='gini',
-                                                max_features=[int(round(number_of_features ** (1 / 2.0))),
-                                                              int(round(number_of_features / 2)),
-                                                              number_of_features],
-                                                n_estimators=[100, 500, 1000],
-                                                min_samples_leaf=[1, 50, 100]))
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             criterion='gini',
+                             max_features=[int(round(number_of_features ** (1 / 2.0))),
+                                           int(round(number_of_features / 2)),
+                                           number_of_features],
+                             n_estimators=[100, 500, 1000],
+                             min_samples_leaf=[1, 50, 100])))
 
     @staticmethod
     def get_SvmLinearClassifier() -> ModelInfo:
@@ -343,12 +354,13 @@ class ModelDefaults:
                                           CenterScaleTransformer(),
                                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
                          hyper_params=SvmLinearClassifierHP(),
-                         hyper_params_grid={  # The ‘l2’ penalty is the standard used in SVC. The ‘l1’ leads
-                                            # to coef_ vectors that are sparse.
-                                            'penalty': ['l2'],
-                                            #  a smaller C value leads to a wider street but more margin
-                                            #  violations (HOML pg 148)
-                                            'penalty_c': [0.001, 0.01, 0.1, 1, 100, 1000]})
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             # The ‘l2’ penalty is the standard used in SVC. The ‘l1’ leads
+                             # to coef_ vectors that are sparse.
+                             penalty=['l2'],
+                             #  a smaller C value leads to a wider street but more margin
+                             #  violations (HOML pg 148)
+                             penalty_c=[0.001, 0.01, 0.1, 1, 100, 1000])))
 
     @staticmethod
     def get_SvmPolynomialClassifier() -> ModelInfo:
@@ -360,11 +372,12 @@ class ModelDefaults:
                                           CenterScaleTransformer(),
                                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
                          hyper_params=SvmPolynomialClassifierHP(),
-                         hyper_params_grid={'degree': [2, 3],
-                                            'coef0': [0, 1, 10],
-                                            #  a smaller C value leads to a wider street but more margin
-                                            #  violations (HOML pg 148)
-                                            'penalty_c': [0.001, 0.1, 100, 1000]})
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             degree=[2, 3],
+                             coef0=[0, 1, 10],
+                             # a smaller C value leads to a wider street but more margin
+                             # violations (HOML pg 148)
+                             penalty_c=[0.001, 0.1, 100, 1000])))
 
     @staticmethod
     def get_AdaBoostClassifier() -> ModelInfo:
@@ -374,9 +387,10 @@ class ModelDefaults:
                          # TODO: fill out rest of recommended transformations, verify order
                          transformations=None,
                          hyper_params=AdaBoostClassifierHP(),
-                         hyper_params_grid=dict(max_depth=[3, 10, 30],
-                                                n_estimators=[100, 500, 1000],
-                                                learning_rate=[0.1, 0.5, 1]))
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             max_depth=[3, 10, 30],
+                             n_estimators=[100, 500, 1000],
+                             learning_rate=[0.1, 0.5, 1])))
 
     @staticmethod
     def get_GradientBoostingClassifier(number_of_features) -> ModelInfo:
@@ -396,14 +410,16 @@ class ModelDefaults:
                          # You should take the variables with a higher impact on outcome first.
                          # For instance, max_depth and min_samples_split have a significant impact and we’re
                          #    tuning those first.
-                         hyper_params_grid=dict(n_estimators=[50, 200, 350],
-                                                max_depth=[2, 5, 8],
-                                                min_samples_leaf=[2, 10, 50],
-                                                max_features=[  # int(round(number_of_features**(1/2.0)))],
-                                                    # int(round(number_of_features/2)),
-                                                    int(round(number_of_features / 3 * 2))],  # 2/3
-                                                # number_of_features - 1],
-                                                subsample=[0.3, 0.5, 0.8]))
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             n_estimators=[50, 200, 350],
+                             max_depth=[2, 5, 8],
+                             min_samples_leaf=[2, 10, 50],
+                             max_features=[
+                                           # int(round(number_of_features**(1/2.0)))],
+                                           # int(round(number_of_features/2)),
+                                           # number_of_features - 1],
+                                           int(round(number_of_features / 3 * 2))],  # 2/3
+                             subsample=[0.3, 0.5, 0.8])))
 
     @staticmethod
     def get_XGBoostClassifier_tree(objective: XGBObjective) -> ModelInfo:
@@ -416,9 +432,10 @@ class ModelDefaults:
                          hyper_params=XGBoostTreeHP(objective=objective),
                          # https://www.analyticsvidhya.com/blog/2016/03/complete-guide-parameter-tuning-xgboost-with-codes-python/
                          # https://machinelearningmastery.com/configure-gradient-boosting-algorithm/
-                         hyper_params_grid=dict(colsample_bytree=[0.4, 0.7, 1.0],
-                                                subsample=[0.5, 0.75, 1.0],
-                                                max_depth=[3, 6, 9]))
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             colsample_bytree=[0.4, 0.7, 1.0],
+                             subsample=[0.5, 0.75, 1.0],
+                             max_depth=[3, 6, 9])))
 
     # noinspection SpellCheckingInspection
     @staticmethod
@@ -468,7 +485,8 @@ class ModelDefaults:
                          model=model_wrapper,
                          transformations=transformations,
                          hyper_params=SoftmaxLogisticHP(),
-                         hyper_params_grid={'C': [0.001, 0.01, 0.1, 1, 100, 1000]})
+                         hyper_params_grid=HyperParamsGrid(params_dict=dict(
+                             C=[0.001, 0.01, 0.1, 1, 100, 1000])))
 
     @staticmethod
     def get_multiclass_classification_models(number_of_features):
