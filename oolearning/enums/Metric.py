@@ -11,6 +11,7 @@ class Metric(Enum):
     AUC_PRECISION_RECALL = 'AUC_PrecisionRecall'
     KAPPA = 'kappa'
     F1_SCORE = 'F1'
+    FBETA_SCORE = 'F_BETA'
     SPECIFICITY = 'specificity'
     SENSITIVITY = 'sensitivity'
     POSITIVE_PREDICTIVE_VALUE = 'positive_predictive_value'

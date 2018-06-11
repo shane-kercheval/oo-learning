@@ -4,7 +4,7 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, recall_score, f1_score, cohen_kappa_score, \
+from sklearn.metrics import accuracy_score, recall_score, f1_score, fbeta_score, cohen_kappa_score, \
     mean_squared_error, mean_absolute_error, roc_auc_score, average_precision_score
 
 from oolearning import *
@@ -161,11 +161,14 @@ class EvaluatorTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [0.37990215607221967, 0.34756903797404387])])
 
-    def test_F1Score(self):
+    def test_FBetaScore(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
         predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
         predictions_mock.columns = [1, 0]
 
+        ######################################################################################################
+        # F1 Score (i.e. Beta == 1)
+        ######################################################################################################
         score = F1Score(converter=TwoClassThresholdConverter(threshold=0.41, positive_class=1))
         assert isinstance(score, UtilityFunctionMixin)
         assert isinstance(score, ScoreBase)
@@ -187,6 +190,47 @@ class EvaluatorTests(TimerTestCase):
         eval_list.sort()  # "better, worse"
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [0.6472491909385113, 0.5802707930367504])])
+
+        ######################################################################################################
+        # FBeta Score (Beta == 0.5)
+        ######################################################################################################
+        score_other = FBetaScore(converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=1),
+                                 beta=0.5)
+        score_other.calculate(actual_values=mock_data.actual,
+                              predicted_values=predictions_mock)
+        assert isclose(score_other.value,
+                       fbeta_score(y_true=mock_data.actual,
+                                   y_pred=mock_data.predictions,
+                                   beta=0.5,
+                                   pos_label=1))
+
+        eval_list = [score_other, score]  # "worse, better"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [0.6260434056761269, 0.6472491909385113])])
+        eval_list.sort()  # "better, worse"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [0.6472491909385113, 0.6260434056761269])])
+
+        ######################################################################################################
+        # FBeta Score (Beta == 1.5)
+        ######################################################################################################
+        score_other = FBetaScore(converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=1),
+                                 beta=1.5)
+        score_other.calculate(actual_values=mock_data.actual, predicted_values=predictions_mock)
+        assert isclose(score_other.value,
+                       fbeta_score(y_true=mock_data.actual,
+                                   y_pred=mock_data.predictions,
+                                   beta=1.5,
+                                   pos_label=1))
+
+        eval_list = [score_other, score]  # "worse, better"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [0.5542922114837977, 0.6472491909385113])])
+        eval_list.sort()  # "better, worse"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [0.6472491909385113, 0.5542922114837977])])
 
     def test_ErrorRate(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa

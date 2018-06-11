@@ -24,6 +24,7 @@ from .evaluators.TwoClassEvaluator import TwoClassEvaluator
 from .evaluators.CostFunctionMixin import CostFunctionMixin
 from .evaluators.ErrorRateScore import ErrorRateScore
 from .evaluators.ScoreBase import ScoreBase
+from .evaluators.FBetaScore import FBetaScore
 from .evaluators.F1Score import F1Score
 from .evaluators.KappaScore import KappaScore
 from .evaluators.MaeScore import MaeScore

@@ -118,13 +118,24 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
 
     @property
     def f1_score(self) -> float:
-        if self.positive_predictive_value is None or \
-                self.sensitivity is None or \
+        return self.fbeta_score(beta=1)
+
+    def fbeta_score(self, beta: float) -> float:
+        """
+
+        :param beta: The `beta` parameter determines the weight of precision in the combined score.
+            `beta < 1` lends more weight to precision, while
+            `beta > 1` favors recall
+            (`beta -> 0` considers only precision, `beta -> inf` only recall).
+            http://scikit-learn.org/stable/modules/generated/sklearn.metrics.fbeta_score.html
+        :return:
+        """
+        if self.positive_predictive_value is None or self.sensitivity is None or \
                 (self.positive_predictive_value + self.sensitivity) == 0:
             return 0
 
-        return 2 * (self.positive_predictive_value * self.sensitivity) / \
-            (self.positive_predictive_value + self.sensitivity)
+        return (1 + (beta**2)) * (self.positive_predictive_value * self.sensitivity) / \
+            (((beta**2) * self.positive_predictive_value) + self.sensitivity)
 
     @property
     def all_quality_metrics(self) -> dict:
