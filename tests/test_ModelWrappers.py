@@ -1721,6 +1721,10 @@ class ModelWrapperTests(TimerTestCase):
 
     def test_SVM_classification(self):
         data = TestHelper.get_titanic_data()
+
+        ######################################################################################################
+        # No class weights
+        ######################################################################################################
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
                            ImputationTransformer(),
@@ -1735,6 +1739,7 @@ class ModelWrapperTests(TimerTestCase):
         fitter.train(data=data, target_variable='Survived', hyper_params=SvmLinearClassifierHP())
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+        assert fitter.model._class_weights is None
 
         assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}
 
@@ -1764,8 +1769,157 @@ class ModelWrapperTests(TimerTestCase):
         assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
+        ######################################################################################################
+        # Class Weights
+        ######################################################################################################
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        # test with custom threshold of 0.5
+        fitter = ModelTrainer(model=SvmLinearClassifier(class_weights={0: 0.3, 1: 0.7}),
+                              model_transformations=transformations,
+                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                              evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))
+        fitter.train(data=data, target_variable='Survived', hyper_params=SvmLinearClassifierHP())
+        assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+        assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+        assert fitter.model._class_weights == {0: 0.3, 1: 0.7}
+        assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}
+
+        con_matrix = fitter.training_evaluator._confusion_matrix
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [379, 82, 461]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [60, 191, 251]
+        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
+        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
+        assert isclose(fitter.training_evaluator.auc_roc, 0.8619656728996137)
+
+        con_matrix = fitter.holdout_evaluator._confusion_matrix
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [97, 22, 119]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [13, 47, 60]
+        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
+        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
+        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8433465085638999)
+
+        actual_metrics = fitter.training_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.8619656728996137, 'AUC Precision/Recall': 0.8299329798408961, 'Kappa': 0.5716694486574423, 'F1 Score': 0.7290076335877862, 'Two-Class Accuracy': 0.800561797752809, 'Error Rate': 0.199438202247191, 'True Positive Rate': 0.6996336996336996, 'True Negative Rate': 0.8633257403189066, 'False Positive Rate': 0.1366742596810934, 'False Negative Rate': 0.30036630036630035, 'Positive Predictive Value': 0.7609561752988048, 'Negative Predictive Value': 0.8221258134490239, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+
+        actual_metrics = fitter.holdout_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.8433465085638999, 'AUC Precision/Recall': 0.7813374079453008, 'Kappa': 0.5770035784214436, 'F1 Score': 0.7286821705426356, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6811594202898551, 'True Negative Rate': 0.8818181818181818, 'False Positive Rate': 0.11818181818181818, 'False Negative Rate': 0.3188405797101449, 'Positive Predictive Value': 0.7833333333333333, 'Negative Predictive Value': 0.8151260504201681, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+
+    def test_SVM_classification_string(self):
+        data = TestHelper.get_titanic_data()
+        positive_class = 'lived'
+        negative_class = 'died'
+        # Test with a string target variable rather than 0/1
+        data.Survived = np.where(data.Survived == 1, positive_class, negative_class)
+        ######################################################################################################
+        # No class weights
+        ######################################################################################################
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        # test with custom threshold of 0.5
+        fitter = ModelTrainer(model=SvmLinearClassifier(),
+                              model_transformations=transformations,
+                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                              evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived')))
+        fitter.train(data=data, target_variable='Survived', hyper_params=SvmLinearClassifierHP())
+        assert fitter.model._class_weights is None
+        assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+        assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+
+        assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}
+
+        con_matrix = fitter.training_evaluator._confusion_matrix
+        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [387, 89, 476]
+        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [52, 184, 236]
+        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
+        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
+        assert isclose(fitter.training_evaluator.auc_roc, 0.8621826161689488)
+
+        con_matrix = fitter.holdout_evaluator._confusion_matrix
+        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [99, 27, 126]
+        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [11, 42, 53]
+        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
+        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
+        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8363636363636364)
+
+        actual_metrics = fitter.training_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.8621826161689488, 'AUC Precision/Recall': 0.8353822535872308, 'Kappa': 0.5701514009728027, 'F1 Score': 0.7229862475442044, 'Two-Class Accuracy': 0.8019662921348315, 'Error Rate': 0.19803370786516855, 'True Positive Rate': 0.673992673992674, 'True Negative Rate': 0.8815489749430524, 'False Positive Rate': 0.11845102505694761, 'False Negative Rate': 0.326007326007326, 'Positive Predictive Value': 0.7796610169491526, 'Negative Predictive Value': 0.8130252100840336, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+
+        actual_metrics = fitter.holdout_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.8363636363636364, 'AUC Precision/Recall': 0.7935282490390818, 'Kappa': 0.5316717157807767, 'F1 Score': 0.6885245901639344, 'Two-Class Accuracy': 0.7877094972067039, 'Error Rate': 0.2122905027932961, 'True Positive Rate': 0.6086956521739131, 'True Negative Rate': 0.9, 'False Positive Rate': 0.1, 'False Negative Rate': 0.391304347826087, 'Positive Predictive Value': 0.7924528301886793, 'Negative Predictive Value': 0.7857142857142857, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+
+        ######################################################################################################
+        # Class class weights
+        ######################################################################################################
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        # test with custom threshold of 0.5
+        fitter = ModelTrainer(model=SvmLinearClassifier(class_weights={'died': 0.3, 'lived': 0.7}),
+                              model_transformations=transformations,
+                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                              evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived')))
+        fitter.train(data=data, target_variable='Survived', hyper_params=SvmLinearClassifierHP())
+        assert fitter.model._class_weights == {'died': 0.3, 'lived': 0.7}
+        assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+        assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+        assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}
+
+        con_matrix = fitter.training_evaluator._confusion_matrix
+        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [379, 82, 461]
+        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [60, 191, 251]
+        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
+        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
+        assert isclose(fitter.training_evaluator.auc_roc, 0.8619656728996137)
+
+        con_matrix = fitter.holdout_evaluator._confusion_matrix
+        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [97, 22, 119]
+        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [13, 47, 60]
+        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
+        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
+        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8433465085638999)
+
+        actual_metrics = fitter.training_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.8619656728996137, 'AUC Precision/Recall': 0.8299329798408961, 'Kappa': 0.5716694486574423, 'F1 Score': 0.7290076335877862, 'Two-Class Accuracy': 0.800561797752809, 'Error Rate': 0.199438202247191, 'True Positive Rate': 0.6996336996336996, 'True Negative Rate': 0.8633257403189066, 'False Positive Rate': 0.1366742596810934, 'False Negative Rate': 0.30036630036630035, 'Positive Predictive Value': 0.7609561752988048, 'Negative Predictive Value': 0.8221258134490239, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+
+        actual_metrics = fitter.holdout_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.8433465085638999, 'AUC Precision/Recall': 0.7813374079453008, 'Kappa': 0.5770035784214436, 'F1 Score': 0.7286821705426356, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6811594202898551, 'True Negative Rate': 0.8818181818181818, 'False Positive Rate': 0.11818181818181818, 'False Negative Rate': 0.3188405797101449, 'Positive Predictive Value': 0.7833333333333333, 'Negative Predictive Value': 0.8151260504201681, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+
     def test_SvmPolynomial_classification(self):
         data = TestHelper.get_titanic_data()
+
+        ######################################################################################################
+        # No class weights
+        ######################################################################################################
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
                            ImputationTransformer(),
@@ -1779,6 +1933,7 @@ class ModelWrapperTests(TimerTestCase):
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))
         fitter.train(data=data, target_variable='Survived', hyper_params=SvmPolynomialClassifierHP())
+        assert fitter.model._class_weights is None
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
@@ -1807,6 +1962,54 @@ class ModelWrapperTests(TimerTestCase):
 
         actual_metrics = fitter.holdout_evaluator.all_quality_metrics
         expected_metrics = {'AUC ROC': 0.8299077733860343, 'AUC Precision/Recall': 0.7965623013913842, 'Kappa': 0.5321087954786295, 'F1 Score': 0.672566371681416, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.5507246376811594, 'True Negative Rate': 0.9454545454545454, 'False Positive Rate': 0.05454545454545454, 'False Negative Rate': 0.4492753623188406, 'Positive Predictive Value': 0.8636363636363636, 'Negative Predictive Value': 0.7703703703703704, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+
+        ######################################################################################################
+        # class weights
+        ######################################################################################################
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           CenterScaleTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        # test with custom threshold of 0.5
+        fitter = ModelTrainer(model=SvmPolynomialClassifier(class_weights={0: 0.3, 1: 0.7}),
+                              model_transformations=transformations,
+                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                              evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))
+        fitter.train(data=data, target_variable='Survived', hyper_params=SvmPolynomialClassifierHP())
+        assert fitter.model._class_weights == {0: 0.3, 1: 0.7}
+        assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+        assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+
+        assert fitter.model.hyper_params.params_dict == {'degree': 3, 'coef0': 0.0, 'penalty_c': 1.0}
+
+        con_matrix = fitter.training_evaluator._confusion_matrix
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [366, 63, 429]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [73, 210, 283]
+        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
+        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
+        assert isclose(fitter.training_evaluator.auc_roc, 0.8598713359533405)
+
+        con_matrix = fitter.holdout_evaluator._confusion_matrix
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [88, 21, 109]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [22, 48, 70]
+        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
+        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
+        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8292490118577075)
+
+        actual_metrics = fitter.training_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.8598713359533405, 'AUC Precision/Recall': 0.8447190364224766, 'Kappa': 0.5987967881203543, 'F1 Score': 0.7553956834532375, 'Two-Class Accuracy': 0.8089887640449438, 'Error Rate': 0.19101123595505617, 'True Positive Rate': 0.7692307692307693, 'True Negative Rate': 0.8337129840546698, 'False Positive Rate': 0.1662870159453303, 'False Negative Rate': 0.23076923076923078, 'Positive Predictive Value': 0.7420494699646644, 'Negative Predictive Value': 0.8531468531468531, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+
+        actual_metrics = fitter.holdout_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.8292490118577075, 'AUC Precision/Recall': 0.7764102175364866, 'Kappa': 0.49431706195387953, 'F1 Score': 0.6906474820143885, 'Two-Class Accuracy': 0.7597765363128491, 'Error Rate': 0.24022346368715083, 'True Positive Rate': 0.6956521739130435, 'True Negative Rate': 0.8, 'False Positive Rate': 0.2, 'False Negative Rate': 0.30434782608695654, 'Positive Predictive Value': 0.6857142857142857, 'Negative Predictive Value': 0.8073394495412844, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
         assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 

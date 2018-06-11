@@ -28,14 +28,23 @@ class SvmLinearClassifierHP(HyperParamsBase):
 
 
 class SvmLinearClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
-    def __init__(self, fit_intercept: bool=False, seed: int=42):
+    def __init__(self, fit_intercept: bool=False, class_weights: dict=None, seed: int=42):
+        # noinspection SpellCheckingInspection
         """
         :param fit_intercept: set to False by default, since the expectation is that One-Hot encoding will
             be used
+        :param class_weights: from http://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html
+            Set the parameter C of class i to class_weight[i]*C for SVC. If not given, all classes are
+            supposed to have weight one. The “balanced” mode uses the values of y to automatically adjust
+            weights inversely proportional to class frequencies in the input data as
+                `n_samples / (n_classes * np.bincount(y))`
+
+            weights must add to 1, e.g. `{'died': 0.3, 'lived': 0.7}`
         """
         super().__init__()
         self._fit_intercept = fit_intercept
         self._seed = seed
+        self._class_weights = class_weights
 
     @property
     def feature_importance(self):
@@ -62,6 +71,7 @@ class SvmLinearClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
                         # ValueError: Unsupported set of arguments: The combination of penalty=l2 and
                         # loss=hinge are not supported when dual=False, Parameters: penalty=l2, loss=hinge,
                         # dual=False
+                        class_weight=self._class_weights,
                         random_state=self._seed)
         # SVM classifiers do not output probabilities for each class (but we will convert them to remain
         #
@@ -85,13 +95,17 @@ class SvmPolynomialClassifierHP(HyperParamsBase):
 
 
 class SvmPolynomialClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
-    def __init__(self, seed: int=42):
+    def __init__(self, class_weights: dict = None, seed: int=42):
         """
-        :param fit_intercept: set to False by default, since the expectation is that One-Hot encoding will
-            be used
+        :param class_weights: from http://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html
+            Set the parameter C of class i to class_weight[i]*C for SVC. If not given, all classes are
+            supposed to have weight one. The “balanced” mode uses the values of y to automatically adjust
+            weights inversely proportional to class frequencies in the input data as
+                `n_samples / (n_classes * np.bincount(y))`
         """
         super().__init__()
         self._seed = seed
+        self._class_weights = class_weights
 
     @property
     def feature_importance(self):
@@ -112,6 +126,7 @@ class SvmPolynomialClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
                   degree=param_dict['degree'],
                   coef0=param_dict['coef0'],
                   C=param_dict['penalty_c'],
+                  class_weight=self._class_weights,
                   random_state=self._seed)
         # SVM classifiers do not output probabilities for each class (but we will convert them to remain
         # https://stackoverflow.com/questions/26478000/converting-linearsvcs-decision-function-to-probabilities-scikit-learn-python
