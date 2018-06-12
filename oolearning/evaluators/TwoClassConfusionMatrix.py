@@ -122,7 +122,6 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
 
     def fbeta_score(self, beta: float) -> float:
         """
-
         :param beta: The `beta` parameter determines the weight of precision in the combined score.
             `beta < 1` lends more weight to precision, while
             `beta > 1` favors recall

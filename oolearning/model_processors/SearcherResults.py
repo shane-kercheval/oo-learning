@@ -164,6 +164,11 @@ class SearcherResults:
         # noinspection PyTypeChecker,PyUnresolvedReferences
         if (resamples <= 1).all().all():
             plt.xlim(0.0, 1.0)
+            plt.xticks(np.arange(start=0.0, stop=1.05, step=0.05))
+            ax = plt.gca()
+            ax.set_xticklabels(labels=['0']+['{0:.2f}'.format(x) for x in np.arange(start=0.05, stop=1, step=0.05)]+['1'],  # noqa
+                               rotation=20,
+                               ha='right')
         plt.title('{0} ({1})'.format('Resampling Scores Per `Best` Models', metric.name), loc='right')
         plt.tight_layout()
         plt.gca().get_yticklabels()[index_of_best_mean].set_color('red')
