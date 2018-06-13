@@ -38,7 +38,7 @@ class RemoveCorrelationsTransformer(TransformerBase):
             correlation_matrix = data_x.drop(columns=columns_to_remove).corr()
 
             features = correlation_matrix.columns.values
-            correlation_matrix = np.abs(correlation_matrix.as_matrix())
+            correlation_matrix = np.abs(correlation_matrix.values)
             np.fill_diagonal(correlation_matrix, np.NaN)
 
             # correlation_matrix.unique()
