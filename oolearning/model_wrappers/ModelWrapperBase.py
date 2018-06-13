@@ -8,6 +8,7 @@ import pandas as pd
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError, ModelAlreadyFittedError, \
     ModelCachedAlreadyConfigured
+from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 
 
 class ModelWrapperBase(metaclass=ABCMeta):
@@ -37,7 +38,7 @@ class ModelWrapperBase(metaclass=ABCMeta):
 
         return copy.deepcopy(self)
 
-    def set_persistence_manager(self, persistence_manager):
+    def set_persistence_manager(self, persistence_manager: PersistenceManagerBase):
         """
         #TODO: fix documentation
         # NOTE: cannot pass cache_path in to constructor, in case we want to clone the model.
@@ -54,21 +55,21 @@ class ModelWrapperBase(metaclass=ABCMeta):
         return type(self).__name__
 
     @property
-    def hyper_params(self):
+    def hyper_params(self) -> HyperParamsBase:
         if self._model_object is None:
             raise ModelNotFittedError()
 
         return self._hyper_params
 
     @property
-    def feature_names(self):
+    def feature_names(self) -> list:
         if self._model_object is None:
             raise ModelNotFittedError()
 
         return self._feature_names
 
     @property
-    def data_x_trained_head(self):
+    def data_x_trained_head(self) -> pd.DataFrame:
         """
         :return: the first X rows of the dataset that was trained
         """
@@ -113,9 +114,9 @@ class ModelWrapperBase(metaclass=ABCMeta):
 
         if self._persistence_manager:
             self._model_object = self._persistence_manager.\
-                get_object(fetch_function=lambda:self._train(data_x=data_x,
-                                                             data_y=data_y,
-                                                             hyper_params=hyper_params))
+                get_object(fetch_function=lambda: self._train(data_x=data_x,
+                                                              data_y=data_y,
+                                                              hyper_params=hyper_params))
         else:
             self._model_object = self._train(data_x=data_x, data_y=data_y, hyper_params=hyper_params)
 
