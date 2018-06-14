@@ -32,10 +32,10 @@ class StatelessParallelizationHelper:
         return x_df.reindex(columns=self._expected_columns, fill_value=0)
 
 
-def build_cache_key(model: ModelWrapperBase,
-                    hyper_params: HyperParamsBase,
-                    repeat_index: int,
-                    fold_index: int) -> str:
+def model_build_cache_key(model: ModelWrapperBase,
+                          hyper_params: HyperParamsBase,
+                          repeat_index: int,
+                          fold_index: int) -> str:
     """
     :return: returns a key that acts as, for example, the file name of the model being cached for the
         persistence manager; has the form:
@@ -113,10 +113,10 @@ def resample_repeat(args):
 
         # set up persistence if applicable
         if persistence_manager is not None:  # then build the key
-            cache_key = build_cache_key(model=model_copy,
-                                        hyper_params=hyper_params,
-                                        repeat_index=repeat_index,
-                                        fold_index=fold_index)
+            cache_key = model_build_cache_key(model=model_copy,
+                                              hyper_params=hyper_params,
+                                              repeat_index=repeat_index,
+                                              fold_index=fold_index)
             persistence_manager.set_key(key=cache_key)
             model_copy.set_persistence_manager(persistence_manager=persistence_manager)
 
@@ -151,7 +151,8 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                  model: ModelWrapperBase,
                  transformations: Union[List[TransformerBase], None],
                  scores: List[ScoreBase],
-                 persistence_manager: PersistenceManagerBase = None,
+                 model_persistence_manager: PersistenceManagerBase = None,
+                 results_persistence_manager: PersistenceManagerBase = None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None,
                  folds: int=5,
@@ -164,7 +165,9 @@ class RepeatedCrossValidationResampler(ResamplerBase):
             the transformations are fit/transformed on the training folds, and then transformed
             (without being fit) on the holdout set. The objects are cloned/copied at each fold.
         :param scores: the Scores that are evaluated at each fold/repeat.
-        :param persistence_manager: an object describing how to save/cache the trained models.
+        :param model_persistence_manager: an object describing how to save/cache the trained models.
+        :param results_persistence_manager: an object describing how to save/cache the ResamplerResults,
+            avoiding the need to resample/train the associated models.
         :param train_callback: a callback that is called at each fold after the transformations and
             before the model is trained. Its primary use is originally for testing and data
             verification.
@@ -184,7 +187,8 @@ class RepeatedCrossValidationResampler(ResamplerBase):
         super().__init__(model=model,
                          transformations=transformations,
                          scores=scores,
-                         persistence_manager=persistence_manager,
+                         model_persistence_manager=model_persistence_manager,
+                         results_persistence_manager=results_persistence_manager,
                          train_callback=train_callback)
 
         assert isinstance(folds, int)
@@ -234,7 +238,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                               train_callback=self._train_callback,
                               hyper_params=hyper_params,
                               model=self._model,
-                              persistence_manager=self._persistence_manager,
+                              persistence_manager=self._model_persistence_manager,
                               scores=self._scores,  # need to reuse this object type for each fold/repeat
                               decorators=self._decorators)
                          for x in range(self._repeats)]
@@ -295,13 +299,13 @@ class RepeatedCrossValidationResampler(ResamplerBase):
         #         model_copy = self._model.clone()  # need to reuse this object type for each fold/repeat
         #
         #         # set up persistence if applicable
-        #         if self._persistence_manager is not None:  # then build the key
-        #             cache_key = self.build_cache_key(model=model_copy,
+        #         if self._model_persistence_manager is not None:  # then build the key
+        #             cache_key = self.model_build_cache_key(model=model_copy,
         #                                              hyper_params=hyper_params,
         #                                              repeat_index=repeat_index,
         #                                              fold_index=fold_index)
-        #             self._persistence_manager.set_key(key=cache_key)
-        #             model_copy.set_persistence_manager(persistence_manager=self._persistence_manager)
+        #             self._model_persistence_manager.set_key(key=cache_key)
+        #             model_copy.set_persistence_manager(persistence_manager=self._model_persistence_manager)
         #
         #         model_copy.train(data_x=train_x_transformed, data_y=train_y, hyper_params=hyper_params)
         #         predicted_values = model_copy.predict(data_x=holdout_x_transformed)

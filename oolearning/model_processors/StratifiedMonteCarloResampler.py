@@ -20,7 +20,7 @@ class StratifiedMonteCarloResampler(ResamplerBase):
                  transformations: List[TransformerBase],
                  stratified_splitter: StratifiedDataSplitter,
                  scores: List[ScoreBase],
-                 persistence_manager: PersistenceManagerBase = None,
+                 model_persistence_manager: PersistenceManagerBase = None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None,
                  repeats=30):
@@ -36,7 +36,7 @@ class StratifiedMonteCarloResampler(ResamplerBase):
         super().__init__(model=model,
                          transformations=transformations,
                          scores=scores,
-                         persistence_manager=persistence_manager,
+                         model_persistence_manager=model_persistence_manager,
                          train_callback=train_callback)
 
         assert isinstance(repeats, int)

@@ -251,7 +251,7 @@ class SearcherTests(TimerTestCase):
                                                     scores=score_list,
                                                     folds=num_folds,
                                                     repeats=num_repeats),
-                                                persistence_manager=LocalCacheManager
+                                                model_persistence_manager=LocalCacheManager
                                                     (cache_directory=cache_directory)))  # noqa
 
         ######################################################################################################
@@ -288,7 +288,7 @@ class SearcherTests(TimerTestCase):
                                      scores=score_list,
                                      folds=num_folds,
                                      repeats=num_repeats),
-                                 persistence_manager=LocalCacheManager(cache_directory=cache_directory),
+                                 model_persistence_manager=LocalCacheManager(cache_directory=cache_directory),
                                  parallelization_cores=-1)
         searcher.search(data=data, target_variable='Survived')
 
@@ -445,3 +445,6 @@ class SearcherTests(TimerTestCase):
                               lambda: searcher.results.plot_resampled_scores(Metric.SPECIFICITY))
         TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_ERROR_RATE.png',
                               lambda: searcher.results.plot_resampled_scores(Metric.ERROR_RATE))
+
+    def test_ModelSearch_resampler_cache(self):
+        assert False

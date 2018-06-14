@@ -8,12 +8,31 @@ import pandas as pd
 
 from oolearning.model_processors.ProcessingExceptions import CallbackUsedWithParallelizationError
 from oolearning.model_processors.DecoratorBase import DecoratorBase
+from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.HyperParamsGrid import HyperParamsGrid
 from oolearning.model_processors.ResamplerBase import ResamplerBase
 from oolearning.model_processors.TunerResults import TunerResults
 from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError
+
+
+def resampler_results_build_cache_key(model: ModelWrapperBase,
+                                      hyper_params: HyperParamsBase) -> str:
+    """
+    :return: returns a key that acts as, for example, the file name of the model being cached for the
+        persistence manager; has the form:
+            `repeat[repeat number]_fold[fold number]_[Model Class Name]`
+    """
+    model_name = 'resampler_results_' + model.name
+    if hyper_params is None:
+        key = model_name
+    else:
+        # if hyper-params, flatten out list of param names and values and concatenate/join them together
+        hyper_params_long = '_'.join([str(x) + str(y) for x, y in hyper_params.params_dict.items()])
+        key = '_'.join([model_name, hyper_params_long])
+
+    return key
 
 
 def single_tune(args):
@@ -23,20 +42,27 @@ def single_tune(args):
     # we are going to reuse the resampler and hyper_params for each combination, so clone first
     resampler_copy = args['resampler_copy']
     decorators = args['decorators']
-    persistence_manager = args['persistence_manager']
+    model_persistence_manager = args['model_persistence_manager']
+    resampler_persistence_manager = args['resampler_persistence_manager']
     data_x = args['data_x']
     data_y = args['data_y']
 
     if decorators:
         resampler_copy.set_decorators(decorators=decorators)
 
-    if persistence_manager is not None:
-        resampler_copy.set_persistence_manager(persistence_manager=persistence_manager.clone())
-
     if has_params and hyper_param_object is not None:
         # if we are tuning over hyper-params, update the params object with the current params
         # print(params_combo_index)
         hyper_param_object.update_dict(params_combo_index)  # default params, updated based on combo
+
+    if model_persistence_manager is not None:
+        resampler_copy.set_model_persistence_manager(persistence_manager=model_persistence_manager.clone())
+
+    if resampler_persistence_manager is not None:
+        cache_key = resampler_results_build_cache_key(model=resampler_copy.model,
+                                                      hyper_params=hyper_param_object)
+        resampler_persistence_manager.set_key(key=cache_key)
+        resampler_copy.set_results_persistence_manager(persistence_manager=resampler_persistence_manager.clone())  # noqa
 
     start_time_individual = time.time()
     resampler_copy.resample(data_x=data_x, data_y=data_y, hyper_params=hyper_param_object)
@@ -55,7 +81,8 @@ class ModelTuner:
                  resampler: ResamplerBase,
                  hyper_param_object: HyperParamsBase,
                  resampler_decorators: List[DecoratorBase] = None,
-                 persistence_manager: PersistenceManagerBase = None,
+                 model_persistence_manager: PersistenceManagerBase = None,
+                 resampler_persistence_manager: PersistenceManagerBase = None,
                  parallelization_cores: int=-1):
         """
         :param resampler:
@@ -70,9 +97,9 @@ class ModelTuner:
             `RandomForestHP(n_estimators=20)`, since `n_estimators` is not being tuned (i.e. over-written)
         :param resampler_decorators: a list of decorators that will be passed into the resampler object.
             They will be cloned for each resampler object.
-        :param persistence_manager: a PersistenceManager defining how the underlying models should be cached,
+        :param model_persistence_manager: a PersistenceManager defining how the underlying models should be cached,
             optional.
-            NOTE: for each resampling (i.e. each set of hyper-params being resampled) the persistence_manager
+            NOTE: for each resampling (i.e. each set of hyper-params being resampled) the model_persistence_manager
             is cloned and passed to the resampler. The resampler already differentiates the file name based on
             the hyper-parameters (and e.g. repeat/fold indexes which should make it unique)
         :param parallelization_cores: the number of cores to use for parallelization. -1 is all, 0 or 1 is
@@ -83,7 +110,8 @@ class ModelTuner:
         self._resampler = resampler
         self._hyper_param_object = hyper_param_object
         self._results = None
-        self._persistence_manager = persistence_manager
+        self._model_persistence_manager = model_persistence_manager
+        self._resampler_persistence_manager = resampler_persistence_manager
         self._resampler_decorators = resampler_decorators
         self._total_tune_time = None
         self._parallelization_cores = parallelization_cores
@@ -138,7 +166,8 @@ class ModelTuner:
                                  hyper_param_object=self._hyper_param_object.clone() if self._hyper_param_object else None,  # noqa
                                  resampler_copy=self._resampler.clone(),  # resampler
                                  decorators=[y.clone() for y in self._resampler_decorators] if self._resampler_decorators else None,  # noqa
-                                 persistence_manager=self._persistence_manager,
+                                 model_persistence_manager=self._model_persistence_manager,
+                                 resampler_persistence_manager=self._resampler_persistence_manager,
                                  data_x=data_x,
                                  data_y=data_y)  # decorators
                             for x in range(len(params_combinations))]
@@ -162,8 +191,8 @@ class ModelTuner:
         #     if self._resampler_decorators:
         #         resampler_copy.set_decorators(decorators=[x.clone() for x in self._resampler_decorators])
         #
-        #     if self._persistence_manager is not None:
-        #         resampler_copy.set_persistence_manager(persistence_manager=self._persistence_manager.clone())
+        #     if self._model_persistence_manager is not None:
+        #         resampler_copy.set_model_persistence_manager(persistence_manager=self._model_persistence_manager.clone())
         #     hyper_params_copy = None if self._hyper_param_object is None else self._hyper_param_object.clone()
         #
         #     if params_grid is not None and self._hyper_param_object is not None:

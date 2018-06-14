@@ -6,6 +6,7 @@ from math import isclose
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import shutil
 
 from oolearning import *
 
@@ -457,7 +458,7 @@ class ResamplerTests(TimerTestCase):
             model=RandomForestClassifier(),
             transformations=transformations,
             scores=score_list,
-            persistence_manager=LocalCacheManager(cache_directory=cache_directory),
+            model_persistence_manager=LocalCacheManager(cache_directory=cache_directory),
             folds=5,
             repeats=5)
 
@@ -532,7 +533,7 @@ class ResamplerTests(TimerTestCase):
             model=RandomForestClassifier(),
             transformations=transformations,
             scores=score_list,
-            persistence_manager=LocalCacheManager(cache_directory=cache_directory),
+            model_persistence_manager=LocalCacheManager(cache_directory=cache_directory),
             folds=5,
             repeats=5,
             parallelization_cores=-1)
@@ -827,3 +828,268 @@ class ResamplerTests(TimerTestCase):
         # the object should be stored in the results as the first and only decorator element
         assert len(resampler.results.decorators) == 1
         assert resampler.results.decorators[0] is decorator  # should be the same objects
+
+    def test_resampler_results_caching_without_model_cacher(self):
+        data = TestHelper.get_titanic_data()
+
+        # main reason we want to split the data is to get the means/st_devs so that we can confirm with
+        # e.g. the Searcher
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+        training_indexes, _ = splitter.split(target_values=data.Survived)
+
+        train_data = data.iloc[training_indexes]
+        train_data_y = train_data.Survived
+        train_data = train_data.drop(columns='Survived')
+
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                      SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                      SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                      ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
+
+        cache_directory = TestHelper.ensure_test_directory('data/test_Resamplers/cached_resampler/')
+        resampler = RepeatedCrossValidationResampler(
+            model=RandomForestClassifier(),
+            transformations=transformations,
+            scores=score_list,
+            results_persistence_manager=LocalCacheManager(cache_directory=cache_directory, key='test'),
+            folds=5,
+            repeats=5,
+            parallelization_cores=-1)
+
+        self.assertRaises(ModelNotFittedError, lambda: resampler.results)
+        resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
+
+        assert len(resampler.results._scores) == 25
+        assert all([len(x) == 4 and
+                    isinstance(x[0], KappaScore) and
+                    isinstance(x[1], SensitivityScore) and
+                    isinstance(x[2], SpecificityScore) and
+                    isinstance(x[3], ErrorRateScore)
+                    for x in resampler.results._scores])
+        assert resampler.results.num_resamples == 25
+
+        expected_file = 'test.pkl'
+        assert os.path.isfile(os.path.join(cache_directory, expected_file))
+
+        assert resampler.results.score_names == ['kappa', 'sensitivity', 'specificity', 'error_rate']
+
+        # make sure the order of the resampled_scores is the same order as Evaluators passed in
+        assert all(resampler.results.resampled_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])  # noqa
+
+        # score_means and score_standard_deviations comes from resampled_scores, so testing both
+        assert isclose(resampler.results.score_means['kappa'], 0.586495320545703)
+        assert isclose(resampler.results.score_means['sensitivity'], 0.721899136052689)
+        assert isclose(resampler.results.score_means['specificity'], 0.8617441563168404)
+        assert isclose(resampler.results.score_means['error_rate'], 0.192053148900336)
+
+        assert isclose(resampler.results.score_standard_deviations['kappa'], 0.06833478821655113)
+        assert isclose(resampler.results.score_standard_deviations['sensitivity'], 0.06706830388930413)
+        assert isclose(resampler.results.score_standard_deviations['specificity'], 0.03664756028501139)
+        assert isclose(resampler.results.score_standard_deviations['error_rate'], 0.031189357324296424)
+
+        assert isclose(resampler.results.score_coefficients_of_variation['kappa'], round(0.06833478821655113 / 0.586495320545703, 2))  # noqa
+        assert isclose(resampler.results.score_coefficients_of_variation['sensitivity'], round(0.06706830388930413 / 0.721899136052689, 2))  # noqa
+        assert isclose(resampler.results.score_coefficients_of_variation['specificity'], round(0.03664756028501139 / 0.8617441563168404, 2))  # noqa
+        assert isclose(resampler.results.score_coefficients_of_variation['error_rate'], round(0.031189357324296424 / 0.192053148900336, 2))  # noqa
+
+        ######################################################################################################
+        # Now do again with new resampler that gets cached results
+        ######################################################################################################
+        # we should be abble to pass in a different model (have to pass in a model); no transformations, etc.
+        # and still get back the same results, this is how we know the results are cached and correctly
+        # retreived
+        # noinspection PyTypeChecker
+        resampler_cached = RepeatedCrossValidationResampler(
+            model=RandomForestClassifier(),
+            transformations=None,  # different
+            scores=[],  # different
+            results_persistence_manager=LocalCacheManager(cache_directory=cache_directory, key='test'),
+            folds=1,  # different
+            repeats=1,  # different
+            parallelization_cores=-1)
+
+        self.assertRaises(ModelNotFittedError, lambda: resampler_cached.results)
+
+        time_start = time.time()
+        # noinspection PyTypeChecker
+        resampler_cached.resample(data_x=None, data_y=None, hyper_params=None)
+        time_stop = time.time()
+        assert (time_stop - time_start) < 1
+
+        assert len(resampler_cached.results._scores) == 25
+        assert all([len(x) == 4 and
+                    isinstance(x[0], KappaScore) and
+                    isinstance(x[1], SensitivityScore) and
+                    isinstance(x[2], SpecificityScore) and
+                    isinstance(x[3], ErrorRateScore)
+                    for x in resampler_cached.results._scores])
+        assert resampler_cached.results.num_resamples == 25
+
+        assert os.path.isfile(os.path.join(cache_directory, expected_file))
+
+        assert resampler_cached.results.score_names == ['kappa', 'sensitivity', 'specificity', 'error_rate']
+
+        # make sure the order of the resampled_scores is the same order as Evaluators passed in
+        assert all(resampler_cached.results.resampled_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])  # noqa
+
+        # score_means and score_standard_deviations comes from resampled_scores, so testing both
+        assert isclose(resampler_cached.results.score_means['kappa'], 0.586495320545703)
+        assert isclose(resampler_cached.results.score_means['sensitivity'], 0.721899136052689)
+        assert isclose(resampler_cached.results.score_means['specificity'], 0.8617441563168404)
+        assert isclose(resampler_cached.results.score_means['error_rate'], 0.192053148900336)
+
+        assert isclose(resampler_cached.results.score_standard_deviations['kappa'], 0.06833478821655113)
+        assert isclose(resampler_cached.results.score_standard_deviations['sensitivity'], 0.06706830388930413)
+        assert isclose(resampler_cached.results.score_standard_deviations['specificity'], 0.03664756028501139)
+        assert isclose(resampler_cached.results.score_standard_deviations['error_rate'], 0.031189357324296424)
+
+        assert isclose(resampler_cached.results.score_coefficients_of_variation['kappa'], round(0.06833478821655113 / 0.586495320545703, 2))  # noqa
+        assert isclose(resampler_cached.results.score_coefficients_of_variation['sensitivity'], round(0.06706830388930413 / 0.721899136052689, 2))  # noqa
+        assert isclose(resampler_cached.results.score_coefficients_of_variation['specificity'], round(0.03664756028501139 / 0.8617441563168404, 2))  # noqa
+        assert isclose(resampler_cached.results.score_coefficients_of_variation['error_rate'], round(0.031189357324296424 / 0.192053148900336, 2))  # noqa
+
+        shutil.rmtree(cache_directory)
+
+    def test_resampler_results_caching_with_model_cacher(self):
+        data = TestHelper.get_titanic_data()
+
+        # main reason we want to split the data is to get the means/st_devs so that we can confirm with
+        # e.g. the Searcher
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+        training_indexes, _ = splitter.split(target_values=data.Survived)
+
+        train_data = data.iloc[training_indexes]
+        train_data_y = train_data.Survived
+        train_data = train_data.drop(columns='Survived')
+
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                      SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                      SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+                      ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
+
+        model_cache_directory = TestHelper.ensure_test_directory('data/test_Resamplers/temp_model_cache/')
+        cache_directory = TestHelper.ensure_test_directory('data/test_Resamplers/cached_resampler/')
+        resampler = RepeatedCrossValidationResampler(
+            model=RandomForestClassifier(),
+            transformations=transformations,
+            scores=score_list,
+            model_persistence_manager=LocalCacheManager(cache_directory=model_cache_directory),
+            results_persistence_manager=LocalCacheManager(cache_directory=cache_directory, key='test'),
+            folds=5,
+            repeats=5,
+            parallelization_cores=-1)
+
+        self.assertRaises(ModelNotFittedError, lambda: resampler.results)
+
+        resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
+
+        assert len(resampler.results._scores) == 25
+        assert all([len(x) == 4 and
+                    isinstance(x[0], KappaScore) and
+                    isinstance(x[1], SensitivityScore) and
+                    isinstance(x[2], SpecificityScore) and
+                    isinstance(x[3], ErrorRateScore)
+                    for x in resampler.results._scores])
+        assert resampler.results.num_resamples == 25
+
+        expected_file = 'repeat{0}_fold{1}_RandomForestClassifier_n_estimators500_criteriongini_max_featuresNone_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_min_impurity_decrease0_bootstrapTrue_oob_scoreFalse.pkl'  # noqa
+        for fold_index in range(5):
+            for repeat_index in range(5):
+                assert os.path.isfile(os.path.join(model_cache_directory,
+                                                   expected_file.format(fold_index, repeat_index)))
+
+        # now that we have verify model caching works, we shouldn't need the models since the resampler is
+        # cached
+        shutil.rmtree(model_cache_directory)
+
+        expected_file = 'test.pkl'
+        assert os.path.isfile(os.path.join(cache_directory, expected_file))
+
+        assert resampler.results.score_names == ['kappa', 'sensitivity', 'specificity', 'error_rate']
+
+        # make sure the order of the resampled_scores is the same order as Evaluators passed in
+        assert all(resampler.results.resampled_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])  # noqa
+
+        # score_means and score_standard_deviations comes from resampled_scores, so testing both
+        assert isclose(resampler.results.score_means['kappa'], 0.586495320545703)
+        assert isclose(resampler.results.score_means['sensitivity'], 0.721899136052689)
+        assert isclose(resampler.results.score_means['specificity'], 0.8617441563168404)
+        assert isclose(resampler.results.score_means['error_rate'], 0.192053148900336)
+
+        assert isclose(resampler.results.score_standard_deviations['kappa'], 0.06833478821655113)
+        assert isclose(resampler.results.score_standard_deviations['sensitivity'], 0.06706830388930413)
+        assert isclose(resampler.results.score_standard_deviations['specificity'], 0.03664756028501139)
+        assert isclose(resampler.results.score_standard_deviations['error_rate'], 0.031189357324296424)
+
+        assert isclose(resampler.results.score_coefficients_of_variation['kappa'], round(0.06833478821655113 / 0.586495320545703, 2))  # noqa
+        assert isclose(resampler.results.score_coefficients_of_variation['sensitivity'], round(0.06706830388930413 / 0.721899136052689, 2))  # noqa
+        assert isclose(resampler.results.score_coefficients_of_variation['specificity'], round(0.03664756028501139 / 0.8617441563168404, 2))  # noqa
+        assert isclose(resampler.results.score_coefficients_of_variation['error_rate'], round(0.031189357324296424 / 0.192053148900336, 2))  # noqa
+
+        ######################################################################################################
+        # Now do again with new resampler that gets cached results
+        ######################################################################################################
+        # we should be abble to pass in a different model (have to pass in a model); no transformations, etc.
+        # and still get back the same results, this is how we know the results are cached and correctly
+        # retreived
+        # noinspection PyTypeChecker
+        resampler_cached = RepeatedCrossValidationResampler(
+            model=RandomForestClassifier(),
+            transformations=None,  # different
+            scores=[],  # different
+            # model_persistence_manager shouldn't even be used (and we deleted the models above)
+            model_persistence_manager=LocalCacheManager(cache_directory=model_cache_directory),
+            results_persistence_manager=LocalCacheManager(cache_directory=cache_directory, key='test'),
+            folds=1,  # different
+            repeats=1,  # different
+            parallelization_cores=-1)
+
+        self.assertRaises(ModelNotFittedError, lambda: resampler_cached.results)
+
+        time_start = time.time()
+        # noinspection PyTypeChecker
+        resampler_cached.resample(data_x=None, data_y=None, hyper_params=None)
+        time_stop = time.time()
+        assert (time_stop - time_start) < 1
+
+        assert len(resampler_cached.results._scores) == 25
+        assert all([len(x) == 4 and
+                    isinstance(x[0], KappaScore) and
+                    isinstance(x[1], SensitivityScore) and
+                    isinstance(x[2], SpecificityScore) and
+                    isinstance(x[3], ErrorRateScore)
+                    for x in resampler_cached.results._scores])
+        assert resampler_cached.results.num_resamples == 25
+
+        assert os.path.isfile(os.path.join(cache_directory, expected_file))
+
+        assert resampler_cached.results.score_names == ['kappa', 'sensitivity', 'specificity', 'error_rate']
+
+        # make sure the order of the resampled_scores is the same order as Evaluators passed in
+        assert all(resampler_cached.results.resampled_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])  # noqa
+
+        # score_means and score_standard_deviations comes from resampled_scores, so testing both
+        assert isclose(resampler_cached.results.score_means['kappa'], 0.586495320545703)
+        assert isclose(resampler_cached.results.score_means['sensitivity'], 0.721899136052689)
+        assert isclose(resampler_cached.results.score_means['specificity'], 0.8617441563168404)
+        assert isclose(resampler_cached.results.score_means['error_rate'], 0.192053148900336)
+
+        assert isclose(resampler_cached.results.score_standard_deviations['kappa'], 0.06833478821655113)
+        assert isclose(resampler_cached.results.score_standard_deviations['sensitivity'], 0.06706830388930413)
+        assert isclose(resampler_cached.results.score_standard_deviations['specificity'], 0.03664756028501139)
+        assert isclose(resampler_cached.results.score_standard_deviations['error_rate'], 0.031189357324296424)
+
+        assert isclose(resampler_cached.results.score_coefficients_of_variation['kappa'], round(0.06833478821655113 / 0.586495320545703, 2))  # noqa
+        assert isclose(resampler_cached.results.score_coefficients_of_variation['sensitivity'], round(0.06706830388930413 / 0.721899136052689, 2))  # noqa
+        assert isclose(resampler_cached.results.score_coefficients_of_variation['specificity'], round(0.03664756028501139 / 0.8617441563168404, 2))  # noqa
+        assert isclose(resampler_cached.results.score_coefficients_of_variation['error_rate'], round(0.031189357324296424 / 0.192053148900336, 2))  # noqa

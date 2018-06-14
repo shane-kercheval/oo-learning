@@ -23,7 +23,8 @@ class ModelSearcher:
                  resampler_function: Callable[[ModelWrapperBase, List[TransformerBase]], ResamplerBase],
                  global_transformations: Union[List[TransformerBase], None] = None,
                  resampler_decorators: List[DecoratorBase] = None,
-                 persistence_manager: PersistenceManagerBase = None,
+                 model_persistence_manager: PersistenceManagerBase = None,
+                 resampler_persistence_manager: PersistenceManagerBase = None,
                  parallelization_cores: int=-1):
         """
         A "Searcher" searches across different models and hyper-parameters (or the same models and
@@ -52,11 +53,13 @@ class ModelSearcher:
             fields from the Titanic dataset. 
         :param resampler_decorators: list of decorators, the decorates are cloned for each model i.e. each
             model uses the same list of decorators.
-        :param persistence_manager: a PersistenceManager defining how the underlying models should be cached,
+        :param model_persistence_manager: a PersistenceManager defining how the underlying models should be cached,
             optional. It is closed for each model, 
 
             When tuning, the substructure is set to "tune_[model description]" and when fitting on the entire
             dataset, the prefix is set to "final_[model description]"
+        :param resampler_persistence_manager: a PersistenceManager defining how the underlying
+            ResamplerResults should be cached, optional.
         :param parallelization_cores: the number of cores to use for parallelization (via underlying
             ModelTuner). -1 is all, 0 or 1 is "off"
         """
@@ -80,7 +83,8 @@ class ModelSearcher:
         self._resampler_function = resampler_function
         self._results = None
         self._resampler_decorators = resampler_decorators
-        self._persistence_manager = persistence_manager
+        self._model_persistence_manager = model_persistence_manager
+        self._resampler_persistence_manager = resampler_persistence_manager
         self._parallelization_cores = parallelization_cores
 
     def search(self, data: pd.DataFrame, target_variable: str):
@@ -127,22 +131,29 @@ class ModelSearcher:
             local_model_params_object = self._model_hyper_params_object[index]
             local_model_params_grid = self._model_hyper_params_grid[index]
 
-            local_persistence_manager = self._persistence_manager.clone() if self._persistence_manager else None  # noqa
-            if local_persistence_manager is not None:
+            local_model_pers_manager = self._model_persistence_manager.clone() if self._model_persistence_manager else None  # noqa
+            if local_model_pers_manager is not None:
                 # we have a PersistenceManager, we need to ensure each key (e.g. saved file name) is unique
                 # because keys across various Tuners are not guaranteed to be unique;
                 # keys within Tuners are only unique for each model/hyper-param combination (plus whatever
                 # the resampler does), but we might have the same models/hyper-params passed into the
                 # searcher; the difference, for example, might be the the transformations
-                local_persistence_manager.set_sub_structure(sub_structure='tune_' + local_model_description)
+                local_model_pers_manager.set_sub_structure(sub_structure='tune_' + local_model_description)
+
+            local_resampler_pers_manager = self._resampler_persistence_manager.clone() \
+                if self._resampler_persistence_manager else None  # noqa
+            if local_resampler_pers_manager is not None:
+                local_resampler_pers_manager.set_sub_structure(sub_structure='tune_' +
+                                                                             local_model_description)
 
             # clone all the objects to be reused with the ModelTrainer after tuning
             tuner = ModelTuner(resampler=self._resampler_function(local_model.clone(),
                                                                   None if local_model_trans is None else
                                                                   [x.clone() for x in local_model_trans]),
-                               hyper_param_object=None if local_model_params_object is None else local_model_params_object.clone(),  # noqa
+                               hyper_param_object=None if local_model_params_object is None
+                                                       else local_model_params_object.clone(),
                                resampler_decorators=self._resampler_decorators,
-                               persistence_manager=local_persistence_manager,
+                               model_persistence_manager=local_model_pers_manager,
                                parallelization_cores=self._parallelization_cores)
 
             # noinspection PyProtectedMember
@@ -157,12 +168,12 @@ class ModelSearcher:
             tuner_results.append(tuner.results)
 
             # set prefix rather than sub_structure for refitting model on all data
-            local_persistence_manager = self._persistence_manager.clone() if self._persistence_manager else None  # noqa
-            if local_persistence_manager is not None:
+            local_model_pers_manager = self._model_persistence_manager.clone() if self._model_persistence_manager else None  # noqa
+            if local_model_pers_manager is not None:
                 # if we have a PersistenceManager, we need to ensure each key (e.g. saved file name) is unique
                 # we might have the same models passed into the searcher; the difference, for example, might
                 # be the the transformations; but we ensure the model descriptions are unique, so use that
-                local_persistence_manager.set_key_prefix(prefix='final_' + local_model_description + '_')
+                local_model_pers_manager.set_key_prefix(prefix='final_' + local_model_description + '_')
 
             # verify that the fitter uses the same training data as the Tuner (i.e. the indexes used for the
             # training data in the fitter match the index used to pass in data to the Tuner)
@@ -174,7 +185,7 @@ class ModelSearcher:
                                   model_transformations=local_model_trans,
                                   splitter=self._splitter,
                                   scores=scores,
-                                  persistence_manager=local_persistence_manager,
+                                  persistence_manager=local_model_pers_manager,
                                   train_callback=train_callback)
 
             if local_model_params_object is not None:

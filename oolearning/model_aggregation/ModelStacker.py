@@ -249,7 +249,7 @@ class ModelStacker(ModelWrapperBase):
                 folds=5,
                 repeats=1,
                 fold_decorators=[decorator],
-                persistence_manager=local_persistence_manager)
+                model_persistence_manager=local_persistence_manager)
 
             resampler.resample(data_x=data_x, data_y=data_y, hyper_params=model_info.hyper_params)
             self._resampler_results.append(resampler.results)
