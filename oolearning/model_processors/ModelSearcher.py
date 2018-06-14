@@ -154,6 +154,7 @@ class ModelSearcher:
                                                        else local_model_params_object.clone(),
                                resampler_decorators=self._resampler_decorators,
                                model_persistence_manager=local_model_pers_manager,
+                               resampler_persistence_manager=local_resampler_pers_manager,
                                parallelization_cores=self._parallelization_cores)
 
             # noinspection PyProtectedMember
