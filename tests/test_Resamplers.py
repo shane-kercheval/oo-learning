@@ -978,13 +978,14 @@ class ResamplerTests(TimerTestCase):
                       ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
 
         model_cache_directory = TestHelper.ensure_test_directory('data/test_Resamplers/temp_model_cache/')
-        cache_directory = TestHelper.ensure_test_directory('data/test_Resamplers/cached_resampler/')
+        resampler_cache_directory = TestHelper.ensure_test_directory('data/test_Resamplers/cached_resampler/')
         resampler = RepeatedCrossValidationResampler(
             model=RandomForestClassifier(),
             transformations=transformations,
             scores=score_list,
             model_persistence_manager=LocalCacheManager(cache_directory=model_cache_directory),
-            results_persistence_manager=LocalCacheManager(cache_directory=cache_directory, key='test'),
+            results_persistence_manager=LocalCacheManager(cache_directory=resampler_cache_directory,
+                                                          key='test'),
             folds=5,
             repeats=5,
             parallelization_cores=-1)
@@ -1013,7 +1014,7 @@ class ResamplerTests(TimerTestCase):
         shutil.rmtree(model_cache_directory)
 
         expected_file = 'test.pkl'
-        assert os.path.isfile(os.path.join(cache_directory, expected_file))
+        assert os.path.isfile(os.path.join(resampler_cache_directory, expected_file))
 
         assert resampler.results.score_names == ['kappa', 'sensitivity', 'specificity', 'error_rate']
 
@@ -1049,7 +1050,8 @@ class ResamplerTests(TimerTestCase):
             scores=[],  # different
             # model_persistence_manager shouldn't even be used (and we deleted the models above)
             model_persistence_manager=LocalCacheManager(cache_directory=model_cache_directory),
-            results_persistence_manager=LocalCacheManager(cache_directory=cache_directory, key='test'),
+            results_persistence_manager=LocalCacheManager(cache_directory=resampler_cache_directory,
+                                                          key='test'),
             folds=1,  # different
             repeats=1,  # different
             parallelization_cores=-1)
@@ -1071,7 +1073,7 @@ class ResamplerTests(TimerTestCase):
                     for x in resampler_cached.results._scores])
         assert resampler_cached.results.num_resamples == 25
 
-        assert os.path.isfile(os.path.join(cache_directory, expected_file))
+        assert os.path.isfile(os.path.join(resampler_cache_directory, expected_file))
 
         assert resampler_cached.results.score_names == ['kappa', 'sensitivity', 'specificity', 'error_rate']
 
@@ -1093,3 +1095,5 @@ class ResamplerTests(TimerTestCase):
         assert isclose(resampler_cached.results.score_coefficients_of_variation['sensitivity'], round(0.06706830388930413 / 0.721899136052689, 2))  # noqa
         assert isclose(resampler_cached.results.score_coefficients_of_variation['specificity'], round(0.03664756028501139 / 0.8617441563168404, 2))  # noqa
         assert isclose(resampler_cached.results.score_coefficients_of_variation['error_rate'], round(0.031189357324296424 / 0.192053148900336, 2))  # noqa
+
+        shutil.rmtree(resampler_cache_directory)
