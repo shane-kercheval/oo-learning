@@ -1,6 +1,8 @@
+import hashlib
 import os.path
 import pickle
 import string
+
 from typing import Callable
 
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
@@ -106,7 +108,8 @@ class LocalCacheManager(PersistenceManagerBase):
         if len(cache_path) > 255:  # 255 is max filename length in most popular systems
             # noinspection PyTypeChecker
             prefix = '' if self._key_prefix is None else ''.join(c for c in self._key_prefix if c in valid_chars)  # noqa
-            cache_path = prefix + str(hash(key)) + '.pkl'  # only hash the key
+            # only hash the key
+            cache_path = prefix + hashlib.sha224(key.encode('utf-8')).hexdigest() + '.pkl'
 
         cache_path = os.path.join(self._cache_directory, cache_path)
         return cache_path if cache_path[0] != '/' else cache_path[1:]

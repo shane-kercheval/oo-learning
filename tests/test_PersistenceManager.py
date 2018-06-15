@@ -1,3 +1,4 @@
+import hashlib
 import os
 import shutil
 
@@ -189,15 +190,10 @@ class PersistenceManagerTests(TimerTestCase):
         persistence_object = LocalCacheManager(cache_directory=expected_directory, key=valid_key)
         assert persistence_object._cache_path == os.path.join(expected_directory, valid_key + '.pkl')
 
-        # now try invalid key; make sure it converts to hash
-        invalid_key = 'a'*(256 - len('.pkl'))
-        valid_key = str(hash(invalid_key)) + '.pkl'
-        persistence_object = LocalCacheManager(cache_directory=expected_directory, key=invalid_key)
-        assert persistence_object._cache_path == os.path.join(expected_directory, valid_key)
-
         # file too long with prefix only converts key, not prefix
         invalid_key = 'a'*(256 - len('.pkl'))
-        valid_key = str(hash(invalid_key)) + '.pkl'
+        # raw string; that way we can check that we get the same hash value across sessions
+        valid_key = '2e5fc80386a5c7df9425d72af5f7c8f89eb0f50563f2869ec3bfb108.pkl'
         persistence_object = LocalCacheManager(cache_directory=expected_directory, key=invalid_key)
         assert persistence_object._cache_path == os.path.join(expected_directory, valid_key)
 
@@ -233,7 +229,8 @@ class PersistenceManagerTests(TimerTestCase):
 
         # prefix pushes the filename over the limit; however, the key_prefix should never be changed/hashed
         # noinspection SpellCheckingInspection
-        expected_key = 'invalidprefix_' + str(hash(key_limit)) + '.pkl'  # now a valid prefix
+        # raw string; that way we can check that we get the same hash value across sessions
+        expected_key = 'invalidprefix_198712a23db7ae113f047178daeb9c8b15854383ae98410e20374f72.pkl'
         # we are passing in an invalid prefix to test that the prefix still gets converted, but not hashed
         persistence_object = LocalCacheManager(cache_directory=expected_directory,
                                                key=key_limit,
