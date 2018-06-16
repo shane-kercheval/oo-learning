@@ -640,6 +640,8 @@ class TransformerTests(TimerTestCase):
         dummy_transformer.fit(data_x=data)
 
         assert dummy_transformer._columns_to_reindex == new_dummy_columns
+        assert dummy_transformer.encoded_columns == ['sex_male', 'smoker_yes', 'region_northwest',
+                                                     'region_southeast', 'region_southwest']
         assert dummy_transformer.state == expected_state
 
         new_dummy_data = dummy_transformer.transform(data_x=data)
@@ -652,6 +654,9 @@ class TransformerTests(TimerTestCase):
         one_hot_transformer = DummyEncodeTransformer(encoding=CategoricalEncoding.ONE_HOT)
         one_hot_transformer.fit(data_x=data)
         assert one_hot_transformer._columns_to_reindex == new_one_hot_columns
+        assert one_hot_transformer.encoded_columns == ['sex_female', 'sex_male', 'smoker_no', 'smoker_yes',
+                                                       'region_northeast', 'region_northwest',
+                                                       'region_southeast', 'region_southwest']
         assert one_hot_transformer.state == expected_state
 
         new_encoded_data = one_hot_transformer.transform(data_x=data)
@@ -723,6 +728,9 @@ class TransformerTests(TimerTestCase):
         dummy_transformer.fit(data_x=data.drop(index=0))  # the transformer doesn't know about the value
         # the data has the wrong columns because it doesn't know about the 'maybe' value
         assert dummy_transformer._columns_to_reindex == wrong_columns
+        assert dummy_transformer.encoded_columns == ['sex_female', 'sex_male', 'smoker_no', 'smoker_yes',
+                                                     'region_northeast', 'region_northwest',
+                                                     'region_southeast', 'region_southwest']
 
         # now, when we try to fit with the data that has the unseen values, it will explode
         self.assertRaises(AssertionError, lambda: dummy_transformer.transform(data_x=data))

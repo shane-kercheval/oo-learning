@@ -14,7 +14,15 @@ class DummyEncodeTransformer(TransformerBase):
         assert encoding is not CategoricalEncoding.NONE  # this wouldn't make sense
         self._encoding = encoding
         self._columns_to_reindex = None
+        self._encoded_columns = None
         self._peak_state = None
+
+    @property
+    def encoded_columns(self):
+        """
+        :return: the transformed/final column names of the categorical columns encoded
+        """
+        return self._encoded_columns
 
     def peak(self, data_x: pd.DataFrame):
         """
@@ -70,10 +78,12 @@ class DummyEncodeTransformer(TransformerBase):
         # save the numeric & dummy columns, so that we can reindex consistently in transform
         starting_index = 1 if self._encoding == CategoricalEncoding.DUMMY else 0  # ignore 1st index if dummy
 
-        self._columns_to_reindex = numeric_features
+        self._encoded_columns = []
         for column in state.keys():
             new_columns = [column + '_' + str(value) for value in state[column]]  # `str` in case of numeric
-            self._columns_to_reindex.extend(new_columns[starting_index:])
+            self._encoded_columns.extend(new_columns[starting_index:])
+
+        self._columns_to_reindex = numeric_features + self._encoded_columns
 
         return state
 
