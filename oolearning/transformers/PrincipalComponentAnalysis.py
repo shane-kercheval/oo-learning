@@ -25,7 +25,7 @@ class PCATransformer(TransformerBase):
             http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
 
             Alternatively, the user can pass in `None`, which will give all components, and then use
-                `get_pca_plot()` to determine ideal number of components baed off of the bend in the graph.
+                `plot_cumulative_variance()` to determine ideal number of components baed off of the bend in the graph.
 
         :param exclude_categorical_columns: if set to True, the categoric features are not retained in the
             transformed dataset returned.
@@ -73,13 +73,40 @@ class PCATransformer(TransformerBase):
                                                                                      data_x[categorical_features]],  # noqa
                                                                                     axis=1)
 
-    def get_pca_plot(self):
+    def plot_cumulative_variance(self):
         """
-        Creates a strandard plot of PCA that shows the cumulative variance explained for each additional
+        Creates a Pareto plot of PCA that shows the cumulative variance explained for each additional
             component used.
         """
         assert self._cumulative_explained_variance is not None
 
-        plt.plot(range(1, 8), self.cumulative_explained_variance)
+        cumulative_var = self.cumulative_explained_variance
+        component_weights = np.array(
+            [x - y for x, y in zip(cumulative_var, np.insert(cumulative_var, 0, 0, axis=0))])
+        assert len(component_weights) == len(cumulative_var)
+
+        # lefthand edge of each bar
+        left = range(1, len(component_weights) + 1)
+        fig, ax = plt.subplots(1, 1)
+        ax.bar(left, component_weights, 1)
+        ax.plot(range(1, len(cumulative_var) + 1), cumulative_var)
         plt.xlabel('number of components')
         plt.ylabel('cumulative explained variance')
+        plt.title('PCA Explained Variance')
+        index_90_per = np.argmax(cumulative_var >= 0.90)
+        index_95_per = np.argmax(cumulative_var >= 0.95)
+        index_99_per = np.argmax(cumulative_var >= 0.99)
+
+        # make sure indexes are unique
+        annotation_indexes = list({index_90_per, index_95_per, index_99_per})
+
+        for x in annotation_indexes:
+            y = cumulative_var[x]
+            component = x + 1
+            plt.annotate('{} comps; {}%'.format(component, round(cumulative_var[x] * 100, 1)),
+                         size=8,
+                         xy=(component, y),
+                         xytext=(component, y),
+                         horizontalalignment='right', verticalalignment='bottom')
+
+        plt.plot([x + 1 for x in annotation_indexes], [cumulative_var[x] for x in annotation_indexes], 'rx')

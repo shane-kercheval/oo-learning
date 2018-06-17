@@ -1142,7 +1142,7 @@ class TransformerTests(TimerTestCase):
         assert all(transformed_data['temp_categorical'].values == training_set['temp_categorical'].values)
 
         TestHelper.check_plot('data/test_Transformers/test_get_pca_plot.png',
-                              lambda: pca_transformer.get_pca_plot())
+                              lambda: pca_transformer.plot_cumulative_variance())
 
         # test when setting `exclude_categorical_columns=True`
         pca_transformer = PCATransformer(exclude_categorical_columns=True)
