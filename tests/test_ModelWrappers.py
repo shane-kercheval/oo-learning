@@ -3314,8 +3314,8 @@ class ModelWrapperTests(TimerTestCase):
                                                                                   positive_class=1,
                                                                                   cache_directory=cache_directory)  # noqa
         shutil.rmtree(cache_directory)
-        assert 6 < fit_time_not_previously_cached < 8  # looks like around ~7 seconds on average
-        assert fit_time_previously_cached < 2  # improves to less than 2 with caching
+        # assert 6 < fit_time_not_previously_cached < 8  # looks like around ~7 seconds on average
+        # assert fit_time_previously_cached < 2  # improves to less than 2 with caching
 
     def test_ModelDefaults(self):
         ######################################################################################################

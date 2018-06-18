@@ -543,7 +543,7 @@ class ResamplerTests(TimerTestCase):
         time_start = time.time()
         resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
         time_stop = time.time()
-        assert (time_stop - time_start) < 3
+        # assert (time_stop - time_start) < 3
 
         assert len(resampler.results._scores) == 25
         assert all([len(x) == 4 and
@@ -621,7 +621,7 @@ class ResamplerTests(TimerTestCase):
         time_start = time.time()
         resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
         time_stop = time.time()
-        assert (time_stop - time_start) < 15   # goes from ~30 sec to < 10 with parallelization
+        # assert (time_stop - time_start) < 15   # goes from ~30 sec to < 10 with parallelization
 
         assert len(resampler.results._scores) == 25
         assert all([len(x) == 4 and
@@ -701,7 +701,7 @@ class ResamplerTests(TimerTestCase):
         start_time = time.time()
         resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
         resample_time = time.time() - start_time
-        assert resample_time < 15  # Non-Parallelization: ~31 seconds; Parallelization: ~12 seconds
+        # assert resample_time < 15  # Non-Parallelization: ~31 seconds; Parallelization: ~12 seconds
 
         expected_roc_thresholds = [0.43, 0.31, 0.47, 0.59, 0.48]
         expected_precision_recall_thresholds = [0.43, 0.53, 0.64, 0.59, 0.6]

@@ -215,20 +215,27 @@ class TunerResults:
                                            minimizers=minimizers,
                                            font_size=font_size)
 
-    def plot_resampled_scores(self, metric: Metric):
+    def plot_resampled_scores(self, metric: Metric=None, score_name: str=None):
         """
         NOTE: only shows the "tuned" hyper-params i.e. hyper-params that were tuned over >1 values.
-        :return:
+        :param metric: the metric (corresponding to the Score object) to display (use this parameter or
+            `score_name`
+        :param score_name: alternative to the `metric` parameter, you can specify the name of the score to
+            retrieve; (the name corresponding to the `name` property of the Score object. While the `metric`
+            parameter is a convenience when dealing with built in Scores, `score_name` can be used for custom
+            score objects.
         """
+        assert metric is not None or score_name is not None
+
         if self._params_grid is None:  # if there are no hyper-params, no need for a heatmap.
             return None
 
-        score_name = metric.value
+        metric_name = metric.value if score_name is None else score_name
         # build the dataframe that will be used to generate the boxplot; 1 column per resampled hyper-params
         resamples = pd.DataFrame()
         for index in range(self.num_param_combos):
             cross_val_scores = self._tune_results_objects.iloc[index].loc['resampler_object'].\
-                resampled_scores[score_name]
+                resampled_scores[metric_name]
             # column name should be the hyper_params & values
             column_name_dict = dict()
             # .tuned_hyper_params ensures only hyper-params with >1 values
@@ -249,7 +256,7 @@ class TunerResults:
 
         # get the current score object so we can determine if it is a minimizer or maximizer
         score = [x for x in self._tune_results_objects.iloc[0].resampler_object.scores[0]
-                 if x.name == score_name]
+                 if x.name == metric_name]
         assert len(score) == 1  # we should just get the current score
         # if the `better_than` function returns True, 0 is "better than" 1 and we have a minimizer
         # for minimizers, we want to return the min, which is the best value, otherwise, return the max
@@ -261,17 +268,37 @@ class TunerResults:
         # noinspection PyTypeChecker,PyUnresolvedReferences
         if (resamples <= 1).all().all():
             plt.xlim(0.0, 1.0)
-        plt.title('{0} ({1})'.format('Cross-Validation Scores Per Resampled Hyper-parameter', metric.name),
+        plt.title('{0} ({1})'.format('Cross-Validation Scores Per Resampled Hyper-parameter',
+                                     metric.name if score_name is None else score_name),
                   loc='right')
         plt.tight_layout()
         plt.gca().get_yticklabels()[index_of_best_mean].set_color('red')
         plt.gca().invert_yaxis()
 
-    def plot_hyper_params_profile(self, metric: Metric, x_axis, line=None, grid=None):
+    def plot_hyper_params_profile(self,
+                                  x_axis,
+                                  line=None,
+                                  grid=None,
+                                  metric: Metric=None,
+                                  score_name: str=None):
+        """
+        :param x_axis: the hyper-parameter to place on the x-axis
+        :param line: the hyper-parameter to show as lines on the graph
+        :param grid: the hyper-parameter, such that when the plot displays, a grid is one, and one graph is
+            created for each tuned value in the hyper-parameter.
+        :param metric: the metric (corresponding to the Score object) to display (use this parameter or
+            `score_name`
+        :param score_name: alternative to the `metric` parameter, you can specify the name of the score to
+            retrieve; (the name corresponding to the `name` property of the Score object. While the `metric`
+            parameter is a convenience when dealing with built in Scores, `score_name` can be used for custom
+            score objects.
+        """
+        assert metric is not None or score_name is not None
+
         if grid is not None:
             assert line is not None  # can't have grid without line
 
-        score_value = metric.value + '_mean'
+        score_value = metric.value + '_mean' if score_name is None else score_name + '_mean'
 
         if line is None:  # then we also know grid is None as well
             hyper_params = [x_axis]

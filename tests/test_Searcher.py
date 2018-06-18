@@ -466,13 +466,16 @@ class SearcherTests(TimerTestCase):
         TestHelper.check_plot('data/test_Searcher/test_get_holdout_score_heatmap.png',
                               lambda: searcher.results.plot_holdout_scores())
         TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_KAPPA.png',
-                              lambda: searcher.results.plot_resampled_scores(Metric.KAPPA))
+                              lambda: searcher.results.plot_resampled_scores(metric=Metric.KAPPA))
         TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_SENSITIVITY.png',
-                              lambda: searcher.results.plot_resampled_scores(Metric.SENSITIVITY))
+                              lambda: searcher.results.plot_resampled_scores(metric=Metric.SENSITIVITY))
         TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_SPECIFICITY.png',
-                              lambda: searcher.results.plot_resampled_scores(Metric.SPECIFICITY))
+                              lambda: searcher.results.plot_resampled_scores(metric=Metric.SPECIFICITY))
         TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_ERROR_RATE.png',
-                              lambda: searcher.results.plot_resampled_scores(Metric.ERROR_RATE))
+                              lambda: searcher.results.plot_resampled_scores(metric=Metric.ERROR_RATE))
+
+        TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_KAPPA_string.png',
+                              lambda: searcher.results.plot_resampled_scores(score_name='kappa'))
 
         ######################################################################################################
         # test resampler cache
@@ -514,7 +517,7 @@ class SearcherTests(TimerTestCase):
         searcher_cached.search(data=data, target_variable='Survived')
         time_stop = time.time()
         # cache improves time, but still needs to loop, predict on holdout set, etc.
-        assert (time_stop - time_start) < 4
+        # assert (time_stop - time_start) < 4
 
         # TEST TUNER RESULTS
         assert len(searcher_cached.results.tuner_results) == 4

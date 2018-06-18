@@ -125,13 +125,19 @@ class SearcherResults:
 # each sub-model has been resampled, so the "best model" for the sub-model has associated resampled data (i.e. all the cross validation scores for each score)
     #
 
-    def plot_resampled_scores(self, metric: Metric):
+    def plot_resampled_scores(self, metric: Metric=None, score_name: str=None):
         """
         for each "best" model, show the resamples via boxplot
-        :param metric:
-        :return:
+        :param metric: the metric (corresponding to the Score object) to display (use this parameter or
+            `score_name`
+        :param score_name: alternative to the `metric` parameter, you can specify the name of the score to
+            retrieve; (the name corresponding to the `name` property of the Score object. While the `metric`
+            parameter is a convenience when dealing with built in Scores, `score_name` can be used for custom
+            score objects.
         """
-        metric_name = metric.value
+        assert metric is not None or score_name is not None
+
+        metric_name = metric.value if score_name is None else score_name
         # build the dataframe that will be used to generate the boxplot; 1 column per "best" model
         resamples = pd.DataFrame()
         for index in range(len(self.model_names)):
@@ -169,7 +175,9 @@ class SearcherResults:
             ax.set_xticklabels(labels=['0']+['{0:.2f}'.format(x) for x in np.arange(start=0.05, stop=1, step=0.05)]+['1'],  # noqa
                                rotation=20,
                                ha='right')
-        plt.title('{0} ({1})'.format('Resampling Scores Per `Best` Models', metric.name), loc='right')
+        plt.title('{0} ({1})'.format('Resampling Scores Per `Best` Models',
+                                     metric.name if score_name is None else score_name),
+                  loc='right')
         plt.tight_layout()
         plt.gca().get_yticklabels()[index_of_best_mean].set_color('red')
         plt.gca().invert_yaxis()
