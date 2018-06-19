@@ -215,7 +215,11 @@ class TunerResults:
                                            minimizers=minimizers,
                                            font_size=font_size)
 
-    def plot_resampled_scores(self, metric: Metric=None, score_name: str=None):
+    def plot_resampled_scores(self,
+                              metric: Metric=None,
+                              score_name: str=None,
+                              x_axis_limits: tuple=(0.0, 1.0),
+                              show_one_ste_rule: bool=False):
         """
         NOTE: only shows the "tuned" hyper-params i.e. hyper-params that were tuned over >1 values.
         :param metric: the metric (corresponding to the Score object) to display (use this parameter or
@@ -224,6 +228,8 @@ class TunerResults:
             retrieve; (the name corresponding to the `name` property of the Score object. While the `metric`
             parameter is a convenience when dealing with built in Scores, `score_name` can be used for custom
             score objects.
+        :param x_axis_limits: limits for the x-axis
+        :param show_one_ste_rule: show a blue line one standard error below the mean of the best model.
         """
         assert metric is not None or score_name is not None
 
@@ -265,9 +271,20 @@ class TunerResults:
         index_of_best_mean = resample_means.index(best(resample_means))
 
         resamples.boxplot(vert=False, figsize=(10, 10))
+        resample_medians = [resamples[column].median() for column in resamples.columns.values]
+        plt.axvline(x=max(resample_medians), color='red', linewidth=1)
+
+        if show_one_ste_rule:
+            # using means rather than medians because we are calculating standard error (from the mean)
+            resamples_of_best_mean = resamples[resamples.columns.values[index_of_best_mean]].values
+            one_standard_error_of_best = resamples_of_best_mean.std() / math.sqrt(len(resamples_of_best_mean))
+            # noinspection PyUnresolvedReferences
+            one_standard_error_rule = resamples_of_best_mean.mean() - one_standard_error_of_best
+            plt.axvline(x=one_standard_error_rule, color='blue', linewidth=1)
+
         # noinspection PyTypeChecker,PyUnresolvedReferences
         if (resamples <= 1).all().all():
-            plt.xlim(0.0, 1.0)
+            plt.xlim(x_axis_limits[0], x_axis_limits[1])
         plt.title('{0} ({1})'.format('Cross-Validation Scores Per Resampled Hyper-parameter',
                                      metric.name if score_name is None else score_name),
                   loc='right')

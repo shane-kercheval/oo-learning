@@ -240,6 +240,14 @@ class TunerTests(TimerTestCase):
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_boxplot_error.png',
                               lambda: tuner.results.plot_resampled_scores(metric=Metric.ERROR_RATE))
 
+        TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_boxplot_kappa_string.png',  # noqa
+                              lambda: tuner.results.plot_resampled_scores(score_name='kappa'))
+
+        TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_boxplot_kappa_xlims_one_ste.png',  # noqa
+                              lambda: tuner.results.plot_resampled_scores(metric=Metric.KAPPA,
+                                                                          x_axis_limits=(0.3, 0.8),
+                                                                          show_one_ste_rule=True))
+
         x_axis = 'max_features'
         line = 'n_estimators'
         grid = 'min_samples_leaf'
@@ -254,6 +262,10 @@ class TunerTests(TimerTestCase):
                               lambda: tuner.results.plot_hyper_params_profile(metric=metric, x_axis='n_estimators', line=None, grid=None))  # noqa
         TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_profile_hyper_params_1_msl.png',  # noqa
                               lambda: tuner.results.plot_hyper_params_profile(metric=metric, x_axis='min_samples_leaf', line=None, grid=None))  # noqa
+
+        TestHelper.check_plot('data/test_Tuners/test_ModelTuner_mock_classification_get_profile_hyper_params_3_string.png',  # noqa
+                              lambda: tuner.results.plot_hyper_params_profile(metric=metric, x_axis=x_axis, line=line, grid=grid))  # noqa
+
         self.assertRaises(AssertionError, lambda: tuner.results.plot_hyper_params_profile(metric=metric, x_axis=x_axis, line=None, grid=grid))  # noqa
 
     def test_ModelTuner_GradientBoosting_classification(self):
@@ -398,7 +410,7 @@ class TunerTests(TimerTestCase):
 
         tuner_cached.tune(data_x=None, data_y=None, params_grid=grid)
 
-        #assert tuner_cached.total_tune_time < 1  # should be super quick with only 8 cached files to load
+        assert tuner_cached.total_tune_time < 1  # should be super quick with only 8 cached files to load
 
         assert len(tuner_cached.results._tune_results_objects) == len(grid.params_grid)
         assert all([isinstance(x, ResamplerResults)

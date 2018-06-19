@@ -1,5 +1,6 @@
 from typing import List
 
+import math
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -125,7 +126,11 @@ class SearcherResults:
 # each sub-model has been resampled, so the "best model" for the sub-model has associated resampled data (i.e. all the cross validation scores for each score)
     #
 
-    def plot_resampled_scores(self, metric: Metric=None, score_name: str=None):
+    def plot_resampled_scores(self,
+                              metric: Metric=None,
+                              score_name: str=None,
+                              x_axis_limits: tuple=(0.0, 1.0),
+                              show_one_ste_rule: bool=False):
         """
         for each "best" model, show the resamples via boxplot
         :param metric: the metric (corresponding to the Score object) to display (use this parameter or
@@ -134,9 +139,9 @@ class SearcherResults:
             retrieve; (the name corresponding to the `name` property of the Score object. While the `metric`
             parameter is a convenience when dealing with built in Scores, `score_name` can be used for custom
             score objects.
+        :param x_axis_limits: limits for the x-axis
+        :param show_one_ste_rule: show a blue line one standard error below the mean of the best model.
         """
-        assert metric is not None or score_name is not None
-
         metric_name = metric.value if score_name is None else score_name
         # build the dataframe that will be used to generate the boxplot; 1 column per "best" model
         resamples = pd.DataFrame()
@@ -165,16 +170,27 @@ class SearcherResults:
         best = min if minimizer else max
         index_of_best_mean = resample_means.index(best(resample_means))
 
-        resample_boxplot = resamples.boxplot(vert=False, figsize=(10, 10))
+        resamples.boxplot(vert=False, figsize=(10, 10))
+        resample_medians = [resamples[column].median() for column in resamples.columns.values]
+        plt.axvline(x=max(resample_medians), color='red', linewidth=1)
+
+        if show_one_ste_rule:
+            # using means rather than medians because we are calculating standard error (from the mean)
+            resamples_of_best_mean = resamples[resamples.columns.values[index_of_best_mean]].values
+            one_standard_error_of_best = resamples_of_best_mean.std() / math.sqrt(len(resamples_of_best_mean))
+            # noinspection PyUnresolvedReferences
+            one_standard_error_rule = resamples_of_best_mean.mean() - one_standard_error_of_best
+            plt.axvline(x=one_standard_error_rule, color='blue', linewidth=1)
 
         # noinspection PyTypeChecker,PyUnresolvedReferences
         if (resamples <= 1).all().all():
-            plt.xlim(0.0, 1.0)
-            plt.xticks(np.arange(start=0.0, stop=1.05, step=0.05))
-            ax = plt.gca()
-            ax.set_xticklabels(labels=['0']+['{0:.2f}'.format(x) for x in np.arange(start=0.05, stop=1, step=0.05)]+['1'],  # noqa
-                               rotation=20,
-                               ha='right')
+            plt.xlim(x_axis_limits[0], x_axis_limits[1])
+            # plt.xticks(np.arange(start=x_axis_limits[0], stop=x_axis_limits[1], step=0.05))
+            # ax = plt.gca()
+            # ax.set_xticklabels(labels=['0']+['{0:.2f}'.format(x) for x in np.arange(start=x_axis_limits[0] + 0.05,
+            #                                                                         stop=x_axis_limits[1] + 0.05, step=0.05)]+['1'],  # noqa
+            #                    rotation=20,
+            #                    ha='right')
         plt.title('{0} ({1})'.format('Resampling Scores Per `Best` Models',
                                      metric.name if score_name is None else score_name),
                   loc='right')

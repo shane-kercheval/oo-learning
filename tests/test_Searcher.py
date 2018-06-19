@@ -477,6 +477,11 @@ class SearcherTests(TimerTestCase):
         TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_KAPPA_string.png',
                               lambda: searcher.results.plot_resampled_scores(score_name='kappa'))
 
+        TestHelper.check_plot('data/test_Searcher/test_get_resamples_boxplot_KAPPA_xlims_one_ste_rule.png',
+                              lambda: searcher.results.plot_resampled_scores(metric=Metric.KAPPA,
+                                                                             x_axis_limits=(0, 0.15),
+                                                                             show_one_ste_rule=True))
+
         ######################################################################################################
         # test resampler cache
         ######################################################################################################
@@ -516,6 +521,7 @@ class SearcherTests(TimerTestCase):
         time_start = time.time()
         searcher_cached.search(data=data, target_variable='Survived')
         time_stop = time.time()
+        shutil.rmtree(cache_directory)
         # cache improves time, but still needs to loop, predict on holdout set, etc.
         # assert (time_stop - time_start) < 4
 
@@ -635,5 +641,3 @@ class SearcherTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip(searcher_cached.results.best_tuned_results.error_rate_mean, [0.4713687139504869, 0.4713687139504869, 0.48359594883324886, 0.38334207853184576])])  # noqa
         assert all([isclose(x, y) for x, y in zip(searcher_cached.results.best_tuned_results.error_rate_st_dev, [0.05288425259051662, 0.05288425259051662, 0.02628308134935678, 0.044852752350113725])])  # noqa
         assert all([isclose(x, y) for x, y in zip(searcher_cached.results.best_tuned_results.error_rate_cv, [0.11, 0.11, 0.05, 0.12])])  # noqa
-
-        shutil.rmtree(cache_directory)
