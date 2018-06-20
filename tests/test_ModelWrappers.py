@@ -2177,10 +2177,39 @@ class ModelWrapperTests(TimerTestCase):
 
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
 
-        assert fitter.model.hyper_params.params_dict == {'max_depth': None,
-                                                         'n_estimators': 50,
+        assert fitter.model.hyper_params.params_dict == {'n_estimators': 50,
                                                          'learning_rate': 1.0,
-                                                         'loss': 'linear'}
+                                                         'loss': 'linear',
+                                                         'criterion': 'mse',
+                                                         'splitter': 'best',
+                                                         'max_depth': None,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'min_weight_fraction_leaf': 0.0,
+                                                         'max_features': None,
+                                                         'max_leaf_nodes': None,
+                                                         'min_impurity_decrease': 0.0,
+                                                         'presort': False}
+
+        # all parameters except 'base_estimator', which gives an object
+        expected_params = {'base_estimator__criterion': 'mse',
+                           'base_estimator__max_depth': None,
+                           'base_estimator__max_features': None,
+                           'base_estimator__max_leaf_nodes': None,
+                           'base_estimator__min_impurity_decrease': 0.0,
+                           'base_estimator__min_impurity_split': None,
+                           'base_estimator__min_samples_leaf': 1,
+                           'base_estimator__min_samples_split': 2,
+                           'base_estimator__min_weight_fraction_leaf': 0.0,
+                           'base_estimator__presort': False,
+                           'base_estimator__random_state': 42,
+                           'base_estimator__splitter': 'best',
+                           'learning_rate': 1.0,
+                           'loss': 'linear',
+                           'n_estimators': 50,
+                           'random_state': 42}
+        actual_params = fitter.model.model_object.get_params()
+        assert all([actual_params[key] == value for key, value in expected_params.items()])
 
         keys = fitter.training_evaluator.all_quality_metrics.keys()
         expected_values = {'Mean Absolute Error (MAE)': 1.5431027895916443, 'Mean Squared Error (MSE)': 7.862081902399274, 'Root Mean Squared Error (RMSE)': 2.8039404241886587, 'RMSE to Standard Deviation of Target': 0.16722734259434227, 'Total Observations': 824}  # noqa
@@ -2205,10 +2234,40 @@ class ModelWrapperTests(TimerTestCase):
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
         assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
-        assert fitter.model.hyper_params.params_dict == {'max_depth': None,
-                                                         'n_estimators': 50,
+        assert fitter.model.hyper_params.params_dict == {'n_estimators': 50,
                                                          'learning_rate': 1.0,
-                                                         'algorithm': 'SAMME.R'}
+                                                         'algorithm': 'SAMME.R',
+                                                         'criterion': 'gini',
+                                                         'splitter': 'best',
+                                                         'max_depth': None,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'min_weight_fraction_leaf': 0.0,
+                                                         'max_features': None,
+                                                         'max_leaf_nodes': None,
+                                                         'min_impurity_decrease': 0.0,
+                                                         'class_weight': None,
+                                                         'presort': False}
+        # all parameters except 'base_estimator', which gives an object
+        expected_params = {'algorithm': 'SAMME.R',
+                           'base_estimator__class_weight': None,
+                           'base_estimator__criterion': 'gini',
+                           'base_estimator__max_depth': None,
+                           'base_estimator__max_features': None,
+                           'base_estimator__max_leaf_nodes': None,
+                           'base_estimator__min_impurity_decrease': 0.0,
+                           'base_estimator__min_impurity_split': None,
+                           'base_estimator__min_samples_leaf': 1,
+                           'base_estimator__min_samples_split': 2,
+                           'base_estimator__min_weight_fraction_leaf': 0.0,
+                           'base_estimator__presort': False,
+                           'base_estimator__random_state': 42,
+                           'base_estimator__splitter': 'best',
+                           'learning_rate': 1.0,
+                           'n_estimators': 50,
+                           'random_state': 42}
+        actual_params = fitter.model.model_object.get_params()
+        assert all([actual_params[key] == value for key, value in expected_params.items()])
 
         assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9992991063606097, 'AUC Precision/Recall': 0.9984018681159533, 'Kappa': 0.9641059680549836, 'F1 Score': 0.9776119402985075, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.9597069597069597, 'True Negative Rate': 0.9977220956719818, 'False Positive Rate': 0.002277904328018223, 'False Negative Rate': 0.040293040293040296, 'Positive Predictive Value': 0.9961977186311787, 'Negative Predictive Value': 0.9755011135857461, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.797957839262187, 'AUC Precision/Recall': 0.7339255444753214, 'Kappa': 0.5770035784214436, 'F1 Score': 0.7286821705426356, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6811594202898551, 'True Negative Rate': 0.8818181818181818, 'False Positive Rate': 0.11818181818181818, 'False Negative Rate': 0.3188405797101449, 'Positive Predictive Value': 0.7833333333333333, 'Negative Predictive Value': 0.8151260504201681, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
@@ -2220,16 +2279,26 @@ class ModelWrapperTests(TimerTestCase):
                               model_transformations=None,
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                               evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
-        fitter.train(data=data, target_variable=target_variable, hyper_params=AdaBoostClassifierHP())  # noqa
+        fitter.train(data=data, target_variable=target_variable, hyper_params=AdaBoostClassifierHP())
 
         assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
         assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
 
-        assert fitter.model.feature_names == ['sepal_length', 'sepal_width', 'petal_length', 'petal_width']  # noqa
-        assert fitter.model.hyper_params.params_dict == {'max_depth': None,
-                                                         'n_estimators': 50,
+        assert fitter.model.feature_names == ['sepal_length', 'sepal_width', 'petal_length', 'petal_width']
+        assert fitter.model.hyper_params.params_dict == {'n_estimators': 50,
                                                          'learning_rate': 1.0,
-                                                         'algorithm': 'SAMME.R'}
+                                                         'algorithm': 'SAMME.R',
+                                                         'criterion': 'gini',
+                                                         'splitter': 'best',
+                                                         'max_depth': None,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'min_weight_fraction_leaf': 0.0,
+                                                         'max_features': None,
+                                                         'max_leaf_nodes': None,
+                                                         'min_impurity_decrease': 0.0,
+                                                         'class_weight': None,
+                                                         'presort': False}
 
         assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
         assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.841995841995842, 'Accuracy': 0.8947368421052632, 'Error Rate': 0.10526315789473684, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa
