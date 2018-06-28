@@ -221,6 +221,11 @@ class TunerResults:
                               x_axis_limits: tuple=(0.0, 1.0),
                               show_one_ste_rule: bool=False):
         """
+        NOTE: there is some odd/inconsistent reference lines/colors with this graph to be aware of:
+            The params with the best MEAN are highlighted in red.
+            The vertical line represents the params that give the best MEDIAN
+            The blue vertical line represents one standard error below the MEAN.
+
         NOTE: only shows the "tuned" hyper-params i.e. hyper-params that were tuned over >1 values.
         :param metric: the metric (corresponding to the Score object) to display (use this parameter or
             `score_name`
