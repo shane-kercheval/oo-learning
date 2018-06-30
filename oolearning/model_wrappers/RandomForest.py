@@ -107,10 +107,19 @@ class RandomForestClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
         forest will typically be helpful when we have a large number of correlated features." (ISLR pg
         319-320)
     """
-    def __init__(self, _num_jobs_in_parallel: int=-1, seed: int=42):
+    def __init__(self, extra_trees_implementation: bool=False, _num_jobs_in_parallel: int=-1, seed: int=42):
+        """
+        :param extra_trees_implementation: uses sklearn.ensemble.ExtraTreesClassifier/Regressor rather than
+            sklearn.ensemble.RandomForestClassifier/Regressor
+        """
         super().__init__()
         self._num_jobs_in_parallel = _num_jobs_in_parallel
         self._seed = seed
+        self._extra_trees_implementation = extra_trees_implementation
+
+    @property
+    def extra_trees_implementation(self) -> bool:
+        return self._extra_trees_implementation
 
     @property
     def feature_importance(self):
@@ -126,28 +135,56 @@ class RandomForestClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
 
         #  n_jobs: The number of jobs to run in parallel for both train and predict. If -1, then the number
         # of jobs is set to the number of cores.
-        rf_model = sklearn.ensemble.RandomForestClassifier(n_estimators=param_dict['n_estimators'],
-                                                           criterion=param_dict['criterion'],
-                                                           max_features=param_dict['max_features'],
-                                                           max_depth=param_dict['max_depth'],
-                                                           min_samples_split=param_dict['min_samples_split'],
-                                                           min_samples_leaf=param_dict['min_samples_leaf'],
-                                                           min_weight_fraction_leaf=param_dict['min_weight_fraction_leaf'],  # noqa
-                                                           max_leaf_nodes=param_dict['max_leaf_nodes'],
-                                                           min_impurity_decrease=param_dict['min_impurity_decrease'],  # noqa
-                                                           bootstrap=param_dict['bootstrap'],
-                                                           oob_score=param_dict['oob_score'],
-                                                           n_jobs=self._num_jobs_in_parallel,
-                                                           random_state=self._seed)
-        rf_model.fit(data_x, data_y)
-        return rf_model
+        if self.extra_trees_implementation:
+            model = sklearn.ensemble.ExtraTreesClassifier(
+                n_estimators=param_dict['n_estimators'],
+                criterion=param_dict['criterion'],
+                max_features=param_dict['max_features'],
+                max_depth=param_dict['max_depth'],
+                min_samples_split=param_dict['min_samples_split'],
+                min_samples_leaf=param_dict['min_samples_leaf'],
+                min_weight_fraction_leaf=param_dict['min_weight_fraction_leaf'],
+                max_leaf_nodes=param_dict['max_leaf_nodes'],
+                min_impurity_decrease=param_dict['min_impurity_decrease'],
+                bootstrap=param_dict['bootstrap'],
+                oob_score=param_dict['oob_score'],
+                n_jobs=self._num_jobs_in_parallel,
+                random_state=self._seed,
+            )
+        else:
+            model = sklearn.ensemble.RandomForestClassifier(
+                n_estimators=param_dict['n_estimators'],
+                criterion=param_dict['criterion'],
+                max_features=param_dict['max_features'],
+                max_depth=param_dict['max_depth'],
+                min_samples_split=param_dict['min_samples_split'],
+                min_samples_leaf=param_dict['min_samples_leaf'],
+                min_weight_fraction_leaf=param_dict['min_weight_fraction_leaf'],
+                max_leaf_nodes=param_dict['max_leaf_nodes'],
+                min_impurity_decrease=param_dict['min_impurity_decrease'],
+                bootstrap=param_dict['bootstrap'],
+                oob_score=param_dict['oob_score'],
+                n_jobs=self._num_jobs_in_parallel,
+                random_state=self._seed,
+            )
+        model.fit(data_x, data_y)
+        return model
 
 
 class RandomForestRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
-    def __init__(self, _num_jobs_in_parallel: int=-1, seed: int=42):
+    def __init__(self, extra_trees_implementation: bool=False, _num_jobs_in_parallel: int=-1, seed: int=42):
+        """
+        :param extra_trees_implementation: uses sklearn.ensemble.ExtraTreesClassifier/Regressor rather than
+            sklearn.ensemble.RandomForestClassifier/Regressor
+        """
         super().__init__()
         self._num_jobs_in_parallel = _num_jobs_in_parallel
         self._seed = seed
+        self._extra_trees_implementation = extra_trees_implementation
+
+    @property
+    def extra_trees_implementation(self) -> bool:
+        return self._extra_trees_implementation
 
     @property
     def feature_importance(self):
@@ -162,18 +199,37 @@ class RandomForestRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
 
         #  n_jobs: The number of jobs to run in parallel for both train and predict. If -1, then the number
         # of jobs is set to the number of cores.
-        rf_model = sklearn.ensemble.RandomForestRegressor(n_estimators=param_dict['n_estimators'],
-                                                          criterion=param_dict['criterion'],
-                                                          max_features=param_dict['max_features'],
-                                                          max_depth=param_dict['max_depth'],
-                                                          min_samples_split=param_dict['min_samples_split'],
-                                                          min_samples_leaf=param_dict['min_samples_leaf'],
-                                                          min_weight_fraction_leaf=param_dict['min_weight_fraction_leaf'],  # noqa
-                                                          max_leaf_nodes=param_dict['max_leaf_nodes'],
-                                                          min_impurity_decrease=param_dict['min_impurity_decrease'],  # noqa
-                                                          bootstrap=param_dict['bootstrap'],
-                                                          oob_score=param_dict['oob_score'],
-                                                          n_jobs=self._num_jobs_in_parallel,
-                                                          random_state=self._seed)
-        rf_model.fit(data_x, data_y)
-        return rf_model
+        if self.extra_trees_implementation:
+            model = sklearn.ensemble.ExtraTreesRegressor(
+                n_estimators=param_dict['n_estimators'],
+                criterion=param_dict['criterion'],
+                max_features=param_dict['max_features'],
+                max_depth=param_dict['max_depth'],
+                min_samples_split=param_dict['min_samples_split'],
+                min_samples_leaf=param_dict['min_samples_leaf'],
+                min_weight_fraction_leaf=param_dict['min_weight_fraction_leaf'],
+                max_leaf_nodes=param_dict['max_leaf_nodes'],
+                min_impurity_decrease=param_dict['min_impurity_decrease'],
+                bootstrap=param_dict['bootstrap'],
+                oob_score=param_dict['oob_score'],
+                n_jobs=self._num_jobs_in_parallel,
+                random_state=self._seed,
+            )
+        else:
+            model = sklearn.ensemble.RandomForestRegressor(
+                n_estimators=param_dict['n_estimators'],
+                criterion=param_dict['criterion'],
+                max_features=param_dict['max_features'],
+                max_depth=param_dict['max_depth'],
+                min_samples_split=param_dict['min_samples_split'],
+                min_samples_leaf=param_dict['min_samples_leaf'],
+                min_weight_fraction_leaf=param_dict['min_weight_fraction_leaf'],
+                max_leaf_nodes=param_dict['max_leaf_nodes'],
+                min_impurity_decrease=param_dict['min_impurity_decrease'],
+                bootstrap=param_dict['bootstrap'],
+                oob_score=param_dict['oob_score'],
+                n_jobs=self._num_jobs_in_parallel,
+                random_state=self._seed,
+            )
+        model.fit(data_x, data_y)
+        return model

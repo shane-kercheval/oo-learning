@@ -10,6 +10,7 @@ from typing import Callable
 
 import numpy as np
 import pandas as pd
+import sklearn as sk
 
 import warnings
 
@@ -1347,6 +1348,7 @@ class ModelWrapperTests(TimerTestCase):
         assert not os.path.isdir(fitter._persistence_manager._cache_directory)
         fitter.train(data=data, target_variable='Survived', hyper_params=RandomForestHP(criterion='gini'))
         assert os.path.isfile(fitter._persistence_manager._cache_path)
+        assert isinstance(fitter.model.model_object, sk.ensemble.RandomForestClassifier)
 
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
@@ -1392,6 +1394,7 @@ class ModelWrapperTests(TimerTestCase):
                                                                                         max_features='auto',
                                                                                         n_estimators=10))
         assert os.path.isfile(fitter._persistence_manager._cache_path)
+        assert isinstance(fitter.model.model_object, sk.ensemble.RandomForestClassifier)
 
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
@@ -1433,6 +1436,7 @@ class ModelWrapperTests(TimerTestCase):
                                                                       positive_class=positive_class)))
 
         fitter.train(data=data, target_variable='Survived', hyper_params=RandomForestHP(criterion='gini'))
+        assert isinstance(fitter.model.model_object, sk.ensemble.RandomForestClassifier)
 
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
@@ -1485,6 +1489,7 @@ class ModelWrapperTests(TimerTestCase):
                               scores=score_list)
 
         fitter.train(data=data, target_variable='Survived', hyper_params=RandomForestHP(criterion='gini'))
+        assert isinstance(fitter.model.model_object, sk.ensemble.RandomForestClassifier)
 
         assert isclose(fitter.training_scores[0].value, 0.9642058165548097)
         assert isclose(fitter.training_scores[1].value, 0.967032967032967)
@@ -1509,12 +1514,12 @@ class ModelWrapperTests(TimerTestCase):
         # test default hyper-parameters
         ######################################################################################################
         fitter.train(data=data, target_variable='strength', hyper_params=RandomForestHP(criterion='MAE', n_estimators=10))  # noqa
+        assert isinstance(fitter.model.model_object, sk.ensemble.RandomForestRegressor)
 
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
 
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
-
         assert fitter.model.hyper_params.params_dict == {'n_estimators': 10,
                                                          'criterion': 'mae',
                                                          'max_features': None,
@@ -1545,6 +1550,7 @@ class ModelWrapperTests(TimerTestCase):
         fitter.train(data=data, target_variable=target_variable, hyper_params=RandomForestHP(criterion='gini',
                                                                                              n_estimators=10,
                                                                                              max_features='auto'))  # noqa
+        assert isinstance(fitter.model.model_object, sk.ensemble.RandomForestClassifier)
 
         assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
         assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
@@ -1569,6 +1575,176 @@ class ModelWrapperTests(TimerTestCase):
         assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
         assert con_matrix['versicolor'].values.tolist() == [0, 12, 3, 15]
         assert con_matrix['virginica'].values.tolist() == [0, 1, 10, 11]
+        assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
+        assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+
+    def test_ExtraTreesClassifier(self):
+        data = TestHelper.get_titanic_data()
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+        # test with custom threshold of 0.5
+        fitter = ModelTrainer(model=RandomForestClassifier(extra_trees_implementation=True),
+                              model_transformations=transformations,
+                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                              evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=1)))
+
+        fitter.train(data=data, target_variable='Survived', hyper_params=RandomForestHP(criterion='gini'))
+        assert isinstance(fitter.model.model_object, sk.ensemble.ExtraTreesClassifier)
+
+        assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+        assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+
+        assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'n_estimators': 500,
+                                                         'criterion': 'gini',
+                                                         'max_features': None,
+                                                         'max_depth': None,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'min_weight_fraction_leaf': 0.0,
+                                                         'max_leaf_nodes': None,
+                                                         'min_impurity_decrease': 0,
+                                                         'bootstrap': True,
+                                                         'oob_score': False}
+
+        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9976303119811092, 'AUC Precision/Recall': 0.9961455436444634, 'Kappa': 0.9642058165548097, 'F1 Score': 0.9777777777777779, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.967032967032967, 'True Negative Rate': 0.9931662870159453, 'False Positive Rate': 0.00683371298405467, 'False Negative Rate': 0.03296703296703297, 'Positive Predictive Value': 0.9887640449438202, 'Negative Predictive Value': 0.9797752808988764, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8379446640316204, 'AUC Precision/Recall': 0.8053536737588968, 'Kappa': 0.5924735502879335, 'F1 Score': 0.7424242424242424, 'Two-Class Accuracy': 0.8100558659217877, 'Error Rate': 0.18994413407821228, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8727272727272727, 'False Positive Rate': 0.12727272727272726, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.7777777777777778, 'Negative Predictive Value': 0.8275862068965517, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+
+    def test_ExtraTreesClassifier_string_target(self):
+        data = TestHelper.get_titanic_data()
+        positive_class = 'lived'
+        negative_class = 'died'
+
+        # Test with a string target variable rather than 0/1
+        data.Survived = np.where(data.Survived == 1, positive_class, negative_class)
+
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+        # test with custom threshold of 0.5
+        fitter = ModelTrainer(model=RandomForestClassifier(extra_trees_implementation=True),
+                              model_transformations=transformations,
+                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                              evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=positive_class)))
+
+        fitter.train(data=data, target_variable='Survived', hyper_params=RandomForestHP(criterion='gini'))
+        assert isinstance(fitter.model.model_object, sk.ensemble.ExtraTreesClassifier)
+
+        assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+        assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+
+        assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'n_estimators': 500,
+                                                         'criterion': 'gini',
+                                                         'max_features': None,
+                                                         'max_depth': None,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'min_weight_fraction_leaf': 0.0,
+                                                         'max_leaf_nodes': None,
+                                                         'min_impurity_decrease': 0,
+                                                         'bootstrap': True,
+                                                         'oob_score': False}
+
+        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9976303119811092, 'AUC Precision/Recall': 0.9961455436444634, 'Kappa': 0.9642058165548097, 'F1 Score': 0.9777777777777779, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.967032967032967, 'True Negative Rate': 0.9931662870159453, 'False Positive Rate': 0.00683371298405467, 'False Negative Rate': 0.03296703296703297, 'Positive Predictive Value': 0.9887640449438202, 'Negative Predictive Value': 0.9797752808988764, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8379446640316204, 'AUC Precision/Recall': 0.8053536737588968, 'Kappa': 0.5924735502879335, 'F1 Score': 0.7424242424242424, 'Two-Class Accuracy': 0.8100558659217877, 'Error Rate': 0.18994413407821228, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8727272727272727, 'False Positive Rate': 0.12727272727272726, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.7777777777777778, 'Negative Predictive Value': 0.8275862068965517, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+
+        con_matrix = fitter.training_evaluator._confusion_matrix
+        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [436, 9, 445]
+        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [3, 264, 267]
+        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
+        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
+
+        con_matrix = fitter.holdout_evaluator._confusion_matrix
+        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [96, 20, 116]
+        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [14, 49, 63]
+        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
+        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
+        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
+
+    def test_ExtraTreesRegressor(self):
+        data = TestHelper.get_cement_data()
+        transformations = [ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        fitter = ModelTrainer(model=RandomForestRegressor(extra_trees_implementation=True),
+                              model_transformations=transformations,
+                              splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
+                              evaluator=RegressionEvaluator())
+        ######################################################################################################
+        # test default hyper-parameters
+        ######################################################################################################
+        fitter.train(data=data,
+                     target_variable='strength',
+                     hyper_params=RandomForestHP(criterion='MAE', n_estimators=10))
+        assert isinstance(fitter.model.model_object, sk.ensemble.ExtraTreesRegressor)
+        assert isinstance(fitter.training_evaluator, RegressionEvaluator)
+        assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+
+        assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
+        assert fitter.model.hyper_params.params_dict == {'n_estimators': 10,
+                                                         'criterion': 'mae',
+                                                         'max_features': None,
+                                                         'max_depth': None,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'min_weight_fraction_leaf': 0.0,
+                                                         'max_leaf_nodes': None,
+                                                         'min_impurity_decrease': 0,
+                                                         'bootstrap': True,
+                                                         'oob_score': False}
+
+        keys = fitter.training_evaluator.all_quality_metrics.keys()
+        expected_values = {'Mean Absolute Error (MAE)': 1.687515776699029, 'Mean Squared Error (MSE)': 7.131085667475727, 'Root Mean Squared Error (RMSE)': 2.6704092696580664, 'RMSE to Standard Deviation of Target': 0.15926352855140777, 'Total Observations': 824}  # noqa
+        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+        expected_values = {'Mean Absolute Error (MAE)': 3.767553398058253, 'Mean Squared Error (MSE)': 27.160341936893207, 'Root Mean Squared Error (RMSE)': 5.211558494048897, 'RMSE to Standard Deviation of Target': 0.3174763376657444, 'Total Observations': 206}  # noqa
+        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+    def test_ExtraTreesClassifier_multiclass(self):
+        data = TestHelper.get_iris_data()
+        target_variable = 'species'
+        fitter = ModelTrainer(model=RandomForestClassifier(extra_trees_implementation=True),
+                              model_transformations=None,
+                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
+                              evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
+
+        fitter.train(data=data,
+                     target_variable=target_variable,
+                     hyper_params=RandomForestHP(criterion='gini', n_estimators=10, max_features='auto'))
+        assert isinstance(fitter.model.model_object, sk.ensemble.ExtraTreesClassifier)
+        assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
+        assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
+
+        assert fitter.model.feature_names == ['sepal_length', 'sepal_width', 'petal_length', 'petal_width']
+        assert fitter.model.hyper_params.params_dict == {'n_estimators': 10,
+                                                         'criterion': 'gini',
+                                                         'max_features': 'auto',
+                                                         'max_depth': None,
+                                                         'min_samples_split': 2,
+                                                         'min_samples_leaf': 1,
+                                                         'min_weight_fraction_leaf': 0.0,
+                                                         'max_leaf_nodes': None,
+                                                         'min_impurity_decrease': 0,
+                                                         'bootstrap': True,
+                                                         'oob_score': False}
+
+        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.920997920997921, 'Accuracy': 0.9473684210526315, 'Error Rate': 0.052631578947368474, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa
+
+        con_matrix = fitter.holdout_evaluator.matrix
+        assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
+        assert con_matrix['versicolor'].values.tolist() == [0, 13, 2, 15]
+        assert con_matrix['virginica'].values.tolist() == [0, 0, 11, 11]
         assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
         assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
         assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
