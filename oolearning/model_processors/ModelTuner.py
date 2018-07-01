@@ -214,7 +214,8 @@ class ModelTuner:
         # so, let's ignore any columns where the hyper-param is specifically set to None
         if params_grid:
             # noinspection PyProtectedMember
-            params_containing_none = [key for key, value in params_grid._params_dict.items() if value is None]
+            params_containing_none = [key for key, value in params_grid._params_dict.items()
+                                      if value is None or None in value]
         else:
             params_containing_none = []
 
