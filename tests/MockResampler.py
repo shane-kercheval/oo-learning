@@ -26,7 +26,8 @@ class MockResampler(ResamplerBase):
         # load actual data from a RandomForestClassifier Tuner/Resampler:
         # (test_ModelTuner_RandomForest_classification)
         # so that we can build up the necessary ResamplerResults object based on the saved data.
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelTuner_classification_mock.pkl'))  # noqa
+        file = os.path.join(os.getcwd(),
+                            TestHelper.ensure_test_directory('data/test_ModelTuner_classification_mock.pkl'))
         with open(file, 'rb') as saved_object:
             self._tune_results = pickle.load(saved_object)
 

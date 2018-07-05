@@ -215,7 +215,7 @@ class ModelTuner:
         if params_grid:
             # noinspection PyProtectedMember
             params_containing_none = [key for key, value in params_grid._params_dict.items()
-                                      if value is None or None in value]
+                                      if value is None or (isinstance(value, list) and None in value)]
         else:
             params_containing_none = []
 
