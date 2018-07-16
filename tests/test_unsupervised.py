@@ -66,6 +66,7 @@ class UnsupervisedTests(TimerTestCase):
 
         transformations = [CenterScaleTransformer()]
 
+        # NOTE: the data is shuffled within `ClusteringKMeans.train()`, but that happens after the callback
         # noinspection PyUnusedLocal
         def fit_callback(transformed_data, hyper_params):
             # make sure the data that was trained was as expected
@@ -91,7 +92,7 @@ class UnsupervisedTests(TimerTestCase):
                                             'precompute_distances': 'auto',
                                             'algorithm': 'auto'}
 
-    def test_KMeans(self):
+    def test_KMeans_shuffle(self):
         data = TestHelper.get_iris_data()
 
         # determine scaling
@@ -100,13 +101,44 @@ class UnsupervisedTests(TimerTestCase):
         fitter = ModelFitter(model=ClusteringKMeans(),
                              model_transformations=transformations)
         clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringKMeansHP(num_clusters=3))
+
+        assert isclose(fitter.model.score, -140.0260445198753)
+
+        center_scale = CenterScaleTransformer()
+        transformed_data = center_scale.fit_transform(data_x=data)
+        num_cached = fitter.model.data_x_trained_head.shape[0]
+        assert all(transformed_data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)  # noqa
+
+        # 0 == virginica
+        # 1 == setosa
+        # 2 == versicolor
+        lookup = ['virginica', 'setosa', 'versicolor']
+        predicted_clusters = [lookup[x] for x in clusters]
+
+        # noinspection PyTypeChecker
+        confusion_matrix = ConfusionMatrix(actual_classes=data['species'].values,
+                                           predicted_classes=predicted_clusters)
+        assert all(confusion_matrix.matrix.setosa.values == [50, 0, 0, 50])
+        assert all(confusion_matrix.matrix.versicolor.values == [0, 39, 14, 53])
+        assert all(confusion_matrix.matrix.virginica.values == [0, 11, 36, 47])
+
+    def test_KMeans_no_shuffle(self):
+        data = TestHelper.get_iris_data()
+
+        # determine scaling
+        cluster_data = data.drop(columns='species')
+        transformations = [CenterScaleTransformer()]
+        fitter = ModelFitter(model=ClusteringKMeans(shuffle_data=False),
+                             model_transformations=transformations)
+        clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringKMeansHP(num_clusters=3))
         assert isclose(fitter.model.score, -140.0260445198753)
 
         # make sure the data that was trained was as expected
         center_scale = CenterScaleTransformer()
         transformed_data = center_scale.fit_transform(data_x=data)
         num_cached = fitter.model.data_x_trained_head.shape[0]
-        assert all(transformed_data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)  # noqa
+        assert all(transformed_data.drop(columns='species').iloc[
+                   0:num_cached] == fitter.model.data_x_trained_head)  # noqa
 
         # 0 == virginica
         # 1 == setosa
@@ -133,8 +165,11 @@ class UnsupervisedTests(TimerTestCase):
 
     def test_KMeans_heatmap(self):
         data = TestHelper.get_iris_data()
-        data.loc[0, 'sepal_length'] = np.nan
-        data.loc[1, 'petal_length'] = np.nan
+        # remove setosa, in order to test 2 clusters with same amount of data, so we can verify axis on graph
+        data = data.drop(index=[0, 1, 2])
+
+        data.loc[3, 'sepal_length'] = np.nan
+        data.loc[4, 'petal_length'] = np.nan
 
         assert data.isnull().sum().sum() == 2
 
@@ -149,6 +184,8 @@ class UnsupervisedTests(TimerTestCase):
 
         assert data.isnull().sum().sum() == 2  # make sure original data wasn't transformed
 
+        assert all(np.bincount(np.array(clusters)) == [47, 53, 47])  # make sure 2 clusters are same size
+        assert len(clusters) == len(data)
         # CENTER/SCALE
         TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_centerscale_strategy_mean.png',
                               lambda: Clustering.cluster_heatmap(

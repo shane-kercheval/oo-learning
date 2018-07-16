@@ -36,8 +36,9 @@ class ClusteringKMeansHP(HyperParamsBase):
 
 class ClusteringKMeans(SklearnPredictArrayMixin, ModelWrapperBase):
 
-    def __init__(self, num_jobs: int=1, seed: int=42):
+    def __init__(self, shuffle_data: bool=True, num_jobs: int=1, seed: int=42):
         super().__init__()
+        self._shuffle_data = shuffle_data
         self._num_jobs = num_jobs
         self._seed = seed
         self._score = None
@@ -62,6 +63,13 @@ class ClusteringKMeans(SklearnPredictArrayMixin, ModelWrapperBase):
 
         if data_x.isnull().sum().sum() > 0:
             raise MissingValueError()
+
+        if self._shuffle_data:
+            # "randomly" shuffle data
+            indexes = np.arange(0, len(data_x))
+            np.random.seed(self._seed)
+            np.random.shuffle(indexes)
+            data_x = data_x.iloc[indexes]
 
         param_dict = hyper_params.params_dict
         model_object = KMeans(

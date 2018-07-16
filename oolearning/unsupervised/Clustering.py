@@ -94,11 +94,11 @@ class Clustering:
 
         transformed_data['cluster'] = clusters
 
-        cluster_size = transformed_data.groupby('cluster').count()
-        cluster_size_lookup = cluster_size[cluster_size.columns[0]].values
+        cluster_size = transformed_data.groupby('cluster').size()
+        cluster_size_lookup = cluster_size.values
 
         group_data = transformed_data.groupby('cluster').apply(agg_method).drop(columns='cluster')
-        indexes_with_sizes = ['{} - {}'.format(index, size) for index, size in zip(group_data.index.values,
+        indexes_with_sizes = ['{1} ({0})'.format(index, size) for index, size in zip(group_data.index.values,
                                                                                    cluster_size_lookup)]
         group_data.index = indexes_with_sizes
 
@@ -119,12 +119,13 @@ class Clustering:
         for column in values.columns.values:
             values[column] = values[column].astype(str)
 
-        sns.heatmap(group_data.transpose(),
-                    annot=values.transpose(), fmt='',  # fmt="f",
+        sns.heatmap(group_data.iloc[np.argsort(cluster_size_lookup)].transpose(),
+                    annot=values.iloc[np.argsort(cluster_size_lookup)].transpose(), fmt='',  # fmt="f",
                     robust=True, cmap='RdBu_r', vmin=color_scale_min, vmax=color_scale_max,
                     cbar_kws={'label': color_scale_title})
         plt.yticks(rotation=-30, va='bottom')
         plt.tight_layout()
+        # plt.title('Cluster Heatmap')
 
     @staticmethod
     def kmeans_elbow_plot(data: pd.DataFrame, num_clusters: list, transformations: List[TransformerBase]):
