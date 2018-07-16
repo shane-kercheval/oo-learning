@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import shutil
 
 from math import isclose
 
@@ -57,6 +58,7 @@ class UnsupervisedTests(TimerTestCase):
         new_clusters = new_model_fitter.fit_predict(data=data, hyper_params=ClusteringKMeansHP())
         # noinspection PyTypeChecker
         assert all(new_clusters == clusters)
+        shutil.rmtree(cache_directory)
 
     def test_ModelFitter_transformations(self):
         data = TestHelper.get_iris_data()
@@ -64,6 +66,7 @@ class UnsupervisedTests(TimerTestCase):
 
         transformations = [CenterScaleTransformer()]
 
+        # noinspection PyUnusedLocal
         def fit_callback(transformed_data, hyper_params):
             # make sure the data that was trained was as expected
             center_scale = CenterScaleTransformer()
@@ -202,5 +205,3 @@ class UnsupervisedTests(TimerTestCase):
                                   trans_strategy=ClusteringHeatmapTransStrategy.PERCENTILES,
                                   agg_strategy=ClusteringHeatmapAggStrategy.MEDIAN,
                                   display_values=ClusteringHeatmapValues.STRATEGY))
-
-
