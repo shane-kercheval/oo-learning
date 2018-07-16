@@ -5,10 +5,10 @@ from sklearn.linear_model import LinearRegression
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictRegressorMixin
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictArrayMixin
 
 
-class LinearRegressorSK(SklearnPredictRegressorMixin, ModelWrapperBase):
+class LinearRegressorSK(SklearnPredictArrayMixin, ModelWrapperBase):
     """
     fits Linear Regression model on the data
 

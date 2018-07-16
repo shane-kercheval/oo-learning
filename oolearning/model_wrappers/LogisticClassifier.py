@@ -5,7 +5,7 @@ from sklearn import linear_model
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictClassifierMixin
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictProbabilityMixin
 
 
 class LogisticClassifierHP(HyperParamsBase):
@@ -23,7 +23,7 @@ class LogisticClassifierHP(HyperParamsBase):
                                  solver=solver)
 
 
-class LogisticClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
+class LogisticClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
     # noinspection SpellCheckingInspection
     def __init__(self, fit_intercept: bool=True, seed: int=42):
         """

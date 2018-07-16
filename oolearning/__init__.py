@@ -19,6 +19,8 @@ from .enums.Skewness import Skewness
 from .evaluators.AccuracyScore import AccuracyScore
 from .evaluators.AucRocScore import AucRocScore
 from .evaluators.AucPrecisionRecallScore import AucPrecisionRecallScore
+from .evaluators.ConfusionMatrix import ConfusionMatrix
+from .evaluators.TwoClassConfusionMatrix import TwoClassConfusionMatrix
 from .evaluators.MultiClassEvaluator import MultiClassEvaluator
 from .evaluators.TwoClassEvaluator import TwoClassEvaluator
 from .evaluators.CostFunctionMixin import CostFunctionMixin
@@ -54,6 +56,7 @@ from oolearning.model_aggregation.MedianAggregationStrategy import MedianAggrega
 
 from .model_processors.DecoratorBase import DecoratorBase
 from .model_processors.TwoClassThresholdDecorator import TwoClassThresholdDecorator
+from .model_processors.ModelFitter import ModelFitter
 from .model_processors.ModelTrainer import ModelTrainer
 from .model_processors.ModelInfo import ModelInfo
 from .model_processors.ModelSearcher import ModelSearcher
@@ -100,8 +103,8 @@ from .model_wrappers.RandomForest import RandomForestClassifier
 from .model_wrappers.RandomForest import RandomForestHP
 from .model_wrappers.RidgeRegressor import RidgeRegressor
 from .model_wrappers.RidgeRegressor import RidgeRegressorHP
-from .model_wrappers.SklearnPredictMixin import SklearnPredictClassifierMixin
-from .model_wrappers.SklearnPredictMixin import SklearnPredictRegressorMixin
+from .model_wrappers.SklearnPredictMixin import SklearnPredictProbabilityMixin
+from .model_wrappers.SklearnPredictMixin import SklearnPredictArrayMixin
 from .model_wrappers.SoftmaxLogisticClassifier import SoftmaxLogisticClassifier
 from .model_wrappers.SoftmaxLogisticClassifier import SoftmaxLogisticHP
 from .model_wrappers.SupportVectorMachines import SvmLinearClassifier
@@ -140,3 +143,8 @@ from .transformers.StatelessColumnTransformer import StatelessColumnTransformer
 from .transformers.StatelessTransformer import StatelessTransformer
 from .transformers.TransformerBase import TransformerBase
 from .transformers.TransformerPipeline import TransformerPipeline
+
+from .unsupervised.ClusteringKmeans import ClusteringKMeans, ClusteringKMeansHP
+from .unsupervised.Clustering import Clustering, ClusteringHeatmapValues, ClusteringHeatmapAggStrategy, \
+    ClusteringHeatmapTransStrategy
+

@@ -5,7 +5,7 @@ from sklearn.linear_model import ElasticNet
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictRegressorMixin
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictArrayMixin
 
 
 class ElasticNetRegressorHP(HyperParamsBase):
@@ -21,7 +21,7 @@ class ElasticNetRegressorHP(HyperParamsBase):
         self._params_dict = dict(alpha=alpha, l1_ratio=l1_ratio)
 
 
-class ElasticNetRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
+class ElasticNetRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
     """
     fits Linear Regression model on the data
     """

@@ -5,7 +5,7 @@ from sklearn import linear_model
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictClassifierMixin
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictProbabilityMixin
 
 
 class SoftmaxLogisticHP(HyperParamsBase):
@@ -28,7 +28,7 @@ class SoftmaxLogisticHP(HyperParamsBase):
                                  solver=solver)
 
 
-class SoftmaxLogisticClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
+class SoftmaxLogisticClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
     def __init__(self, fit_intercept: bool=True, seed: int=42):
         """
         need to set fit_intercept to False if using One-Hot-Encoding

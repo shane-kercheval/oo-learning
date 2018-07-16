@@ -4,8 +4,8 @@ import pandas as pd
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictClassifierMixin, \
-    SklearnPredictRegressorMixin
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictProbabilityMixin, \
+    SklearnPredictArrayMixin
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 
@@ -54,7 +54,7 @@ class CartDecisionTreeHP(HyperParamsBase):
         return self._is_regression
 
 
-class CartDecisionTreeClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
+class CartDecisionTreeClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
     def __init__(self, seed: int=42):
         super().__init__()
         self._seed = seed
@@ -84,7 +84,7 @@ class CartDecisionTreeClassifier(SklearnPredictClassifierMixin, ModelWrapperBase
         return tree
 
 
-class CartDecisionTreeRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
+class CartDecisionTreeRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
     def __init__(self, seed: int=42):
         super().__init__()
         self._seed = seed

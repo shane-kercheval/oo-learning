@@ -8,8 +8,8 @@ from xgboost import plot_importance
 
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictRegressorMixin, \
-    SklearnPredictClassifierMixin
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictArrayMixin, \
+    SklearnPredictProbabilityMixin
 
 
 # noinspection SpellCheckingInspection
@@ -257,7 +257,7 @@ class XGBoostBase(ModelWrapperBase):
 
 
 # noinspection SpellCheckingInspection
-class XGBoostRegressor(SklearnPredictRegressorMixin, XGBoostBase):
+class XGBoostRegressor(SklearnPredictArrayMixin, XGBoostBase):
     # noinspection PyTypeChecker
     def _train(self,
                data_x: pd.DataFrame,
@@ -294,7 +294,7 @@ class XGBoostRegressor(SklearnPredictRegressorMixin, XGBoostBase):
 
 
 # noinspection SpellCheckingInspection
-class XGBoostClassifier(SklearnPredictClassifierMixin, XGBoostBase):
+class XGBoostClassifier(SklearnPredictProbabilityMixin, XGBoostBase):
     # noinspection PyTypeChecker
     def _train(self,
                data_x: pd.DataFrame,

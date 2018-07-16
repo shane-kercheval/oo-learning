@@ -5,7 +5,7 @@ from sklearn.linear_model import Ridge
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictRegressorMixin
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictArrayMixin
 
 
 class RidgeRegressorHP(HyperParamsBase):
@@ -20,7 +20,7 @@ class RidgeRegressorHP(HyperParamsBase):
         self._params_dict = dict(alpha=alpha, solver=solver)
 
 
-class RidgeRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
+class RidgeRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
     """
     fits Linear Regression model on the data
     """

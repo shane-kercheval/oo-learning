@@ -5,10 +5,10 @@ import sklearn.dummy
 from oolearning.enums.DummyClassifierStrategy import DummyClassifierStrategy
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictClassifierMixin
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictProbabilityMixin
 
 
-class DummyClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
+class DummyClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
     def __init__(self, strategy: DummyClassifierStrategy):
         """
         Uses sklearn's DummyClassifier 

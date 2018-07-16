@@ -7,8 +7,8 @@ from sklearn.ensemble import GradientBoostingRegressor as SkGradientBoostingRegr
 
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictClassifierMixin, \
-    SklearnPredictRegressorMixin
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictProbabilityMixin, \
+    SklearnPredictArrayMixin
 
 
 class GradientBoostingClassifierHP(HyperParamsBase):
@@ -36,7 +36,7 @@ class GradientBoostingClassifierHP(HyperParamsBase):
                                  subsample=subsample)
 
 
-class GradientBoostingClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
+class GradientBoostingClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
     def __init__(self, seed: int=42):
         super().__init__()
         self._seed = seed
@@ -89,7 +89,7 @@ class GradientBoostingRegressorHP(HyperParamsBase):
                                  subsample=subsample)
 
 
-class GradientBoostingRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
+class GradientBoostingRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
     def __init__(self, seed: int=42):
         super().__init__()
         self._seed = seed

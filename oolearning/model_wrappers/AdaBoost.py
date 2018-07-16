@@ -8,8 +8,8 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictClassifierMixin, \
-    SklearnPredictRegressorMixin
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictProbabilityMixin, \
+    SklearnPredictArrayMixin
 
 
 class AdaBoostClassifierHP(HyperParamsBase):
@@ -58,7 +58,7 @@ class AdaBoostClassifierHP(HyperParamsBase):
         )
 
 
-class AdaBoostClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
+class AdaBoostClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
     def __init__(self, seed: int=42):
         super().__init__()
         self._seed = seed
@@ -139,7 +139,7 @@ class AdaBoostRegressorHP(HyperParamsBase):
         )
 
 
-class AdaBoostRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
+class AdaBoostRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
     def __init__(self, seed: int=42):
         super().__init__()
         self._seed = seed

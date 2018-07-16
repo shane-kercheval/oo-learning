@@ -3,8 +3,8 @@ import pandas as pd
 import sklearn.ensemble
 from typing import Union
 
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictRegressorMixin, \
-    SklearnPredictClassifierMixin
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictArrayMixin, \
+    SklearnPredictProbabilityMixin
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 
@@ -94,7 +94,7 @@ class RandomForestHP(HyperParamsBase):
         return self._is_regression
 
 
-class RandomForestClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
+class RandomForestClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
     """
     Random Forest is a small tweak on Tree Bagging where, "each time a split in a tree is considered, a
         random sample of m features is chosen as split candidates from the full set of p features. The
@@ -171,7 +171,7 @@ class RandomForestClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
         return model
 
 
-class RandomForestRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
+class RandomForestRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
     def __init__(self, extra_trees_implementation: bool=False, _num_jobs_in_parallel: int=-1, seed: int=42):
         """
         :param extra_trees_implementation: uses sklearn.ensemble.ExtraTreesClassifier/Regressor rather than

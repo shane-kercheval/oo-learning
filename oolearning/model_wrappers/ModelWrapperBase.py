@@ -40,10 +40,7 @@ class ModelWrapperBase(metaclass=ABCMeta):
 
     def set_persistence_manager(self, persistence_manager: PersistenceManagerBase):
         """
-        #TODO: fix documentation
-        # NOTE: cannot pass cache_path in to constructor, in case we want to clone the model.
-        :param persistence_manager:
-        :param persistence_manager: cache (store/retrieve) the underlying model
+        :param persistence_manager: object that defines show to cache (store/retrieve) the underlying model
         """
         if self._model_object is not None:  # doesn't make sense to configure the cache after we `train()`
             raise ModelAlreadyFittedError()
@@ -92,7 +89,7 @@ class ModelWrapperBase(metaclass=ABCMeta):
 
     def train(self,
               data_x: pd.DataFrame,
-              data_y: np.ndarray,
+              data_y: Union[np.ndarray, None]=None,
               hyper_params: HyperParamsBase=None):
         """
         trains the model on the training_set; assumes the parent class has transformed/etc. the
@@ -144,7 +141,7 @@ class ModelWrapperBase(metaclass=ABCMeta):
     @abstractmethod
     def _train(self,
                data_x: pd.DataFrame,
-               data_y: np.ndarray,
+               data_y: Union[np.ndarray, None],
                hyper_params: HyperParamsBase=None) -> object:
         """
         contains the logic of training the data, to be implemented by the sub-class

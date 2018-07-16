@@ -6,8 +6,8 @@ from sklearn.svm import LinearSVC, LinearSVR, SVC, SVR
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictClassifierMixin, \
-    SklearnPredictRegressorMixin
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictProbabilityMixin, \
+    SklearnPredictArrayMixin
 
 
 ##############################################################################################################
@@ -27,7 +27,7 @@ class SvmLinearClassifierHP(HyperParamsBase):
         self._params_dict = dict(penalty=penalty, penalty_c=penalty_c, loss=loss)
 
 
-class SvmLinearClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
+class SvmLinearClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
     def __init__(self, fit_intercept: bool=False, class_weights: dict=None, seed: int=42):
         # noinspection SpellCheckingInspection
         """
@@ -94,7 +94,7 @@ class SvmPolynomialClassifierHP(HyperParamsBase):
         self._params_dict = dict(degree=degree, coef0=coef0, penalty_c=penalty_c)
 
 
-class SvmPolynomialClassifier(SklearnPredictClassifierMixin, ModelWrapperBase):
+class SvmPolynomialClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
     def __init__(self, class_weights: dict = None, seed: int=42):
         """
         :param class_weights: from http://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html
@@ -153,7 +153,7 @@ class SvmLinearRegressorHP(HyperParamsBase):
         self._params_dict = dict(epsilon=epsilon, penalty_c=penalty_c)
 
 
-class SvmLinearRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
+class SvmLinearRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
     def __init__(self, fit_intercept: bool=False, seed: int=42):
         """
         :param fit_intercept: set to False by default, since the expectation is that One-Hot encoding will
@@ -200,7 +200,7 @@ class SvmPolynomialRegressorHP(HyperParamsBase):
         self._params_dict = dict(degree=degree, epsilon=epsilon, penalty_c=penalty_c)
 
 
-class SvmPolynomialRegressor(SklearnPredictRegressorMixin, ModelWrapperBase):
+class SvmPolynomialRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
     @property
     def feature_importance(self):
         raise NotImplementedError()
