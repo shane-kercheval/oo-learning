@@ -98,8 +98,8 @@ class Clustering:
         cluster_size_lookup = cluster_size.values
 
         group_data = transformed_data.groupby('cluster').apply(agg_method).drop(columns='cluster')
-        indexes_with_sizes = ['{1} ({0})'.format(index, size) for index, size in zip(group_data.index.values,
-                                                                                     cluster_size_lookup)]
+        indexes_with_sizes = ['{1} - ~{2}% ({0})'.format(index, size, int(round(size/len(clusters) * 100, 0)))
+                              for index, size in zip(group_data.index.values, cluster_size_lookup)]
         group_data.index = indexes_with_sizes
 
         if display_values == ClusteringHeatmapValues.ACTUAL:
