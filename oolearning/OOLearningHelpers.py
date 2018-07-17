@@ -24,6 +24,10 @@ class OOLearningHelpers:
         return dtype in OOLearningHelpers._numeric_dtypes
 
     @staticmethod
+    def is_series_boolean(variable: pd.Series):
+        return isinstance(variable.values[0], bool) or isinstance(variable.values[0], np.bool_)
+
+    @staticmethod
     def get_columns_by_type(data_dtypes: List[np.dtype], target_variable: str=None):
         """returns numeric columns in first return, and string columns in second"""
         assert isinstance(data_dtypes, pd.Series)

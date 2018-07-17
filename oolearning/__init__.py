@@ -129,6 +129,7 @@ from .splitters.RegressionStratifiedDataSplitter import RegressionStratifiedData
 from .splitters.RandomShuffleDataSplitter import RandomShuffleDataSplitter
 from .splitters.StratifiedDataSplitter import StratifiedDataSplitter
 
+from .transformers.BooleanToIntegerTransformer import BooleanToIntegerTransformer
 from .transformers.BoxCoxTransformer import BoxCoxTransformer
 from .transformers.CategoricConverterTransformer import CategoricConverterTransformer
 from .transformers.CenterScaleTransformer import CenterScaleTransformer

@@ -868,6 +868,80 @@ class TransformerTests(TimerTestCase):
         for index in range(1, len(data.columns.values)):
             test_remove_columns(columns_to_remove=list(data.columns.values[0:(index+1)]))
 
+    def test_BooleanToIntegerTransformer(self):
+        zeros_ones = np.random.randint(2, size=100)
+        booleans = zeros_ones == 1
+        data = pd.DataFrame({'a': booleans,
+                             'b': booleans,
+                             'c': zeros_ones,
+                             'd': [str(val) for val in zeros_ones],
+                             'e': [str(val) for val in booleans]})
+
+        assert [OOLearningHelpers.is_series_boolean(data[x]) for x in data.columns.values] == [True, True, False, False, False]  # noqa
+
+        ######################################################################################################
+        # all boolean columns (columns parameter is None
+        ######################################################################################################
+        trans = BooleanToIntegerTransformer()
+        transformed_data = trans.fit_transform(data_x=data)
+        # check that data didn't change
+        assert all(data['a'] == booleans)  # this will be true regardless of conversion, just checking values
+        assert OOLearningHelpers.is_series_boolean(data.a)
+        assert all(data['b'] == booleans)
+        assert OOLearningHelpers.is_series_boolean(data.b)
+        assert all(data['c'] == zeros_ones)
+        assert not OOLearningHelpers.is_series_boolean(data.c)
+        assert all(data['d'] == [str(val) for val in zeros_ones])
+        assert not OOLearningHelpers.is_series_boolean(data.d)
+        assert all(data['e'] == [str(val) for val in booleans])
+        assert not OOLearningHelpers.is_series_boolean(data.e)
+
+        assert all(transformed_data['a'] == zeros_ones)
+        assert not OOLearningHelpers.is_series_boolean(transformed_data.a)
+        assert all(transformed_data['b'] == zeros_ones)
+        assert not OOLearningHelpers.is_series_boolean(transformed_data.b)
+        assert all(transformed_data['c'] == zeros_ones)
+        assert not OOLearningHelpers.is_series_boolean(transformed_data.c)
+        assert all(transformed_data['d'] == [str(val) for val in zeros_ones])
+        assert not OOLearningHelpers.is_series_boolean(transformed_data.d)
+        assert all(transformed_data['e'] == [str(val) for val in booleans])
+        assert not OOLearningHelpers.is_series_boolean(transformed_data.e)
+
+        ######################################################################################################
+        # specify columns
+        ######################################################################################################
+        trans = BooleanToIntegerTransformer(columns=['b'])
+        transformed_data = trans.fit_transform(data_x=data)
+        # check that data didn't change
+        assert all(data['a'] == booleans)  # this will be true regardless of conversion, just checking values
+        assert OOLearningHelpers.is_series_boolean(data.a)
+        assert all(data['b'] == booleans)
+        assert OOLearningHelpers.is_series_boolean(data.b)
+        assert all(data['c'] == zeros_ones)
+        assert not OOLearningHelpers.is_series_boolean(data.c)
+        assert all(data['d'] == [str(val) for val in zeros_ones])
+        assert not OOLearningHelpers.is_series_boolean(data.d)
+        assert all(data['e'] == [str(val) for val in booleans])
+        assert not OOLearningHelpers.is_series_boolean(data.e)
+
+        assert all(transformed_data['a'] == booleans)
+        assert OOLearningHelpers.is_series_boolean(transformed_data.a)  # this should be boolean this time
+        assert all(transformed_data['b'] == zeros_ones)
+        assert not OOLearningHelpers.is_series_boolean(transformed_data.b)
+        assert all(transformed_data['c'] == zeros_ones)
+        assert not OOLearningHelpers.is_series_boolean(transformed_data.c)
+        assert all(transformed_data['d'] == [str(val) for val in zeros_ones])
+        assert not OOLearningHelpers.is_series_boolean(transformed_data.d)
+        assert all(transformed_data['e'] == [str(val) for val in booleans])
+        assert not OOLearningHelpers.is_series_boolean(transformed_data.e)
+
+        # should fail beceause we aren't passing a list
+        self.assertRaises(AssertionError, lambda: BooleanToIntegerTransformer(columns='asdf'))
+        # should fail beceause column doesn't exist
+        self.assertRaises(AssertionError, lambda: BooleanToIntegerTransformer(columns=['f']).fit_transform(data_x=data))
+        # should fail beceause column isn't a boolean type
+        self.assertRaises(AssertionError, lambda: BooleanToIntegerTransformer(columns=['c']).fit_transform(data_x=data))
+
     def test_StatelessTransformer(self):
         """
         Create a StatelessTransformer that does the same thing as RemoveColumnsTransformer so that we can
