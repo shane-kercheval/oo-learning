@@ -25,6 +25,7 @@ class UnsupervisedTests(TimerTestCase):
             raise NotImplementedError()
 
         model_fitter = ModelFitter(model=ClusteringKMeans(),
+                                   model_transformations=[CenterScaleTransformer()],
                                    fit_callback=fit_callback)
 
         # should raise an error from the callback definition above
@@ -40,6 +41,7 @@ class UnsupervisedTests(TimerTestCase):
         assert os.path.isdir(cache_directory) is False
 
         model_fitter = ModelFitter(model=ClusteringKMeans(),
+                                   model_transformations=[CenterScaleTransformer()],
                                    persistence_manager=LocalCacheManager(cache_directory=cache_directory))
         clusters = model_fitter.fit_predict(data=data, hyper_params=ClusteringKMeansHP())
 
@@ -51,11 +53,12 @@ class UnsupervisedTests(TimerTestCase):
         # clusters (i.e. commenting out `persistence_manager=...` was verified to produce different
         # `new_clusters`
         new_model_fitter = ModelFitter(model=ClusteringKMeans(seed=123),
+                                       model_transformations=[CenterScaleTransformer()],
                                        persistence_manager=LocalCacheManager(cache_directory=cache_directory))
         new_clusters = new_model_fitter.fit_predict(data=data, hyper_params=ClusteringKMeansHP())
+        shutil.rmtree(cache_directory)
         # noinspection PyTypeChecker
         assert all(new_clusters == clusters)
-        shutil.rmtree(cache_directory)
 
     def test_ModelFitter_transformations(self):
         data = TestHelper.get_iris_data()
@@ -93,52 +96,53 @@ class UnsupervisedTests(TimerTestCase):
         data = TestHelper.get_iris_data()
 
         cluster_data = data.drop(columns='species')
-        fitter = ModelFitter(model=ClusteringKMeans())
+        fitter = ModelFitter(model=ClusteringKMeans(), model_transformations=[CenterScaleTransformer()])
         clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringKMeansHP(num_clusters=3))
 
-        assert isclose(fitter.model.score, -78.94084142614594)
+        assert isclose(fitter.model.score, -140.02604451987534)
 
         num_cached = fitter.model.data_x_trained_head.shape[0]
-        assert all(data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)  # noqa
+        assert all(data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)
 
-        # setosa == 0
-        # versicolor == 1
+        # setosa == 1
+        # versicolor == 0
         # virginica == 2
-        lookup = ['setosa', 'versicolor', 'virginica']
+        lookup = ['virginica', 'setosa', 'versicolor']
         predicted_clusters = [lookup[x] for x in clusters]
 
         # noinspection PyTypeChecker
         confusion_matrix = ConfusionMatrix(actual_classes=data['species'].values,
                                            predicted_classes=predicted_clusters)
         assert all(confusion_matrix.matrix.setosa.values == [50, 0, 0, 50])
-        assert all(confusion_matrix.matrix.versicolor.values == [0, 48, 14, 62])
-        assert all(confusion_matrix.matrix.virginica.values == [0, 2, 36, 38])
+        assert all(confusion_matrix.matrix.versicolor.values == [0, 39, 14, 53])
+        assert all(confusion_matrix.matrix.virginica.values == [0, 11, 36, 47])
         assert all(confusion_matrix.matrix.Total.values == [50, 50, 50, 150])
 
     def test_KMeans_no_shuffle(self):
         data = TestHelper.get_iris_data()
 
         cluster_data = data.drop(columns='species')
-        fitter = ModelFitter(model=ClusteringKMeans(shuffle_data=False))
+        fitter = ModelFitter(model=ClusteringKMeans(shuffle_data=False),
+                             model_transformations=[CenterScaleTransformer()])
         clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringKMeansHP(num_clusters=3))
 
-        assert isclose(fitter.model.score, -78.94084142614594)
+        assert isclose(fitter.model.score, -140.02604451987534)
 
         num_cached = fitter.model.data_x_trained_head.shape[0]
-        assert all(data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)  # noqa
+        assert all(data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)
 
         # setosa == 1
-        # versicolor == 0
-        # virginica == 2
-        lookup = ['versicolor', 'setosa', 'virginica']
+        # versicolor == 2
+        # virginica == 0
+        lookup = ['virginica', 'setosa', 'versicolor']
         predicted_clusters = [lookup[x] for x in clusters]
 
         # noinspection PyTypeChecker
         confusion_matrix = ConfusionMatrix(actual_classes=data['species'].values,
                                            predicted_classes=predicted_clusters)
         assert all(confusion_matrix.matrix.setosa.values == [50, 0, 0, 50])
-        assert all(confusion_matrix.matrix.versicolor.values == [0, 48, 14, 62])
-        assert all(confusion_matrix.matrix.virginica.values == [0, 2, 36, 38])
+        assert all(confusion_matrix.matrix.versicolor.values == [0, 39, 14, 53])
+        assert all(confusion_matrix.matrix.virginica.values == [0, 11, 36, 47])
         assert all(confusion_matrix.matrix.Total.values == [50, 50, 50, 150])
 
     def test_KMeans_elbow(self):
@@ -148,12 +152,13 @@ class UnsupervisedTests(TimerTestCase):
 
         TestHelper.check_plot('data/test_unsupervised/test_kmeans_elbow_plot.png',
                               lambda: Clustering.kmeans_elbow_plot(data=data.drop(columns='species'),
-                                                                   num_clusters=num_clusters))
+                                                                   num_clusters=num_clusters,
+                                                                   transformations=[CenterScaleTransformer()]))  # noqa
 
     def test_KMeans_heatmap(self):
         data = TestHelper.get_iris_data()
         # remove setosa, in order to test 2 clusters with same amount of data, so we can verify axis on graph
-        num_drop = 12
+        num_drop = 3
         data = data.drop(index=list(range(num_drop)))
 
         data.loc[num_drop, 'sepal_length'] = np.nan
@@ -163,14 +168,15 @@ class UnsupervisedTests(TimerTestCase):
 
         # impute missing values by species, then center/scale, then remove the species column
         transformations = [ImputationTransformer(group_by_column='species'),
-                           RemoveColumnsTransformer(columns=['species'])]
+                           RemoveColumnsTransformer(columns=['species']),
+                           CenterScaleTransformer()]
 
         fitter = ModelFitter(model=ClusteringKMeans(seed=199),
                              model_transformations=transformations)
         clusters = fitter.fit_predict(data=data, hyper_params=ClusteringKMeansHP(num_clusters=3))
         assert data.isnull().sum().sum() == 2  # make sure original data wasn't transformed
 
-        assert all(np.bincount(np.array(clusters)) == [38, 38, 62])  # make sure 2 clusters are same size
+        assert all(np.bincount(np.array(clusters)) == [47, 47, 53])  # make sure 2 clusters are same size
         assert len(clusters) == len(data)
         # CENTER/SCALE
         TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_centerscale_strategy_mean.png',

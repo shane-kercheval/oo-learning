@@ -135,7 +135,8 @@ class Clustering:
         scores = []
         for cluster in num_clusters:
             fitter = ModelFitter(model=ClusteringKMeans(),
-                                 model_transformations=transformations)
+                                 model_transformations=None if transformations is None else
+                                 [x.clone() for x in transformations])
             fitter.fit(data=data, hyper_params=ClusteringKMeansHP(num_clusters=cluster))
             # noinspection PyUnresolvedReferences
             scores.append(abs(fitter.model.score))
