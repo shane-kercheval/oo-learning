@@ -1,5 +1,5 @@
 from enum import Enum, unique
-from typing import List
+from typing import List, Union
 
 import pandas as pd
 import numpy as np
@@ -36,9 +36,21 @@ class Clustering:
                         clusters: np.array,
                         trans_strategy: ClusteringHeatmapTransStrategy.CENTER_SCALE,
                         agg_strategy: ClusteringHeatmapAggStrategy.MEAN,
-                        display_values: ClusteringHeatmapValues.ACTUAL):
+                        display_values: ClusteringHeatmapValues.ACTUAL,
+                        color_scale_min: Union[int, float, None]=None,
+                        color_scale_max: Union[int, float, None] = None):
         """
-        :type agg_strategy: This strategy (ClusteringHeatmapAggStrategy) will determine how the values for
+        :param data: data from which the clusters were generated
+            It is recommended you use the pre-transformed data (i.e. could contain missing values), otherwise
+                mean/median/etc. is calculated on filled values (i.e. replacing NAs with 0) which will change
+                the aggregated values.
+
+                e.g. if original column was `(0, 1, 0, 1, NA, NA)` and transformed column was
+                    `(0, 1, 0, 1, 0, 0)` then the original mean is `0.5` while the mean for the transformed
+                    column is `0.333`
+        :param clusters: the cluster number for each row in `data`
+
+        :param agg_strategy: This strategy (ClusteringHeatmapAggStrategy) will determine how the values for
             each feature/cluster are aggregated.
             Specifically, each cell in the heatmap corresponds to, for example, the average (or median, etc.)
                 value for that cluster/feature. The strategy determines if it is mean/median/etc.
@@ -56,15 +68,9 @@ class Clustering:
             ClusteringHeatmapTransStrategy.CENTER_SCALE centers and scales each column/feature (i.e.
                 transforms to corresponding z-score values before aggregating and displaying
 
-        :param data: data from which the clusters were generated
-            It is recommended you use the pre-transformed data (i.e. could contain missing values), otherwise
-                mean/median/etc. is calculated on filled values (i.e. replacing NAs with 0) which will change
-                the aggregated values.
+        :param color_scale_min: min value for the color scale
+        :param color_scale_max: max value for the color scale
 
-                e.g. if original column was `(0, 1, 0, 1, NA, NA)` and transformed column was
-                    `(0, 1, 0, 1, 0, 0)` then the original mean is `0.5` while the mean for the transformed
-                    column is `0.333`
-        :param clusters:
         :return:
         """
         if agg_strategy == ClusteringHeatmapAggStrategy.MEAN:
@@ -79,14 +85,18 @@ class Clustering:
 
         if trans_strategy == ClusteringHeatmapTransStrategy.CENTER_SCALE:
             transformed_data = CenterScaleTransformer().fit_transform(data)
-            color_scale_min = -2
-            color_scale_max = 2
+            if color_scale_min is None:
+                color_scale_min = -2
+            if color_scale_max is None:
+                color_scale_max = 2
             color_scale_title = "Cluster's {} Stan. Dev. (Z-Score) of Feature".format(agg_strategy_label)
 
         elif trans_strategy == ClusteringHeatmapTransStrategy.PERCENTILES:
             transformed_data = data.rank(pct=True)
-            color_scale_min = 0
-            color_scale_max = 1
+            if color_scale_min is None:
+                color_scale_min = 0
+            if color_scale_max is None:
+                color_scale_max = 1
             color_scale_title = "Cluster's {} Percentile Value for the Feature".format(agg_strategy_label)
 
         else:
@@ -105,7 +115,6 @@ class Clustering:
         if display_values == ClusteringHeatmapValues.ACTUAL:
             temp = data
             temp['cluster'] = clusters
-            temp.groupby('cluster').apply(pd.DataFrame.median)
             values = temp.groupby('cluster').apply(agg_method).drop(columns='cluster')
             values.index = indexes_with_sizes
 

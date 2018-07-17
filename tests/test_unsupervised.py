@@ -186,6 +186,15 @@ class UnsupervisedTests(TimerTestCase):
                                   agg_strategy=ClusteringHeatmapAggStrategy.MEAN,
                                   display_values=ClusteringHeatmapValues.STRATEGY))
 
+        TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_centerscale_strategy_mean_min_max.png',  # noqa
+                              lambda: Clustering.cluster_heatmap(
+                                  data=data.drop(columns='species'), clusters=clusters,
+                                  trans_strategy=ClusteringHeatmapTransStrategy.CENTER_SCALE,
+                                  agg_strategy=ClusteringHeatmapAggStrategy.MEAN,
+                                  display_values=ClusteringHeatmapValues.STRATEGY,
+                                  color_scale_min=-3,
+                                  color_scale_max=3))
+
         TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_centerscale_actual_mean.png',
                               lambda: Clustering.cluster_heatmap(
                                   data=data.drop(columns='species'), clusters=clusters,  # noqa
