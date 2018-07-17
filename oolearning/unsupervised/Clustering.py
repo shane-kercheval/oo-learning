@@ -124,15 +124,18 @@ class Clustering:
                     robust=True, cmap='RdBu_r', vmin=color_scale_min, vmax=color_scale_max,
                     cbar_kws={'label': color_scale_title})
         plt.yticks(rotation=-30, va='bottom')
+        plt.xticks(rotation=30, ha='right')
         plt.tight_layout()
         # plt.title('Cluster Heatmap')
 
     @staticmethod
-    def kmeans_elbow_plot(data: pd.DataFrame, num_clusters: list, transformations: List[TransformerBase]):
+    def kmeans_elbow_plot(data: pd.DataFrame,
+                          num_clusters: list,
+                          transformations: List[TransformerBase]=None):
         scores = []
         for cluster in num_clusters:
             fitter = ModelFitter(model=ClusteringKMeans(),
-                                 model_transformations=[x.clone() for x in transformations])
+                                 model_transformations=transformations)
             fitter.fit(data=data, hyper_params=ClusteringKMeansHP(num_clusters=cluster))
             # noinspection PyUnresolvedReferences
             scores.append(abs(fitter.model.score))

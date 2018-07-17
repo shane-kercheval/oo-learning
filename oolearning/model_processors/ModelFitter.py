@@ -28,7 +28,7 @@ class ModelFitter:
 
     def __init__(self,
                  model: ModelWrapperBase,
-                 model_transformations: List[TransformerBase],
+                 model_transformations: List[TransformerBase]=None,
                  persistence_manager: PersistenceManagerBase=None,
                  fit_callback: Callable[[pd.DataFrame,
                                          Union[HyperParamsBase, None]], None] = None):
