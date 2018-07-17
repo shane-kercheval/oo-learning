@@ -938,9 +938,9 @@ class TransformerTests(TimerTestCase):
         # should fail beceause we aren't passing a list
         self.assertRaises(AssertionError, lambda: BooleanToIntegerTransformer(columns='asdf'))
         # should fail beceause column doesn't exist
-        self.assertRaises(AssertionError, lambda: BooleanToIntegerTransformer(columns=['f']).fit_transform(data_x=data))
+        self.assertRaises(AssertionError, lambda: BooleanToIntegerTransformer(columns=['f']).fit_transform(data_x=data))  # noqa
         # should fail beceause column isn't a boolean type
-        self.assertRaises(AssertionError, lambda: BooleanToIntegerTransformer(columns=['c']).fit_transform(data_x=data))
+        self.assertRaises(AssertionError, lambda: BooleanToIntegerTransformer(columns=['c']).fit_transform(data_x=data))  # noqa
 
     def test_StatelessTransformer(self):
         """
