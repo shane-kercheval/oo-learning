@@ -96,7 +96,8 @@ class UnsupervisedTests(TimerTestCase):
         data = TestHelper.get_iris_data()
 
         cluster_data = data.drop(columns='species')
-        fitter = ModelFitter(model=ClusteringKMeans(), model_transformations=[CenterScaleTransformer()])
+        fitter = ModelFitter(model=ClusteringKMeans(evaluate_bss_tss=True),
+                             model_transformations=[CenterScaleTransformer()])
         clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringKMeansHP(num_clusters=3))
 
         assert isclose(fitter.model.score, -140.02604451987534)
@@ -128,7 +129,7 @@ class UnsupervisedTests(TimerTestCase):
         clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringKMeansHP(num_clusters=3))
 
         assert isclose(fitter.model.score, -140.02604451987534)
-        assert isclose(fitter.model.bss_tss_ratio, 0.7650569722820886)
+        assert fitter.model.bss_tss_ratio is None
 
         num_cached = fitter.model.data_x_trained_head.shape[0]
         assert all(data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)

@@ -36,12 +36,13 @@ class ClusteringKMeansHP(HyperParamsBase):
 
 class ClusteringKMeans(SklearnPredictArrayMixin, ModelWrapperBase):
 
-    def __init__(self, shuffle_data: bool=True, num_jobs: int=1, seed: int=42):
+    def __init__(self, shuffle_data: bool=True, evaluate_bss_tss: bool=False, num_jobs: int=1, seed: int=42):
         super().__init__()
         self._shuffle_data = shuffle_data
         self._num_jobs = num_jobs
         self._seed = seed
         self._score = None
+        self._evaluate_bss_tss = evaluate_bss_tss
         self._bss = None
         self._tss = None
         self._wss = None
@@ -60,7 +61,7 @@ class ClusteringKMeans(SklearnPredictArrayMixin, ModelWrapperBase):
 
     @property
     def bss(self):
-        return self.tss - self.wss
+        return None if self.tss is None or self.wss is None else self.tss - self.wss
 
     @property
     def tss(self):
@@ -70,10 +71,9 @@ class ClusteringKMeans(SklearnPredictArrayMixin, ModelWrapperBase):
     def wss(self):
         return self._wss
 
-
     @property
     def bss_tss_ratio(self):
-        return self.bss / self.tss
+        return None if self.bss is None else self.bss / self.tss
 
     def _train(self,
                data_x: pd.DataFrame,
@@ -105,13 +105,14 @@ class ClusteringKMeans(SklearnPredictArrayMixin, ModelWrapperBase):
 
         self._score = model_object.score(X=data_x)
 
-        # distances for each data-point to each cluster center
-        distances = cdist(data_x, model_object.cluster_centers_, 'euclidean')
-        min_distances = np.min(distances, axis=1)
+        if self._evaluate_bss_tss:
+            # distances for each data-point to each cluster center
+            distances = cdist(data_x, model_object.cluster_centers_, 'euclidean')
+            min_distances = np.min(distances, axis=1)
 
-        # Total with-in sum of square
-        self._wss = sum(min_distances ** 2)  # ends of being absolute value of self._score
-        self._tss = sum(pdist(data_x) ** 2) / data_x.shape[0]
+            # Total with-in sum of square
+            self._wss = sum(min_distances ** 2)  # ends of being absolute value of self._score
+            self._tss = sum(pdist(data_x) ** 2) / data_x.shape[0]
 
         return model_object
 
