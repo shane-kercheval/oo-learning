@@ -100,6 +100,7 @@ class UnsupervisedTests(TimerTestCase):
         clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringKMeansHP(num_clusters=3))
 
         assert isclose(fitter.model.score, -140.02604451987534)
+        assert isclose(fitter.model.bss_tss_ratio, 0.7650569722820886)
 
         num_cached = fitter.model.data_x_trained_head.shape[0]
         assert all(data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)
@@ -127,6 +128,7 @@ class UnsupervisedTests(TimerTestCase):
         clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringKMeansHP(num_clusters=3))
 
         assert isclose(fitter.model.score, -140.02604451987534)
+        assert isclose(fitter.model.bss_tss_ratio, 0.7650569722820886)
 
         num_cached = fitter.model.data_x_trained_head.shape[0]
         assert all(data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)
@@ -145,15 +147,19 @@ class UnsupervisedTests(TimerTestCase):
         assert all(confusion_matrix.matrix.virginica.values == [0, 11, 36, 47])
         assert all(confusion_matrix.matrix.Total.values == [50, 50, 50, 150])
 
-    def test_KMeans_elbow(self):
+    def test_KMeans_elbow_sse(self):
         data = TestHelper.get_iris_data()
-        # give possible values of k
-        num_clusters = [2, 3, 4, 5, 6, 7, 8]
-
         TestHelper.check_plot('data/test_unsupervised/test_kmeans_elbow_plot.png',
-                              lambda: Clustering.kmeans_elbow_plot(data=data.drop(columns='species'),
-                                                                   num_clusters=num_clusters,
-                                                                   transformations=[CenterScaleTransformer()]))  # noqa
+                              lambda: Clustering.kmeans_elbow_sse_plot(data=data.drop(columns='species'),
+                                                                       num_clusters=list(range(1, 9)),
+                                                                       transformations=[CenterScaleTransformer()]))  # noqa
+
+    def test_KMeans_elbow_bss_tss(self):
+        data = TestHelper.get_iris_data()
+        TestHelper.check_plot('data/test_unsupervised/test_kmeans_elbow_plot_bss_tss.png',
+                              lambda: Clustering.kmeans_elbow_bss_tss_plot(data=data.drop(columns='species'),
+                                                                           num_clusters=list(range(1, 9)),
+                                                                           transformations=[CenterScaleTransformer()]))  # noqa
 
     def test_KMeans_heatmap(self):
         data = TestHelper.get_iris_data()

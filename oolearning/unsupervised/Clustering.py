@@ -1,5 +1,6 @@
 from enum import Enum, unique
 from typing import List, Union
+from scipy.spatial.distance import cdist, pdist
 
 import pandas as pd
 import numpy as np
@@ -84,6 +85,10 @@ class Clustering:
             raise NotImplementedError()
 
         if trans_strategy == ClusteringHeatmapTransStrategy.CENTER_SCALE:
+            # same as getting the cluster centers if using the underlying sklearn model, if STRATEGY was used:
+            # cluster_centers = pd.DataFrame(fitter.model.model_object.cluster_centers_)
+            # cluster_centers.columns = columns_to_keep
+            # round(cluster_centers.iloc[[4, 7, 5, 3, 1, 2, 6, 0]].transpose(), 2)
             transformed_data = CenterScaleTransformer().fit_transform(data)
             if color_scale_min is None:
                 color_scale_min = -2
@@ -138,9 +143,9 @@ class Clustering:
         # plt.title('Cluster Heatmap')
 
     @staticmethod
-    def kmeans_elbow_plot(data: pd.DataFrame,
-                          num_clusters: list,
-                          transformations: List[TransformerBase]=None):
+    def kmeans_elbow_sse_plot(data: pd.DataFrame,
+                              num_clusters: list,
+                              transformations: List[TransformerBase]=None):
         scores = []
         for cluster in num_clusters:
             fitter = ModelFitter(model=ClusteringKMeans(),
@@ -154,3 +159,24 @@ class Clustering:
         plt.xlabel('K')
         plt.ylabel('SSE')
         plt.title('SSE vs. K')
+
+    @staticmethod
+    def kmeans_elbow_bss_tss_plot(data: pd.DataFrame,
+                                  num_clusters: list,
+                                  transformations: List[TransformerBase]=None):
+        """
+        Method from https://chih-ling-hsu.github.io/2018/01/02/clustering-python
+        """
+        ratios = []
+        for cluster in num_clusters:
+            fitter = ModelFitter(model=ClusteringKMeans(),
+                                 model_transformations=None if transformations is None else
+                                 [x.clone() for x in transformations])
+            fitter.fit(data=data, hyper_params=ClusteringKMeansHP(num_clusters=cluster))
+            # noinspection PyUnresolvedReferences
+            ratios.append(abs(fitter.model.bss_tss_ratio))
+
+        plt.plot(num_clusters, ratios, linestyle='--', marker='o', color='b')
+        plt.xlabel('K')
+        plt.ylabel('BSS/TSS RATIO')
+        plt.title('BSS/TSS RATIO vs. K')

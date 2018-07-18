@@ -1,14 +1,14 @@
-import numpy as np
-
 from typing import Union
+
+import numpy as np
+import pandas as pd
+from scipy.spatial.distance import cdist, pdist
 from sklearn.cluster import KMeans
 
-import pandas as pd
-
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictArrayMixin
-from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
+from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictArrayMixin
 
 
 class ClusteringKMeansHP(HyperParamsBase):
@@ -42,6 +42,9 @@ class ClusteringKMeans(SklearnPredictArrayMixin, ModelWrapperBase):
         self._num_jobs = num_jobs
         self._seed = seed
         self._score = None
+        self._bss = None
+        self._tss = None
+        self._wss = None
 
     @property
     def feature_importance(self):
@@ -54,6 +57,23 @@ class ClusteringKMeans(SklearnPredictArrayMixin, ModelWrapperBase):
         :return: Opposite of the value of X on the K-means objective.
         """
         return self._score
+
+    @property
+    def bss(self):
+        return self.tss - self.wss
+
+    @property
+    def tss(self):
+        return self._tss
+
+    @property
+    def wss(self):
+        return self._wss
+
+
+    @property
+    def bss_tss_ratio(self):
+        return self.bss / self.tss
 
     def _train(self,
                data_x: pd.DataFrame,
@@ -84,6 +104,14 @@ class ClusteringKMeans(SklearnPredictArrayMixin, ModelWrapperBase):
         model_object.fit(X=data_x)
 
         self._score = model_object.score(X=data_x)
+
+        # distances for each data-point to each cluster center
+        distances = cdist(data_x, model_object.cluster_centers_, 'euclidean')
+        min_distances = np.min(distances, axis=1)
+
+        # Total with-in sum of square
+        self._wss = sum(min_distances ** 2)  # ends of being absolute value of self._score
+        self._tss = sum(pdist(data_x) ** 2) / data_x.shape[0]
 
         return model_object
 
