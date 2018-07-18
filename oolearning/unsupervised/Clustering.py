@@ -169,7 +169,7 @@ class Clustering:
         """
         ratios = []
         for cluster in num_clusters:
-            fitter = ModelFitter(model=ClusteringKMeans(),
+            fitter = ModelFitter(model=ClusteringKMeans(evaluate_bss_tss=True),
                                  model_transformations=None if transformations is None else
                                  [x.clone() for x in transformations])
             fitter.fit(data=data, hyper_params=ClusteringKMeansHP(num_clusters=cluster))
