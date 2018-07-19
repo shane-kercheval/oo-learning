@@ -705,6 +705,74 @@ class TransformerTests(TimerTestCase):
         new_data = dummy_transformer.transform(data_x=data)
         assert all(new_data.columns.values == data.columns.values)
 
+    def test_transformations_DummyEncodeTransformer_choose_leaveout(self):
+        data = TestHelper.get_insurance_data()
+
+        new_dummy_columns = ['age', 'bmi', 'children', 'expenses', 'sex_female', 'smoker_yes',
+                             'region_northeast', 'region_northwest', 'region_southwest']
+
+        expected_state = {'region': ['northeast', 'northwest', 'southeast', 'southwest'],
+                          'sex': ['female', 'male'],
+                          'smoker': ['no', 'yes']}
+        # Test DUMMY
+        dummy_transformer = DummyEncodeTransformer(encoding=CategoricalEncoding.DUMMY,
+                                                   leave_out_columns={'region': 'southeast',
+                                                                      'sex': 'male'})
+        dummy_transformer.fit(data_x=data)
+
+        assert dummy_transformer._columns_to_reindex == new_dummy_columns
+        assert dummy_transformer.encoded_columns == ['sex_female', 'smoker_yes', 'region_northeast',
+                                                     'region_northwest', 'region_southwest']
+        assert dummy_transformer.state == expected_state
+
+        new_dummy_data = dummy_transformer.transform(data_x=data)
+        assert all(new_dummy_data.index.values == data.index.values)
+        assert new_dummy_data is not None
+        assert len(new_dummy_data) == len(data)
+        assert all(new_dummy_data.columns.values == new_dummy_columns)
+
+        ######################################################################################################
+        # test with different values
+        ######################################################################################################
+        data = TestHelper.get_insurance_data()
+
+        new_dummy_columns = ['age', 'bmi', 'children', 'expenses', 'sex_male', 'smoker_yes',
+                             'region_northeast', 'region_northwest', 'region_southeast']
+
+        expected_state = {'region': ['northeast', 'northwest', 'southeast', 'southwest'],
+                          'sex': ['female', 'male'],
+                          'smoker': ['no', 'yes']}
+        # Test DUMMY
+        dummy_transformer = DummyEncodeTransformer(encoding=CategoricalEncoding.DUMMY,
+                                                   leave_out_columns={'region': 'southwest',
+                                                                      'smoker': 'no'}
+                                                   )
+        dummy_transformer.fit(data_x=data)
+
+        assert dummy_transformer._columns_to_reindex == new_dummy_columns
+        assert dummy_transformer.encoded_columns == ['sex_male', 'smoker_yes', 'region_northeast',
+                                                     'region_northwest', 'region_southeast']
+        assert dummy_transformer.state == expected_state
+
+        new_dummy_data = dummy_transformer.transform(data_x=data)
+        assert all(new_dummy_data.index.values == data.index.values)
+        assert new_dummy_data is not None
+        assert len(new_dummy_data) == len(data)
+        assert all(new_dummy_data.columns.values == new_dummy_columns)
+
+        # TEST DATA WITH *NO* CATEGORICAL VALUES
+        data = TestHelper.get_cement_data()
+        dummy_transformer = DummyEncodeTransformer(encoding=CategoricalEncoding.DUMMY)
+        dummy_transformer.fit(data_x=data)
+        new_data = dummy_transformer.transform(data_x=data)
+        assert all(new_data.columns.values == data.columns.values)
+
+        data = TestHelper.get_cement_data()
+        dummy_transformer = DummyEncodeTransformer(encoding=CategoricalEncoding.ONE_HOT)
+        dummy_transformer.fit(data_x=data)
+        new_data = dummy_transformer.transform(data_x=data)
+        assert all(new_data.columns.values == data.columns.values)
+
     def test_transformations_DummyEncodeTransformer_peaking(self):
         # the problem is that when Encoding, specifically when resampling etc…. the data/Transformer is
         # fitted with a subset of values that it will eventually see, and if a rare value is not in the

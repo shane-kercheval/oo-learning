@@ -8,11 +8,24 @@ class DummyEncodeTransformer(TransformerBase):
     """
     Transforms categorical variables to either DUMMY or ONE-HOT encoding
     """
-    def __init__(self, encoding: CategoricalEncoding = CategoricalEncoding.DUMMY):
+    def __init__(self, encoding: CategoricalEncoding = CategoricalEncoding.DUMMY,
+                 leave_out_columns: dict=None):
+        """
+        :param encoding: type of encoding to use
+        :param leave_out_columns: if CategoricalEncoding.DUMMY, this parameter specifies, per column,
+            the new column (i.e. category) to leave out. Not all columns need to be specified.
+            If not specified, or leave_out_columns is None (and DUMMY encoding), then the first category found
+            is dropped.
+
+            Example: `{'original_column': 'drop_column', ...}
+        """
         super().__init__()
         assert isinstance(encoding, CategoricalEncoding)
         assert encoding is not CategoricalEncoding.NONE  # this wouldn't make sense
+        if leave_out_columns is not None:
+            assert isinstance(leave_out_columns, dict)
         self._encoding = encoding
+        self._leave_out_columns = leave_out_columns
         self._columns_to_reindex = None
         self._encoded_columns = None
         self._peak_state = None
@@ -75,13 +88,22 @@ class DummyEncodeTransformer(TransformerBase):
         # i.e. discarding previously removed columns
         state = {feature: state[feature] for feature in categoric_features}
 
-        # save the numeric & dummy columns, so that we can reindex consistently in transform
-        starting_index = 1 if self._encoding == CategoricalEncoding.DUMMY else 0  # ignore 1st index if dummy
-
         self._encoded_columns = []
         for column in state.keys():
             new_columns = [column + '_' + str(value) for value in state[column]]  # `str` in case of numeric
-            self._encoded_columns.extend(new_columns[starting_index:])
+
+            # if DUMMY encoding, then we need to drop a column;
+            # either drop the first column, or _leave_out_columns
+            if self._encoding == CategoricalEncoding.DUMMY:
+                # if leave out columns were specified, and the specific column was specified
+                if self._leave_out_columns is not None and column in self._leave_out_columns.keys():
+                    column_to_drop = '{}_{}'.format(column, self._leave_out_columns[column])
+                else:
+                    column_to_drop = new_columns[0]
+
+                new_columns.remove(column_to_drop)
+
+            self._encoded_columns.extend(new_columns)
 
         self._columns_to_reindex = numeric_features + self._encoded_columns
 
