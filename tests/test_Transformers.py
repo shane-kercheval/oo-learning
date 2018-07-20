@@ -626,13 +626,15 @@ class TransformerTests(TimerTestCase):
 
     def test_transformations_DummyEncodeTransformer(self):
         data = TestHelper.get_insurance_data()
+        # make sure encoding works when columns names have spaces
+        data = data.rename(index=str, columns={'region': 'reg ion'})
 
         new_dummy_columns = ['age', 'bmi', 'children', 'expenses', 'sex_male', 'smoker_yes',
-                             'region_northwest', 'region_southeast', 'region_southwest']
+                             'reg ion_northwest', 'reg ion_southeast', 'reg ion_southwest']
         new_one_hot_columns = ['age', 'bmi', 'children', 'expenses', 'sex_female', 'sex_male', 'smoker_no',
-                               'smoker_yes', 'region_northeast', 'region_northwest',
-                               'region_southeast', 'region_southwest']
-        expected_state = {'region': ['northeast', 'northwest', 'southeast', 'southwest'],
+                               'smoker_yes', 'reg ion_northeast', 'reg ion_northwest',
+                               'reg ion_southeast', 'reg ion_southwest']
+        expected_state = {'reg ion': ['northeast', 'northwest', 'southeast', 'southwest'],
                           'sex': ['female', 'male'],
                           'smoker': ['no', 'yes']}
         # Test DUMMY
@@ -640,8 +642,8 @@ class TransformerTests(TimerTestCase):
         dummy_transformer.fit(data_x=data)
 
         assert dummy_transformer._columns_to_reindex == new_dummy_columns
-        assert dummy_transformer.encoded_columns == ['sex_male', 'smoker_yes', 'region_northwest',
-                                                     'region_southeast', 'region_southwest']
+        assert dummy_transformer.encoded_columns == ['sex_male', 'smoker_yes', 'reg ion_northwest',
+                                                     'reg ion_southeast', 'reg ion_southwest']
         assert dummy_transformer.state == expected_state
 
         new_dummy_data = dummy_transformer.transform(data_x=data)
@@ -655,8 +657,8 @@ class TransformerTests(TimerTestCase):
         one_hot_transformer.fit(data_x=data)
         assert one_hot_transformer._columns_to_reindex == new_one_hot_columns
         assert one_hot_transformer.encoded_columns == ['sex_female', 'sex_male', 'smoker_no', 'smoker_yes',
-                                                       'region_northeast', 'region_northwest',
-                                                       'region_southeast', 'region_southwest']
+                                                       'reg ion_northeast', 'reg ion_northwest',
+                                                       'reg ion_southeast', 'reg ion_southwest']
         assert one_hot_transformer.state == expected_state
 
         new_encoded_data = one_hot_transformer.transform(data_x=data)
@@ -674,15 +676,15 @@ class TransformerTests(TimerTestCase):
                 assert new_encoded_data[column][index] == expected_value
 
         for index in range(0, len(data)):  # cycle through each row, check the values of each dummy variable
-            assert_all_encoded_values('region')
+            assert_all_encoded_values('reg ion')
             assert_all_encoded_values('sex')
             assert_all_encoded_values('smoker')
 
         # now that we have tested all columns (one hot), ensure that the one hot columns match the
         # dummy columns that weren't dropped
-        assert all(new_dummy_data['region_northwest'] == new_encoded_data['region_northwest'])
-        assert all(new_dummy_data['region_southeast'] == new_encoded_data['region_southeast'])
-        assert all(new_dummy_data['region_southwest'] == new_encoded_data['region_southwest'])
+        assert all(new_dummy_data['reg ion_northwest'] == new_encoded_data['reg ion_northwest'])
+        assert all(new_dummy_data['reg ion_southeast'] == new_encoded_data['reg ion_southeast'])
+        assert all(new_dummy_data['reg ion_southwest'] == new_encoded_data['reg ion_southwest'])
         assert all(new_dummy_data['sex_male'] == new_encoded_data['sex_male'])
         assert all(new_dummy_data['smoker_yes'] == new_encoded_data['smoker_yes'])
 
@@ -707,21 +709,23 @@ class TransformerTests(TimerTestCase):
 
     def test_transformations_DummyEncodeTransformer_choose_leaveout(self):
         data = TestHelper.get_insurance_data()
+        # make sure encoding works when columns names have spaces
+        data = data.rename(index=str, columns={'sex': 'se x'})
 
-        new_dummy_columns = ['age', 'bmi', 'children', 'expenses', 'sex_female', 'smoker_yes',
+        new_dummy_columns = ['age', 'bmi', 'children', 'expenses', 'se x_female', 'smoker_yes',
                              'region_northeast', 'region_northwest', 'region_southwest']
 
         expected_state = {'region': ['northeast', 'northwest', 'southeast', 'southwest'],
-                          'sex': ['female', 'male'],
+                          'se x': ['female', 'male'],
                           'smoker': ['no', 'yes']}
         # Test DUMMY
         dummy_transformer = DummyEncodeTransformer(encoding=CategoricalEncoding.DUMMY,
                                                    leave_out_columns={'region': 'southeast',
-                                                                      'sex': 'male'})
+                                                                      'se x': 'male'})
         dummy_transformer.fit(data_x=data)
 
         assert dummy_transformer._columns_to_reindex == new_dummy_columns
-        assert dummy_transformer.encoded_columns == ['sex_female', 'smoker_yes', 'region_northeast',
+        assert dummy_transformer.encoded_columns == ['se x_female', 'smoker_yes', 'region_northeast',
                                                      'region_northwest', 'region_southwest']
         assert dummy_transformer.state == expected_state
 
@@ -735,12 +739,14 @@ class TransformerTests(TimerTestCase):
         # test with different values
         ######################################################################################################
         data = TestHelper.get_insurance_data()
+        # make sure encoding works when columns names have spaces
+        data = data.rename(index=str, columns={'sex': 'se x'})
 
-        new_dummy_columns = ['age', 'bmi', 'children', 'expenses', 'sex_male', 'smoker_yes',
+        new_dummy_columns = ['age', 'bmi', 'children', 'expenses', 'se x_male', 'smoker_yes',
                              'region_northeast', 'region_northwest', 'region_southeast']
 
         expected_state = {'region': ['northeast', 'northwest', 'southeast', 'southwest'],
-                          'sex': ['female', 'male'],
+                          'se x': ['female', 'male'],
                           'smoker': ['no', 'yes']}
         # Test DUMMY
         dummy_transformer = DummyEncodeTransformer(encoding=CategoricalEncoding.DUMMY,
@@ -750,7 +756,7 @@ class TransformerTests(TimerTestCase):
         dummy_transformer.fit(data_x=data)
 
         assert dummy_transformer._columns_to_reindex == new_dummy_columns
-        assert dummy_transformer.encoded_columns == ['sex_male', 'smoker_yes', 'region_northeast',
+        assert dummy_transformer.encoded_columns == ['se x_male', 'smoker_yes', 'region_northeast',
                                                      'region_northwest', 'region_southeast']
         assert dummy_transformer.state == expected_state
 
