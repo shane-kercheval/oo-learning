@@ -39,7 +39,8 @@ class Clustering:
                         agg_strategy: ClusteringHeatmapAggStrategy.MEAN,
                         display_values: ClusteringHeatmapValues.ACTUAL,
                         color_scale_min: Union[int, float, None]=None,
-                        color_scale_max: Union[int, float, None] = None):
+                        color_scale_max: Union[int, float, None] = None,
+                        y_axis_rotation: int=0):
         """
         :param data: data from which the clusters were generated
             It is recommended you use the pre-transformed data (i.e. could contain missing values), otherwise
@@ -71,7 +72,7 @@ class Clustering:
 
         :param color_scale_min: min value for the color scale
         :param color_scale_max: max value for the color scale
-
+        :param y_axis_rotation: degrees to rotate the y-axis labels
         :return:
         """
         if agg_strategy == ClusteringHeatmapAggStrategy.MEAN:
@@ -137,7 +138,7 @@ class Clustering:
                     annot=values.iloc[np.argsort(cluster_size_lookup)].transpose(), fmt='',  # fmt="f",
                     robust=True, cmap='RdBu_r', vmin=color_scale_min, vmax=color_scale_max,
                     cbar_kws={'label': color_scale_title})
-        plt.yticks(rotation=-30, va='bottom')
+        plt.yticks(rotation=y_axis_rotation * -1, va='center' if y_axis_rotation == 0 else 'bottom')
         plt.xticks(rotation=30, ha='right')
         plt.tight_layout()
         # plt.title('Cluster Heatmap')

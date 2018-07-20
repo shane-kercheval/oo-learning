@@ -191,7 +191,8 @@ class UnsupervisedTests(TimerTestCase):
                                   data=data.drop(columns='species'), clusters=clusters,
                                   trans_strategy=ClusteringHeatmapTransStrategy.CENTER_SCALE,
                                   agg_strategy=ClusteringHeatmapAggStrategy.MEAN,
-                                  display_values=ClusteringHeatmapValues.STRATEGY))
+                                  display_values=ClusteringHeatmapValues.STRATEGY,
+                                  y_axis_rotation=30))
 
         TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_centerscale_strategy_mean_min_max.png',  # noqa
                               lambda: Clustering.cluster_heatmap(
@@ -199,6 +200,7 @@ class UnsupervisedTests(TimerTestCase):
                                   trans_strategy=ClusteringHeatmapTransStrategy.CENTER_SCALE,
                                   agg_strategy=ClusteringHeatmapAggStrategy.MEAN,
                                   display_values=ClusteringHeatmapValues.STRATEGY,
+                                  y_axis_rotation=30,
                                   color_scale_min=-3,
                                   color_scale_max=3))
 
@@ -207,46 +209,53 @@ class UnsupervisedTests(TimerTestCase):
                                   data=data.drop(columns='species'), clusters=clusters,  # noqa
                                   trans_strategy=ClusteringHeatmapTransStrategy.CENTER_SCALE,
                                   agg_strategy=ClusteringHeatmapAggStrategy.MEAN,
-                                  display_values=ClusteringHeatmapValues.ACTUAL))
+                                  display_values=ClusteringHeatmapValues.ACTUAL,
+                                  y_axis_rotation=30))
 
         TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_centerscale_actual_median.png',
                               lambda: Clustering.cluster_heatmap(
                                   data=data.drop(columns='species'), clusters=clusters,  # noqa
                                   trans_strategy=ClusteringHeatmapTransStrategy.CENTER_SCALE,
                                   agg_strategy=ClusteringHeatmapAggStrategy.MEDIAN,
-                                  display_values=ClusteringHeatmapValues.ACTUAL))
+                                  display_values=ClusteringHeatmapValues.ACTUAL,
+                                  y_axis_rotation=30))
 
         TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_centerscale_strategy_median.png',
                               lambda: Clustering.cluster_heatmap(
                                   data=data.drop(columns='species'), clusters=clusters,  # noqa
                                   trans_strategy=ClusteringHeatmapTransStrategy.CENTER_SCALE,
                                   agg_strategy=ClusteringHeatmapAggStrategy.MEDIAN,
-                                  display_values=ClusteringHeatmapValues.STRATEGY))
+                                  display_values=ClusteringHeatmapValues.STRATEGY,
+                                  y_axis_rotation=30))
         # PERCENTILES
         TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_percentiles_strategy_mean.png',
                               lambda: Clustering.cluster_heatmap(
                                   data=data.drop(columns='species'), clusters=clusters,
                                   trans_strategy=ClusteringHeatmapTransStrategy.PERCENTILES,
                                   agg_strategy=ClusteringHeatmapAggStrategy.MEAN,
-                                  display_values=ClusteringHeatmapValues.STRATEGY))
+                                  display_values=ClusteringHeatmapValues.STRATEGY,
+                                  y_axis_rotation=30))
 
         TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_percentiles_actual_mean.png',
                               lambda: Clustering.cluster_heatmap(
                                   data=data.drop(columns='species'), clusters=clusters,  # noqa
                                   trans_strategy=ClusteringHeatmapTransStrategy.PERCENTILES,
                                   agg_strategy=ClusteringHeatmapAggStrategy.MEAN,
-                                  display_values=ClusteringHeatmapValues.ACTUAL))
+                                  display_values=ClusteringHeatmapValues.ACTUAL,
+                                  y_axis_rotation=30))
 
         TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_percentiles_actual_median.png',
                               lambda: Clustering.cluster_heatmap(
                                   data=data.drop(columns='species'), clusters=clusters,  # noqa
                                   trans_strategy=ClusteringHeatmapTransStrategy.PERCENTILES,
                                   agg_strategy=ClusteringHeatmapAggStrategy.MEDIAN,
-                                  display_values=ClusteringHeatmapValues.ACTUAL))
+                                  display_values=ClusteringHeatmapValues.ACTUAL,
+                                  y_axis_rotation=30))
 
         TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_percentiles_strategy_median.png',
                               lambda: Clustering.cluster_heatmap(
                                   data=data.drop(columns='species'), clusters=clusters,  # noqa
                                   trans_strategy=ClusteringHeatmapTransStrategy.PERCENTILES,
                                   agg_strategy=ClusteringHeatmapAggStrategy.MEDIAN,
-                                  display_values=ClusteringHeatmapValues.STRATEGY))
+                                  display_values=ClusteringHeatmapValues.STRATEGY,
+                                  y_axis_rotation=30))
