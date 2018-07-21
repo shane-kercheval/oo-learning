@@ -36,7 +36,7 @@ class ClusteringKMeansHP(HyperParamsBase):
 
 class ClusteringKMeans(SklearnPredictArrayMixin, ModelWrapperBase):
 
-    def __init__(self, shuffle_data: bool=True, evaluate_bss_tss: bool=False, num_jobs: int=1, seed: int=42):
+    def __init__(self, evaluate_bss_tss: bool=False, shuffle_data: bool=True, num_jobs: int=1, seed: int=42):
         super().__init__()
         self._shuffle_data = shuffle_data
         self._num_jobs = num_jobs
@@ -49,7 +49,7 @@ class ClusteringKMeans(SklearnPredictArrayMixin, ModelWrapperBase):
 
     @property
     def feature_importance(self):
-        pass
+        raise NotImplementedError()
 
     @property
     def score(self):
@@ -115,7 +115,3 @@ class ClusteringKMeans(SklearnPredictArrayMixin, ModelWrapperBase):
             self._tss = sum(pdist(data_x) ** 2) / data_x.shape[0]
 
         return model_object
-
-    def _predict(self, model_object: object, data_x: pd.DataFrame) -> Union[np.ndarray, pd.DataFrame]:
-        # noinspection PyUnresolvedReferences
-        return model_object.predict(data_x)

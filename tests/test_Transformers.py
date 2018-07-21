@@ -1,5 +1,5 @@
 from math import isclose
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 import numpy as np
 import pandas as pd
@@ -1170,6 +1170,62 @@ class TransformerTests(TimerTestCase):
                                                                                 ]].copy())
         assert all([isclose(x, y) for x, y in zip(sklearn_transformations[:, 0],
                                                   transformed_training.longitude)])
+
+    def test_NormalizationTransformer(self):
+        data = TestHelper.get_housing_data()
+        target_variable = 'median_house_value'
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_regression(data, target_variable)
+
+        transformer = NormalizationTransformer()
+
+        # ensure that we are forced to call `fit` first
+        self.assertRaises(AssertionError, lambda: transformer.transform(data_x=data))
+
+        transformed_training = transformer.fit_transform(data_x=training_set.copy())
+        assert transformer.state == {'minimums': {'longitude': -124.35, 'latitude': 32.54, 'housing_median_age': 1.0, 'total_rooms': 2.0, 'total_bedrooms': 1.0, 'population': 3.0, 'households': 1.0, 'median_income': 0.4999}, 'maximums': {'longitude': -114.31, 'latitude': 41.95, 'housing_median_age': 52.0, 'total_rooms': 37937.0, 'total_bedrooms': 5471.0, 'population': 16122.0, 'households': 5189.0, 'median_income': 15.0001}}  # noqa
+
+        # categorical columns should not have changed
+        assert all(transformed_training.ocean_proximity.values == training_set.ocean_proximity.values)
+        assert all(transformed_training.temp_categorical.values == training_set.temp_categorical.values)
+
+        standard_scaler = MinMaxScaler()
+        sklearn_transformations = standard_scaler.fit_transform(X=training_set[['longitude',
+                                                                                'latitude',
+                                                                                 'housing_median_age',
+                                                                                 'total_rooms',
+                                                                                 # 'total_bedrooms',
+                                                                                 'population',
+                                                                                 'households',
+                                                                                 'median_income',
+                                                                                ]].copy())
+        assert all([isclose(x, y) for x, y in zip(sklearn_transformations[:, 0], transformed_training.longitude)])  # noqa
+        assert all([isclose(x, y) for x, y in zip(sklearn_transformations[:, 1], transformed_training.latitude)])  # noqa
+        assert all([isclose(x, y) for x, y in zip(sklearn_transformations[:, 2], transformed_training.housing_median_age)])  # noqa
+        assert all([isclose(x, y) for x, y in zip(sklearn_transformations[:, 3], transformed_training.total_rooms)])  # noqa
+        # assert all([isclose(x, y) for x, y in zip(sklearn_transformations[:, 0], transformed_training.total_bedrooms)])  # noqa
+        assert all([isclose(x, y) for x, y in zip(sklearn_transformations[:, 4], transformed_training.population)])  # noqa
+        assert all([isclose(x, y) for x, y in zip(sklearn_transformations[:, 5], transformed_training.households)])  # noqa
+        assert all([isclose(x, y) for x, y in zip(sklearn_transformations[:, 6], transformed_training.median_income)])  # noqa
+
+        # predict
+        transformed_test = transformer.transform(data_x=test_set.copy())
+        sklearn_test_transformations = standard_scaler.transform(X=test_set[['longitude',
+                                                                             'latitude',
+                                                                             'housing_median_age',
+                                                                             'total_rooms',
+                                                                             # 'total_bedrooms',
+                                                                             'population',
+                                                                             'households',
+                                                                             'median_income',
+                                                                             ]].copy())
+        assert all([isclose(x, y) for x, y in zip(sklearn_test_transformations[:, 0], transformed_test.longitude)])  # noqa
+        assert all([isclose(x, y) for x, y in zip(sklearn_test_transformations[:, 1], transformed_test.latitude)])  # noqa
+        assert all([isclose(x, y) for x, y in zip(sklearn_test_transformations[:, 2], transformed_test.housing_median_age)])  # noqa
+        assert all([isclose(x, y) for x, y in zip(sklearn_test_transformations[:, 3], transformed_test.total_rooms)])  # noqa
+        # assert all([isclose(x, y) for x, y in zip(sklearn_test_transformations[:, 0], transformed_test.total_bedrooms)])  # noqa
+        assert all([isclose(x, y) for x, y in zip(sklearn_test_transformations[:, 4], transformed_test.population)])  # noqa
+        assert all([isclose(x, y) for x, y in zip(sklearn_test_transformations[:, 5], transformed_test.households)])  # noqa
+        assert all([isclose(x, y) for x, y in zip(sklearn_test_transformations[:, 6], transformed_test.median_income)])  # noqa
 
     def test_BoxCoxTransformer(self):
         data = TestHelper.get_housing_data()

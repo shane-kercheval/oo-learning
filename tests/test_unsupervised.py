@@ -3,6 +3,7 @@ import numpy as np
 import shutil
 
 from math import isclose
+from sklearn.metrics import adjusted_rand_score
 
 from oolearning import *
 from tests.TestHelper import TestHelper
@@ -100,9 +101,9 @@ class UnsupervisedTests(TimerTestCase):
                              model_transformations=[CenterScaleTransformer()])
         clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringKMeansHP(num_clusters=3))
 
-        assert isclose(fitter.model.score, -140.02604451987534)
+        assert isclose(fitter.model.score, -140.96581663074699)
         assert isclose(fitter.model.bss_tss_ratio, 0.7650569722820886)
-
+        assert isclose(adjusted_rand_score(data.species, clusters), 0.6201351808870379)
         num_cached = fitter.model.data_x_trained_head.shape[0]
         assert all(data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)
 
@@ -128,7 +129,8 @@ class UnsupervisedTests(TimerTestCase):
                              model_transformations=[CenterScaleTransformer()])
         clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringKMeansHP(num_clusters=3))
 
-        assert isclose(fitter.model.score, -140.02604451987534)
+        assert isclose(fitter.model.score, -140.96581663074699)
+        assert isclose(adjusted_rand_score(data.species, clusters), 0.6201351808870379)
         assert fitter.model.bss_tss_ratio is None
 
         num_cached = fitter.model.data_x_trained_head.shape[0]
@@ -259,3 +261,90 @@ class UnsupervisedTests(TimerTestCase):
                                   agg_strategy=ClusteringHeatmapAggStrategy.MEDIAN,
                                   display_values=ClusteringHeatmapValues.STRATEGY,
                                   y_axis_rotation=30))
+
+    def test_Hierarchical_no_shuffle(self):
+        data = TestHelper.get_iris_data()
+        cluster_data = data.drop(columns='species')
+
+        fitter = ModelFitter(model=ClusteringHierarchical(shuffle_data=False),
+                             model_transformations=[NormalizationTransformer()],
+                             )
+        clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringHierarchicalHP(num_clusters=3))  # noqa
+        assert isclose(adjusted_rand_score(data.species, clusters), 0.7195837484778037)
+
+        num_cached = fitter.model.data_x_trained_head.shape[0]
+        assert all(data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)
+
+        # setosa == 1
+        # versicolor == 0
+        # virginica == 2
+        lookup = ['versicolor', 'setosa', 'virginica']
+        predicted_clusters = [lookup[x] for x in clusters]
+        # noinspection PyTypeChecker
+        confusion_matrix = ConfusionMatrix(actual_classes=data['species'].values,
+                                           predicted_classes=predicted_clusters)
+        assert all(confusion_matrix.matrix.setosa.values == [50, 0, 0, 50])
+        assert all(confusion_matrix.matrix.versicolor.values == [0, 50, 17, 67])
+        assert all(confusion_matrix.matrix.virginica.values == [0, 0, 33, 33])
+        assert all(confusion_matrix.matrix.Total.values == [50, 50, 50, 150])
+
+    def test_Hierarchical_shuffle(self):
+        data = TestHelper.get_iris_data()
+        cluster_data = data.drop(columns='species')
+
+        fitter = ModelFitter(model=ClusteringHierarchical(shuffle_data=True),
+                             model_transformations=[NormalizationTransformer()],
+                             )
+        clusters = fitter.fit_predict(data=cluster_data,
+                                      hyper_params=ClusteringHierarchicalHP(num_clusters=3))  # noqa
+        assert isclose(adjusted_rand_score(data.species, clusters), 0.7195837484778037)
+
+        num_cached = fitter.model.data_x_trained_head.shape[0]
+        assert all(data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)
+
+        # setosa == 1
+        # versicolor == 0
+        # virginica == 2
+        lookup = ['versicolor', 'setosa', 'virginica']
+        predicted_clusters = [lookup[x] for x in clusters]
+        # noinspection PyTypeChecker
+        confusion_matrix = ConfusionMatrix(actual_classes=data['species'].values,
+                                           predicted_classes=predicted_clusters)
+        assert all(confusion_matrix.matrix.setosa.values == [50, 0, 0, 50])
+        assert all(confusion_matrix.matrix.versicolor.values == [0, 50, 17, 67])
+        assert all(confusion_matrix.matrix.virginica.values == [0, 0, 33, 33])
+        assert all(confusion_matrix.matrix.Total.values == [50, 50, 50, 150])
+
+    def test_Hierarchical_shuffle_string_index(self):
+        # noinspection SpellCheckingInspection
+        """
+        because AgglomerativeClustering doesn't have a `predict`, ClusteringHierarchical has some additional
+        logic to "un-shuffle" the data in `predict()` method, need to test string indexes as well as integer
+        """
+        data = TestHelper.get_iris_data()
+        data.index = data.index.astype(str)
+        assert all([isinstance(x, str) for x in data.index.values])
+        cluster_data = data.drop(columns='species')
+
+        fitter = ModelFitter(model=ClusteringHierarchical(shuffle_data=True),
+                             model_transformations=[NormalizationTransformer()],
+                             )
+        clusters = fitter.fit_predict(data=cluster_data,
+                                      hyper_params=ClusteringHierarchicalHP(num_clusters=3))  # noqa
+        assert isclose(adjusted_rand_score(data.species, clusters), 0.7195837484778037)
+
+        num_cached = fitter.model.data_x_trained_head.shape[0]
+        assert all(data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)
+
+        # setosa == 1
+        # versicolor == 0
+        # virginica == 2
+        lookup = ['versicolor', 'setosa', 'virginica']
+        predicted_clusters = [lookup[x] for x in clusters]
+        # noinspection PyTypeChecker
+        confusion_matrix = ConfusionMatrix(actual_classes=data['species'].values,
+                                           predicted_classes=predicted_clusters)
+        assert all(confusion_matrix.matrix.setosa.values == [50, 0, 0, 50])
+        assert all(confusion_matrix.matrix.versicolor.values == [0, 50, 17, 67])
+        assert all(confusion_matrix.matrix.virginica.values == [0, 0, 33, 33])
+        assert all(confusion_matrix.matrix.Total.values == [50, 50, 50, 150])

@@ -12,7 +12,6 @@ from .enums.CategoricalEncoding import CategoricalEncoding
 from .enums.DummyClassifierStrategy import DummyClassifierStrategy
 from .enums.Imputation import Imputation
 from .enums.Metric import Metric
-from .enums.Normalization import Normalization
 from .enums.ResolveOutliers import ResolveOutliers
 from .enums.Skewness import Skewness
 
@@ -135,6 +134,7 @@ from .transformers.CategoricConverterTransformer import CategoricConverterTransf
 from .transformers.CenterScaleTransformer import CenterScaleTransformer
 from .transformers.DummyEncodeTransformer import DummyEncodeTransformer
 from .transformers.ImputationTransformer import ImputationTransformer
+from .transformers.NormalizationTransformer import NormalizationTransformer
 from .transformers.PolynomialFeaturesTransformer import PolynomialFeaturesTransformer
 from .transformers.RemoveColumnsTransformer import RemoveColumnsTransformer
 from .transformers.RemoveCorrelationsTransformer import RemoveCorrelationsTransformer
@@ -145,7 +145,8 @@ from .transformers.StatelessTransformer import StatelessTransformer
 from .transformers.TransformerBase import TransformerBase
 from .transformers.TransformerPipeline import TransformerPipeline
 
+from .unsupervised.ClusteringHierarchical import ClusteringHierarchicalAffinity, \
+    ClusteringHierarchicalLinkage, ClusteringHierarchicalHP, ClusteringHierarchical
 from .unsupervised.ClusteringKmeans import ClusteringKMeans, ClusteringKMeansHP
 from .unsupervised.Clustering import Clustering, ClusteringHeatmapValues, ClusteringHeatmapAggStrategy, \
     ClusteringHeatmapTransStrategy
-
