@@ -715,8 +715,6 @@ class ModelWrapperTests(TimerTestCase):
         assert isclose(fitter.holdout_evaluator.mean_squared_error, 100.07028301004217)
         assert isclose(fitter.holdout_evaluator.mean_absolute_error, 7.99161252047238)
 
-        np.asarray(fitter.predict(data_x=data.drop(columns=target_variable)))
-
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'age']  # noqa
 
         assert isclose(10.524151070654748, fitter.model.summary_stats['residual standard error (RSE)'])
@@ -868,6 +866,7 @@ class ModelWrapperTests(TimerTestCase):
         tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
         assert len(tuner.results._tune_results_objects) == 6
         assert tuner.results.num_param_combos == 6
+
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ElasticNet_can_tune.pkl'))  # noqa
         with open(file, 'rb') as saved_object:
             saved_results = pickle.load(saved_object)
@@ -2116,12 +2115,12 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.model.hyper_params.params_dict == {'degree': 3, 'coef0': 0.0, 'penalty_c': 1.0}
 
         con_matrix = fitter.training_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 0].values.tolist() == [403, 99, 502]
-        assert con_matrix.matrix.loc[:, 1].values.tolist() == [36, 174, 210]
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [403, 100, 503]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [36, 173, 209]
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
         assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
         assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.training_evaluator.auc_roc, 0.8623328076631038)
+        assert isclose(fitter.training_evaluator.auc_roc, 0.8623077757474112)
 
         con_matrix = fitter.holdout_evaluator._confusion_matrix
         assert con_matrix.matrix.loc[:, 0].values.tolist() == [104, 31, 135]
@@ -2129,15 +2128,15 @@ class ModelWrapperTests(TimerTestCase):
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
         assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
         assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8299077733860343)
+        assert isclose(fitter.holdout_evaluator.auc_roc, 0.829776021080369)
 
         actual_metrics = fitter.training_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8623328076631038, 'AUC Precision/Recall': 0.8282519195039698, 'Kappa': 0.5806941318117573, 'F1 Score': 0.7204968944099378, 'Two-Class Accuracy': 0.8103932584269663, 'Error Rate': 0.1896067415730337, 'True Positive Rate': 0.6373626373626373, 'True Negative Rate': 0.9179954441913439, 'False Positive Rate': 0.08200455580865604, 'False Negative Rate': 0.3626373626373626, 'Positive Predictive Value': 0.8285714285714286, 'Negative Predictive Value': 0.8027888446215139, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        expected_metrics = {'AUC ROC': 0.8623077757474112, 'AUC Precision/Recall': 0.8282970071095012, 'Kappa': 0.5772820535207578, 'F1 Score': 0.7178423236514523, 'Two-Class Accuracy': 0.8089887640449438, 'Error Rate': 0.19101123595505617, 'True Positive Rate': 0.6336996336996337, 'True Negative Rate': 0.9179954441913439, 'False Positive Rate': 0.08200455580865604, 'False Negative Rate': 0.3663003663003663, 'Positive Predictive Value': 0.8277511961722488, 'Negative Predictive Value': 0.8011928429423459, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
         actual_metrics = fitter.holdout_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8299077733860343, 'AUC Precision/Recall': 0.7965623013913842, 'Kappa': 0.5321087954786295, 'F1 Score': 0.672566371681416, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.5507246376811594, 'True Negative Rate': 0.9454545454545454, 'False Positive Rate': 0.05454545454545454, 'False Negative Rate': 0.4492753623188406, 'Positive Predictive Value': 0.8636363636363636, 'Negative Predictive Value': 0.7703703703703704, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        expected_metrics = {'AUC ROC': 0.829776021080369, 'AUC Precision/Recall': 0.7965252719501299, 'Kappa': 0.5321087954786295, 'F1 Score': 0.672566371681416, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.5507246376811594, 'True Negative Rate': 0.9454545454545454, 'False Positive Rate': 0.05454545454545454, 'False Negative Rate': 0.4492753623188406, 'Positive Predictive Value': 0.8636363636363636, 'Negative Predictive Value': 0.7703703703703704, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
         assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
@@ -2169,7 +2168,7 @@ class ModelWrapperTests(TimerTestCase):
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
         assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
         assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.training_evaluator.auc_roc, 0.8598713359533405)
+        assert isclose(fitter.training_evaluator.auc_roc, 0.8599047118409305)
 
         con_matrix = fitter.holdout_evaluator._confusion_matrix
         assert con_matrix.matrix.loc[:, 0].values.tolist() == [88, 21, 109]
@@ -2180,7 +2179,7 @@ class ModelWrapperTests(TimerTestCase):
         assert isclose(fitter.holdout_evaluator.auc_roc, 0.8292490118577075)
 
         actual_metrics = fitter.training_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8598713359533405, 'AUC Precision/Recall': 0.8447190364224766, 'Kappa': 0.5987967881203543, 'F1 Score': 0.7553956834532375, 'Two-Class Accuracy': 0.8089887640449438, 'Error Rate': 0.19101123595505617, 'True Positive Rate': 0.7692307692307693, 'True Negative Rate': 0.8337129840546698, 'False Positive Rate': 0.1662870159453303, 'False Negative Rate': 0.23076923076923078, 'Positive Predictive Value': 0.7420494699646644, 'Negative Predictive Value': 0.8531468531468531, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        expected_metrics = {'AUC ROC': 0.8599047118409305, 'AUC Precision/Recall': 0.8447391418292325, 'Kappa': 0.5987967881203543, 'F1 Score': 0.7553956834532375, 'Two-Class Accuracy': 0.8089887640449438, 'Error Rate': 0.19101123595505617, 'True Positive Rate': 0.7692307692307693, 'True Negative Rate': 0.8337129840546698, 'False Positive Rate': 0.1662870159453303, 'False Negative Rate': 0.23076923076923078, 'Positive Predictive Value': 0.7420494699646644, 'Negative Predictive Value': 0.8531468531468531, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
@@ -2235,10 +2234,10 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.model.hyper_params.params_dict == {'degree': 3, 'epsilon': 0.1, 'penalty_c': 1.0}
 
         keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 8.89089537374377, 'Mean Squared Error (MSE)': 132.68328212645022, 'Root Mean Squared Error (RMSE)': 11.518822948828157, 'RMSE to Standard Deviation of Target': 0.68698397973439, 'Total Observations': 824}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 8.884181650910488, 'Mean Squared Error (MSE)': 132.52397635503377, 'Root Mean Squared Error (RMSE)': 11.511905852422256, 'RMSE to Standard Deviation of Target': 0.6865714432766075, 'Total Observations': 824}  # noqa
         assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
-        expected_values = {'Mean Absolute Error (MAE)': 9.01999140928503, 'Mean Squared Error (MSE)': 130.26406061226362, 'Root Mean Squared Error (RMSE)': 11.413328200497155, 'RMSE to Standard Deviation of Target': 0.6952740992562293, 'Total Observations': 206}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 9.013573723533986, 'Mean Squared Error (MSE)': 130.1151697621433, 'Root Mean Squared Error (RMSE)': 11.406803661067517, 'RMSE to Standard Deviation of Target': 0.6948766390942753, 'Total Observations': 206}  # noqa
         assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
     def test_CartDecisionTreeRegressor(self):
@@ -3071,7 +3070,7 @@ class ModelWrapperTests(TimerTestCase):
         evaluator = RegressionEvaluator()
         evaluator.evaluate(actual_values=holdout_y, predicted_values=predictions_aggregation)
         TestHelper.ensure_values_numeric_dictionary(dictionary_1=evaluator.all_quality_metrics,
-                                                    dictionary_2={'Mean Absolute Error (MAE)': 2929.902780386074, 'Mean Squared Error (MSE)': 26119870.737061337, 'Root Mean Squared Error (RMSE)': 5110.7602895324035, 'RMSE to Standard Deviation of Target': 0.4126739290232337, 'Total Observations': 268})  # noqa
+                                                    dictionary_2={'Mean Absolute Error (MAE)': 2924.9208144505114, 'Mean Squared Error (MSE)': 26111091.521699697, 'Root Mean Squared Error (RMSE)': 5109.901322109821, 'RMSE to Standard Deviation of Target': 0.41260457075927714, 'Total Observations': 268})  # noqa
 
     def test_ModelAggregator_regression_median_transformations(self):
         """
@@ -3108,7 +3107,7 @@ class ModelWrapperTests(TimerTestCase):
         evaluator = RegressionEvaluator()
         evaluator.evaluate(actual_values=holdout_y, predicted_values=predictions_aggregation)
         TestHelper.ensure_values_numeric_dictionary(dictionary_1=evaluator.all_quality_metrics,
-                                                    dictionary_2={'Mean Absolute Error (MAE)': 2219.7179684340335, 'Mean Squared Error (MSE)': 24703837.75169208, 'Root Mean Squared Error (RMSE)': 4970.295539672876, 'RMSE to Standard Deviation of Target': 0.4013319491748498, 'Total Observations': 268})  # noqa
+                                                    dictionary_2={'Mean Absolute Error (MAE)': 2219.068192315147, 'Mean Squared Error (MSE)': 24703523.577163797, 'Root Mean Squared Error (RMSE)': 4970.263934356383, 'RMSE to Standard Deviation of Target': 0.40132939716900407, 'Total Observations': 268})  # noqa
 
     def helper_test_ModelStacker_Classification(self, data, positive_class, cache_directory=None):
         """
@@ -3477,6 +3476,7 @@ class ModelWrapperTests(TimerTestCase):
                 # model
                 TestHelper.ensure_all_values_equal_from_file(file=file_test_callback_traindata,
                                                              expected_dataframe=test_meta)
+
                 # add value to the list so we know this callback (and this if) was called
                 predict_callback_called.append('predict_called_train')
 
@@ -3518,9 +3518,9 @@ class ModelWrapperTests(TimerTestCase):
         # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
         assert predict_callback_called == ['predict_called_train', 'predict_called_holdout']
 
-        expected_training_evaluator_metrics = {'Mean Absolute Error (MAE)': 2352.581933713817, 'Mean Squared Error (MSE)': 12286239.244358376, 'Root Mean Squared Error (RMSE)': 3505.173211748369, 'RMSE to Standard Deviation of Target': 0.29126439926969333, 'Total Observations': 1070}  # noqa
+        expected_training_evaluator_metrics = {'Mean Absolute Error (MAE)': 2352.23265884996, 'Mean Squared Error (MSE)': 12284297.510075146, 'Root Mean Squared Error (RMSE)': 3504.8962195869863, 'RMSE to Standard Deviation of Target': 0.29124138244552694, 'Total Observations': 1070}  # noqa
         assert all([isclose(expected_training_evaluator_metrics[key], fitter.training_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
-        expected_holdout_evaluator_metrics = {'Mean Absolute Error (MAE)': 3130.3878123286368, 'Mean Squared Error (MSE)': 25683778.713447947, 'Root Mean Squared Error (RMSE)': 5067.916604823717, 'RMSE to Standard Deviation of Target': 0.40921446884491564, 'Total Observations': 268}  # noqa
+        expected_holdout_evaluator_metrics = {'Mean Absolute Error (MAE)': 3130.0282071040265, 'Mean Squared Error (MSE)': 25681167.074077167, 'Root Mean Squared Error (RMSE)': 5067.658934269074, 'RMSE to Standard Deviation of Target': 0.4091936629541765, 'Total Observations': 268}  # noqa
         assert all([isclose(expected_holdout_evaluator_metrics[key], fitter.holdout_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
         assert all([x == y for x, y in zip([x.description for x in model_stacker._base_models], ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor'])])  # noqa
         # test resample data

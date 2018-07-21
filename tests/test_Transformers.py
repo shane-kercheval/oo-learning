@@ -1,4 +1,5 @@
 from math import isclose
+from sklearn.preprocessing import StandardScaler
 
 import numpy as np
 import pandas as pd
@@ -1033,7 +1034,7 @@ class TransformerTests(TimerTestCase):
             assert all(new_data.columns.values ==
                        [column for column in data.columns.values if column not in columns_to_remove])
 
-        self.assertRaises(ValueError, lambda: test_remove_columns(columns_to_remove=['expensess']))
+        self.assertRaises(BaseException, lambda: test_remove_columns(columns_to_remove=['expensess']))
 
         # test removing each individual columns
         for x in data.columns.values:
@@ -1101,14 +1102,14 @@ class TransformerTests(TimerTestCase):
         assert isclose(transformer._state['averages']['households'], training_set['households'].mean())
         assert isclose(transformer._state['averages']['median_income'], training_set['median_income'].mean())
 
-        assert isclose(transformer._state['standard_deviations']['longitude'], training_set['longitude'].std())  # noqa
-        assert isclose(transformer._state['standard_deviations']['latitude'], training_set['latitude'].std())
-        assert isclose(transformer._state['standard_deviations']['housing_median_age'], training_set['housing_median_age'].std())  # noqa
-        assert isclose(transformer._state['standard_deviations']['total_rooms'], training_set['total_rooms'].std())  # noqa
-        assert isclose(transformer._state['standard_deviations']['total_bedrooms'], training_set['total_bedrooms'].std())  # noqa
-        assert isclose(transformer._state['standard_deviations']['population'], training_set['population'].std())  # noqa
-        assert isclose(transformer._state['standard_deviations']['households'], training_set['households'].std())  # noqa
-        assert isclose(transformer._state['standard_deviations']['median_income'], training_set['median_income'].std())  # noqa
+        assert isclose(transformer._state['standard_deviations']['longitude'], training_set['longitude'].std(ddof=0))  # noqa
+        assert isclose(transformer._state['standard_deviations']['latitude'], training_set['latitude'].std(ddof=0))  # noqa
+        assert isclose(transformer._state['standard_deviations']['housing_median_age'], training_set['housing_median_age'].std(ddof=0))  # noqa
+        assert isclose(transformer._state['standard_deviations']['total_rooms'], training_set['total_rooms'].std(ddof=0))  # noqa
+        assert isclose(transformer._state['standard_deviations']['total_bedrooms'], training_set['total_bedrooms'].std(ddof=0))  # noqa
+        assert isclose(transformer._state['standard_deviations']['population'], training_set['population'].std(ddof=0))  # noqa
+        assert isclose(transformer._state['standard_deviations']['households'], training_set['households'].std(ddof=0))  # noqa
+        assert isclose(transformer._state['standard_deviations']['median_income'], training_set['median_income'].std(ddof=0))  # noqa
 
         # all transformed columns of the training set should have a mean of zero and a standard deviation of 1
         assert isclose(round(transformed_training['longitude'].mean(), 14), 0)
@@ -1118,13 +1119,13 @@ class TransformerTests(TimerTestCase):
         assert isclose(round(transformed_training['total_bedrooms'].mean(), 14), 0)
         assert isclose(round(transformed_training['population'].mean(), 14), 0)
         assert isclose(round(transformed_training['households'].mean(), 14), 0)
-        assert isclose(transformed_training['longitude'].std(), 1)
-        assert isclose(transformed_training['latitude'].std(), 1)
-        assert isclose(transformed_training['housing_median_age'].std(), 1)
-        assert isclose(transformed_training['total_rooms'].std(), 1)
-        assert isclose(transformed_training['total_bedrooms'].std(), 1)
-        assert isclose(transformed_training['households'].std(), 1)
-        assert isclose(transformed_training['population'].std(), 1)
+        assert isclose(transformed_training['longitude'].std(ddof=0), 1)
+        assert isclose(transformed_training['latitude'].std(ddof=0), 1)
+        assert isclose(transformed_training['housing_median_age'].std(ddof=0), 1)
+        assert isclose(transformed_training['total_rooms'].std(ddof=0), 1)
+        assert isclose(transformed_training['total_bedrooms'].std(ddof=0), 1)
+        assert isclose(transformed_training['households'].std(ddof=0), 1)
+        assert isclose(transformed_training['population'].std(ddof=0), 1)
 
         # mean and standard deviation of the test is not necessarily but should be close to 0/1
         # because we are using the values fitted from the training set
@@ -1137,13 +1138,38 @@ class TransformerTests(TimerTestCase):
         assert isclose(round(transformed_test['total_bedrooms'].mean(), 1), 0)  # less precision, but ~0
         assert isclose(round(transformed_test['population'].mean(), 1), 0)  # less precision, but ~0
         assert isclose(round(transformed_test['households'].mean(), 1), 0)  # less precision, but ~0
-        assert isclose(round(transformed_test['longitude'].std(), 1), 1)  # less precision, but ~1
-        assert isclose(round(transformed_test['latitude'].std(), 1), 1)  # less precision, but ~1
-        assert isclose(round(transformed_test['housing_median_age'].std(), 1), 1)  # less precision, but ~1
-        assert isclose(round(transformed_test['total_rooms'].std(), 0), 1)  # less precision, but ~1
-        assert isclose(round(transformed_test['total_bedrooms'].std(), 1), 1)  # less precision, but ~1
-        assert isclose(round(transformed_test['households'].std(), 1), 1)  # less precision, but ~1
-        assert isclose(round(transformed_test['population'].std(), 0), 1)  # less precision, but ~1
+        assert isclose(round(transformed_test['longitude'].std(ddof=0), 1), 1)  # less precision, but ~1
+        assert isclose(round(transformed_test['latitude'].std(ddof=0), 1), 1)  # less precision, but ~1
+        assert isclose(round(transformed_test['housing_median_age'].std(ddof=0), 1), 1)
+        assert isclose(round(transformed_test['total_rooms'].std(ddof=0), 0), 1)  # less precision, but ~1
+        assert isclose(round(transformed_test['total_bedrooms'].std(ddof=0), 1), 1)  # less precision, but ~1
+        assert isclose(round(transformed_test['households'].std(ddof=0), 1), 1)  # less precision, but ~1
+        assert isclose(round(transformed_test['population'].std(ddof=0), 0), 1)  # less precision, but ~1
+
+    def test_CenterScaleTransformer_sklearn(self):
+        data = TestHelper.get_housing_data()
+        target_variable = 'median_house_value'
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_regression(data, target_variable)
+
+        transformer = CenterScaleTransformer()
+
+        # ensure that we are forced to call `fit` first
+        self.assertRaises(AssertionError, lambda: transformer.transform(data_x=data))
+
+        transformed_training = transformer.fit_transform(data_x=training_set.copy())
+
+        standard_scaler = StandardScaler()
+        sklearn_transformations = standard_scaler.fit_transform(X=training_set[['longitude',
+                                                                                'latitude',
+                                                                                 'housing_median_age',
+                                                                                 'total_rooms',
+                                                                                 # 'total_bedrooms',
+                                                                                 'population',
+                                                                                 'households',
+                                                                                 'median_income',
+                                                                                ]].copy())
+        assert all([isclose(x, y) for x, y in zip(sklearn_transformations[:, 0],
+                                                  transformed_training.longitude)])
 
     def test_BoxCoxTransformer(self):
         data = TestHelper.get_housing_data()

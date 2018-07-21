@@ -354,7 +354,11 @@ class TunerTests(TimerTestCase):
             assert tuner.results._tune_results_objects.iloc[index].n_estimators == tuner.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['n_estimators']  # noqa
             assert tuner.results._tune_results_objects.iloc[index].min_samples_leaf == tuner.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['min_samples_leaf']  # noqa
 
-        assert tuner.results._tune_results_objects.iloc[0].resampler_object.score_means == {'kappa': 0.5239954603575802, 'sensitivity': 0.5187339582751682, 'specificity': 0.9639047970435495, 'error_rate': 0.20571868388646114}  # noqa
+        resampler_scores = tuner.results._tune_results_objects.iloc[0].resampler_object.score_means
+        expected_scores = {'kappa': 0.5239954603575802, 'sensitivity': 0.5187339582751682, 'specificity': 0.9639047970435495, 'error_rate': 0.20571868388646114}  # noqa
+
+        assert resampler_scores.keys() == expected_scores.keys()
+        assert all([isclose(x, y) for x, y in zip(resampler_scores.values(), expected_scores.values())])
 
         # evaluator columns should be in the same order as specificied in the list
         assert all(tuner.results.resampled_stats.columns.values == ['max_features',
@@ -425,7 +429,11 @@ class TunerTests(TimerTestCase):
             assert tuner_cached.results._tune_results_objects.iloc[index].n_estimators == tuner_cached.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['n_estimators']  # noqa
             assert tuner_cached.results._tune_results_objects.iloc[index].min_samples_leaf == tuner_cached.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['min_samples_leaf']  # noqa
 
-        assert tuner_cached.results._tune_results_objects.iloc[0].resampler_object.score_means == {'kappa': 0.5239954603575802, 'sensitivity': 0.5187339582751682, 'specificity': 0.9639047970435495, 'error_rate': 0.20571868388646114}  # noqa
+        tuner_cached_scores = tuner_cached.results._tune_results_objects.iloc[0].resampler_object.score_means
+        expected_scores = {'kappa': 0.5239954603575802, 'sensitivity': 0.5187339582751682, 'specificity': 0.9639047970435495, 'error_rate': 0.20571868388646114}  # noqa
+
+        assert tuner_cached_scores.keys() == expected_scores.keys()
+        assert all([isclose(x, y) for x, y in zip(tuner_cached_scores.values(), expected_scores.values())])
 
         # evaluator columns should be in the same order as specificied in the list
         assert all(tuner_cached.results.resampled_stats.columns.values == ['max_features', 'n_estimators', 'min_samples_leaf', 'kappa_mean', 'kappa_st_dev', 'kappa_cv', 'sensitivity_mean', 'sensitivity_st_dev', 'sensitivity_cv', 'specificity_mean', 'specificity_st_dev', 'specificity_cv', 'error_rate_mean', 'error_rate_st_dev', 'error_rate_cv'])  # noqa
@@ -497,7 +505,11 @@ class TunerTests(TimerTestCase):
             assert tuner.results._tune_results_objects.iloc[index].subsample == tuner.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['subsample']  # noqa
             assert tuner.results._tune_results_objects.iloc[index].max_depth == tuner.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['max_depth']  # noqa
 
-        assert tuner.results._tune_results_objects.iloc[0].resampler_object.score_means == {'kappa': 0.5919671489816765, 'sensitivity': 0.6960690967835372, 'specificity': 0.8837468870856553, 'error_rate': 0.18808609351805455}  # noqa
+        tuner_scores = tuner.results._tune_results_objects.iloc[0].resampler_object.score_means
+        expected_scores = {'kappa': 0.5919671489816765, 'sensitivity': 0.6960690967835372, 'specificity': 0.8837468870856553, 'error_rate': 0.18808609351805455}  # noqa
+
+        assert tuner_scores.keys() == expected_scores.keys()
+        assert all([isclose(x, y) for x, y in zip(tuner_scores.values(), expected_scores.values())])
 
         # evaluator columns should be in the same order as specificied in the list
         assert all(tuner.results.resampled_stats.columns.values == ['colsample_bytree', 'subsample',

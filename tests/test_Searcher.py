@@ -71,7 +71,7 @@ class SearcherTests(TimerTestCase):
         # noinspection PyRedeclaration
         def train_callback(data_x, data_y, hyper_params):
             # test that the data has been center/scaled (st-dev:1, mean:0)
-            assert all([isclose(x, 1) for x in data_x.std()])
+            assert all([isclose(x, 1) for x in data_x.std(ddof=0)])
             assert all([isclose(round(x, 10), 0) for x in data_x.mean()])
 
         ModelSearcher(global_transformations=None,
@@ -102,7 +102,7 @@ class SearcherTests(TimerTestCase):
             # class after the split
             assert data_x.columns.values.tolist() == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
             # test that the data has been center/scaled (st-dev:1, mean:0)
-            assert all([not isclose(x, 1) for x in data_x.std()])
+            assert all([not isclose(x, 1) for x in data_x.std(ddof=0)])
             # we need to drop Parch_6 because no values (Parch == 6) will be found in some of the holdout sets
             # IN THE RESAMPLER, but the resampler will ensure that all columns exist, setting Parch_6 to all
             # 0's so the mean will be 0
@@ -143,7 +143,7 @@ class SearcherTests(TimerTestCase):
             # we need to drop Parch_6 because no values (Parch == 6) will be found in some of the holdout sets
             # IN THE RESAMPLER, but the resampler will ensure that all columns exist, setting Parch_6 to all
             # 0's so the standard deviation will be 0
-            assert all([isclose(x, 1) for x in data_x.drop(columns='Parch_6').std()])
+            assert all([isclose(x, 1) for x in data_x.drop(columns='Parch_6').std(ddof=0)])
             assert all([isclose(round(x, 10), 0) for x in data_x.mean()])
 
         ModelSearcher(global_transformations=[x.clone() for x in global_transformations],
