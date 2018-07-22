@@ -243,8 +243,6 @@ class ModelTrainer:
 
         return predictions
 
-
-
     @property
     def training_evaluator(self) -> Union[EvaluatorBase, None]:
         """

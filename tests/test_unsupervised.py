@@ -68,8 +68,6 @@ class UnsupervisedTests(TimerTestCase):
 
         transformations = [CenterScaleTransformer()]
 
-        # NOTE: the data is shuffled within `ClusteringKMeans.train_predict_eval()`, but that happens after
-        # the callback
         # noinspection PyUnusedLocal
         def fit_callback(transformed_data, target, hyper_params):
             # make sure the data that was trained was as expected
@@ -256,21 +254,31 @@ class UnsupervisedTests(TimerTestCase):
         data = TestHelper.get_iris_data()
         cluster_data = data.drop(columns='species')
         trainer = ModelTrainer(model=ClusteringHierarchical(),
-                               model_transformations=[NormalizationVectorSpaceTransformer()])
+                               model_transformations=[NormalizationVectorSpaceTransformer()],
+                               scores=[SilhouetteScore()])
         clusters = trainer.train_predict_eval(data=cluster_data,
                                               hyper_params=ClusteringHierarchicalHP(num_clusters=3))
-        assert isclose(trainer.model.silhouette_score, 0.556059949257158)
+        score = SilhouetteScore().calculate(
+            clustered_data=NormalizationVectorSpaceTransformer().fit_transform(cluster_data),
+            clusters=clusters)
+        assert isclose(score, 0.556059949257158)
+        assert isclose(score, trainer.training_scores[0].value)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.8856970310281228)
 
-    def test_Hierarchical_shuffle(self):
+    def test_Hierarchical(self):
         data = TestHelper.get_iris_data()
         cluster_data = data.drop(columns='species')
 
         trainer = ModelTrainer(model=ClusteringHierarchical(),
-                               model_transformations=[NormalizationTransformer()])
+                               model_transformations=[NormalizationTransformer()],
+                               scores=[SilhouetteScore()])
         clusters = trainer.train_predict_eval(data=cluster_data,
                                               hyper_params=ClusteringHierarchicalHP(num_clusters=3))
-        assert isclose(trainer.model.silhouette_score, 0.5043490792923951)
+        score = SilhouetteScore().calculate(
+            clustered_data=NormalizationTransformer().fit_transform(cluster_data),
+            clusters=clusters)
+        assert isclose(score, 0.5043490792923951)
+        assert isclose(score, trainer.training_scores[0].value)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.7195837484778037)
 
         num_cached = trainer.model.data_x_trained_head.shape[0]
@@ -291,20 +299,21 @@ class UnsupervisedTests(TimerTestCase):
 
     def test_Hierarchical_string_index(self):
         # noinspection SpellCheckingInspection
-        """
-        because AgglomerativeClustering doesn't have a `predict`, ClusteringHierarchical has some additional
-        logic to "un-shuffle" the data in `predict()` method, need to test string indexes as well as integer
-        """
         data = TestHelper.get_iris_data()
         data.index = data.index.astype(str)
         assert all([isinstance(x, str) for x in data.index.values])
         cluster_data = data.drop(columns='species')
 
         trainer = ModelTrainer(model=ClusteringHierarchical(),
-                               model_transformations=[NormalizationTransformer()])
+                               model_transformations=[NormalizationTransformer()],
+                               scores=[SilhouetteScore()])
         clusters = trainer.train_predict_eval(data=cluster_data,
                                               hyper_params=ClusteringHierarchicalHP(num_clusters=3))
-        assert isclose(trainer.model.silhouette_score, 0.5043490792923951)
+        score = SilhouetteScore().calculate(
+            clustered_data=NormalizationTransformer().fit_transform(cluster_data),
+            clusters=clusters)
+        assert isclose(score, 0.5043490792923951)
+        assert isclose(score, trainer.training_scores[0].value)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.7195837484778037)
 
         num_cached = trainer.model.data_x_trained_head.shape[0]
@@ -323,28 +332,38 @@ class UnsupervisedTests(TimerTestCase):
         assert all(confusion_matrix.matrix.virginica.values == [0, 0, 33, 33])
         assert all(confusion_matrix.matrix.Total.values == [50, 50, 50, 150])
 
-    def test_DBSCAN_shuffle(self):
+    def test_DBSCAN(self):
         # after normalization, default epsilon of 0.5 is too small
         data = TestHelper.get_iris_data()
         cluster_data = data.drop(columns='species')
-        fitter = ModelTrainer(model=ClusteringDBSCAN(), model_transformations=[NormalizationTransformer()])
-        clusters = fitter.train_predict_eval(data=cluster_data, hyper_params=ClusteringDBSCANHP())
-        assert isclose(fitter.model.silhouette_score, -1)
+        trainer = ModelTrainer(model=ClusteringDBSCAN(),
+                               model_transformations=[NormalizationTransformer()],
+                               scores=[SilhouetteScore()])
+        clusters = trainer.train_predict_eval(data=cluster_data, hyper_params=ClusteringDBSCANHP())
+        score = SilhouetteScore().calculate(
+            clustered_data=NormalizationTransformer().fit_transform(cluster_data),  # noqa
+            clusters=clusters)
+        assert isclose(score, -1)
+        assert isclose(score, trainer.training_scores[0].value)
         assert isclose(adjusted_rand_score(data.species, clusters), 0)
 
         # try smaller epsilon
-        fitter = ModelTrainer(model=ClusteringDBSCAN(), model_transformations=[NormalizationTransformer()])
-        clusters = fitter.train_predict_eval(data=cluster_data, hyper_params=ClusteringDBSCANHP(epsilon=0.25))
-        assert isclose(fitter.model.silhouette_score, 0.5759307352949353)
+        trainer = ModelTrainer(model=ClusteringDBSCAN(),
+                               model_transformations=[NormalizationTransformer()],
+                               scores=[SilhouetteScore()])
+        clusters = trainer.train_predict_eval(data=cluster_data,
+                                              hyper_params=ClusteringDBSCANHP(epsilon=0.25))
+        score = SilhouetteScore().calculate(
+            clustered_data=NormalizationTransformer().fit_transform(cluster_data),
+            clusters=clusters)
+        assert isclose(score, 0.5759307352949353)
+        assert isclose(score, trainer.training_scores[0].value)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.5557898627256278)
 
-        num_cached = fitter.model.data_x_trained_head.shape[0]
-        assert all(data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)
+        num_cached = trainer.model.data_x_trained_head.shape[0]
+        assert all(data.drop(columns='species').iloc[0:num_cached] == trainer.model.data_x_trained_head)
 
-        # setosa == 1
-        # versicolor == 0
-        # virginica == -1
-        lookup = {1: 'setosa', 0: 'versicolor', -1: 'virginica'}
+        lookup = {0: 'setosa', 1: 'versicolor', -1: 'virginica'}
         predicted_clusters = [lookup[x] for x in clusters]
 
         # noinspection PyTypeChecker
