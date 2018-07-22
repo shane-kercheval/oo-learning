@@ -22,10 +22,10 @@ from oolearning.evaluators.ScoreClusteringBase import ScoreClusteringBase
 
 class ScoreMediator:
     @staticmethod
-    def calculate(score, data_x, actual_target_variables, predicted_values):
+    def calculate(score, data_x, actual_target_variables, predicted_values) -> float:
         if isinstance(score, ScoreActualPredictedBase):
-            score.calculate(actual_values=actual_target_variables, predicted_values=predicted_values)
+            return score.calculate(actual_values=actual_target_variables, predicted_values=predicted_values)
         elif isinstance(score, ScoreClusteringBase):
-            score.calculate(clustered_data=data_x, clusters=predicted_values)
+            return score.calculate(clustered_data=data_x, clusters=predicted_values)
         else:
-            raise ValueError()
+            raise ValueError('`{}` not known in ScoreMediator'.format(str(type(score))))

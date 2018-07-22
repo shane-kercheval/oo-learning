@@ -27,6 +27,7 @@ from .evaluators.ErrorRateScore import ErrorRateScore
 from .evaluators.TwoClassScoreBase import TwoClassScoreBase
 from .evaluators.ScoreBase import ScoreBase
 from .evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
+from .evaluators.ScoreClusteringBase import ScoreClusteringBase
 from .evaluators.ScoreMediator import ScoreMediator
 from .evaluators.FBetaScore import FBetaScore
 from .evaluators.F1Score import F1Score

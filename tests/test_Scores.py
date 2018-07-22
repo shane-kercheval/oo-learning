@@ -20,7 +20,66 @@ class EvaluatorTests(TimerTestCase):
         pass
 
     def test_ScoreMediator(self):
-        raise NotImplementedError()
+        ######################################################################################################
+        # test ScoreMediator with a ScoreActualPredictedBase object
+        ######################################################################################################
+        mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
+        predictions_mock = mock_data.drop(columns=['actual', 'predictions'])
+        predictions_mock.columns = [1, 0]
+
+        score = KappaScore(converter=TwoClassThresholdConverter(threshold=0.41, positive_class=1))
+
+        # check that both the score is returned from the Mediator and the score object has the `value` set
+        accuracy = ScoreMediator.calculate(score,
+                                           data_x=None,
+                                           actual_target_variables=mock_data.actual,
+                                           predicted_values=predictions_mock)
+        assert isclose(accuracy, 0.37990215607221967)  # check the score is returned
+        assert isclose(score.value, 0.37990215607221967)  # check the score object's `value` is set
+
+        ######################################################################################################
+        # test ScoreMediator with a ScoreClusteringBase object
+        ######################################################################################################
+        data = TestHelper.get_iris_data()
+        cluster_data = data.drop(columns='species')
+        trainer = ModelTrainer(model=ClusteringHierarchical(),
+                               model_transformations=[NormalizationVectorSpaceTransformer()],
+                               scores=[SilhouetteScore()])
+        clusters = trainer.train_predict_eval(data=cluster_data,
+                                              hyper_params=ClusteringHierarchicalHP(num_clusters=3))
+
+        score = SilhouetteScore()
+        assert isinstance(score, UtilityFunctionMixin)
+        assert isinstance(score, ScoreClusteringBase)
+
+        accuracy = ScoreMediator.calculate(score,
+                                           # NOTE: we have to pass in the TRANSFORMED data
+                                           data_x=NormalizationVectorSpaceTransformer().fit_transform(cluster_data),  # noqa
+                                           actual_target_variables=None,
+                                           predicted_values=clusters)
+        assert isclose(accuracy, 0.556059949257158)  # check the score is returned
+        assert isclose(score.value, 0.556059949257158)  # check the score object's `value` is set
+
+        ######################################################################################################
+        # test ScoreMediator with unsupported ScoreBaseObject
+        ######################################################################################################
+        class MockScore(ScoreBase):
+            def _better_than(self, this: float, other: float) -> bool:
+                pass
+
+            def _calculate(self, *args) -> float:
+                pass
+
+            # noinspection PyPropertyDefinition
+            @property
+            def name(self) -> str:
+                pass
+
+        self.assertRaises(ValueError,
+                          lambda: ScoreMediator.calculate(MockScore(),
+                                                          data_x=None,
+                                                          actual_target_variables=None,
+                                                          predicted_values=None))
 
     def test_BaseClass(self):
         predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
