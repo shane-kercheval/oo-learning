@@ -124,5 +124,8 @@ class ClusteringKMeans(ModelWrapperBase):
     def _predict(self, model_object: object, data_x: pd.DataFrame) -> np.ndarray:
         # noinspection PyUnresolvedReferences
         clusters = model_object.predict(data_x)
-        self._silhouette_score = silhouette_score(X=data_x, labels=clusters)
+        if len(np.unique(clusters)) >= 2:  # silhouette_score requires >=2 clusters
+            self._silhouette_score = silhouette_score(X=data_x, labels=clusters)
+        else:
+            self._silhouette_score = -1
         return clusters

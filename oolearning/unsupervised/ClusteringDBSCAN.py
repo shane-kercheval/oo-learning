@@ -1,9 +1,6 @@
-from enum import unique, Enum
-from typing import Union
-
 import numpy as np
 import pandas as pd
-from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import DBSCAN
 from sklearn.metrics import silhouette_score
 
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
@@ -11,51 +8,25 @@ from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 
 
-@unique
-class ClusteringHierarchicalLinkage(Enum):
-    WARD = 'ward'
-    COMPLETE = 'complete'
-    AVERAGE = 'average'
-
-
-@unique
-class ClusteringHierarchicalAffinity(Enum):
-    EUCLIDEAN = 'euclidean'
-    L1 = 'l1'
-    L2 = 'l2'
-    MANHATTAN = 'manhattan'
-    COSINE = 'cosine'
-    PRECOMPUTED = 'precomputed'
-
-
-class ClusteringHierarchicalHP(HyperParamsBase):
+class ClusteringDBSCANHP(HyperParamsBase):
     """
-    See http://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html for more information
-        on tuning parameters
     """
-    def __init__(self,
-                 num_clusters: int=2,
-                 linkage: ClusteringHierarchicalLinkage=ClusteringHierarchicalLinkage.WARD,
-                 affinity: Union[ClusteringHierarchicalAffinity,
-                                 callable]=ClusteringHierarchicalAffinity.EUCLIDEAN):
+    def __init__(self,  epsilon: float=0.5, min_samples: int=5):
         super().__init__()
-        if linkage == ClusteringHierarchicalLinkage.WARD:
-            assert affinity == ClusteringHierarchicalAffinity.EUCLIDEAN
-
         self._params_dict = dict(
-            num_clusters=num_clusters,
-            linkage=linkage.value,
-            affinity=affinity.value,
-        )
+                                    epsilon=epsilon,
+                                    min_samples=min_samples,
+                                )
 
 
-class ClusteringHierarchical(ModelWrapperBase):
+class ClusteringDBSCAN(ModelWrapperBase):
 
-    def __init__(self, shuffle_data: bool=True, seed: int=42):
+    def __init__(self, shuffle_data: bool=True, num_jobs: int=1, seed: int=42):
         super().__init__()
-        self._silhouette_score = None
         self._shuffle_data = shuffle_data
+        self._num_jobs = num_jobs
         self._seed = seed
+        self._silhouette_score = None
 
     @property
     def silhouette_score(self):
@@ -94,11 +65,9 @@ class ClusteringHierarchical(ModelWrapperBase):
             data = data.iloc[indexes]
 
         param_dict = self._hyper_params.params_dict
-        model_object = AgglomerativeClustering(
-            n_clusters=param_dict['num_clusters'],
-            linkage=param_dict['linkage'],
-            affinity=param_dict['affinity'],
-        )
+        model_object = DBSCAN(eps=param_dict['epsilon'],
+                              min_samples=param_dict['min_samples'],
+                              n_jobs=self._num_jobs)
         clusters = model_object.fit_predict(X=data)
         # create a dataframe so we can easily sort back to the original indexes, to return clusters in
         # the expected order

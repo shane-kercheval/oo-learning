@@ -1,10 +1,9 @@
 import os
-import numpy as np
 import shutil
-
 from math import isclose
+
+import numpy as np
 from sklearn.metrics import adjusted_rand_score
-from sklearn import preprocessing
 
 from oolearning import *
 from tests.TestHelper import TestHelper
@@ -370,4 +369,67 @@ class UnsupervisedTests(TimerTestCase):
         assert all(confusion_matrix.matrix.setosa.values == [50, 0, 0, 50])
         assert all(confusion_matrix.matrix.versicolor.values == [0, 50, 17, 67])
         assert all(confusion_matrix.matrix.virginica.values == [0, 0, 33, 33])
+        assert all(confusion_matrix.matrix.Total.values == [50, 50, 50, 150])
+
+    def test_DBSCAN_shuffle(self):
+        # after normalization, default epsilon of 0.5 is too small
+        data = TestHelper.get_iris_data()
+        cluster_data = data.drop(columns='species')
+        fitter = ModelFitter(model=ClusteringDBSCAN(), model_transformations=[NormalizationTransformer()])
+        clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringDBSCANHP())
+        assert isclose(fitter.model.silhouette_score, -1)
+        assert isclose(adjusted_rand_score(data.species, clusters), 0)
+
+        # try smaller epsilon
+        fitter = ModelFitter(model=ClusteringDBSCAN(), model_transformations=[NormalizationTransformer()])
+        clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringDBSCANHP(epsilon=0.25))
+        assert isclose(fitter.model.silhouette_score, 0.5759307352949353)
+        assert isclose(adjusted_rand_score(data.species, clusters), 0.5557898627256278)
+
+        num_cached = fitter.model.data_x_trained_head.shape[0]
+        assert all(data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)
+
+        # setosa == 1
+        # versicolor == 0
+        # virginica == -1
+        lookup = {1: 'setosa', 0: 'versicolor', -1: 'virginica'}
+        predicted_clusters = [lookup[x] for x in clusters]
+
+        # noinspection PyTypeChecker
+        confusion_matrix = ConfusionMatrix(actual_classes=data['species'].values,
+                                           predicted_classes=predicted_clusters)
+        assert all(confusion_matrix.matrix.setosa.values == [49, 0, 0, 49])
+        assert all(confusion_matrix.matrix.versicolor.values == [0, 50, 49, 99])
+        assert all(confusion_matrix.matrix.virginica.values == [1, 0, 1, 2])
+        assert all(confusion_matrix.matrix.Total.values == [50, 50, 50, 150])
+
+    # noinspection PyUnresolvedReferences
+    def test_DBSCAN_no_shuffle(self):
+        # after normalization, default epsilon of 0.5 is too small
+        data = TestHelper.get_iris_data()
+        cluster_data = data.drop(columns='species')
+        fitter = ModelFitter(model=ClusteringDBSCAN(shuffle_data=False),
+                             model_transformations=[NormalizationTransformer()])
+        clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringDBSCANHP())
+        assert isclose(fitter.model.silhouette_score, -1)
+        assert isclose(adjusted_rand_score(data.species, clusters), 0)
+
+        # try smaller epsilon
+        fitter = ModelFitter(model=ClusteringDBSCAN(), model_transformations=[NormalizationTransformer()])
+        clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringDBSCANHP(epsilon=0.25))
+        assert isclose(fitter.model.silhouette_score, 0.5759307352949353)
+        assert isclose(adjusted_rand_score(data.species, clusters), 0.5557898627256278)
+
+        num_cached = fitter.model.data_x_trained_head.shape[0]
+        assert all(data.drop(columns='species').iloc[0:num_cached] == fitter.model.data_x_trained_head)
+
+        lookup = {1: 'setosa', 0: 'versicolor', -1: 'virginica'}
+        predicted_clusters = [lookup[x] for x in clusters]
+
+        # noinspection PyTypeChecker
+        confusion_matrix = ConfusionMatrix(actual_classes=data['species'].values,
+                                           predicted_classes=predicted_clusters)
+        assert all(confusion_matrix.matrix.setosa.values == [49, 0, 0, 49])
+        assert all(confusion_matrix.matrix.versicolor.values == [0, 50, 49, 99])
+        assert all(confusion_matrix.matrix.virginica.values == [1, 0, 1, 2])
         assert all(confusion_matrix.matrix.Total.values == [50, 50, 50, 150])

@@ -146,6 +146,7 @@ from .transformers.StatelessTransformer import StatelessTransformer
 from .transformers.TransformerBase import TransformerBase
 from .transformers.TransformerPipeline import TransformerPipeline
 
+from .unsupervised.ClusteringDBSCAN import ClusteringDBSCAN, ClusteringDBSCANHP
 from .unsupervised.ClusteringHierarchical import ClusteringHierarchicalAffinity, \
     ClusteringHierarchicalLinkage, ClusteringHierarchicalHP, ClusteringHierarchical
 from .unsupervised.ClusteringKmeans import ClusteringKMeans, ClusteringKMeansHP
