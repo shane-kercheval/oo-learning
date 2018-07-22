@@ -167,7 +167,7 @@ class UnsupervisedTests(TimerTestCase):
         clusters = trainer.train_predict_eval(data=data, hyper_params=ClusteringKMeansHP(num_clusters=3))
         assert data.isnull().sum().sum() == 2  # make sure original data wasn't transformed
 
-        assert all(np.bincount(np.array(clusters)) == [47, 47, 53])  # make sure 2 clusters are same size
+        assert all(np.bincount(np.array(clusters)) == [53, 47, 47])  # make sure 2 clusters are same size
         assert len(clusters) == len(data)
         # CENTER/SCALE
         TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_centerscale_strategy_mean.png',
