@@ -135,6 +135,7 @@ from .transformers.CenterScaleTransformer import CenterScaleTransformer
 from .transformers.DummyEncodeTransformer import DummyEncodeTransformer
 from .transformers.ImputationTransformer import ImputationTransformer
 from .transformers.NormalizationTransformer import NormalizationTransformer
+from .transformers.NormalizationVectorSpaceTransformer import NormalizationVectorSpaceTransformer
 from .transformers.PolynomialFeaturesTransformer import PolynomialFeaturesTransformer
 from .transformers.RemoveColumnsTransformer import RemoveColumnsTransformer
 from .transformers.RemoveCorrelationsTransformer import RemoveCorrelationsTransformer

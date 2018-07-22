@@ -4,11 +4,11 @@ import numpy as np
 import pandas as pd
 from scipy.spatial.distance import cdist, pdist
 from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictArrayMixin
 
 
 class ClusteringKMeansHP(HyperParamsBase):
@@ -34,7 +34,7 @@ class ClusteringKMeansHP(HyperParamsBase):
                                 )
 
 
-class ClusteringKMeans(SklearnPredictArrayMixin, ModelWrapperBase):
+class ClusteringKMeans(ModelWrapperBase):
 
     def __init__(self, evaluate_bss_tss: bool=False, shuffle_data: bool=True, num_jobs: int=1, seed: int=42):
         super().__init__()
@@ -46,6 +46,11 @@ class ClusteringKMeans(SklearnPredictArrayMixin, ModelWrapperBase):
         self._bss = None
         self._tss = None
         self._wss = None
+        self._silhouette_score = None
+
+    @property
+    def silhouette_score(self):
+        return self._silhouette_score
 
     @property
     def feature_importance(self):
@@ -115,3 +120,9 @@ class ClusteringKMeans(SklearnPredictArrayMixin, ModelWrapperBase):
             self._tss = sum(pdist(data_x) ** 2) / data_x.shape[0]
 
         return model_object
+
+    def _predict(self, model_object: object, data_x: pd.DataFrame) -> np.ndarray:
+        # noinspection PyUnresolvedReferences
+        clusters = model_object.predict(data_x)
+        self._silhouette_score = silhouette_score(X=data_x, labels=clusters)
+        return clusters

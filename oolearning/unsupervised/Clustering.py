@@ -1,15 +1,17 @@
 from enum import Enum, unique
+from scipy.cluster import hierarchy
 from typing import List, Union
-from scipy.spatial.distance import cdist, pdist
 
-import pandas as pd
-import numpy as np
-import seaborn as sns
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
 
 from oolearning.model_processors.ModelFitter import ModelFitter
-from oolearning.transformers.TransformerBase import TransformerBase
+from oolearning.transformers.TransformerPipeline import TransformerPipeline
 from oolearning.transformers.CenterScaleTransformer import CenterScaleTransformer
+from oolearning.transformers.TransformerBase import TransformerBase
+from oolearning.unsupervised.ClusteringHierarchical import ClusteringHierarchicalLinkage
 from oolearning.unsupervised.ClusteringKmeans import ClusteringKMeans, ClusteringKMeansHP
 
 
@@ -32,6 +34,7 @@ class ClusteringHeatmapAggStrategy(Enum):
 
 
 class Clustering:
+
     @staticmethod
     def cluster_heatmap(data: pd.DataFrame,
                         clusters: np.array,
@@ -181,3 +184,15 @@ class Clustering:
         plt.xlabel('K')
         plt.ylabel('BSS/TSS RATIO')
         plt.title('BSS/TSS RATIO vs. K')
+
+    @staticmethod
+    def hierarchical_dendogram_plot(data: pd.DataFrame,
+                                    transformations: List[TransformerBase] = None,
+                                    linkage: ClusteringHierarchicalLinkage=ClusteringHierarchicalLinkage.WARD,
+                                    figure_size: set=(22, 18)):
+
+        transformed_data = TransformerPipeline(transformations=transformations).fit_transform(data)
+        # Specify the linkage type. Scipy accepts 'ward', 'complete', 'average', as well as other values
+        linkage_matrix = hierarchy.linkage(transformed_data.as_matrix(), linkage.value)
+        plt.figure(figsize=figure_size)
+        hierarchy.dendrogram(linkage_matrix)

@@ -4,6 +4,7 @@ import shutil
 
 from math import isclose
 from sklearn.metrics import adjusted_rand_score
+from sklearn import preprocessing
 
 from oolearning import *
 from tests.TestHelper import TestHelper
@@ -100,7 +101,7 @@ class UnsupervisedTests(TimerTestCase):
         fitter = ModelFitter(model=ClusteringKMeans(evaluate_bss_tss=True),
                              model_transformations=[CenterScaleTransformer()])
         clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringKMeansHP(num_clusters=3))
-
+        assert isclose(fitter.model.silhouette_score, 0.4589717867018717)
         assert isclose(fitter.model.score, -140.96581663074699)
         assert isclose(fitter.model.bss_tss_ratio, 0.7650569722820886)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.6201351808870379)
@@ -128,7 +129,7 @@ class UnsupervisedTests(TimerTestCase):
         fitter = ModelFitter(model=ClusteringKMeans(shuffle_data=False),
                              model_transformations=[CenterScaleTransformer()])
         clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringKMeansHP(num_clusters=3))
-
+        assert isclose(fitter.model.silhouette_score, 0.4589717867018717)
         assert isclose(fitter.model.score, -140.96581663074699)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.6201351808870379)
         assert fitter.model.bss_tss_ratio is None
@@ -262,6 +263,25 @@ class UnsupervisedTests(TimerTestCase):
                                   display_values=ClusteringHeatmapValues.STRATEGY,
                                   y_axis_rotation=30))
 
+    def test_hierarchical_dendogram_plot(self):
+        data = TestHelper.get_iris_data()
+        cluster_data = data.drop(columns='species')
+        TestHelper.check_plot('data/test_unsupervised/test_hierarchical_dendogram_plot.png',
+                              lambda: Clustering.hierarchical_dendogram_plot(data=cluster_data,
+                                                                             transformations=[NormalizationVectorSpaceTransformer()],  # noqa
+                                                                             linkage=ClusteringHierarchicalLinkage.WARD))  # noqa
+
+    def test_Hierarchical_sklearn_normalization(self):
+        data = TestHelper.get_iris_data()
+        cluster_data = data.drop(columns='species')
+        fitter = ModelFitter(model=ClusteringHierarchical(),
+                             model_transformations=[NormalizationVectorSpaceTransformer()],
+                             )
+        clusters = fitter.fit_predict(data=cluster_data,
+                                      hyper_params=ClusteringHierarchicalHP(num_clusters=3))  # noqa
+        assert isclose(fitter.model.silhouette_score, 0.556059949257158)
+        assert isclose(adjusted_rand_score(data.species, clusters), 0.8856970310281228)
+
     def test_Hierarchical_no_shuffle(self):
         data = TestHelper.get_iris_data()
         cluster_data = data.drop(columns='species')
@@ -270,6 +290,7 @@ class UnsupervisedTests(TimerTestCase):
                              model_transformations=[NormalizationTransformer()],
                              )
         clusters = fitter.fit_predict(data=cluster_data, hyper_params=ClusteringHierarchicalHP(num_clusters=3))  # noqa
+        assert isclose(fitter.model.silhouette_score, 0.5043490792923951)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.7195837484778037)
 
         num_cached = fitter.model.data_x_trained_head.shape[0]
@@ -297,6 +318,7 @@ class UnsupervisedTests(TimerTestCase):
                              )
         clusters = fitter.fit_predict(data=cluster_data,
                                       hyper_params=ClusteringHierarchicalHP(num_clusters=3))  # noqa
+        assert isclose(fitter.model.silhouette_score, 0.5043490792923951)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.7195837484778037)
 
         num_cached = fitter.model.data_x_trained_head.shape[0]
@@ -331,6 +353,7 @@ class UnsupervisedTests(TimerTestCase):
                              )
         clusters = fitter.fit_predict(data=cluster_data,
                                       hyper_params=ClusteringHierarchicalHP(num_clusters=3))  # noqa
+        assert isclose(fitter.model.silhouette_score, 0.5043490792923951)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.7195837484778037)
 
         num_cached = fitter.model.data_x_trained_head.shape[0]

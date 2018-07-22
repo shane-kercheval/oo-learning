@@ -1,5 +1,5 @@
 from math import isclose
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, normalize
 
 import numpy as np
 import pandas as pd
@@ -1226,6 +1226,21 @@ class TransformerTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip(sklearn_test_transformations[:, 4], transformed_test.population)])  # noqa
         assert all([isclose(x, y) for x, y in zip(sklearn_test_transformations[:, 5], transformed_test.households)])  # noqa
         assert all([isclose(x, y) for x, y in zip(sklearn_test_transformations[:, 6], transformed_test.median_income)])  # noqa
+
+    def test_NormalizationVectorSpaceTransformer(self):
+        data = TestHelper.get_iris_data()
+        transformer = NormalizationVectorSpaceTransformer()
+        transformed_data = transformer.fit_transform(data_x=data)
+
+        assert all(transformed_data.index.values == data.index.values)
+        assert all(transformed_data.columns.values == data.columns.values)
+        assert all(transformed_data.species.values == data.species.values)
+
+        data_normalized = normalize(data[['sepal_length', 'sepal_width', 'petal_length', 'petal_width']])
+        assert all([isclose(x, y) for x, y in zip(data_normalized[:, 0], transformed_data.sepal_length)])
+        assert all([isclose(x, y) for x, y in zip(data_normalized[:, 1], transformed_data.sepal_width)])
+        assert all([isclose(x, y) for x, y in zip(data_normalized[:, 2], transformed_data.petal_length)])
+        assert all([isclose(x, y) for x, y in zip(data_normalized[:, 3], transformed_data.petal_width)])
 
     def test_BoxCoxTransformer(self):
         data = TestHelper.get_housing_data()

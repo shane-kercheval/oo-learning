@@ -4,6 +4,7 @@ from typing import Union
 import numpy as np
 import pandas as pd
 from sklearn.cluster import AgglomerativeClustering
+from sklearn.metrics import silhouette_score
 
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import MissingValueError
@@ -52,8 +53,13 @@ class ClusteringHierarchical(ModelWrapperBase):
 
     def __init__(self, shuffle_data: bool=True, seed: int=42):
         super().__init__()
+        self._silhouette_score = None
         self._shuffle_data = shuffle_data
         self._seed = seed
+
+    @property
+    def silhouette_score(self):
+        return self._silhouette_score
 
     @property
     def feature_importance(self):
@@ -93,7 +99,10 @@ class ClusteringHierarchical(ModelWrapperBase):
             linkage=param_dict['linkage'],
             affinity=param_dict['affinity'],
         )
-        predictions = model_object.fit_predict(X=data)
-
-        predictions_df = pd.DataFrame(data={'clusters': predictions}, index=data.index)
-        return predictions_df.loc[original_indexes].clusters.values
+        clusters = model_object.fit_predict(X=data)
+        # create a dataframe so we can easily sort back to the original indexes, to return clusters in
+        # the expected order
+        predictions_df = pd.DataFrame(data={'clusters': clusters}, index=data.index)
+        predictions_df = predictions_df.loc[original_indexes]
+        self._silhouette_score = silhouette_score(X=data_x, labels=predictions_df.clusters.values)
+        return predictions_df.clusters.values
