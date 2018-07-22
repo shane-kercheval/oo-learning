@@ -73,4 +73,5 @@ class ClusteringHierarchical(ModelWrapperBase):
             linkage=param_dict['linkage'],
             affinity=param_dict['affinity'],
         )
+        self._model_object = model_object
         return model_object.fit_predict(X=data)

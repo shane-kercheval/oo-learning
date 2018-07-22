@@ -46,4 +46,5 @@ class ClusteringDBSCAN(ModelWrapperBase):
         model_object = DBSCAN(eps=param_dict['epsilon'],
                               min_samples=param_dict['min_samples'],
                               n_jobs=self._num_jobs)
+        self._model_object = model_object
         return model_object.fit_predict(X=data)

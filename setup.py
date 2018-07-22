@@ -19,6 +19,7 @@ setup(
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python :: 3'],
     install_requires=[
+        'hdbscan==0.8.15',
         'xgboost==0.71',
         'seaborn>=0.8.1',
         'scipy>=1.0.0',

@@ -1,6 +1,8 @@
 import os
 import shutil
+import hdbscan
 from math import isclose
+
 
 import numpy as np
 from sklearn.metrics import adjusted_rand_score
@@ -102,6 +104,8 @@ class UnsupervisedTests(TimerTestCase):
                                scores=[SilhouetteScore()])
         clusters = trainer.train_predict_eval(data=cluster_data,
                                               hyper_params=ClusteringKMeansHP(num_clusters=3))
+        assert trainer.model.model_object.n_clusters == 3
+
         # make sure Score object, when manually calculated, is the expected value,
         # then verify trainer.training_score
         score = SilhouetteScore().calculate(clustered_data=CenterScaleTransformer().fit_transform(cluster_data),  # noqa
@@ -274,6 +278,7 @@ class UnsupervisedTests(TimerTestCase):
                                scores=[SilhouetteScore()])
         clusters = trainer.train_predict_eval(data=cluster_data,
                                               hyper_params=ClusteringHierarchicalHP(num_clusters=3))
+        assert trainer.model.model_object.n_clusters == 3
         score = SilhouetteScore().calculate(
             clustered_data=NormalizationTransformer().fit_transform(cluster_data),
             clusters=clusters)
@@ -340,8 +345,9 @@ class UnsupervisedTests(TimerTestCase):
                                model_transformations=[NormalizationTransformer()],
                                scores=[SilhouetteScore()])
         clusters = trainer.train_predict_eval(data=cluster_data, hyper_params=ClusteringDBSCANHP())
+        transformed_cluster_data = NormalizationTransformer().fit_transform(cluster_data)
         score = SilhouetteScore().calculate(
-            clustered_data=NormalizationTransformer().fit_transform(cluster_data),  # noqa
+            clustered_data=transformed_cluster_data,
             clusters=clusters)
         assert isclose(score, -1)
         assert isclose(score, trainer.training_scores[0].value)
@@ -350,15 +356,23 @@ class UnsupervisedTests(TimerTestCase):
         # try smaller epsilon
         trainer = ModelTrainer(model=ClusteringDBSCAN(),
                                model_transformations=[NormalizationTransformer()],
-                               scores=[SilhouetteScore()])
+                               scores=[SilhouetteScore(),
+                                       DensityBasedClusteringValidationScore()])
         clusters = trainer.train_predict_eval(data=cluster_data,
-                                              hyper_params=ClusteringDBSCANHP(epsilon=0.25))
+                                              hyper_params=ClusteringDBSCANHP(epsilon=0.25,
+                                                                              min_samples=4))
+        assert trainer.model.model_object.eps == 0.25
+        assert trainer.model.model_object.min_samples == 4
         score = SilhouetteScore().calculate(
-            clustered_data=NormalizationTransformer().fit_transform(cluster_data),
+            clustered_data=transformed_cluster_data,
             clusters=clusters)
         assert isclose(score, 0.5759307352949353)
         assert isclose(score, trainer.training_scores[0].value)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.5557898627256278)
+
+        assert isclose(trainer.training_scores[1].value,
+                       hdbscan.validity.validity_index(X=transformed_cluster_data.as_matrix(),
+                                                       labels=clusters))
 
         num_cached = trainer.model.data_x_trained_head.shape[0]
         assert all(data.drop(columns='species').iloc[0:num_cached] == trainer.model.data_x_trained_head)
@@ -373,3 +387,28 @@ class UnsupervisedTests(TimerTestCase):
         assert all(confusion_matrix.matrix.versicolor.values == [0, 50, 49, 99])
         assert all(confusion_matrix.matrix.virginica.values == [1, 0, 1, 2])
         assert all(confusion_matrix.matrix.Total.values == [50, 50, 50, 150])
+
+    def test_HDBSCAN(self):
+        data = TestHelper.get_iris_data()
+        cluster_data = data.drop(columns='species')
+        trainer = ModelTrainer(model=ClusteringHDBSCAN(),
+                               model_transformations=[NormalizationTransformer()],
+                               scores=[SilhouetteScore(),
+                                       DensityBasedClusteringValidationScore()])
+        clusters = trainer.train_predict_eval(data=cluster_data,
+                                              hyper_params=ClusteringHDBSCANHP(min_cluster_size=2,
+                                                                               min_samples=5))
+        assert trainer.model.model_object.min_cluster_size == 2
+        assert trainer.model.model_object.min_samples == 5
+        transformed_cluster_data = NormalizationTransformer().fit_transform(cluster_data)
+        score = SilhouetteScore().calculate(
+            clustered_data=transformed_cluster_data,
+            clusters=clusters)
+        assert isclose(score, 0.6294675561906642)
+        assert isclose(score, trainer.training_scores[0].value)
+        assert isclose(adjusted_rand_score(data.species, clusters), 0.5681159420289855)
+
+        # validity_index
+        assert isclose(trainer.training_scores[1].value,
+                       hdbscan.validity.validity_index(X=transformed_cluster_data.as_matrix(),
+                                                       labels=clusters))

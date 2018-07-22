@@ -15,33 +15,33 @@ from .enums.Metric import Metric
 from .enums.ResolveOutliers import ResolveOutliers
 from .enums.Skewness import Skewness
 
+from .evaluators.ScoreBase import ScoreBase
 from .evaluators.AccuracyScore import AccuracyScore
 from .evaluators.AucRocScore import AucRocScore
 from .evaluators.AucPrecisionRecallScore import AucPrecisionRecallScore
 from .evaluators.ConfusionMatrix import ConfusionMatrix
-from .evaluators.TwoClassConfusionMatrix import TwoClassConfusionMatrix
-from .evaluators.MultiClassEvaluator import MultiClassEvaluator
-from .evaluators.TwoClassEvaluator import TwoClassEvaluator
 from .evaluators.CostFunctionMixin import CostFunctionMixin
+from .evaluators.DensityBasedClusteringValidationScore import DensityBasedClusteringValidationScore
 from .evaluators.ErrorRateScore import ErrorRateScore
-from .evaluators.TwoClassScoreBase import TwoClassScoreBase
-from .evaluators.ScoreBase import ScoreBase
-from .evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
-from .evaluators.ScoreClusteringBase import ScoreClusteringBase
-from .evaluators.ScoreMediator import ScoreMediator
 from .evaluators.FBetaScore import FBetaScore
 from .evaluators.F1Score import F1Score
 from .evaluators.KappaScore import KappaScore
 from .evaluators.MaeScore import MaeScore
-from .evaluators.NegativePredictiveValueScore import NegativePredictiveValueScore
 from .evaluators.MultiClassEvaluator import MultiClassEvaluator
+from .evaluators.NegativePredictiveValueScore import NegativePredictiveValueScore
 from .evaluators.PositivePredictiveValueScore import PositivePredictiveValueScore
 from .evaluators.RegressionEvaluator import RegressionEvaluator
 from .evaluators.RmseScore import RmseScore
+from .evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
+
+from .evaluators.ScoreClusteringBase import ScoreClusteringBase
+from .evaluators.ScoreMediator import ScoreMediator
 from .evaluators.SensitivityScore import SensitivityScore
 from .evaluators.SilhouetteScore import SilhouetteScore
 from .evaluators.SpecificityScore import SpecificityScore
+from .evaluators.TwoClassConfusionMatrix import TwoClassConfusionMatrix
 from .evaluators.TwoClassEvaluator import TwoClassEvaluator
+from .evaluators.TwoClassScoreBase import TwoClassScoreBase
 from .evaluators.TwoClassProbabilityEvaluator import TwoClassProbabilityEvaluator
 from .evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
@@ -151,6 +151,7 @@ from .transformers.TransformerBase import TransformerBase
 from .transformers.TransformerPipeline import TransformerPipeline
 
 from .unsupervised.ClusteringDBSCAN import ClusteringDBSCAN, ClusteringDBSCANHP
+from .unsupervised.ClusteringHDBSCAN import ClusteringHDBSCAN, ClusteringHDBSCANHP
 from .unsupervised.ClusteringHierarchical import ClusteringHierarchicalAffinity, \
     ClusteringHierarchicalLinkage, ClusteringHierarchicalHP, ClusteringHierarchical
 from .unsupervised.ClusteringKmeans import ClusteringKMeans, ClusteringKMeansHP
