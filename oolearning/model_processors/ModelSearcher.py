@@ -113,7 +113,7 @@ class ModelSearcher:
 
         tuner_results = list()
         holdout_scores = list()
-        # for each model: tune; get the best hyper-parameters; train all the training data on the best
+        # for each model: tune; get the best hyper-parameters; train_predict_eval all the training data on the best
         # hyper-parameters; then calculate the final model on the holdout data
         for index in range(len(self._models)):
             local_model_description = self._model_descriptions[index]
@@ -194,12 +194,12 @@ class ModelSearcher:
                 # combination
                 local_model_params_object.update_dict(tuner.results.best_hyper_params)
 
-            # re-train on entire training set using the best hyper_params.
+            # re-train_predict_eval on entire training set using the best hyper_params.
             # we are passing in all the data, but the Fitter will split the data according to the same
             # Splitter that we used to get the training data to pass into the Tuner.
-            fitter.train(data=data,
-                         target_variable=target_variable,
-                         hyper_params=local_model_params_object)
+            fitter.train_predict_eval(data=data,
+                                      target_variable=target_variable,
+                                      hyper_params=local_model_params_object)
 
             # get the best model
             holdout_scores.append(fitter.holdout_scores)

@@ -19,6 +19,9 @@ class EvaluatorTests(TimerTestCase):
     def setUpClass(cls):
         pass
 
+    def test_ScoreMediator(self):
+        raise NotImplementedError()
+
     def test_BaseClass(self):
         predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
         actual = np.array([6, 10, 14, 16, 7, 5, 5, 13, 12, 13, 8, 5])
@@ -262,7 +265,7 @@ class EvaluatorTests(TimerTestCase):
     def test_BaseValue_is_int_or_float(self):
         # bug, where positive predictive value (or any score) returns 0 (e.g. from DummyClassifier)
         # which is an int (but base class originally checked only for float)
-        class MockScore(ScoreBase):
+        class MockScore(ScoreActualPredictedBase):
             @property
             def name(self) -> str:
                 return 'test'

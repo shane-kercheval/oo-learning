@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from oolearning.model_processors.ModelFitter import ModelFitter
+from oolearning.model_processors.ModelTrainer import ModelTrainer
 from oolearning.transformers.TransformerPipeline import TransformerPipeline
 from oolearning.transformers.CenterScaleTransformer import CenterScaleTransformer
 from oolearning.transformers.TransformerBase import TransformerBase
@@ -152,12 +152,12 @@ class Clustering:
                               transformations: List[TransformerBase]=None):
         scores = []
         for cluster in num_clusters:
-            fitter = ModelFitter(model=ClusteringKMeans(),
-                                 model_transformations=None if transformations is None else
-                                 [x.clone() for x in transformations])
-            fitter.fit(data=data, hyper_params=ClusteringKMeansHP(num_clusters=cluster))
+            trainer = ModelTrainer(model=ClusteringKMeans(),
+                                   model_transformations=None if transformations is None else
+                                   [x.clone() for x in transformations])
+            trainer.train_predict_eval(data=data, hyper_params=ClusteringKMeansHP(num_clusters=cluster))
             # noinspection PyUnresolvedReferences
-            scores.append(abs(fitter.model.score))
+            scores.append(abs(trainer.model.score))
 
         plt.plot(num_clusters, scores, linestyle='--', marker='o', color='b')
         plt.xlabel('K')
@@ -173,12 +173,12 @@ class Clustering:
         """
         ratios = []
         for cluster in num_clusters:
-            fitter = ModelFitter(model=ClusteringKMeans(evaluate_bss_tss=True),
-                                 model_transformations=None if transformations is None else
-                                 [x.clone() for x in transformations])
-            fitter.fit(data=data, hyper_params=ClusteringKMeansHP(num_clusters=cluster))
+            trainer = ModelTrainer(model=ClusteringKMeans(evaluate_bss_tss=True),
+                                   model_transformations=None if transformations is None else
+                                   [x.clone() for x in transformations])
+            trainer.train_predict_eval(data=data, hyper_params=ClusteringKMeansHP(num_clusters=cluster))
             # noinspection PyUnresolvedReferences
-            ratios.append(abs(fitter.model.bss_tss_ratio))
+            ratios.append(abs(trainer.model.bss_tss_ratio))
 
         plt.plot(num_clusters, ratios, linestyle='--', marker='o', color='b')
         plt.xlabel('K')

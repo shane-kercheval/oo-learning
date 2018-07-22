@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from oolearning.OOLearningHelpers import OOLearningHelpers
-from oolearning.evaluators.ScoreBase import ScoreBase
+from oolearning.evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
 from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.model_processors.ModelInfo import ModelInfo
 from oolearning.model_processors.RepeatedCrossValidationResampler import RepeatedCrossValidationResampler
@@ -123,7 +123,7 @@ class ModelStacker(ModelWrapperBase):
     """
     def __init__(self,
                  base_models: List[ModelInfo],
-                 scores: List[ScoreBase],
+                 scores: List[ScoreActualPredictedBase],
                  stacking_model: ModelWrapperBase,
                  stacking_transformations: List[TransformerBase] = None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
@@ -304,8 +304,8 @@ class ModelStacker(ModelWrapperBase):
 
             model_info.model.set_persistence_manager(local_persistence_manager)
             model_info.model.train(data_x=transformed_data_x,
-                                   data_y=data_y,
-                                   hyper_params=model_info.hyper_params)
+                                                data_y=data_y,
+                                                hyper_params=model_info.hyper_params)
 
         # get the correlations before any transformations on `train_meta` for the stacking model.
         self._train_meta_correlations = train_meta.corr()

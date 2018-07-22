@@ -6,11 +6,11 @@ from sklearn.metrics import accuracy_score
 
 from oolearning.converters.ContinuousToClassConverterBase import ContinuousToClassConverterBase
 from oolearning.enums.Metric import Metric
-from oolearning.evaluators.ScoreBase import ScoreBase
+from oolearning.evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
 from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
 
-class AccuracyScore(UtilityFunctionMixin, ScoreBase):
+class AccuracyScore(UtilityFunctionMixin, ScoreActualPredictedBase):
     """
     For classification problems, calculates simple "accuracy"; uses sklearn's `accuracy_score()` function:
         http://scikit-learn.org/stable/modules/generated/sklearn.score_names.accuracy_score.html

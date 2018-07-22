@@ -36,9 +36,8 @@ class ClusteringKMeansHP(HyperParamsBase):
 
 class ClusteringKMeans(ModelWrapperBase):
 
-    def __init__(self, evaluate_bss_tss: bool=False, shuffle_data: bool=True, num_jobs: int=1, seed: int=42):
+    def __init__(self, evaluate_bss_tss: bool=False, num_jobs: int=1, seed: int=42):
         super().__init__()
-        self._shuffle_data = shuffle_data
         self._num_jobs = num_jobs
         self._seed = seed
         self._score = None
@@ -46,11 +45,6 @@ class ClusteringKMeans(ModelWrapperBase):
         self._bss = None
         self._tss = None
         self._wss = None
-        self._silhouette_score = None
-
-    @property
-    def silhouette_score(self):
-        return self._silhouette_score
 
     @property
     def feature_importance(self):
@@ -89,13 +83,6 @@ class ClusteringKMeans(ModelWrapperBase):
         if data_x.isnull().sum().sum() > 0:
             raise MissingValueError()
 
-        if self._shuffle_data:
-            # "randomly" shuffle data
-            indexes = np.arange(0, len(data_x))
-            np.random.seed(self._seed)
-            np.random.shuffle(indexes)
-            data_x = data_x.iloc[indexes]
-
         param_dict = hyper_params.params_dict
         model_object = KMeans(
             n_clusters=param_dict['num_clusters'],
@@ -112,20 +99,16 @@ class ClusteringKMeans(ModelWrapperBase):
 
         if self._evaluate_bss_tss:
             # distances for each data-point to each cluster center
-            distances = cdist(data_x, model_object.cluster_centers_, 'euclidean')
+            distances = cdist(data_x.as_matrix(), model_object.cluster_centers_, 'euclidean')
             min_distances = np.min(distances, axis=1)
 
             # Total with-in sum of square
             self._wss = sum(min_distances ** 2)  # ends of being absolute value of self._score
-            self._tss = sum(pdist(data_x) ** 2) / data_x.shape[0]
+            self._tss = sum(pdist(data_x.as_matrix()) ** 2) / data_x.shape[0]
 
         return model_object
 
     def _predict(self, model_object: object, data_x: pd.DataFrame) -> np.ndarray:
         # noinspection PyUnresolvedReferences
         clusters = model_object.predict(data_x)
-        if len(np.unique(clusters)) >= 2:  # silhouette_score requires >=2 clusters
-            self._silhouette_score = silhouette_score(X=data_x, labels=clusters)
-        else:
-            self._silhouette_score = -1
         return clusters

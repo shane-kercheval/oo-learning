@@ -6,11 +6,11 @@ import pandas as pd
 from oolearning.converters.TwoClassConverterBase import TwoClassConverterBase
 from oolearning.enums.Metric import Metric
 from oolearning.evaluators.TwoClassConfusionMatrix import TwoClassConfusionMatrix
-from oolearning.evaluators.ScoreBase import ScoreBase
+from oolearning.evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
 from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
 
-class PositivePredictiveValueScore(UtilityFunctionMixin, ScoreBase):
+class PositivePredictiveValueScore(UtilityFunctionMixin, ScoreActualPredictedBase):
     def __init__(self, converter: TwoClassConverterBase):
         super().__init__()
         self._converter = converter

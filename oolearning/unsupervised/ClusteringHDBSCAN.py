@@ -7,7 +7,7 @@ from oolearning.model_wrappers.ModelExceptions import MissingValueError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 
 
-class ClusteringDBSCANHP(HyperParamsBase):
+class ClusteringHDBSCANHP(HyperParamsBase):
     """
     """
     def __init__(self,  epsilon: float=0.5, min_samples: int=5):
@@ -18,7 +18,7 @@ class ClusteringDBSCANHP(HyperParamsBase):
                                 )
 
 
-class ClusteringDBSCAN(ModelWrapperBase):
+class ClusteringHDBSCAN(ModelWrapperBase):
 
     def __init__(self, num_jobs: int=1, seed: int=42):
         super().__init__()

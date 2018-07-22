@@ -50,17 +50,6 @@ class ClusteringHierarchicalHP(HyperParamsBase):
 
 
 class ClusteringHierarchical(ModelWrapperBase):
-
-    def __init__(self, shuffle_data: bool=True, seed: int=42):
-        super().__init__()
-        self._silhouette_score = None
-        self._shuffle_data = shuffle_data
-        self._seed = seed
-
-    @property
-    def silhouette_score(self):
-        return self._silhouette_score
-
     @property
     def feature_importance(self):
         raise NotImplementedError()
@@ -78,34 +67,10 @@ class ClusteringHierarchical(ModelWrapperBase):
         if data.isnull().sum().sum() > 0:
             raise MissingValueError()
 
-        # in ClusteringKmeans, because sklearn has a `predict()`, shuffling the data in `train()` has no
-        # affect on predict because the data in `train()` is shuffled, but the data in `predict()` is not
-        # so what is returned is the same order has what is passed in
-        # here, we are shuffling in predict, so we have to un-shuffle and return the clusters in the original
-        # order
-        original_indexes = data_x.index.values
-
-        if self._shuffle_data:
-            # "randomly" shuffle data
-            # noinspection PyTypeChecker
-            indexes = np.arange(0, len(data))
-            np.random.seed(self._seed)
-            np.random.shuffle(indexes)
-            data = data.iloc[indexes]
-
         param_dict = self._hyper_params.params_dict
         model_object = AgglomerativeClustering(
             n_clusters=param_dict['num_clusters'],
             linkage=param_dict['linkage'],
             affinity=param_dict['affinity'],
         )
-        clusters = model_object.fit_predict(X=data)
-        # create a dataframe so we can easily sort back to the original indexes, to return clusters in
-        # the expected order
-        predictions_df = pd.DataFrame(data={'clusters': clusters}, index=data.index)
-        predictions_df = predictions_df.loc[original_indexes]
-        if len(np.unique(clusters)) >= 2:  # silhouette_score requires >=2 clusters
-            self._silhouette_score = silhouette_score(X=data_x, labels=predictions_df.clusters.values)
-        else:
-            self._silhouette_score = -1
-        return predictions_df.clusters.values
+        return model_object.fit_predict(X=data)

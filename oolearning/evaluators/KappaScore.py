@@ -6,11 +6,11 @@ from sklearn.metrics import cohen_kappa_score
 
 from oolearning.converters.ContinuousToClassConverterBase import ContinuousToClassConverterBase
 from oolearning.enums.Metric import Metric
-from oolearning.evaluators.ScoreBase import ScoreBase
+from oolearning.evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
 from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
 
-class KappaScore(UtilityFunctionMixin, ScoreBase):
+class KappaScore(UtilityFunctionMixin, ScoreActualPredictedBase):
     def __init__(self, converter: ContinuousToClassConverterBase):
         super().__init__()
         self._converter = converter

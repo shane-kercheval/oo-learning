@@ -1,12 +1,12 @@
 import numpy as np
 
 from oolearning.enums.Metric import Metric
-from oolearning.evaluators.ScoreBase import ScoreBase
+from oolearning.evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
 from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
 from oolearning.evaluators.RegressionEvaluator import RegressionEvaluator
 
 
-class MaeScore(CostFunctionMixin, ScoreBase):
+class MaeScore(CostFunctionMixin, ScoreActualPredictedBase):
     @property
     def name(self):
         return Metric.MEAN_ABSOLUTE_ERROR.value

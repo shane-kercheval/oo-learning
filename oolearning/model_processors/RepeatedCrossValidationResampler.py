@@ -5,7 +5,7 @@ from multiprocessing import cpu_count
 import numpy as np
 import pandas as pd
 
-from oolearning.evaluators.ScoreBase import ScoreBase
+from oolearning.evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
 from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.model_processors.ProcessingExceptions import CallbackUsedWithParallelizationError
 from oolearning.model_processors.ResamplerBase import ResamplerBase
@@ -150,7 +150,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
     def __init__(self,
                  model: ModelWrapperBase,
                  transformations: Union[List[TransformerBase], None],
-                 scores: List[ScoreBase],
+                 scores: List[ScoreActualPredictedBase],
                  model_persistence_manager: PersistenceManagerBase = None,
                  results_persistence_manager: PersistenceManagerBase = None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,

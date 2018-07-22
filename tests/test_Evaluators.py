@@ -214,7 +214,7 @@ class EvaluatorTests(TimerTestCase):
                                model_transformations=transformations,
                                splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                                evaluator=evaluator)
-        trainer.train(data=explore.dataset, target_variable='Survived', hyper_params=RandomForestHP())
+        trainer.train_predict_eval(data=explore.dataset, target_variable='Survived', hyper_params=RandomForestHP())
 
         TestHelper.check_plot('data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_train_calibration.png',  # noqa
                               lambda: trainer.training_evaluator.plot_calibration())
@@ -403,7 +403,7 @@ class EvaluatorTests(TimerTestCase):
                               persistence_manager=None,
                               train_callback=None)
 
-        fitter.train(data=data, target_variable=target_variable, hyper_params=None)
+        fitter.train_predict_eval(data=data, target_variable=target_variable, hyper_params=None)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
         assert isclose(fitter.training_evaluator.mean_squared_error, 109.68243774089586)
         assert isclose(fitter.training_evaluator.mean_absolute_error, 8.360259532214116)

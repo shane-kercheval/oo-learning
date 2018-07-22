@@ -12,11 +12,11 @@ from oolearning.transformers.TransformerBase import TransformerBase
 from oolearning.transformers.TransformerPipeline import TransformerPipeline
 
 
-class ModelFitter:
+class ModelFitterRemoving:
     """
     ModelFitter encapsulates the (mundane and repetitive) logic of the general process of "training" an
         unsupervised model i.e. we aren't "training" a model against a target variable (that is, no `data_y`
-        in `train()`.
+        in `train_predict_eval()`.
 
         including:
 
@@ -34,12 +34,12 @@ class ModelFitter:
                                          Union[HyperParamsBase, None]], None] = None):
         """
 
-        :param model: a class representing the model to train
+        :param model: a class representing the model to train_predict_eval
         :param model_transformations: a list of transformations to apply before training (and predicting)
         :param persistence_manager: a PersistenceManager defining how the underlying models should be cached,
             optional.
         :param fit_callback: a callback that is called before the model is trained, which returns the
-           data_x, data_y, and hyper_params that are passed into `ModelWrapper.train()`.
+           data_x, data_y, and hyper_params that are passed into `ModelWrapper.train_predict_eval()`.
            The primary intent is for unit tests to have the ability to ensure that the data (data_x) is
            being transformed as expected, but it is imaginable to think that users will also benefit
            from this capability to also peak at the data that is being trained.
@@ -95,9 +95,9 @@ class ModelFitter:
         if self._has_fitted:
             raise ModelAlreadyFittedError()
 
-        # transform/train on training data
+        # transform/train_predict_eval on training data
         if self._model_transformations is not None:
-            # before we train the data, we actually want to 'snoop' at what the expected columns will be with
+            # before we train_predict_eval the data, we actually want to 'snoop' at what the expected columns will be with
             # ALL the data. The reason is that if we so some sort of dummy encoding, but not all the
             # categories are included in the training set (i.e. maybe only a small number of observations have
             # the categoric value), then we can still ensure that we will be giving the same expected columns/
@@ -119,19 +119,19 @@ class ModelFitter:
         # peak at all the data (except for the target variable of course)
         # noinspection PyTypeChecker
         self._pipeline.peak(data_x=data)
-        # fit on only the train data-set (and also transform)
+        # fit on only the train_predict_eval data-set (and also transform)
         transformed_data = self._pipeline.fit_transform(data_x=data)
 
         # set up persistence if applicable
         if self._persistence_manager is not None:  # then build the key
-            cache_key = ModelFitter._build_cache_key(model=self._model, hyper_params=hyper_params)
+            cache_key = ModelFitterRemoving._build_cache_key(model=self._model, hyper_params=hyper_params)
             self._persistence_manager.set_key(key=cache_key)
             self._model.set_persistence_manager(persistence_manager=self._persistence_manager)
 
         if self._fit_callback is not None:
             self._fit_callback(transformed_data, hyper_params)
 
-        # train the model with the transformed training data
+        # train_predict_eval the model with the transformed training data
         self._model.train(data_x=transformed_data, hyper_params=hyper_params)
 
         self._has_fitted = True

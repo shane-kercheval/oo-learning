@@ -4,10 +4,10 @@ from typing import Union
 import numpy as np
 import pandas as pd
 
-from oolearning.evaluators.ScoreBase import ScoreBase
+from oolearning.evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
 
 
-class TwoClassScoreBase(ScoreBase):
+class TwoClassScoreBase(ScoreActualPredictedBase):
     def __init__(self, positive_class: object):
         super().__init__()
         self._positive_class = positive_class

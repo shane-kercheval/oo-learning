@@ -6,6 +6,7 @@ import pandas as pd
 
 from oolearning.evaluators.EvaluatorBase import EvaluatorBase
 from oolearning.evaluators.ScoreBase import ScoreBase
+from oolearning.evaluators.ScoreMediator import ScoreMediator
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import ModelAlreadyFittedError, ModelNotFittedError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
@@ -39,7 +40,7 @@ class ModelTrainer:
                                            Union[HyperParamsBase, None]], None] = None):
         """
 
-        :param model: a class representing the model to train
+        :param model: a class representing the model to train_predict_eval
         :param model_transformations: a list of transformations to apply before training (and predicting)
         :param splitter: a class encapsulating the logic of splitting the data into training and holdout sets;
             if None, then no split occurs, and the model is trained on all the data (and so no holdout
@@ -49,7 +50,7 @@ class ModelTrainer:
         :param persistence_manager: a PersistenceManager defining how the underlying models should be cached,
             optional.
         :param train_callback: a callback that is called before the model is trained, which returns the
-           data_x, data_y, and hyper_params that are passed into `ModelWrapper.train()`.
+           data_x, data_y, and hyper_params that are passed into `ModelWrapper.train_predict_eval()`.
            The primary intent is for unit tests to have the ability to ensure that the data (data_x) is
            being transformed as expected, but it is imaginable to think that users will also benefit
            from this capability to also peak at the data that is being trained.
@@ -106,14 +107,22 @@ class ModelTrainer:
 
         return key
 
-    def train(self, data: pd.DataFrame, target_variable: str, hyper_params: HyperParamsBase=None):
+    def train_predict_eval(self,
+                           data: pd.DataFrame,
+                           target_variable: Union[str, None]=None,
+                           hyper_params: HyperParamsBase=None) -> np.ndarray:
         """
-        splits the data according to the Splitter (if provided; if not provided, no split occurs and the model
-            is trained on all the `data`), fits & transforms the data (based on the training set if a Splitter
-            is provided; caches transformers to transform during `predict()`), trains the model on the
-            appropriate data-set, and if a holdout data-set exists (if a Splitter is provided) then the
-            holdout data-set is evaluated.
-        :param data: data to split (if Splitter is provided) and train the model on
+        The data is split into a training/holdout set if a Splitter is provided. If not provided, no split
+            occurs and the model is trained on all the `data`). Before training, the data is transformed
+            by the specified Transformation objects. If a Splitter is provided, the transformations are
+            'fit/transformed' on the training and only transformed on the holdout.
+
+        Trains the data on the model, predicts, and evaluates the predictions if an Evaluator or Scores are
+            passed in.
+            If a Splitter is provide, the predictions that are returned are of the holdout set. Otherwise,
+            the predictions form the training set are returned.
+
+        :param data: data to split (if Splitter is provided) and train_predict_eval the model on
         :param target_variable: the name of the target variable/column
         :param hyper_params: a corresponding HyperParams object
         """
@@ -121,28 +130,35 @@ class ModelTrainer:
             raise ModelAlreadyFittedError()
 
         if self._splitter:
+            assert target_variable is not None
             training_indexes, holdout_indexes = self._splitter.split(target_values=data[target_variable])
         else:  # we are fitting the entire data-set, no such thing as a holdout data-set/evaluator/scores
             training_indexes, holdout_indexes = range(len(data)), []
             self._holdout_evaluator = None
             self._holdout_scores = None
 
-        training_y = data.iloc[training_indexes][target_variable]
-        training_x = data.iloc[training_indexes].drop(columns=target_variable)
+        # for unsupervised problems, there might not be a target variable;
+        # in that case, there will also not be a training_y/holding_y
+        training_y = data.iloc[training_indexes][target_variable] if target_variable is not None else None
+        training_x = data.iloc[training_indexes]
 
-        holdout_y = data.iloc[holdout_indexes][target_variable]
-        holdout_x = data.iloc[holdout_indexes].drop(columns=target_variable)
+        holdout_y = data.iloc[holdout_indexes][target_variable] if target_variable is not None else None
+        holdout_x = data.iloc[holdout_indexes]
 
-        # transform/train on training data
+        if target_variable is not None:
+            training_x = training_x.drop(columns=target_variable)
+            holdout_x = holdout_x.drop(columns=target_variable)
+
+        # transform/train_predict_eval on training data
         if self._model_transformations is not None:
-            # before we train the data, we actually want to 'snoop' at what the expected columns will be with
-            # ALL the data. The reason is that if we so some sort of dummy encoding, but not all the
-            # categories are included in the training set (i.e. maybe only a small number of observations have
-            # the categoric value), then we can still ensure that we will be giving the same expected columns/
-            # encodings to the predict method with the holdout set.
-            # noinspection PyTypeChecker
-            expected_columns = TransformerPipeline.get_expected_columns(data=data.drop(columns=target_variable),  # noqa
-                                                                        transformations=self._model_transformations)  # noqa
+            # before we train_predict_eval the data, we actually want to 'snoop' at what the expected columns
+            # will be with ALL the data. The reason is that if we so some sort of dummy encoding, but not all
+            # the categories are included in the training set (i.e. maybe only a small number of observations
+            # have the categoric value), then we can still ensure that we will be giving the same expected
+            # columns/encodings to the predict method with the holdout set.
+            expected_columns = TransformerPipeline.\
+                get_expected_columns(data=data if target_variable is None else data.drop(columns=target_variable),  # noqa
+                                     transformations=self._model_transformations)
             transformer = StatelessTransformer(custom_function=lambda x_df: x_df.reindex(columns=expected_columns,  # noqa
                                                                                          fill_value=0))
             self._model_transformations = self._model_transformations + [transformer]
@@ -156,8 +172,8 @@ class ModelTrainer:
 
         # peak at all the data (except for the target variable of course)
         # noinspection PyTypeChecker
-        self._pipeline.peak(data_x=data.drop(columns=target_variable))
-        # fit on only the train data-set (and also transform)
+        self._pipeline.peak(data_x=data if target_variable is None else data.drop(columns=target_variable))
+        # fit on only the train_predict_eval data-set (and also transform)
         transformed_training_data = self._pipeline.fit_transform(training_x)
 
         # set up persistence if applicable
@@ -169,31 +185,42 @@ class ModelTrainer:
         if self._train_callback is not None:
             self._train_callback(transformed_training_data, training_y, hyper_params)
 
-        # train the model with the transformed training data
+        # train_predict_eval the model with the transformed training data
         self._model.train(data_x=transformed_training_data, data_y=training_y, hyper_params=hyper_params)
 
         self._has_fitted = True
+
+        training_predictions = self.predict(data_x=training_x)
+        holdout_predictions = None
+        if self._splitter is not None:
+            holdout_predictions = self.predict(data_x=holdout_x)
 
         # if evaluators, evaluate on both the training and holdout set
         if self._training_evaluator is not None:
             # predict will apply the transformations (which are fitted on the training data)
             self._training_evaluator.evaluate(actual_values=training_y,
-                                              predicted_values=self.predict(data_x=training_x))
+                                              predicted_values=training_predictions)
             if self._holdout_evaluator:
                 self._holdout_evaluator.evaluate(actual_values=holdout_y,
-                                                 predicted_values=self.predict(data_x=holdout_x))
+                                                 predicted_values=holdout_predictions)
 
         # if scores, score on both the training and holdout set
         if self._training_scores is not None:
             # predict will apply the transformations (which are fitted on the training data)
             for score in self._training_scores:
-                score.calculate(actual_values=training_y,
-                                predicted_values=self.predict(data_x=training_x))
+                ScoreMediator.calculate(score=score,
+                                        data_x=transformed_training_data,
+                                        actual_target_variables=training_y,
+                                        predicted_values=training_predictions)
 
             if self._holdout_scores:
                 for score in self._holdout_scores:
-                    score.calculate(actual_values=holdout_y,
-                                    predicted_values=self.predict(data_x=holdout_x))
+                    ScoreMediator.calculate(score=score,
+                                            data_x=holdout_x,  # TODO may have to manually do transformations
+                                            actual_target_variables=holdout_y,
+                                            predicted_values=holdout_predictions)
+
+        return training_predictions if self._splitter is None else holdout_predictions
 
     def predict(self, data_x: pd.DataFrame) -> np.ndarray:
         """
@@ -215,6 +242,8 @@ class ModelTrainer:
             assert all(predictions.index.values == data_x.index.values)
 
         return predictions
+
+
 
     @property
     def training_evaluator(self) -> Union[EvaluatorBase, None]:

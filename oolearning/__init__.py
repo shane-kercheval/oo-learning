@@ -26,6 +26,8 @@ from .evaluators.CostFunctionMixin import CostFunctionMixin
 from .evaluators.ErrorRateScore import ErrorRateScore
 from .evaluators.TwoClassScoreBase import TwoClassScoreBase
 from .evaluators.ScoreBase import ScoreBase
+from .evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
+from .evaluators.ScoreMediator import ScoreMediator
 from .evaluators.FBetaScore import FBetaScore
 from .evaluators.F1Score import F1Score
 from .evaluators.KappaScore import KappaScore
@@ -36,6 +38,7 @@ from .evaluators.PositivePredictiveValueScore import PositivePredictiveValueScor
 from .evaluators.RegressionEvaluator import RegressionEvaluator
 from .evaluators.RmseScore import RmseScore
 from .evaluators.SensitivityScore import SensitivityScore
+from .evaluators.SilhouetteScore import SilhouetteScore
 from .evaluators.SpecificityScore import SpecificityScore
 from .evaluators.TwoClassEvaluator import TwoClassEvaluator
 from .evaluators.TwoClassProbabilityEvaluator import TwoClassProbabilityEvaluator
@@ -55,7 +58,7 @@ from oolearning.model_aggregation.MedianAggregationStrategy import MedianAggrega
 
 from .model_processors.DecoratorBase import DecoratorBase
 from .model_processors.TwoClassThresholdDecorator import TwoClassThresholdDecorator
-from .model_processors.ModelFitter import ModelFitter
+from .model_processors.ModelFitter import ModelFitterRemoving
 from .model_processors.ModelTrainer import ModelTrainer
 from .model_processors.ModelInfo import ModelInfo
 from .model_processors.ModelSearcher import ModelSearcher
