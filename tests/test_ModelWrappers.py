@@ -2168,6 +2168,7 @@ class ModelWrapperTests(TimerTestCase):
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))
         fitter.train_predict_eval(data=data,
+                                  target_variable='Survived',
                                   hyper_params=SvmPolynomialClassifierHP())
         assert fitter.model._class_weights is None
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
