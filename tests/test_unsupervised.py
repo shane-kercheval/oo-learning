@@ -138,14 +138,16 @@ class UnsupervisedTests(TimerTestCase):
         TestHelper.check_plot('data/test_unsupervised/test_kmeans_elbow_plot.png',
                               lambda: Clustering.kmeans_elbow_sse_plot(data=data.drop(columns='species'),
                                                                        num_clusters=list(range(1, 9)),
-                                                                       transformations=[CenterScaleTransformer()]))  # noqa
+                                                                       transformations=[CenterScaleTransformer()]),  # noqa
+                              set_size=False)
 
     def test_KMeans_elbow_bss_tss(self):
         data = TestHelper.get_iris_data()
         TestHelper.check_plot('data/test_unsupervised/test_kmeans_elbow_plot_bss_tss.png',
                               lambda: Clustering.kmeans_elbow_bss_tss_plot(data=data.drop(columns='species'),
                                                                            num_clusters=list(range(1, 9)),
-                                                                           transformations=[CenterScaleTransformer()]))  # noqa
+                                                                           transformations=[CenterScaleTransformer()]),  # noqa
+                              set_size=False)
 
     # noinspection SpellCheckingInspection
     def test_KMeans_heatmap(self):
