@@ -49,6 +49,7 @@ class EvaluatorTests(TimerTestCase):
                                               hyper_params=ClusteringHierarchicalHP(num_clusters=3))
 
         score = SilhouetteScore()
+        assert score.name == Metric.SILHOUETTE.value
         assert isinstance(score, UtilityFunctionMixin)
         assert isinstance(score, ScoreClusteringBase)
 

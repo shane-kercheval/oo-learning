@@ -406,9 +406,145 @@ class UnsupervisedTests(TimerTestCase):
             clusters=clusters)
         assert isclose(score, 0.6294675561906642)
         assert isclose(score, trainer.training_scores[0].value)
+        assert trainer.training_scores[0].name == Metric.SILHOUETTE.value
         assert isclose(adjusted_rand_score(data.species, clusters), 0.5681159420289855)
 
         # validity_index
+        assert trainer.training_scores[1].name == Metric.DENSITY_BASED_CLUSTERING_VALIDATION.value
         assert isclose(trainer.training_scores[1].value,
                        hdbscan.validity.validity_index(X=transformed_cluster_data.as_matrix(),
                                                        labels=clusters))
+
+    # noinspection SpellCheckingInspection
+    def test_ClusteringSearcher(self):
+        data = TestHelper.get_iris_data()
+
+        center_scaled_data = CenterScaleTransformer().fit_transform(data.drop(columns='species'))
+        normalized_data = NormalizationTransformer().fit_transform(data.drop(columns='species'))
+
+        model_infos = [
+            ModelInfo(model=ClusteringKMeans(),
+                      description='KMeans - CenterScale',
+                      transformations=[CenterScaleTransformer()],
+                      hyper_params=ClusteringKMeansHP(),
+                      hyper_params_grid=HyperParamsGrid(params_dict={'num_clusters': [2, 3, 4, 5, 6, 7]})),
+            ModelInfo(model=ClusteringDBSCAN(),
+                      description='DBSCAN - Normalization',
+                      transformations=[NormalizationTransformer()],
+                      hyper_params=ClusteringDBSCANHP(),
+                      hyper_params_grid=HyperParamsGrid(params_dict={'epsilon': [0.1, 0.15, 0.2, 0.25, 0.3],
+                                                                     'min_samples': [3, 4, 5, 6]})),
+        ]
+
+        searcher = ClusteringSearcher(
+            model_infos=model_infos,
+            scores=[SilhouetteScore(),
+                    DensityBasedClusteringValidationScore()],
+            global_transformations=[RemoveColumnsTransformer(columns=['species'])],
+        )
+        results = searcher.search(data=data)
+        assert results.score_names == [Metric.SILHOUETTE.value, Metric.DENSITY_BASED_CLUSTERING_VALIDATION.value]  # noqa
+        ######################################################################################################
+        # verify k-means scores
+        ######################################################################################################
+        silhouettes = []
+        dbcvs = []
+        kmeans_num_clusters = model_infos[0].hyper_params_grid.params_grid.num_clusters
+        for num_clusters in kmeans_num_clusters:
+            trainer = ModelTrainer(model=ClusteringKMeans(),
+                                   scores=[SilhouetteScore(),
+                                           DensityBasedClusteringValidationScore()])
+            trainer.train_predict_eval(center_scaled_data,
+                                       hyper_params=ClusteringKMeansHP(num_clusters=num_clusters))
+            silhouettes.append(trainer.training_scores[0].value)
+            dbcvs.append(trainer.training_scores[1].value)
+
+        for index in range(len(model_infos[0].hyper_params_grid.params_grid)):
+            assert isclose(results.results.iloc[index].silhouette, silhouettes[index])
+            assert isclose(results.results.iloc[index].DBCV, dbcvs[index])
+
+        ######################################################################################################
+        # verify DBSCAN scores
+        ######################################################################################################
+        silhouettes = []
+        dbcvs = []
+        starting_index = len(kmeans_num_clusters)
+        dbscan_params_grid = model_infos[1].hyper_params_grid.params_grid
+        for index in range(len(dbscan_params_grid)):
+            epsilon = dbscan_params_grid.iloc[index].epsilon
+            min_samples = dbscan_params_grid.iloc[index].min_samples
+            trainer = ModelTrainer(model=ClusteringDBSCAN(),
+                                   scores=[SilhouetteScore(),
+                                           DensityBasedClusteringValidationScore()])
+            trainer.train_predict_eval(normalized_data,
+                                       hyper_params=ClusteringDBSCANHP(epsilon=epsilon,
+                                                                       min_samples=min_samples))
+            silhouettes.append(trainer.training_scores[0].value)
+            dbcvs.append(trainer.training_scores[1].value)
+
+        for index in range(len(dbscan_params_grid)):
+            assert isclose(results.results.iloc[starting_index + index].silhouette, silhouettes[index])
+            assert isclose(results.results.iloc[starting_index + index].DBCV, dbcvs[index])
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_unsupervised/UnsupervisedSearcher.pkl'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file, expected_dataframe=results.results)
+
+    def test_ClusteringSearcher_duplicate_descriptions(self):
+        model_infos = [
+            ModelInfo(model=ClusteringKMeans(),
+                      description='1',
+                      transformations=[CenterScaleTransformer()],
+                      hyper_params=ClusteringKMeansHP(),
+                      hyper_params_grid=HyperParamsGrid(params_dict={'num_clusters': [2, 3, 4, 5, 6, 7]})),
+            ModelInfo(model=ClusteringDBSCAN(),
+                      description='1',
+                      transformations=[NormalizationTransformer()],
+                      hyper_params=ClusteringDBSCANHP(),
+                      hyper_params_grid=HyperParamsGrid(params_dict={'epsilon': [0.1, 0.15, 0.2, 0.25, 0.3],
+                                                                     'min_samples': [3, 4, 5, 6]})),
+        ]
+        self.assertRaises(AssertionError,
+                          lambda: ClusteringSearcher(model_infos=model_infos,
+                                                     scores=[SilhouetteScore(),
+                                                             DensityBasedClusteringValidationScore()],
+                                                     global_transformations=[RemoveColumnsTransformer(columns=['species'])])  # noqa
+        )
+
+    def test_ClusteringSearcher_plots(self):
+        data = TestHelper.get_iris_data()
+
+        model_infos = [
+            ModelInfo(model=ClusteringKMeans(),
+                      description='KMeans - CenterScale',
+                      transformations=[CenterScaleTransformer()],
+                      hyper_params=ClusteringKMeansHP(),
+                      hyper_params_grid=HyperParamsGrid(params_dict={'num_clusters': [2, 3, 4, 5, 6, 7]})),
+            ModelInfo(model=ClusteringDBSCAN(),
+                      description='DBSCAN - Normalization',
+                      transformations=[NormalizationTransformer()],
+                      hyper_params=ClusteringDBSCANHP(),
+                      hyper_params_grid=HyperParamsGrid(params_dict={'epsilon': [0.1, 0.15, 0.2, 0.25, 0.3],
+                                                                     'min_samples': [3, 4, 5, 6]})),
+            ModelInfo(model=ClusteringDBSCAN(),
+                      description='DBSCAN - Normalization - VC',
+                      transformations=[NormalizationVectorSpaceTransformer()],
+                      hyper_params=ClusteringDBSCANHP(),
+                      hyper_params_grid=HyperParamsGrid(params_dict={'epsilon': [0.1, 0.15, 0.2, 0.25, 0.3],
+                                                                     'min_samples': [3, 4, 5, 6]})),
+            ModelInfo(model=ClusteringHDBSCAN(),
+                      description='HDBSCAN - Normalization',
+                      transformations=[NormalizationTransformer()],
+                      hyper_params=ClusteringHDBSCANHP(),
+                      hyper_params_grid=HyperParamsGrid(params_dict={'min_cluster_size': [2, 3, 4, 5, 6],
+                                                                     'min_samples': [3, 4, 5, 6]})),
+        ]
+
+        searcher = ClusteringSearcher(
+            model_infos=model_infos,
+            scores=[SilhouetteScore(),
+                    DensityBasedClusteringValidationScore()],
+            global_transformations=[RemoveColumnsTransformer(columns=['species'])],
+        )
+        results = searcher.search(data=data)
+        TestHelper.check_plot('data/test_unsupervised/ClusteringSearcher_heatmap.png',
+                              lambda: results.heatmap())

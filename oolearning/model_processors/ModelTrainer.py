@@ -31,7 +31,7 @@ class ModelTrainer:
 
     def __init__(self,
                  model: ModelWrapperBase,
-                 model_transformations: List[TransformerBase],
+                 model_transformations: Union[List[TransformerBase], None]=None,
                  splitter: DataSplitterBase=None,
                  evaluator: EvaluatorBase=None,
                  scores: List[ScoreBase]=None,

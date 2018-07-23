@@ -157,3 +157,4 @@ from .unsupervised.ClusteringHierarchical import ClusteringHierarchicalAffinity,
 from .unsupervised.ClusteringKmeans import ClusteringKMeans, ClusteringKMeansHP
 from .unsupervised.Clustering import Clustering, ClusteringHeatmapValues, ClusteringHeatmapAggStrategy, \
     ClusteringHeatmapTransStrategy
+from .unsupervised.ClusteringSearcher import ClusteringSearcher

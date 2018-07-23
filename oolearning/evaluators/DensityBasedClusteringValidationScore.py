@@ -18,7 +18,7 @@ class DensityBasedClusteringValidationScore(UtilityFunctionMixin, ScoreClusterin
 
     @property
     def name(self) -> str:
-        return Metric.SILHOUETTE.value
+        return Metric.DENSITY_BASED_CLUSTERING_VALIDATION.value
 
     def _calculate(self, clustered_data: pd.DataFrame, clusters: np.ndarray) -> float:
         """
