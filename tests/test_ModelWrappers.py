@@ -1777,7 +1777,9 @@ class ModelWrapperTests(TimerTestCase):
 
         fitter.train_predict_eval(data=data,
                                   target_variable=target_variable,
-                                  hyper_params=RandomForestHP(criterion='gini', n_estimators=10, max_features='auto'))
+                                  hyper_params=RandomForestHP(criterion='gini',
+                                                              n_estimators=10,
+                                                              max_features='auto'))
         assert isinstance(fitter.model.model_object, sk.ensemble.ExtraTreesClassifier)
         assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
         assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
@@ -2165,7 +2167,8 @@ class ModelWrapperTests(TimerTestCase):
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))
-        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=SvmPolynomialClassifierHP())
+        fitter.train_predict_eval(data=data,
+                                  hyper_params=SvmPolynomialClassifierHP())
         assert fitter.model._class_weights is None
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
@@ -2213,7 +2216,9 @@ class ModelWrapperTests(TimerTestCase):
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))
-        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=SvmPolynomialClassifierHP())
+        fitter.train_predict_eval(data=data,
+                                  target_variable='Survived',
+                                  hyper_params=SvmPolynomialClassifierHP())
         assert fitter.model._class_weights == {0: 0.3, 1: 0.7}
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
@@ -2282,7 +2287,9 @@ class ModelWrapperTests(TimerTestCase):
                               model_transformations=transformations,
                               splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
                               evaluator=RegressionEvaluator())
-        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=SvmPolynomialRegressorHP())
+        fitter.train_predict_eval(data=data,
+                                  target_variable='strength',
+                                  hyper_params=SvmPolynomialRegressorHP())
 
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
@@ -2309,7 +2316,9 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # test default hyper-parameters
         ######################################################################################################
-        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=CartDecisionTreeHP(criterion='mae'))
+        fitter.train_predict_eval(data=data,
+                                  target_variable='strength',
+                                  hyper_params=CartDecisionTreeHP(criterion='mae'))
 
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
@@ -2344,7 +2353,9 @@ class ModelWrapperTests(TimerTestCase):
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5,
                                                                       positive_class=1)))
-        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=CartDecisionTreeHP(criterion='gini'))
+        fitter.train_predict_eval(data=data,
+                                  target_variable='Survived',
+                                  hyper_params=CartDecisionTreeHP(criterion='gini'))
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
         assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
@@ -2512,7 +2523,9 @@ class ModelWrapperTests(TimerTestCase):
                               model_transformations=None,
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                               evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
-        fitter.train_predict_eval(data=data, target_variable=target_variable, hyper_params=AdaBoostClassifierHP())
+        fitter.train_predict_eval(data=data,
+                                  target_variable=target_variable,
+                                  hyper_params=AdaBoostClassifierHP())
 
         assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
         assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
@@ -2555,7 +2568,9 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # test default hyper-parameters
         ######################################################################################################
-        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=GradientBoostingRegressorHP())
+        fitter.train_predict_eval(data=data,
+                                  target_variable='strength',
+                                  hyper_params=GradientBoostingRegressorHP())
 
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
@@ -2589,7 +2604,9 @@ class ModelWrapperTests(TimerTestCase):
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5,
                                                                       positive_class=1)))
-        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=GradientBoostingClassifierHP())
+        fitter.train_predict_eval(data=data,
+                                  target_variable='Survived',
+                                  hyper_params=GradientBoostingClassifierHP())
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
         assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
@@ -2684,8 +2701,10 @@ class ModelWrapperTests(TimerTestCase):
                                   evaluator=TwoClassProbabilityEvaluator(
                                      converter=TwoClassThresholdConverter(threshold=0.5,
                                                                           positive_class=1)))
-            fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC,  # noqa
-                                                                                                        n_estimators=100))
+            fitter.train_predict_eval(data=data,
+                                      target_variable='Survived',
+                                      hyper_params=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC,
+                                                                 n_estimators=100))
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
             assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
@@ -2708,8 +2727,10 @@ class ModelWrapperTests(TimerTestCase):
                                   evaluator=TwoClassProbabilityEvaluator(
                                      converter=TwoClassThresholdConverter(threshold=0.5,
                                                                           positive_class=1)))
-            fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC,  # noqa
-                                                                                                        n_estimators=1000))
+            fitter.train_predict_eval(data=data,
+                                      target_variable='Survived',
+                                      hyper_params=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC,
+                                                                 n_estimators=1000))
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
             assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
@@ -2739,8 +2760,10 @@ class ModelWrapperTests(TimerTestCase):
                                   evaluator=TwoClassProbabilityEvaluator(
                                      converter=TwoClassThresholdConverter(threshold=0.5,
                                                                           positive_class=1)))
-            fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC,  # noqa
-                                                                                                        n_estimators=1000))
+            fitter.train_predict_eval(data=data,
+                                      target_variable='Survived',
+                                      hyper_params=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC,
+                                                                 n_estimators=1000))
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
             assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
@@ -2870,8 +2893,8 @@ class ModelWrapperTests(TimerTestCase):
                        ModelInfo(model=AdaBoostClassifier(), hyper_params=AdaBoostClassifierHP())]
         model_aggregator = ModelAggregator(base_models=model_infos,
                                            aggregation_strategy=SoftVotingAggregationStrategy())
-        # `train_predict_eval()` does nothing, but make sure it doesn't explode in case it is used in a process that
-        # automatically calls `train_predict_eval()
+        # `train_predict_eval()` does nothing, but make sure it doesn't explode in case it is used in a
+        # process that automatically calls `train_predict_eval()
         model_aggregator.train(data_x=train_x, data_y=train_y)
 
         assert isinstance(model_aggregator._base_models[0].model, RandomForestClassifier)
@@ -2912,8 +2935,8 @@ class ModelWrapperTests(TimerTestCase):
                        ModelInfo(model=AdaBoostClassifier(), hyper_params=AdaBoostClassifierHP())]
         model_aggregator = ModelAggregator(base_models=model_infos,
                                            aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for _ in range(0, 3)]))  # noqa
-        # `train_predict_eval()` does nothing, but make sure it doesn't explode in case it is used in a process that
-        # automatically calls `train_predict_eval()
+        # `train_predict_eval()` does nothing, but make sure it doesn't explode in case it is used in a
+        # process that automatically calls `train_predict_eval()
         model_aggregator.train(data_x=train_x, data_y=train_y)
         voting_predictions = model_aggregator.predict(data_x=holdout_x)
 
@@ -2980,8 +3003,8 @@ class ModelWrapperTests(TimerTestCase):
                        ModelInfo(model=AdaBoostClassifier(), hyper_params=AdaBoostClassifierHP())]
         model_aggregator = ModelAggregator(base_models=model_infos,
                                            aggregation_strategy=SoftVotingAggregationStrategy())
-        # `train_predict_eval()` does nothing, but make sure it doesn't explode in case it is used in a process that
-        # automatically calls `train_predict_eval()
+        # `train_predict_eval()` does nothing, but make sure it doesn't explode in case it is used in a
+        # process that automatically calls `train_predict_eval()
         model_aggregator.train(data_x=train_x, data_y=train_y)
         voting_predictions = model_aggregator.predict(data_x=holdout_x)
 
@@ -3014,8 +3037,8 @@ class ModelWrapperTests(TimerTestCase):
                        ModelInfo(model=AdaBoostClassifier(), hyper_params=AdaBoostClassifierHP())]
         model_aggregator = ModelAggregator(base_models=model_infos,
                                            aggregation_strategy=HardVotingAggregationStrategy(converters=[copy.deepcopy(converter) for _ in range(0, 3)]))  # noqa
-        # `train_predict_eval()` does nothing, but make sure it doesn't explode in case it is used in a process that
-        # automatically calls `train_predict_eval()
+        # `train_predict_eval()` does nothing, but make sure it doesn't explode in case it is used in a
+        # process that automatically calls `train_predict_eval()
         model_aggregator.train(data_x=train_x, data_y=train_y)
         voting_predictions = model_aggregator.predict(data_x=holdout_x)
 
@@ -3210,7 +3233,8 @@ class ModelWrapperTests(TimerTestCase):
         predict_callback_called = list()
 
         def train_callback(train_meta_x, train_meta_y, hyper_params):
-            # the `train_meta_x` that we built in `train_predict_eval()` should have the same indexes as `train_meta_x
+            # the `train_meta_x` that we built in `train_predict_eval()` should have the same indexes as
+            # `train_meta_x
             assert all(train_meta_x.index.values == expected_train_x.index.values)
             # cached dataframe in `file_train_callback` are the predictions from the base model we expect
             TestHelper.ensure_all_values_equal_from_file(file=file_train_callback,
@@ -3278,7 +3302,9 @@ class ModelWrapperTests(TimerTestCase):
             assert fitter._persistence_manager._cache_directory == cache_directory
 
             time_start = time.time()
-            fitter.train_predict_eval(data=data, target_variable=target_variable, hyper_params=LogisticClassifierHP())
+            fitter.train_predict_eval(data=data,
+                                      target_variable=target_variable,
+                                      hyper_params=LogisticClassifierHP())
             time_stop = time.time()
             fit_time = time_stop - time_start
 
@@ -3316,7 +3342,9 @@ class ModelWrapperTests(TimerTestCase):
                                      converter=TwoClassThresholdConverter(threshold=0.5,
                                                                           positive_class=positive_class)))
             time_start = time.time()
-            fitter.train_predict_eval(data=data, target_variable=target_variable, hyper_params=LogisticClassifierHP())
+            fitter.train_predict_eval(data=data,
+                                      target_variable=target_variable,
+                                      hyper_params=LogisticClassifierHP())
             time_stop = time.time()
             fit_time = time_stop - time_start
 
@@ -3395,7 +3423,8 @@ class ModelWrapperTests(TimerTestCase):
         predict_callback_called = list()
 
         def train_callback(train_meta_x, train_meta_y, hyper_params):
-            # the `train_meta_x` that we built in `train_predict_eval()` should have the same indexes as `train_meta_x
+            # the `train_meta_x` that we built in `train_predict_eval()` should have the same indexes as
+            # `train_meta_x
             assert all(train_meta_x.index.values == expected_train_x.index.values)
             # cached dataframe in `file_train_callback` are the predictions from the base model we expect
             TestHelper.ensure_all_values_equal_from_file(file=file_train_callback,
@@ -3454,7 +3483,9 @@ class ModelWrapperTests(TimerTestCase):
                               evaluator=RegressionEvaluator())
         assert len(train_callback_called) == 0
         assert len(predict_callback_called) == 0
-        fitter.train_predict_eval(data=data, target_variable=target_variable, hyper_params=ElasticNetRegressorHP())
+        fitter.train_predict_eval(data=data,
+                                  target_variable=target_variable,
+                                  hyper_params=ElasticNetRegressorHP())
         # verify our callback is called. If it wasn't, we would never know and the assertions wouldn't run.
         assert train_callback_called == ['train_called']
         # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
@@ -3509,7 +3540,8 @@ class ModelWrapperTests(TimerTestCase):
         predict_callback_called = list()
 
         def train_callback(train_meta_x, train_meta_y, hyper_params):
-            # the `train_meta_x` that we built in `train_predict_eval()` should have the same indexes as `train_meta_x
+            # the `train_meta_x` that we built in `train_predict_eval()` should have the same indexes as
+            # `train_meta_x
             assert all(train_meta_x.index.values == expected_train_x.index.values)
             # cached dataframe in `file_train_callback` are the predictions from the base model we expect
             TestHelper.ensure_all_values_equal_from_file(file=file_train_callback,
@@ -3570,7 +3602,9 @@ class ModelWrapperTests(TimerTestCase):
                               evaluator=RegressionEvaluator())
         assert len(train_callback_called) == 0
         assert len(predict_callback_called) == 0
-        fitter.train_predict_eval(data=data, target_variable=target_variable, hyper_params=ElasticNetRegressorHP())
+        fitter.train_predict_eval(data=data,
+                                  target_variable=target_variable,
+                                  hyper_params=ElasticNetRegressorHP())
         # verify our callback is called. If it wasn't, we would never know and the assertions wouldn't run.
         assert train_callback_called == ['train_called']
         # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)

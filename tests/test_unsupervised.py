@@ -252,7 +252,8 @@ class UnsupervisedTests(TimerTestCase):
         TestHelper.check_plot('data/test_unsupervised/test_hierarchical_dendogram_plot.png',
                               lambda: Clustering.hierarchical_dendogram_plot(data=cluster_data,
                                                                              transformations=[NormalizationVectorSpaceTransformer()],  # noqa
-                                                                             linkage=ClusteringHierarchicalLinkage.WARD))  # noqa
+                                                                             linkage=ClusteringHierarchicalLinkage.WARD),  # noqa
+                              set_size=False)
 
     def test_Hierarchical_sklearn_normalization(self):
         data = TestHelper.get_iris_data()
@@ -547,4 +548,5 @@ class UnsupervisedTests(TimerTestCase):
         )
         results = searcher.search(data=data)
         TestHelper.check_plot('data/test_unsupervised/ClusteringSearcher_heatmap.png',
-                              lambda: results.heatmap())
+                              lambda: results.heatmap(),
+                              set_size=False)

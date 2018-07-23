@@ -156,15 +156,16 @@ class TestHelper:
         assert all([isclose(dictionary_1[x], dictionary_2[x]) for x in dictionary_1.keys()])  # noqa
 
     @staticmethod
-    def check_plot(file_name: str, get_plot_function: Callable):
+    def check_plot(file_name: str, get_plot_function: Callable, set_size: bool=True):
         plt.gcf().clear()
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory(file_name))
         if os.path.isfile(file):
             os.remove(file)
         assert os.path.isfile(file) is False
         get_plot_function()
-        fig = plt.gcf()
-        fig.set_size_inches(11, 7)
+        if set_size:
+            fig = plt.gcf()
+            fig.set_size_inches(11, 7)
         plt.savefig(file)
         plt.gcf().clear()
         assert os.path.isfile(file)
