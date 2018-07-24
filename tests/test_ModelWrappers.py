@@ -2891,7 +2891,7 @@ class ModelWrapperTests(TimerTestCase):
 
         assert isclose(roc_auc_score(y_true=holdout_y, y_score=predictions_random_forest[1]), 0.8230566534914362)  # noqa
         assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_decision_tree.predict(data_x=holdout_x)[1]), 0.772463768115942)  # noqa
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_adaboost.predict(data_x=holdout_x)[1]), 0.77832674571805)  # noqa
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_adaboost.predict(data_x=holdout_x)[1]), 0.7928853754940711)  # noqa
 
         ######################################################################################################
         # VotingStrategy.SOFT
@@ -2931,7 +2931,7 @@ class ModelWrapperTests(TimerTestCase):
         # make sure we are getting the correct averages back
         assert all([isclose(x, y) for x, y in zip(voting_predictions[0], died_averages)])
         assert all([isclose(x, y) for x, y in zip(voting_predictions[1], survived_averages)])
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.8073781291172596)  # noqa
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.8108036890645587)  # noqa
 
         ######################################################################################################
         # VotingStrategy.HARD
@@ -2965,7 +2965,7 @@ class ModelWrapperTests(TimerTestCase):
         # [1 if x > 0.5 else 0 for x in predictions_random_forest[1]]
         # [1 if x > 0.5 else 0 for x in model_aggregator.predict(data_x=holdout_x)[1]]
         # list(holdout_y)
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.7853096179183136)  # noqa
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.7857048748353096)  # noqa
 
     def test_ModelAggregator_multi_class(self):
         data = TestHelper.get_iris_data()
