@@ -2514,8 +2514,15 @@ class ModelWrapperTests(TimerTestCase):
         actual_params = fitter.model.model_object.get_params()
         assert all([actual_params[key] == value for key, value in expected_params.items()])
 
-        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9992991063606097, 'AUC Precision/Recall': 0.9984018681159533, 'Kappa': 0.9641059680549836, 'F1 Score': 0.9776119402985075, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.9597069597069597, 'True Negative Rate': 0.9977220956719818, 'False Positive Rate': 0.002277904328018223, 'False Negative Rate': 0.040293040293040296, 'Positive Predictive Value': 0.9961977186311787, 'Negative Predictive Value': 0.9755011135857461, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.797957839262187, 'AUC Precision/Recall': 0.7339255444753214, 'Kappa': 0.5770035784214436, 'F1 Score': 0.7286821705426356, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6811594202898551, 'True Negative Rate': 0.8818181818181818, 'False Positive Rate': 0.11818181818181818, 'False Negative Rate': 0.3188405797101449, 'Positive Predictive Value': 0.7833333333333333, 'Negative Predictive Value': 0.8151260504201681, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        expected_values = {'AUC ROC': 0.9992991063606097, 'AUC Precision/Recall': 0.9984018681159533, 'Kappa': 0.9641059680549836, 'F1 Score': 0.9776119402985075, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.9597069597069597, 'True Negative Rate': 0.9977220956719818, 'False Positive Rate': 0.002277904328018223, 'False Negative Rate': 0.040293040293040296, 'Positive Predictive Value': 0.9961977186311787, 'Negative Predictive Value': 0.9755011135857461, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        actual_values = fitter.training_evaluator.all_quality_metrics
+        assert all([x == y for x, y in zip(expected_values.keys(), actual_values.keys())])
+        assert all([isclose(x, y) for x, y in zip(expected_values.values(), actual_values.values())])
+
+        expected_values = {'AUC ROC': 0.8030961791831357, 'AUC Precision/Recall': 0.7446072340377528, 'Kappa': 0.5179100457850795, 'F1 Score': 0.6923076923076924, 'Two-Class Accuracy': 0.776536312849162, 'Error Rate': 0.22346368715083798, 'True Positive Rate': 0.6521739130434783, 'True Negative Rate': 0.8545454545454545, 'False Positive Rate': 0.14545454545454545, 'False Negative Rate': 0.34782608695652173, 'Positive Predictive Value': 0.7377049180327869, 'Negative Predictive Value': 0.7966101694915254, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        actual_values = fitter.holdout_evaluator.all_quality_metrics
+        assert all([x == y for x, y in zip(expected_values.keys(), actual_values.keys())])
+        assert all([isclose(x, y) for x, y in zip(expected_values.values(), actual_values.values())])
 
     def test_AdaBoostClassifier_multiclass(self):
         data = TestHelper.get_iris_data()
