@@ -270,10 +270,10 @@ class ExploratoryTests(TimerTestCase):
         assert all(unique_values.freq.values == [700, 300])
         assert all(unique_values.perc.values == [0.7, 0.3])
 
-        TestHelper.check_plot('data/test_exploratory/unique_purpose.png',  # noqa
+        TestHelper.check_plot('data/test_Exploratory/unique_purpose.png',  # noqa
                               lambda: explore.plot_unique_values(categoric_feature='purpose'))
 
-        TestHelper.check_plot('data/test_exploratory/unique_default.png',  # noqa
+        TestHelper.check_plot('data/test_Exploratory/unique_default.png',  # noqa
                               lambda: explore.plot_unique_values(categoric_feature=target_variable))
 
         ######################################################################################################
@@ -295,12 +295,12 @@ class ExploratoryTests(TimerTestCase):
         assert all(unique_values.perc.values == [0.274, 0.269, 0.063, 0.394])
 
         # not ordered by feature, ordered by frequency
-        TestHelper.check_plot('data/test_exploratory/unique_checking_balance_not_sorted.png',
+        TestHelper.check_plot('data/test_Exploratory/unique_checking_balance_not_sorted.png',
                               lambda: explore.plot_unique_values(categoric_feature='checking_balance',
                                                                  sort_by_feature=False))
 
         # ordered
-        TestHelper.check_plot('data/test_exploratory/unique_checking_balance_sort.png',
+        TestHelper.check_plot('data/test_Exploratory/unique_checking_balance_sort.png',
                               lambda: explore.plot_unique_values(categoric_feature='checking_balance',
                                                                  sort_by_feature=True))
 
@@ -346,13 +346,13 @@ class ExploratoryTests(TimerTestCase):
         # cannot get unique values on numeric feature
         self.assertRaises(AssertionError, lambda: explore.plot_histogram(numeric_feature=target_variable))
 
-        TestHelper.check_plot('data/test_exploratory/hist_amount.png',
+        TestHelper.check_plot('data/test_Exploratory/hist_amount.png',
                               lambda: explore.plot_histogram(numeric_feature='amount'))
 
-        TestHelper.check_plot('data/test_exploratory/hist_amount_bins.png',
+        TestHelper.check_plot('data/test_Exploratory/hist_amount_bins.png',
                               lambda: explore.plot_histogram(numeric_feature='amount', num_bins=20))
 
-        TestHelper.check_plot('data/test_exploratory/hist_years_at_residence.png',
+        TestHelper.check_plot('data/test_Exploratory/hist_years_at_residence.png',
                               lambda: explore.plot_histogram(numeric_feature='years_at_residence'))
 
     def test_ExploreDatasetBase_boxplot(self):
@@ -364,10 +364,10 @@ class ExploratoryTests(TimerTestCase):
         # cannot get unique values on numeric feature
         self.assertRaises(AssertionError, lambda: explore.plot_boxplot(numeric_feature=target_variable))
 
-        TestHelper.check_plot('data/test_exploratory/boxplot_amount.png',
+        TestHelper.check_plot('data/test_Exploratory/boxplot_amount.png',
                               lambda: explore.plot_boxplot(numeric_feature='amount'))
 
-        TestHelper.check_plot('data/test_exploratory/boxplot_years_at_residence.png',
+        TestHelper.check_plot('data/test_Exploratory/boxplot_years_at_residence.png',
                               lambda: explore.plot_boxplot(numeric_feature='years_at_residence'))
 
     def test_ExploreDatasetBase_scatter_plot_numerics(self):
@@ -376,7 +376,7 @@ class ExploratoryTests(TimerTestCase):
 
         explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
 
-        TestHelper.check_plot('data/test_exploratory/scatter_plot_numerics_subset.png',
+        TestHelper.check_plot('data/test_Exploratory/scatter_plot_numerics_subset.png',
                               lambda: explore.plot_scatterplot_numerics(numeric_columns=['median_house_value', 'median_income', 'total_rooms', 'housing_median_age']))  # noqa
 
     def test_ExploreDatasetBase_correlations(self):
@@ -392,7 +392,7 @@ class ExploratoryTests(TimerTestCase):
 
             explore = MockExploreBase.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
 
-            file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_exploratory/credit_correlation_heatmap.png'))  # noqa
+            file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/credit_correlation_heatmap.png'))  # noqa
             assert os.path.isfile(file)
             os.remove(file)
             assert os.path.isfile(file) is False
@@ -444,16 +444,16 @@ class ExploratoryTests(TimerTestCase):
         # cannot get unique values on numeric feature
         self.assertRaises(AssertionError, lambda: explore.plot_against_target(feature=target_variable))
 
-        TestHelper.check_plot('data/test_exploratory/compare_against_target_phone.png',
+        TestHelper.check_plot('data/test_Exploratory/compare_against_target_phone.png',
                               lambda: explore.plot_against_target(feature='phone'))
 
-        TestHelper.check_plot('data/test_exploratory/compare_against_target_checking_balance.png',
+        TestHelper.check_plot('data/test_Exploratory/compare_against_target_checking_balance.png',
                               lambda: explore.plot_against_target(feature='checking_balance'))
 
-        TestHelper.check_plot('data/test_exploratory/compare_against_target_amount.png',
+        TestHelper.check_plot('data/test_Exploratory/compare_against_target_amount.png',
                               lambda: explore.plot_against_target(feature='amount'))
 
-        TestHelper.check_plot('data/test_exploratory/plot_histogram_against_target_amount.png',
+        TestHelper.check_plot('data/test_Exploratory/plot_histogram_against_target_amount.png',
                               lambda: explore.plot_histogram_against_target(numeric_feature='amount'))
 
         explore.plot_histogram_against_target(numeric_feature='amount')
@@ -485,8 +485,8 @@ class ExploratoryTests(TimerTestCase):
         # cannot get unique values on numeric feature
         self.assertRaises(AssertionError, lambda: explore.plot_against_target(feature=target_variable))
 
-        TestHelper.check_plot('data/test_exploratory/compare_against_target_ocean_proximity.png',
+        TestHelper.check_plot('data/test_Exploratory/compare_against_target_ocean_proximity.png',
                               lambda: explore.plot_against_target(feature='ocean_proximity'))
 
-        TestHelper.check_plot('data/test_exploratory/compare_against_target_median_income.png',
+        TestHelper.check_plot('data/test_Exploratory/compare_against_target_median_income.png',
                               lambda: explore.plot_against_target(feature='median_income'))

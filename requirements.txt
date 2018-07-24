@@ -1,5 +1,5 @@
 xgboost
-dill
+dill==0.2.7.1
 hdbscan
 mock
 scikit-learn
