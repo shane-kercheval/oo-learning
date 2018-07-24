@@ -1,3 +1,7 @@
+dill
+hdbscan
+mock
+scikit-learn
 certifi==2018.4.16
 cycler==0.10.0
 kiwisolver==1.0.1
