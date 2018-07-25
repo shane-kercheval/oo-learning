@@ -1979,28 +1979,28 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}
 
         con_matrix = fitter.training_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 0].values.tolist() == [387, 89, 476]
-        assert con_matrix.matrix.loc[:, 1].values.tolist() == [52, 184, 236]
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [386, 85, 471]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [53, 188, 241]
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
         assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
         assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.training_evaluator.auc_roc, 0.8621826161689488)
+        assert isclose(fitter.training_evaluator.auc_roc, 0.860063247306983)
 
         con_matrix = fitter.holdout_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 0].values.tolist() == [99, 27, 126]
-        assert con_matrix.matrix.loc[:, 1].values.tolist() == [11, 42, 53]
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [99, 24, 123]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [11, 45, 56]
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
         assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
         assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8363636363636364)
+        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8404479578392622)
 
         actual_metrics = fitter.training_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8621826161689488, 'AUC Precision/Recall': 0.8353822535872308, 'Kappa': 0.5701514009728027, 'F1 Score': 0.7229862475442044, 'Two-Class Accuracy': 0.8019662921348315, 'Error Rate': 0.19803370786516855, 'True Positive Rate': 0.673992673992674, 'True Negative Rate': 0.8815489749430524, 'False Positive Rate': 0.11845102505694761, 'False Negative Rate': 0.326007326007326, 'Positive Predictive Value': 0.7796610169491526, 'Negative Predictive Value': 0.8130252100840336, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        expected_metrics = {'AUC ROC': 0.860063247306983, 'AUC Precision/Recall': 0.8309551302990441, 'Kappa': 0.5807869204973077, 'F1 Score': 0.7315175097276264, 'Two-Class Accuracy': 0.8061797752808989, 'Error Rate': 0.19382022471910113, 'True Positive Rate': 0.6886446886446886, 'True Negative Rate': 0.8792710706150342, 'False Positive Rate': 0.12072892938496584, 'False Negative Rate': 0.31135531135531136, 'Positive Predictive Value': 0.7800829875518672, 'Negative Predictive Value': 0.8195329087048833, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
         actual_metrics = fitter.holdout_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8363636363636364, 'AUC Precision/Recall': 0.7935282490390818, 'Kappa': 0.5316717157807767, 'F1 Score': 0.6885245901639344, 'Two-Class Accuracy': 0.7877094972067039, 'Error Rate': 0.2122905027932961, 'True Positive Rate': 0.6086956521739131, 'True Negative Rate': 0.9, 'False Positive Rate': 0.1, 'False Negative Rate': 0.391304347826087, 'Positive Predictive Value': 0.7924528301886793, 'Negative Predictive Value': 0.7857142857142857, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        expected_metrics = {'AUC ROC': 0.8404479578392622, 'AUC Precision/Recall': 0.7855258319080893, 'Kappa': 0.5722673585034479, 'F1 Score': 0.7200000000000001, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6521739130434783, 'True Negative Rate': 0.9, 'False Positive Rate': 0.1, 'False Negative Rate': 0.34782608695652173, 'Positive Predictive Value': 0.8035714285714286, 'Negative Predictive Value': 0.8048780487804879, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
         assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
@@ -2025,28 +2025,28 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}
 
         con_matrix = fitter.training_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 0].values.tolist() == [379, 82, 461]
-        assert con_matrix.matrix.loc[:, 1].values.tolist() == [60, 191, 251]
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [374, 80, 454]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [65, 193, 258]
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
         assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
         assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.training_evaluator.auc_roc, 0.8619656728996137)
+        assert isclose(fitter.training_evaluator.auc_roc, 0.8557076939764867)
 
         con_matrix = fitter.holdout_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 0].values.tolist() == [97, 22, 119]
-        assert con_matrix.matrix.loc[:, 1].values.tolist() == [13, 47, 60]
+        assert con_matrix.matrix.loc[:, 0].values.tolist() == [92, 23, 115]
+        assert con_matrix.matrix.loc[:, 1].values.tolist() == [18, 46, 64]
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
         assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
         assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8433465085638999)
+        assert isclose(fitter.holdout_evaluator.auc_roc, 0.825691699604743)
 
         actual_metrics = fitter.training_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8619656728996137, 'AUC Precision/Recall': 0.8299329798408961, 'Kappa': 0.5716694486574423, 'F1 Score': 0.7290076335877862, 'Two-Class Accuracy': 0.800561797752809, 'Error Rate': 0.199438202247191, 'True Positive Rate': 0.6996336996336996, 'True Negative Rate': 0.8633257403189066, 'False Positive Rate': 0.1366742596810934, 'False Negative Rate': 0.30036630036630035, 'Positive Predictive Value': 0.7609561752988048, 'Negative Predictive Value': 0.8221258134490239, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        expected_metrics = {'AUC ROC': 0.8557076939764867, 'AUC Precision/Recall': 0.8088979642448655, 'Kappa': 0.5647628201885297, 'F1 Score': 0.7269303201506591, 'Two-Class Accuracy': 0.7963483146067416, 'Error Rate': 0.20365168539325842, 'True Positive Rate': 0.706959706959707, 'True Negative Rate': 0.8519362186788155, 'False Positive Rate': 0.1480637813211845, 'False Negative Rate': 0.29304029304029305, 'Positive Predictive Value': 0.748062015503876, 'Negative Predictive Value': 0.8237885462555066, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
         actual_metrics = fitter.holdout_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8433465085638999, 'AUC Precision/Recall': 0.7813374079453008, 'Kappa': 0.5770035784214436, 'F1 Score': 0.7286821705426356, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6811594202898551, 'True Negative Rate': 0.8818181818181818, 'False Positive Rate': 0.11818181818181818, 'False Negative Rate': 0.3188405797101449, 'Positive Predictive Value': 0.7833333333333333, 'Negative Predictive Value': 0.8151260504201681, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        expected_metrics = {'AUC ROC': 0.825691699604743, 'AUC Precision/Recall': 0.7585708147490251, 'Kappa': 0.5099165275459098, 'F1 Score': 0.6917293233082707, 'Two-Class Accuracy': 0.770949720670391, 'Error Rate': 0.22905027932960895, 'True Positive Rate': 0.6666666666666666, 'True Negative Rate': 0.8363636363636363, 'False Positive Rate': 0.16363636363636364, 'False Negative Rate': 0.3333333333333333, 'Positive Predictive Value': 0.71875, 'Negative Predictive Value': 0.8, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
         assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
@@ -2078,28 +2078,28 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}
 
         con_matrix = fitter.training_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [387, 89, 476]
-        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [52, 184, 236]
+        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [386, 85, 471]
+        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [53, 188, 241]
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
         assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
         assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
-        assert isclose(fitter.training_evaluator.auc_roc, 0.8621826161689488)
+        assert isclose(fitter.training_evaluator.auc_roc, 0.860063247306983)
 
         con_matrix = fitter.holdout_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [99, 27, 126]
-        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [11, 42, 53]
+        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [99, 24, 123]
+        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [11, 45, 56]
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
         assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
         assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
-        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8363636363636364)
+        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8404479578392622)
 
         actual_metrics = fitter.training_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8621826161689488, 'AUC Precision/Recall': 0.8353822535872308, 'Kappa': 0.5701514009728027, 'F1 Score': 0.7229862475442044, 'Two-Class Accuracy': 0.8019662921348315, 'Error Rate': 0.19803370786516855, 'True Positive Rate': 0.673992673992674, 'True Negative Rate': 0.8815489749430524, 'False Positive Rate': 0.11845102505694761, 'False Negative Rate': 0.326007326007326, 'Positive Predictive Value': 0.7796610169491526, 'Negative Predictive Value': 0.8130252100840336, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        expected_metrics = {'AUC ROC': 0.860063247306983, 'AUC Precision/Recall': 0.8309551302990441, 'Kappa': 0.5807869204973077, 'F1 Score': 0.7315175097276264, 'Two-Class Accuracy': 0.8061797752808989, 'Error Rate': 0.19382022471910113, 'True Positive Rate': 0.6886446886446886, 'True Negative Rate': 0.8792710706150342, 'False Positive Rate': 0.12072892938496584, 'False Negative Rate': 0.31135531135531136, 'Positive Predictive Value': 0.7800829875518672, 'Negative Predictive Value': 0.8195329087048833, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
         actual_metrics = fitter.holdout_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8363636363636364, 'AUC Precision/Recall': 0.7935282490390818, 'Kappa': 0.5316717157807767, 'F1 Score': 0.6885245901639344, 'Two-Class Accuracy': 0.7877094972067039, 'Error Rate': 0.2122905027932961, 'True Positive Rate': 0.6086956521739131, 'True Negative Rate': 0.9, 'False Positive Rate': 0.1, 'False Negative Rate': 0.391304347826087, 'Positive Predictive Value': 0.7924528301886793, 'Negative Predictive Value': 0.7857142857142857, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        expected_metrics = {'AUC ROC': 0.8404479578392622, 'AUC Precision/Recall': 0.7855258319080893, 'Kappa': 0.5722673585034479, 'F1 Score': 0.7200000000000001, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6521739130434783, 'True Negative Rate': 0.9, 'False Positive Rate': 0.1, 'False Negative Rate': 0.34782608695652173, 'Positive Predictive Value': 0.8035714285714286, 'Negative Predictive Value': 0.8048780487804879, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
         assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
@@ -2124,28 +2124,28 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}
 
         con_matrix = fitter.training_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [379, 82, 461]
-        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [60, 191, 251]
+        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [374, 80, 454]
+        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [65, 193, 258]
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
         assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
         assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
-        assert isclose(fitter.training_evaluator.auc_roc, 0.8619656728996137)
+        assert isclose(fitter.training_evaluator.auc_roc, 0.8557076939764867)
 
         con_matrix = fitter.holdout_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [97, 22, 119]
-        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [13, 47, 60]
+        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [92, 23, 115]
+        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [18, 46, 64]
         assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
         assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
         assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
-        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8433465085638999)
+        assert isclose(fitter.holdout_evaluator.auc_roc, 0.825691699604743)
 
         actual_metrics = fitter.training_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8619656728996137, 'AUC Precision/Recall': 0.8299329798408961, 'Kappa': 0.5716694486574423, 'F1 Score': 0.7290076335877862, 'Two-Class Accuracy': 0.800561797752809, 'Error Rate': 0.199438202247191, 'True Positive Rate': 0.6996336996336996, 'True Negative Rate': 0.8633257403189066, 'False Positive Rate': 0.1366742596810934, 'False Negative Rate': 0.30036630036630035, 'Positive Predictive Value': 0.7609561752988048, 'Negative Predictive Value': 0.8221258134490239, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        expected_metrics = {'AUC ROC': 0.8557076939764867, 'AUC Precision/Recall': 0.8088979642448655, 'Kappa': 0.5647628201885297, 'F1 Score': 0.7269303201506591, 'Two-Class Accuracy': 0.7963483146067416, 'Error Rate': 0.20365168539325842, 'True Positive Rate': 0.706959706959707, 'True Negative Rate': 0.8519362186788155, 'False Positive Rate': 0.1480637813211845, 'False Negative Rate': 0.29304029304029305, 'Positive Predictive Value': 0.748062015503876, 'Negative Predictive Value': 0.8237885462555066, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
         assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
         actual_metrics = fitter.holdout_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8433465085638999, 'AUC Precision/Recall': 0.7813374079453008, 'Kappa': 0.5770035784214436, 'F1 Score': 0.7286821705426356, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6811594202898551, 'True Negative Rate': 0.8818181818181818, 'False Positive Rate': 0.11818181818181818, 'False Negative Rate': 0.3188405797101449, 'Positive Predictive Value': 0.7833333333333333, 'Negative Predictive Value': 0.8151260504201681, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        expected_metrics = {'AUC ROC': 0.825691699604743, 'AUC Precision/Recall': 0.7585708147490251, 'Kappa': 0.5099165275459098, 'F1 Score': 0.6917293233082707, 'Two-Class Accuracy': 0.770949720670391, 'Error Rate': 0.22905027932960895, 'True Positive Rate': 0.6666666666666666, 'True Negative Rate': 0.8363636363636363, 'False Positive Rate': 0.16363636363636364, 'False Negative Rate': 0.3333333333333333, 'Positive Predictive Value': 0.71875, 'Negative Predictive Value': 0.8, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
         assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
