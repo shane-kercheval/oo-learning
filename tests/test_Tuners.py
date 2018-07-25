@@ -506,7 +506,7 @@ class TunerTests(TimerTestCase):
             assert tuner.results._tune_results_objects.iloc[index].max_depth == tuner.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['max_depth']  # noqa
 
         tuner_scores = tuner.results._tune_results_objects.iloc[0].resampler_object.score_means
-        expected_scores = {'kappa': 0.5919671489816765, 'sensitivity': 0.6960690967835372, 'specificity': 0.8837468870856553, 'error_rate': 0.18808609351805455}  # noqa
+        expected_scores = {'kappa': 0.5939055543285305, 'sensitivity': 0.7026889336045273, 'specificity': 0.8802720680336996, 'error_rate': 0.18753105999861713}  # noqa
 
         assert tuner_scores.keys() == expected_scores.keys()
         assert all([isclose(x, y) for x, y in zip(tuner_scores.values(), expected_scores.values())])
@@ -532,7 +532,7 @@ class TunerTests(TimerTestCase):
             assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
                                                       data_frame2=tuner.results.sorted_best_models)
 
-        assert all(tuner.results.sorted_best_models.index.values == [2, 5, 4, 1, 6, 3, 0, 7])
+        assert all(tuner.results.sorted_best_models.index.values == [2, 4, 1, 3, 6, 5, 0, 7])
 
     def test_tuner_with_no_hyper_params(self):
         data = TestHelper.get_cement_data()
