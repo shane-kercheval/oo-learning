@@ -1353,7 +1353,7 @@ class TransformerTests(TimerTestCase):
         assert pca_transformer.state is None
 
         pca_transformer.fit(data_x=training_set)
-        assert list(pca_transformer.cumulative_explained_variance) == [0.955751167228117]
+        assert all([isclose(x, y) for x, y in zip(pca_transformer.cumulative_explained_variance, [0.955751167228117])])
         assert pca_transformer.number_of_components == 1
         assert pca_transformer.state == {'categorical_features': ['ocean_proximity', 'temp_categorical']}
 
