@@ -2967,6 +2967,71 @@ class ModelWrapperTests(TimerTestCase):
         # list(holdout_y)
         assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.7857048748353096)  # noqa
 
+    def test_ModelAggregator_soft_median(self):
+        data = TestHelper.get_titanic_data()
+        data.drop(columns=['PassengerId', 'Name', 'Ticket', 'Cabin', 'Age', 'Embarked'], inplace=True)
+        data.Sex = [1 if x == 'male' else 0 for x in data.Sex]
+        # data.Survived = [ if x == 'male' else 0 for x in data.Sex]
+        target_variable = 'Survived'
+        train_x, train_y, holdout_x, holdout_y = TestHelper.split_train_holdout_class(data, target_variable)
+
+        ######################################################################################################
+        # Build Classifiers that will be using by the ModelAggregator (must be pre-trained)
+        ######################################################################################################
+        model_random_forest = RandomForestClassifier()
+        model_random_forest.train(data_x=train_x, data_y=train_y, hyper_params=RandomForestHP())
+
+        model_decision_tree = CartDecisionTreeClassifier()
+        model_decision_tree.train(data_x=train_x, data_y=train_y, hyper_params=CartDecisionTreeHP())
+
+        model_adaboost = AdaBoostClassifier()
+        model_adaboost.train(data_x=train_x, data_y=train_y, hyper_params=AdaBoostClassifierHP())
+
+        predictions_random_forest = model_random_forest.predict(data_x=holdout_x)
+        predictions_decision_tree = model_decision_tree.predict(data_x=holdout_x)
+        predictions_adaboost = model_adaboost.predict(data_x=holdout_x)
+        # model_predictions = [predictions_random_forest, predictions_decision_tree, predictions_adaboost]
+        died_averages = np.median([predictions_random_forest[0].values, predictions_decision_tree[0].values,
+                                   predictions_adaboost[0].values], axis=0)
+        survived_averages = np.median([predictions_random_forest[1].values, predictions_decision_tree[1].values,  # noqa
+                                       predictions_adaboost[1].values], axis=0)
+
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=predictions_random_forest[1]), 0.8230566534914362)  # noqa
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_decision_tree.predict(data_x=holdout_x)[1]), 0.772463768115942)  # noqa
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_adaboost.predict(data_x=holdout_x)[1]), 0.7928853754940711)  # noqa
+
+        ######################################################################################################
+        # VotingStrategy.SOFT
+        ######################################################################################################
+        model_infos = [ModelInfo(model=RandomForestClassifier(), hyper_params=RandomForestHP()),
+                       ModelInfo(model=CartDecisionTreeClassifier(), hyper_params=CartDecisionTreeHP()),
+                       ModelInfo(model=AdaBoostClassifier(), hyper_params=AdaBoostClassifierHP())]
+        model_aggregator = ModelAggregator(base_models=model_infos,
+                                           aggregation_strategy=SoftVotingAggregationStrategy(aggregation=np.median))  # noqa
+        # `train_predict_eval()` does nothing, but make sure it doesn't explode in case it is used in a
+        # process that automatically calls `train_predict_eval()
+        model_aggregator.train(data_x=train_x, data_y=train_y)
+
+        assert isinstance(model_aggregator._base_models[0].model, RandomForestClassifier)
+        assert isinstance(model_aggregator._base_models[1].model, CartDecisionTreeClassifier)
+        assert isinstance(model_aggregator._base_models[2].model, AdaBoostClassifier)
+        assert isinstance(model_aggregator._base_models[0].hyper_params, RandomForestHP)
+        assert isinstance(model_aggregator._base_models[1].hyper_params, CartDecisionTreeHP)
+        assert isinstance(model_aggregator._base_models[2].hyper_params, AdaBoostClassifierHP)
+        assert model_aggregator._base_transformation_pipeline[0].transformations is None
+        assert model_aggregator._base_transformation_pipeline[1].transformations is None
+        assert model_aggregator._base_transformation_pipeline[2].transformations is None
+
+        voting_predictions = model_aggregator.predict(data_x=holdout_x)
+
+        assert all(voting_predictions.index.values == holdout_x.index.values)
+        assert all(voting_predictions.columns.values == predictions_random_forest.columns.values)
+
+        # make sure we are getting the correct averages back
+        assert all([isclose(x, y) for x, y in zip(voting_predictions[0], died_averages)])
+        assert all([isclose(x, y) for x, y in zip(voting_predictions[1], survived_averages)])
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.803491436100132)  # noqa
+
     def test_ModelAggregator_multi_class(self):
         data = TestHelper.get_iris_data()
         target_variable = 'species'
