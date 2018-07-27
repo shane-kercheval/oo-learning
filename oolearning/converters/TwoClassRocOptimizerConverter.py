@@ -42,7 +42,7 @@ class TwoClassRocOptimizerConverter(TwoClassConverterBase):
     """
     def __init__(self,
                  positive_class: Union[str, int],
-                 actual_classes: np.ndarray,
+                 actual_classes: Union[np.ndarray, list],
                  parallelization_cores: int = -1):
         """
         :param positive_class: the positive class (string or int)

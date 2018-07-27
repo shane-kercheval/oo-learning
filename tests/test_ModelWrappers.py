@@ -3658,9 +3658,12 @@ class ModelWrapperTests(TimerTestCase):
             else:
                 raise ValueError()
 
+        cart_info = self.get_CartDecisionTreeRegressor()
+        gbm_info = self.get_GradientBoostingRegressor()
+
         model_stacker = ModelStacker(base_models=[ModelDefaults.get_LinearRegressor(degrees=2),
-                                                  self.get_CartDecisionTreeRegressor(),
-                                                  self.get_GradientBoostingRegressor()],
+                                                  cart_info,
+                                                  gbm_info],
                                      scores=[MaeScore(), RmseScore()],
                                      stacking_model=ElasticNetRegressor(),
                                      stacking_transformations=[CenterScaleTransformer()],
@@ -3726,6 +3729,65 @@ class ModelWrapperTests(TimerTestCase):
         shutil.rmtree(cache_directory)
         # assert 6 < fit_time_not_previously_cached < 8  # looks like around ~7 seconds on average
         # assert fit_time_previously_cached < 2  # improves to less than 2 with caching
+
+    def test_ModelStacker_Tuning(self):
+        """
+        Ensure that we can re-use all of the objects passed into the ModelStacker so, e.g., we can Tune
+        """
+        data = TestHelper.get_titanic_data()
+        positive_class = 1
+        target_variable = 'Survived'
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class)),  # noqa
+                      SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class))]  # noqa
+
+        cart_base_model = ModelInfo(description='cart',
+                                    model=CartDecisionTreeClassifier(),
+                                    transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                                    hyper_params=CartDecisionTreeHP(),
+                                    converter=ExtractPredictionsColumnConverter(column=positive_class))
+        rf_base_model = ModelInfo(description='random_forest',
+                                  model=RandomForestClassifier(),
+                                  transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                                  hyper_params=RandomForestHP(),
+                                  converter=ExtractPredictionsColumnConverter(column=positive_class))
+        base_models = [cart_base_model, rf_base_model]
+
+        model_stacker = ModelStacker(base_models=base_models,
+                                     scores=score_list,
+                                     stacking_model=LogisticClassifier(),
+                                     stacking_transformations=None)
+
+        transformations = [
+            RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+            ImputationTransformer()
+        ]
+        resampler = RepeatedCrossValidationResampler(model=model_stacker,
+                                                     transformations=transformations,
+                                                     scores=score_list,
+                                                     folds=3,
+                                                     repeats=1,
+                                                     # fold_decorators=[TwoClassThresholdDecorator(parallelization_cores=0)]
+                                                     )
+        tuner = ModelTuner(resampler=resampler,
+                           hyper_param_object=LogisticClassifierHP(),
+                           parallelization_cores=-1)  # Hyper-Parameter object specific to RF
+
+        # define the combinations of hyper-params that we want to evaluate
+        grid = HyperParamsGrid(params_dict=dict(regularization_inverse=[0.001, 0.01, 0.05, 0.1, 1, 5, 8, 10]))
+        tuner.tune(data_x=data.drop(columns=target_variable),
+                   data_y=data[target_variable],
+                   params_grid=grid)
+
+        # if these were actually reused each time they should still be None
+        assert model_stacker._model_object is None
+        assert all([x.value is None for x in score_list])
+        assert all([x.state is None for x in transformations])
+        assert cart_base_model.model._model_object is None
+        assert rf_base_model.model._model_object is None
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_tuner_data.pkl'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file, expected_dataframe=tuner.results.resampled_stats)  # noqa
 
     def test_ModelDefaults(self):
         ######################################################################################################

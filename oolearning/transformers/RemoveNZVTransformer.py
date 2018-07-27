@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 from oolearning.transformers.TransformerBase import TransformerBase
 
@@ -24,7 +25,9 @@ class RemoveNZVTransformer(TransformerBase):
         means = data_x.mean()
         st_devs = data_x.std()
         assert all(means.index.values == st_devs.index.values)  # ensure same order
-        columns_to_remove = list(means[st_devs.values / abs(data_x.mean().values) < self._stdev_to_mean_ratio].index.values)  # noqa
+
+        mean_values = [x if x != 0 else 0.001 for x in data_x.mean().values]  # ensure no divide by zero
+        columns_to_remove = list(means[st_devs.values / np.abs(mean_values) < self._stdev_to_mean_ratio].index.values)  # noqa
 
         return dict(columns_to_remove=columns_to_remove)
 
