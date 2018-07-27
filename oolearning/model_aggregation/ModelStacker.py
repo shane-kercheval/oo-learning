@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from oolearning.OOLearningHelpers import OOLearningHelpers
+from oolearning.converters.ContinuousToClassConverterBase import ContinuousToClassConverterBase
 from oolearning.evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
 from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.model_processors.ModelInfo import ModelInfo
@@ -126,6 +127,7 @@ class ModelStacker(ModelWrapperBase):
                  scores: List[ScoreActualPredictedBase],
                  stacking_model: ModelWrapperBase,
                  stacking_transformations: List[TransformerBase] = None,
+                 converter: ContinuousToClassConverterBase = None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None,
                  predict_callback: Callable[[pd.DataFrame], None] = None):
@@ -136,6 +138,11 @@ class ModelStacker(ModelWrapperBase):
             ModelInfo objects. Transformations applied to ALL models (base and stacker) could be passed in
             via (for example) a ModelTrainer.)
         :param scores: since we are cross-validating, we can get a score from each base-model
+        :param converter: A Converter object specifying how the predictions (e.g. DataFrame of probabilities
+            for a classification problem) should be converted to classes. If the base_models `predict()`
+            returns a DataFrame, then a `converter` will need to be supplied to describe how to extract
+            the predictions for the positive class,
+                e.g. `converter=ExtractPredictionsColumnConverter(column=positive_class)`
         """
         super().__init__()
         # ensure unique model descriptions
@@ -146,6 +153,7 @@ class ModelStacker(ModelWrapperBase):
         self._stacking_model = stacking_model
         self._stacking_model_pipeline = None if stacking_transformations is None \
             else TransformerPipeline(transformations=stacking_transformations)
+        self._converter = converter
         self._resampler_results = list()
         self._base_model_pipelines = list()
         self._train_callback = train_callback
@@ -260,8 +268,12 @@ class ModelStacker(ModelWrapperBase):
             # with the positive class. For a multi-class, it might be to choose the class with the highest
             # probability
             predictions = decorator.holdout_predicted_values
-            if model_info.converter is not None:
-                predictions = model_info.converter.convert(values=predictions)
+            if isinstance(predictions, pd.DataFrame):
+                # if predictions is a DataFrame, then we need a Converter
+                assert self._converter is not None
+                predictions = self._converter.convert(values=predictions)
+            else:
+                assert isinstance(predictions, np.ndarray) or isinstance(predictions, list)
 
             assert len(decorator.holdout_predicted_values) == len(original_indexes)
             assert set(train_meta.index.values) == set(original_indexes)
@@ -304,8 +316,8 @@ class ModelStacker(ModelWrapperBase):
 
             model_info.model.set_persistence_manager(local_persistence_manager)
             model_info.model.train(data_x=transformed_data_x,
-                                                data_y=data_y,
-                                                hyper_params=model_info.hyper_params)
+                                   data_y=data_y,
+                                   hyper_params=model_info.hyper_params)
 
         # get the correlations before any transformations on `train_meta` for the stacking model.
         self._train_meta_correlations = train_meta.corr()
@@ -348,8 +360,8 @@ class ModelStacker(ModelWrapperBase):
                 # noinspection PyTypeChecker
                 assert all(predictions.index.values == original_indexes)
 
-            if model_info.converter is not None:
-                predictions = model_info.converter.convert(values=predictions)
+            if self._converter is not None:
+                predictions = self._converter.convert(values=predictions)
 
             test_meta[model_info.description] = predictions  # place predictions in associated column
 

@@ -3276,19 +3276,19 @@ class ModelWrapperTests(TimerTestCase):
         cart_base_model = ModelInfo(description='cart',
                                     model=CartDecisionTreeClassifier(),
                                     transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
-                                    hyper_params=CartDecisionTreeHP(),
-                                    converter=ExtractPredictionsColumnConverter(column=positive_class))
+                                    hyper_params=CartDecisionTreeHP())
         rf_base_model = ModelInfo(description='random_forest',
                                   model=RandomForestClassifier(),
                                   transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
-                                  hyper_params=RandomForestHP(),
-                                  converter=ExtractPredictionsColumnConverter(column=positive_class))
+                                  hyper_params=RandomForestHP())
         base_models = [cart_base_model, rf_base_model]
 
         # Test model stacker with duplicate model names; should get assertion error
         self.assertRaises(AssertionError,
                           lambda: ModelStacker(base_models=base_models + [cart_base_model],
-                                               scores=score_list, stacking_model=LogisticClassifier()))
+                                               scores=score_list,
+                                               stacking_model=LogisticClassifier(),
+                                               converter=ExtractPredictionsColumnConverter(column=positive_class)))  # noqa
 
         # Use same splitter information to get the training/holdout data
         splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
@@ -3354,6 +3354,7 @@ class ModelWrapperTests(TimerTestCase):
                                      scores=score_list,
                                      stacking_model=LogisticClassifier(),
                                      stacking_transformations=None,
+                                     converter=ExtractPredictionsColumnConverter(column=positive_class),
                                      train_callback=train_callback,
                                      predict_callback=predict_callback)
 
@@ -3472,6 +3473,48 @@ class ModelWrapperTests(TimerTestCase):
         # Test with a string target variable rather than 0/1
         data.Survived = np.where(data.Survived == 1, positive_class, negative_class)
         self.helper_test_ModelStacker_Classification(data=data, positive_class=positive_class)
+
+    def test_ModelStacker_Classification_no_converter(self):
+        """
+        NOTE: when using base-models that return DataFrame's for `predict()`, we need to supply a converter
+        """
+        data = TestHelper.get_titanic_data()
+        positive_class = 1
+        target_variable = 'Survived'
+        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class)),  # noqa
+                      SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class))]  # noqa
+
+        cart_base_model = ModelInfo(description='cart',
+                                    model=CartDecisionTreeClassifier(),
+                                    transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                                    hyper_params=CartDecisionTreeHP())
+        rf_base_model = ModelInfo(description='random_forest',
+                                  model=RandomForestClassifier(),
+                                  transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                                  hyper_params=RandomForestHP())
+        base_models = [cart_base_model, rf_base_model]
+
+        model_stacker = ModelStacker(base_models=base_models,
+                                     scores=score_list,
+                                     stacking_model=LogisticClassifier(),
+                                     stacking_transformations=None,
+                                     # no converter, so we should get an Assertion error
+                                     # converter=ExtractPredictionsColumnConverter(column=positive_class),
+                                     )
+
+        fitter = ModelTrainer(model=model_stacker,
+                              model_transformations=[
+                                  RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                                  CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                                  ImputationTransformer()],
+                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                              evaluator=TwoClassProbabilityEvaluator(
+                                  converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                       positive_class=positive_class)))
+        self.assertRaises(AssertionError,
+                          lambda: fitter.train_predict_eval(data=data,
+                                                            target_variable=target_variable,
+                                                            hyper_params=LogisticClassifierHP()))
 
     def test_ModelStacker_Regression_no_stacker_transformations(self):
         ######################################################################################################
@@ -3743,19 +3786,18 @@ class ModelWrapperTests(TimerTestCase):
         cart_base_model = ModelInfo(description='cart',
                                     model=CartDecisionTreeClassifier(),
                                     transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
-                                    hyper_params=CartDecisionTreeHP(),
-                                    converter=ExtractPredictionsColumnConverter(column=positive_class))
+                                    hyper_params=CartDecisionTreeHP())
         rf_base_model = ModelInfo(description='random_forest',
                                   model=RandomForestClassifier(),
                                   transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
-                                  hyper_params=RandomForestHP(),
-                                  converter=ExtractPredictionsColumnConverter(column=positive_class))
+                                  hyper_params=RandomForestHP())
         base_models = [cart_base_model, rf_base_model]
 
         model_stacker = ModelStacker(base_models=base_models,
                                      scores=score_list,
                                      stacking_model=LogisticClassifier(),
-                                     stacking_transformations=None)
+                                     stacking_transformations=None,
+                                     converter=ExtractPredictionsColumnConverter(column=positive_class))
 
         transformations = [
             RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
