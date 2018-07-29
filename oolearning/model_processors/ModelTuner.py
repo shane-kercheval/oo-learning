@@ -102,6 +102,10 @@ class ModelTuner:
             NOTE: for each resampling (i.e. each set of hyper-params being resampled) the model_persistence_manager
             is cloned and passed to the resampler. The resampler already differentiates the file name based on
             the hyper-parameters (and e.g. repeat/fold indexes which should make it unique)
+        :param resampler_persistence_manager:  caches the entire results of the resampler (not individual
+            models) so that the resampling is not run at all (if cached files are found). However, if, for
+            example, the transformations are changed (which will change the results), the cache directory
+            needs to be deleted (i.e. clear the cache).
         :param parallelization_cores: the number of cores to use for parallelization. -1 is all, 0 or 1 is
             "off"
         """

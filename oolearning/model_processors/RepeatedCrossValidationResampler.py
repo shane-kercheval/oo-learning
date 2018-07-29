@@ -33,9 +33,7 @@ class StatelessParallelizationHelper:
 
 
 def model_build_cache_key(model: ModelWrapperBase,
-                          hyper_params: HyperParamsBase,
-                          repeat_index: int,
-                          fold_index: int) -> str:
+                          hyper_params: HyperParamsBase) -> str:
     """
     :return: returns a key that acts as, for example, the file name of the model being cached for the
         persistence manager; has the form:
@@ -47,8 +45,7 @@ def model_build_cache_key(model: ModelWrapperBase,
     else:
         # if hyper-params, flatten out list of param names and values and concatenate/join them together
         hyper_params_long = '_'.join([str(x) + str(y) for x, y in hyper_params.params_dict.items()])
-        key = '_'.join(
-            ['repeat' + str(repeat_index), 'fold' + str(fold_index), model_name, hyper_params_long])  # noqa
+        key = '_'.join([model_name, hyper_params_long])  # noqa
 
     return key
 
@@ -113,10 +110,12 @@ def resample_repeat(args):
 
         # set up persistence if applicable
         if persistence_manager is not None:  # then build the key
+            # first set the key_prefix; separating the repeat/fold information from the rest of the key
+            # let's models (e.g. ModelStacker) utilize the key_prefix, while modifying the key
+            persistence_manager.set_key_prefix(prefix='repeat_{}_fold_{}_'.format(str(repeat_index),
+                                                                                  str(fold_index)))
             cache_key = model_build_cache_key(model=model_copy,
-                                              hyper_params=hyper_params,
-                                              repeat_index=repeat_index,
-                                              fold_index=fold_index)
+                                              hyper_params=hyper_params)
             persistence_manager.set_key(key=cache_key)
             model_copy.set_persistence_manager(persistence_manager=persistence_manager)
 

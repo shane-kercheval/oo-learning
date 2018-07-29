@@ -3780,8 +3780,10 @@ class ModelWrapperTests(TimerTestCase):
         data = TestHelper.get_titanic_data()
         positive_class = 1
         target_variable = 'Survived'
-        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class)),  # noqa
-                      SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class))]  # noqa
+        score_list = [
+            KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class)),
+            SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class)),  # noqa
+        ]
 
         cart_base_model = ModelInfo(description='cart',
                                     model=CartDecisionTreeClassifier(),
@@ -3811,12 +3813,18 @@ class ModelWrapperTests(TimerTestCase):
                                                      repeats=1,
                                                      # fold_decorators=[TwoClassThresholdDecorator(parallelization_cores=0)]
                                                      )
+        cache_directory = TestHelper.ensure_test_directory(
+            'data/test_ModelWrappers/test_tuning_stacker_caching')  # noqa
         tuner = ModelTuner(resampler=resampler,
                            hyper_param_object=LogisticClassifierHP(),
-                           parallelization_cores=-1)  # Hyper-Parameter object specific to RF
+                           model_persistence_manager=LocalCacheManager(cache_directory=cache_directory),
+                           # NOTE: do not use parallelization with model stacker; causes unknown error
+                           parallelization_cores=0,
+                           )  # Hyper-Parameter object specific to RF
 
         # define the combinations of hyper-params that we want to evaluate
-        grid = HyperParamsGrid(params_dict=dict(regularization_inverse=[0.001, 0.01, 0.05, 0.1, 1, 5, 8, 10]))
+        regularization_inverse = [0.001, 0.01, 0.05, 0.1, 1, 5, 8, 10]
+        grid = HyperParamsGrid(params_dict=dict(regularization_inverse=regularization_inverse))
         tuner.tune(data_x=data.drop(columns=target_variable),
                    data_y=data[target_variable],
                    params_grid=grid)
@@ -3830,6 +3838,16 @@ class ModelWrapperTests(TimerTestCase):
 
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_tuner_data.pkl'))  # noqa
         TestHelper.ensure_all_values_equal_from_file(file=file, expected_dataframe=tuner.results.resampled_stats)  # noqa
+
+        for fold in ['repeat_{}_fold_{}_'.format(0, x) for x in range(3)]:
+            assert os.path.isfile(os.path.join(cache_directory, fold + 'train_meta.pkl'))
+            assert os.path.isfile(os.path.join(cache_directory, fold + 'base_cart_criterion_gini_splitter_best_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_max_features_None.pkl'))  # noqa
+            assert os.path.isfile(os.path.join(cache_directory, fold + 'base_random_forest_n_estimators_500_criterion_gini_max_features_None_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_min_impurity_decrease_0_bootstrap_True_oob_score_False.pkl'))  # noqa
+            stacker_file = 'ModelStacker_LogisticClassifier_penaltyl2_regularization_inverse{}_solverliblinear.pkl'  # noqa
+            for param in regularization_inverse:
+                assert os.path.isfile(os.path.join(cache_directory, fold + stacker_file.format(float(param))))
+
+        shutil.rmtree(cache_directory)
 
     def test_ModelDefaults(self):
         ######################################################################################################
