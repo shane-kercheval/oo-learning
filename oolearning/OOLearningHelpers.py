@@ -1,11 +1,8 @@
-from typing import List
-from matplotlib import pyplot as pl
-
 import matplotlib.pyplot as plt
-import seaborn as sns
-
 import numpy as np
 import pandas as pd
+import seaborn as sns
+from matplotlib import pyplot as pl
 
 from oolearning.transformers.StatelessTransformer import StatelessTransformer
 from oolearning.transformers.TransformerPipeline import TransformerPipeline
@@ -28,7 +25,7 @@ class OOLearningHelpers:
         return isinstance(variable.values[0], bool) or isinstance(variable.values[0], np.bool_)
 
     @staticmethod
-    def get_columns_by_type(data_dtypes: List[np.dtype], target_variable: str=None):
+    def get_columns_by_type(data_dtypes: pd.Series, target_variable: str=None):
         """returns numeric columns in first return, and string columns in second"""
         assert isinstance(data_dtypes, pd.Series)
         types_dictionary = dict(data_dtypes)

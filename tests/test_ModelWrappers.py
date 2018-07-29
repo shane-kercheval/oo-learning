@@ -3717,6 +3717,12 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # elastic_net stacker, svm & GBM & polynomial linear regression base models
         ######################################################################################################
+        def fh(file):
+            # file helper
+            return TestHelper.ensure_test_directory(
+                os.path.join('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations',
+                             file))
+
         data = TestHelper.get_insurance_data()
         target_variable = 'expenses'
 
@@ -3727,9 +3733,9 @@ class ModelWrapperTests(TimerTestCase):
         expected_train_x = data.iloc[training_indexes].drop(columns=target_variable)
         expected_test_x = data.iloc[test_indexes].drop(columns=target_variable)
 
-        file_train_callback = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/train_callback_train_meta.pkl'))  # noqa
-        file_test_callback_traindata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/test_callback_test_meta_traindata.pkl'))  # noqa
-        file_test_callback_holdoutdata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/test_callback_test_meta_holdoutdata.pkl'))  # noqa
+        file_train_callback = fh('train_callback_train_meta.pkl')
+        file_test_callback_traindata = fh('test_callback_test_meta_traindata.pkl')
+        file_test_callback_holdoutdata = fh('test_callback_test_meta_holdoutdata.pkl')
 
         # these variables help us verify the callbacks were called
         train_callback_called = list()
@@ -3811,10 +3817,10 @@ class ModelWrapperTests(TimerTestCase):
 
         assert [x.description for x in model_stacker._base_models] == ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor']  # noqa
         # test resample data
-        file_test_model_stacker_resample_data_regression = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/resample_data_regression.pkl'))  # noqa
-        file_test_model_stacker_resample_data_cart = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/resample_data_cart_regression.pkl'))  # noqa
-        file_test_model_stacker_resample_data_gb = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/resample_data_gb.pkl'))  # noqa
-        file_test_model_stacker_resample_means = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/resample_means_regression.pkl'))  # noqa
+        file_test_model_stacker_resample_data_regression = fh('resample_data_regression.pkl')
+        file_test_model_stacker_resample_data_cart = fh('resample_data_cart_regression.pkl')
+        file_test_model_stacker_resample_data_gb = fh('resample_data_gb.pkl')
+        file_test_model_stacker_resample_means = fh('resample_means_regression.pkl')
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_regression,
                                                      expected_dataframe=fitter.model.get_resample_data(model_description='LinearRegressor_polynomial_2'))  # noqa
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_cart,
@@ -3824,8 +3830,8 @@ class ModelWrapperTests(TimerTestCase):
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_means,
                                                      expected_dataframe=fitter.model.get_resample_means())
 
-        file_test_model_stacker_train_meta_correlations = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/train_meta_correlations_regression.pkl'))  # noqa
-        file_plot_correlations = 'data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/stacker_correlations_regression.png'
+        file_test_model_stacker_train_meta_correlations = fh('train_meta_correlations_regression.pkl')
+        file_plot_correlations = 'data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/stacker_correlations_regression.png'  # noqa
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_train_meta_correlations,
                                                      expected_dataframe=fitter.model._train_meta_correlations)
         TestHelper.check_plot(file_plot_correlations, lambda: fitter.model.plot_correlation_heatmap())
@@ -3834,6 +3840,11 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # elastic_net stacker, svm & GBM & polynomial linear regression base models
         ######################################################################################################
+        def fh(file):
+            # file helper
+            return TestHelper.ensure_test_directory(
+                os.path.join('data/test_ModelWrappers/test_ModelStacker_Regression_with_stacker_transformations',
+                             file))
         data = TestHelper.get_insurance_data()
         target_variable = 'expenses'
 
@@ -3844,9 +3855,9 @@ class ModelWrapperTests(TimerTestCase):
         expected_train_x = data.iloc[training_indexes].drop(columns=target_variable)
         expected_test_x = data.iloc[test_indexes].drop(columns=target_variable)
 
-        file_train_callback = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_regression_train_callback_train_meta_stacker_trans.pkl'))  # noqa
-        file_test_callback_traindata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_regression_test_callback_test_meta_traindata_stacker_trans.pkl'))  # noqa
-        file_test_callback_holdoutdata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_regression_test_callback_test_meta_holdoutdata_stacker_trans.pkl'))  # noqa
+        file_train_callback = fh('train_callback_train_meta_stacker_trans.pkl')
+        file_test_callback_traindata = fh('test_callback_test_meta_traindata_stacker_trans.pkl')
+        file_test_callback_holdoutdata = fh('test_callback_test_meta_holdoutdata_stacker_trans.pkl')
 
         # these variables help us verify the callbacks were called
         train_callback_called = list()
@@ -3932,10 +3943,10 @@ class ModelWrapperTests(TimerTestCase):
         assert all([isclose(expected_holdout_evaluator_metrics[key], fitter.holdout_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
         assert all([x == y for x, y in zip([x.description for x in model_stacker._base_models], ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor'])])  # noqa
         # test resample data
-        file_test_model_stacker_resample_data_regression = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_regression_stacker_trans.pkl'))  # noqa
-        file_test_model_stacker_resample_data_cart = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_cart_regression_stacker_trans.pkl'))  # noqa
-        file_test_model_stacker_resample_data_gb = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_gb_stacker_trans.pkl'))  # noqa
-        file_test_model_stacker_resample_means = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_means_regression_stacker_trans.pkl'))  # noqa
+        file_test_model_stacker_resample_data_regression = fh('resample_data_regression_stacker_trans.pkl')
+        file_test_model_stacker_resample_data_cart = fh('resample_data_cart_regression_stacker_trans.pkl')
+        file_test_model_stacker_resample_data_gb = fh('resample_data_gb_stacker_trans.pkl')
+        file_test_model_stacker_resample_means = fh('resample_means_regression_stacker_trans.pkl')
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_regression,
                                                      expected_dataframe=fitter.model.get_resample_data(model_description='LinearRegressor_polynomial_2'))  # noqa
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_cart,
@@ -3945,8 +3956,8 @@ class ModelWrapperTests(TimerTestCase):
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_means,
                                                      expected_dataframe=fitter.model.get_resample_means())
 
-        file_test_model_stacker_train_meta_correlations = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_train_meta_correlations_regression_stacker_trans.pkl'))  # noqa
-        file_plot_correlations = 'data/test_ModelWrappers/test_modelModel_stacker_correlations_regression_stacker_trans.png'  # noqa
+        file_test_model_stacker_train_meta_correlations = fh('train_meta_correlations_regression_stacker_trans.pkl')  # noqa
+        file_plot_correlations = 'data/test_ModelWrappers/correlations_regression_stacker_trans.png'
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_train_meta_correlations,
                                                      expected_dataframe=fitter.model._train_meta_correlations)
         TestHelper.check_plot(file_plot_correlations, lambda: fitter.model.plot_correlation_heatmap())
