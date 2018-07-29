@@ -112,7 +112,7 @@ def resample_repeat(args):
         if persistence_manager is not None:  # then build the key
             # first set the key_prefix; separating the repeat/fold information from the rest of the key
             # let's models (e.g. ModelStacker) utilize the key_prefix, while modifying the key
-            persistence_manager.set_key_prefix(prefix='repeat_{}_fold_{}_'.format(str(repeat_index),
+            persistence_manager.set_key_prefix(prefix='repeat{}_fold{}_'.format(str(repeat_index),
                                                                                   str(fold_index)))
             cache_key = model_build_cache_key(model=model_copy,
                                               hyper_params=hyper_params)

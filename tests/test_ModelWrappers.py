@@ -3384,8 +3384,9 @@ class ModelWrapperTests(TimerTestCase):
 
             assert os.path.isdir(fitter._persistence_manager._cache_directory)
             expected_stacker_cached_file = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification/ModelStacker_LogisticClassifier_penalty_l2_regularization_inverse_1.0_solver_liblinear.pkl')  # noqa
-            expected_base_cart_cached_file = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification/base_cart.pkl')  # noqa
-            expected_base_rf_cached_file = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification/base_random_forest.pkl')  # noqa
+            expected_base_cart_cached_file = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification/base_cart_criterion_gini_splitter_best_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_max_features_None.pkl')  # noqa
+            expected_base_rf_cached_file = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification/base_random_forest_n_estimators_500_criterion_gini_max_features_None_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_min_impurity_decrease_0_bootstrap_True_oob_score_False.pkl')  # noqa
+            expected_train_meta_file = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification/train_meta.pkl')  # noqa
             # ensure the cache path of the stacker is the final stacked model
             assert fitter._persistence_manager._cache_path == expected_stacker_cached_file
             assert os.path.isfile(fitter._persistence_manager._cache_path)
@@ -3393,17 +3394,8 @@ class ModelWrapperTests(TimerTestCase):
             # corresponding to the final trained model for each base model
             assert os.path.isfile(expected_base_cart_cached_file)
             assert os.path.isfile(expected_base_rf_cached_file)
-            # each base model should have a corresponding directory
-            assert os.path.isdir(os.path.join(fitter._persistence_manager._cache_directory, 'resample_' + base_models[0].description))  # noqa
-            assert os.path.isdir(os.path.join(fitter._persistence_manager._cache_directory, 'resample_' + base_models[1].description))  # noqa
-            # check the directory contents of the base models
-            cart_pkl_file_name = 'CartDecisionTreeClassifier_criteriongini_splitterbest_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_max_featuresNone.pkl'  # noqa
-            rf_pkl_file_name = 'RandomForestClassifier_n_estimators500_criteriongini_max_featuresNone_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_min_impurity_decrease0_bootstrapTrue_oob_scoreFalse.pkl'  # noqa
-            # there should only be 1 repeat and 5 folds
-            expected_prefixes = ['repeat0_fold' + str(x) for x in range(5)]
-            # check that all the expected files exist for the given directory and model/hyper-params
-            assert all([os.path.isfile(os.path.join(cache_directory, 'resample_cart', "{0}_{1}".format(x, cart_pkl_file_name))) for x in expected_prefixes])  # noqa
-            assert all([os.path.isfile(os.path.join(cache_directory, 'resample_random_forest', "{0}_{1}".format(x, rf_pkl_file_name))) for x in expected_prefixes])  # noqa
+            # make sure the `train_meta` dataset is cached
+            assert os.path.isfile(expected_train_meta_file)
 
         else:
             fitter = ModelTrainer(model=model_stacker,
@@ -3765,10 +3757,11 @@ class ModelWrapperTests(TimerTestCase):
         fit_time_not_previously_cached = self.helper_test_ModelStacker_Classification(data=TestHelper.get_titanic_data(),  # noqa
                                                                                       positive_class=1,
                                                                                       cache_directory=cache_directory)  # noqa
-
+        # print(fit_time_not_previously_cached)
         fit_time_previously_cached = self.helper_test_ModelStacker_Classification(data=TestHelper.get_titanic_data(),  # noqa
                                                                                   positive_class=1,
                                                                                   cache_directory=cache_directory)  # noqa
+        # print(fit_time_previously_cached)
         shutil.rmtree(cache_directory)
         # assert 6 < fit_time_not_previously_cached < 8  # looks like around ~7 seconds on average
         # assert fit_time_previously_cached < 2  # improves to less than 2 with caching
@@ -3839,7 +3832,7 @@ class ModelWrapperTests(TimerTestCase):
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_tuner_data.pkl'))  # noqa
         TestHelper.ensure_all_values_equal_from_file(file=file, expected_dataframe=tuner.results.resampled_stats)  # noqa
 
-        for fold in ['repeat_{}_fold_{}_'.format(0, x) for x in range(3)]:
+        for fold in ['repeat{}_fold{}_'.format(0, x) for x in range(3)]:
             assert os.path.isfile(os.path.join(cache_directory, fold + 'train_meta.pkl'))
             assert os.path.isfile(os.path.join(cache_directory, fold + 'base_cart_criterion_gini_splitter_best_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_max_features_None.pkl'))  # noqa
             assert os.path.isfile(os.path.join(cache_directory, fold + 'base_random_forest_n_estimators_500_criterion_gini_max_features_None_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_min_impurity_decrease_0_bootstrap_True_oob_score_False.pkl'))  # noqa

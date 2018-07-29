@@ -295,9 +295,9 @@ class ModelStacker(ModelWrapperBase):
         # cache the `train_meta` dataset we've built up
         if self._stackerobject_persistence_manager is not None:
             cache = self._stackerobject_persistence_manager.clone()
-            # utilizes the same _key_prefix (e.g. the index of repeat/fold for a resampler). In the case of a
-            # Resampler, for example, this ensures a different `train_meta` is cached for each fold
-            assert cache.key_prefix is not None
+            # utilizes the cache's _key_prefix if set (e.g. the index of repeat/fold for a resampler).
+            # In the case of a Resampler, for example, this ensures a different `train_meta` is cached for
+            # each fold
             cache.set_key('train_meta')
             train_meta, self._resampler_results = cache.\
                 get_object(fetch_function=lambda: self.build_train_meta(data_x,
