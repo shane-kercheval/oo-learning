@@ -41,8 +41,21 @@ class LocalCacheManager(PersistenceManagerBase):
         self._key_prefix = key_prefix
         self._cache_path = None if key is None else self._create_cached_path(key)
 
+    @property
+    def key(self):
+        return self._key
+
+    @property
+    def key_prefix(self):
+        return self._key_prefix
+
+    @property
+    def cache_path(self):
+        return self._cache_path
+
     def set_key(self, key: str):
         self._cache_path = self._create_cached_path(key=key)
+        self._key = key
 
     def set_key_prefix(self, prefix: str):
         """

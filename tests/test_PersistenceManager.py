@@ -31,28 +31,28 @@ class PersistenceManagerTests(TimerTestCase):
         expected_key = 'test_key_constructor'
         expected_object = 'test expected_object'
         persistence_object = LocalCacheManager(cache_directory=expected_directory, key=expected_key)
-        assert persistence_object._cache_path == os.path.join(expected_directory, expected_key+'.pkl')
+        assert persistence_object.cache_path == os.path.join(expected_directory, expected_key+'.pkl')
         # neither the directory or file should exist yet for this test
         assert os.path.isdir(expected_directory) is False
-        assert os.path.isfile(persistence_object._cache_path) is False
+        assert os.path.isfile(persistence_object.cache_path) is False
 
         fetched_object = persistence_object.get_object(fetch_function=lambda: expected_object)
         assert fetched_object == expected_object
 
         # should have created both the directory and the file
-        assert os.path.isfile(persistence_object._cache_path)
+        assert os.path.isfile(persistence_object.cache_path)
 
         # now, since the object is cached, we can ensure that we should be grabbing the cached item by
         # changing the fetch_function, and ensuring that `get_object` still returns the old (cached) value,
         # not 'JUNK' as would be returned if we 'fetched' via fetch_function
         fetched_object = persistence_object.get_object(fetch_function=lambda: 'JUNK')
         assert fetched_object == expected_object
-        assert os.path.isfile(persistence_object._cache_path)
+        assert os.path.isfile(persistence_object.cache_path)
 
         ######################################################################################################
         # test using key in get_object after using key in constructor
         ######################################################################################################
-        previous_path = persistence_object._cache_path
+        previous_path = persistence_object.cache_path
         previous_key = expected_key
         previous_object = expected_object
         # test with a new key and new object
@@ -64,7 +64,7 @@ class PersistenceManagerTests(TimerTestCase):
         fetched_object = persistence_object.get_object(fetch_function=lambda: expected_object, key=expected_key)  # noqa
         assert fetched_object == expected_object
         # now we should have a new path
-        assert persistence_object._cache_path == expected_new_path
+        assert persistence_object.cache_path == expected_new_path
         # should have created the new file
         assert os.path.isfile(expected_new_path)
         # but also should have retained the old file
@@ -86,7 +86,7 @@ class PersistenceManagerTests(TimerTestCase):
         expected_object = 'test expected_object using key in get_object without using key in constructor'
         persistence_object = LocalCacheManager(cache_directory=expected_directory)
         # this time, _cache_path should be None because we haven't set it
-        assert persistence_object._cache_path is None
+        assert persistence_object.cache_path is None
         # neither the directory or file should exist yet for this test
         assert os.path.isdir(expected_directory) is False
 
@@ -98,11 +98,11 @@ class PersistenceManagerTests(TimerTestCase):
         assert fetched_object == expected_object
 
         # should have created both the directory and the file
-        assert os.path.isfile(persistence_object._cache_path)
+        assert os.path.isfile(persistence_object.cache_path)
 
         fetched_object = persistence_object.get_object(fetch_function=lambda: 'JUNK')
         assert fetched_object == expected_object
-        assert os.path.isfile(persistence_object._cache_path)
+        assert os.path.isfile(persistence_object.cache_path)
 
         shutil.rmtree(expected_directory)
 
@@ -128,39 +128,40 @@ class PersistenceManagerTests(TimerTestCase):
         self.assertRaises(AssertionError, lambda: persistence_object.get_object(fetch_function=lambda: expected_object))  # noqa
 
         # now we can try with a key
-        assert persistence_object._cache_path is None
+        assert persistence_object.cache_path is None
         persistence_object.set_key(key=expected_key)
-        assert persistence_object._cache_path == os.path.join(expected_directory, expected_key + '.pkl')
+        assert persistence_object.key == expected_key
+        assert persistence_object.cache_path == os.path.join(expected_directory, expected_key + '.pkl')
 
-        assert os.path.isfile(persistence_object._cache_path) is False
+        assert os.path.isfile(persistence_object.cache_path) is False
         fetched_object = persistence_object.get_object(fetch_function=lambda: expected_object)
         assert fetched_object == expected_object
         # should have created both the directory and the file
-        assert os.path.isfile(persistence_object._cache_path)
+        assert os.path.isfile(persistence_object.cache_path)
 
         # test it goes to cache
         fetched_object = persistence_object.get_object(fetch_function=lambda: 'JUNK')
         assert fetched_object == expected_object
-        assert os.path.isfile(persistence_object._cache_path)
+        assert os.path.isfile(persistence_object.cache_path)
 
         # test that using set_key again with different key works
-        previous_path = persistence_object._cache_path
+        previous_path = persistence_object.cache_path
         previous_key = expected_key
         previous_object = expected_object
         # test with a new key and new object
         expected_key = 'test_set_key_after_set_key'
         expected_object = 'test expected_object using key in set_key second time'
 
-        assert persistence_object._cache_path == previous_path
+        assert persistence_object.cache_path == previous_path
         persistence_object.set_key(key=expected_key)
         expected_new_path = os.path.join(expected_directory, expected_key + '.pkl')
-        assert persistence_object._cache_path == expected_new_path
+        assert persistence_object.cache_path == expected_new_path
 
         assert os.path.isfile(expected_new_path) is False
         fetched_object = persistence_object.get_object(fetch_function=lambda: expected_object)
         assert fetched_object == expected_object
         # path should be the same
-        assert persistence_object._cache_path == expected_new_path
+        assert persistence_object.cache_path == expected_new_path
         # should have created the new file
         assert os.path.isfile(expected_new_path)
         # but also should have retained the old file
@@ -179,7 +180,7 @@ class PersistenceManagerTests(TimerTestCase):
         valid_key = ''.join([x for x in invalid_key if x != ' '])
 
         persistence_object = LocalCacheManager(cache_directory=expected_directory, key=invalid_key)
-        assert persistence_object._cache_path == os.path.join(expected_directory, valid_key + '.pkl')
+        assert persistence_object.cache_path == os.path.join(expected_directory, valid_key + '.pkl')
 
     def test_LocalCacheObject_long_keys(self):
         expected_directory = TestHelper.ensure_test_directory('data/test_Local_CacheObject_directory')
@@ -187,14 +188,14 @@ class PersistenceManagerTests(TimerTestCase):
         # try valid key
         valid_key = 'a'*(255 - len('.pkl'))
         persistence_object = LocalCacheManager(cache_directory=expected_directory, key=valid_key)
-        assert persistence_object._cache_path == os.path.join(expected_directory, valid_key + '.pkl')
+        assert persistence_object.cache_path == os.path.join(expected_directory, valid_key + '.pkl')
 
         # file too long with prefix only converts key, not prefix
         invalid_key = 'a'*(256 - len('.pkl'))
         # raw string; that way we can check that we get the same hash value across sessions
         valid_key = '2e5fc80386a5c7df9425d72af5f7c8f89eb0f50563f2869ec3bfb108.pkl'
         persistence_object = LocalCacheManager(cache_directory=expected_directory, key=invalid_key)
-        assert persistence_object._cache_path == os.path.join(expected_directory, valid_key)
+        assert persistence_object.cache_path == os.path.join(expected_directory, valid_key)
 
     def test_LocalCacheObject_key_prefix(self):
         expected_directory = TestHelper.ensure_test_directory('data/test_Local_CacheObject_directory')
@@ -204,11 +205,11 @@ class PersistenceManagerTests(TimerTestCase):
         # if we set the key (thereby setting the path) before we call `set_key_prefix` the cache_path should
         # be set back to NULL
         persistence_object = LocalCacheManager(cache_directory=expected_directory, key=expected_key)
-        assert persistence_object._cache_path == os.path.join(expected_directory, expected_key + '.pkl')
+        assert persistence_object.cache_path == os.path.join(expected_directory, expected_key + '.pkl')
         persistence_object.set_key_prefix(prefix=expected_prefix)
-        assert persistence_object._cache_path is None
+        assert persistence_object.cache_path is None
         persistence_object.set_key(key=expected_key)
-        assert persistence_object._cache_path == os.path.join(expected_directory,
+        assert persistence_object.cache_path == os.path.join(expected_directory,
                                                               expected_prefix + expected_key + '.pkl')
         # test invalid prefix
         invalid_prefix = 'invalid prefix_'
@@ -218,13 +219,13 @@ class PersistenceManagerTests(TimerTestCase):
         persistence_object = LocalCacheManager(cache_directory=expected_directory,
                                                key=invalid_key,
                                                key_prefix=invalid_prefix)
-        assert persistence_object._cache_path == os.path.join(expected_directory, valid_key + '.pkl')
+        assert persistence_object.cache_path == os.path.join(expected_directory, valid_key + '.pkl')
 
         # test long key with prefix added (but wouldn't have been long without prefix)
         # make sure what I think is valid to actually be valid
         key_limit = 'a' * (255 - len('.pkl'))
         persistence_object = LocalCacheManager(cache_directory=expected_directory, key=key_limit)
-        assert persistence_object._cache_path == os.path.join(expected_directory, key_limit + '.pkl')
+        assert persistence_object.cache_path == os.path.join(expected_directory, key_limit + '.pkl')
 
         # prefix pushes the filename over the limit; however, the key_prefix should never be changed/hashed
         # noinspection SpellCheckingInspection
@@ -234,7 +235,7 @@ class PersistenceManagerTests(TimerTestCase):
         persistence_object = LocalCacheManager(cache_directory=expected_directory,
                                                key=key_limit,
                                                key_prefix=invalid_prefix)
-        assert persistence_object._cache_path == os.path.join(expected_directory, expected_key)
+        assert persistence_object.cache_path == os.path.join(expected_directory, expected_key)
 
     def test_LocalCacheObject_invalid_key_prefix_length(self):
         expected_directory = TestHelper.ensure_test_directory('data/test_Local_CacheObject_directory')
@@ -242,9 +243,9 @@ class PersistenceManagerTests(TimerTestCase):
         valid_key_prefix = 'a'*100
 
         persistence_object = LocalCacheManager(cache_directory=expected_directory, key='key', key_prefix=valid_key_prefix)  # noqa
-        assert persistence_object._key_prefix == valid_key_prefix
+        assert persistence_object.key_prefix == valid_key_prefix
         persistence_object.set_key_prefix('b'*100)
-        assert persistence_object._key_prefix == 'b'*100
+        assert persistence_object.key_prefix == 'b'*100
 
         invalid_key_prefix = 'a' * 101
         self.assertRaises(ValueError, lambda: LocalCacheManager(cache_directory=expected_directory, key='key', key_prefix=invalid_key_prefix))  # noqa

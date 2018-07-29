@@ -89,6 +89,10 @@ class ModelStackerTrainingObject:
 
 class ModelStacker(ModelWrapperBase):
     """
+    NOTE: do not use caching/persistence-manager when tuning with ModelStacker, there is an unknown
+        race condition when working with the cached files. It needs to be investigated.
+        https://github.com/shane-kercheval/oo-learning/issues/44
+
     This class implements a "Model Stacker" adopted from
     http://blog.kaggle.com/2016/12/27/a-kagglers-guide-to-model-stacking-in-practice/
 
@@ -126,8 +130,9 @@ class ModelStacker(ModelWrapperBase):
                  base_models: List[ModelInfo],
                  scores: List[ScoreActualPredictedBase],
                  stacking_model: ModelWrapperBase,
-                 stacking_transformations: List[TransformerBase] = None,
-                 converter: ContinuousToClassConverterBase = None,
+                 stacking_transformations: List[TransformerBase]=None,
+                 include_original_dataset: bool=False,
+                 converter: ContinuousToClassConverterBase=None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None,
                  predict_callback: Callable[[pd.DataFrame], None] = None):
@@ -137,6 +142,9 @@ class ModelStacker(ModelWrapperBase):
             (The transformations that are specific to the base models will be included in the corresponding
             ModelInfo objects. Transformations applied to ALL models (base and stacker) could be passed in
             via (for example) a ModelTrainer.)
+        :param include_original_dataset: When training the 'stacker' (using the predictions of the base models
+            as features), this parameter indicates whether or not the original dataset should be also included
+            as features, along with the base-model predictions.
         :param scores: since we are cross-validating, we can get a score from each base-model
         :param converter: A Converter object specifying how the predictions (e.g. DataFrame of probabilities
             for a classification problem) should be converted to classes. If the base_models `predict()`
@@ -153,6 +161,7 @@ class ModelStacker(ModelWrapperBase):
         self._stacking_model = stacking_model
         self._stacking_model_pipeline = None if stacking_transformations is None \
             else TransformerPipeline(transformations=stacking_transformations)
+        self._include_original_dataset = include_original_dataset
         self._converter = converter
         self._resampler_results = list()
         self._base_model_pipelines = list()
@@ -223,44 +232,35 @@ class ModelStacker(ModelWrapperBase):
 
         self._stackerobject_persistence_manager = persistence_manager
 
-    def _train(self,
-               data_x: pd.DataFrame,
-               data_y: np.ndarray,
-               hyper_params: HyperParamsBase = None) -> object:
+    @staticmethod
+    def build_train_meta(data_x, data_y, base_models, scores, converter):
         # build `train_meta` skeleton which will be used to train the stacking_model; we will populate it with
         # the holdout predictions from each fold in the cross-validation (utilizing the Decorator to extract
         # the corresponding holdout predictions and associated indices that will be used to tie the
         # predictions back to the original training set's exact rows)
+        resampler_results = list()
         original_indexes = data_x.index.values
         train_meta = pd.DataFrame(index=original_indexes,
-                                  columns=[model_info.description for model_info in self._base_models] +
+                                  columns=[model_info.description for model_info in base_models] +
                                           ['actual_y'])
         train_meta.actual_y = data_y
 
         # NOTE: may be able to improve performance by utilizing same splits
         # https://github.com/shane-kercheval/oo-learning/issues/1
         # for each base-model, resample the data and get the holdout predictions to build train_meta
-        for model_info in self._base_models:
+        for model_info in base_models:
             decorator = FoldPredictionsDecorator()  # used to extract holdout predictions and indices
-
-            local_persistence_manager = self._stackerobject_persistence_manager.clone() \
-                if self._stackerobject_persistence_manager else None
-            if local_persistence_manager is not None:
-                # if there is a PersistenceManager, each base model that is resampled should get its own
-                # sub_structure (e.g. directory)
-                local_persistence_manager.set_sub_structure(sub_structure='resample_'+model_info.description)
 
             resampler = RepeatedCrossValidationResampler(
                 model=model_info.model,
                 transformations=model_info.transformations,  # transformations specific to base-model
-                scores=[score.clone() for score in self._scores],
+                scores=[score.clone() for score in scores],
                 folds=5,
                 repeats=1,
-                fold_decorators=[decorator],
-                model_persistence_manager=local_persistence_manager)
+                fold_decorators=[decorator])
 
             resampler.resample(data_x=data_x, data_y=data_y, hyper_params=model_info.hyper_params)
-            self._resampler_results.append(resampler.results)
+            resampler_results.append(resampler.results)
             # for regression problems, the predictions will be a numpy array; for classification problems,
             # the predicted values will be a DataFrame with a column per class. For 2 & multi-class problems,
             # we have to figure out how to convert the DF to 1 column/series. So, for example, one option
@@ -270,8 +270,8 @@ class ModelStacker(ModelWrapperBase):
             predictions = decorator.holdout_predicted_values
             if isinstance(predictions, pd.DataFrame):
                 # if predictions is a DataFrame, then we need a Converter
-                assert self._converter is not None
-                predictions = self._converter.convert(values=predictions)
+                assert converter is not None
+                predictions = converter.convert(values=predictions)
             else:
                 assert isinstance(predictions, np.ndarray) or isinstance(predictions, list)
 
@@ -294,6 +294,44 @@ class ModelStacker(ModelWrapperBase):
             train_meta.loc[list(decorator.holdout_indexes), model_info.description] = predictions
             train_meta[model_info.description] = train_meta[model_info.description].astype(predictions.dtype)
 
+        return train_meta, resampler_results
+
+    # noinspection PyTypeChecker
+    def _train(self,
+               data_x: pd.DataFrame,
+               data_y: np.ndarray,
+               hyper_params: HyperParamsBase = None) -> object:
+
+        # cache the `train_meta` dataset we've built up
+        if self._stackerobject_persistence_manager is not None:
+            cache = self._stackerobject_persistence_manager.clone()
+            # utilizes the cache's _key_prefix if set (e.g. the index of repeat/fold for a resampler).
+            # In the case of a Resampler, for example, this ensures a different `train_meta` is cached for
+            # each fold
+            cache.set_key('train_meta')
+            train_meta, self._resampler_results = cache.\
+                get_object(fetch_function=lambda: self.build_train_meta(data_x,
+                                                                        data_y,
+                                                                        self._base_models,
+                                                                        self._scores,
+                                                                        self._converter))
+        else:
+            train_meta, self._resampler_results = self.build_train_meta(data_x,
+                                                                        data_y,
+                                                                        self._base_models,
+                                                                        self._scores,
+                                                                        self._converter)
+
+        if self._include_original_dataset:
+            # need to make sure that the columns aren't overlapping
+            assert set(train_meta.columns.values).isdisjoint(set(data_x.columns.values))
+            train_meta = train_meta.join(data_x)
+
+        assert all(train_meta.index.values == data_x.index.values)
+
+        # need to fit each base model on ALL of the training data, because when we predict, we first have to
+        # build the corresponding train_meta features that we will feed into the trained stacker.
+        for model_info in self._base_models:
             transformed_data_x = data_x
             if model_info.transformations:
                 # ensure none of the Transformers have been used.
@@ -303,18 +341,20 @@ class ModelStacker(ModelWrapperBase):
                 pipeline = TransformerPipeline(transformations=model_info.transformations)
                 # fit on only the train data-set (and also transform)
                 transformed_data_x = pipeline.fit_transform(data_x=transformed_data_x)
+                # we will reuse the pipelines (which were fitted on the training data) when we predict
                 self._base_model_pipelines.append(pipeline)
             else:
                 self._base_model_pipelines.append(None)
 
-            local_persistence_manager = self._stackerobject_persistence_manager.clone() \
-                if self._stackerobject_persistence_manager else None  # noqa
-            if local_persistence_manager is not None:
-                # if there is a PersistenceManager, each base model that is refitted on training data should
-                # get its own prefix
-                local_persistence_manager.set_key(key='base_' + model_info.description)
+            if self._stackerobject_persistence_manager is not None:
+                cache = self._stackerobject_persistence_manager.clone()
+                hyper_params_string = '_'.join(['{}_{}'.format(key, value)
+                                                for key, value in model_info.hyper_params.params_dict.items()])  # noqa
+                # utilizes the same _key_prefix (e.g. the index of repeat/fold for a resampler). In the case
+                # of a Resampler, for example, this ensures a different `train_meta` is cached for each fold
+                cache.set_key(key='{}_{}_{}'.format('base', model_info.description, hyper_params_string))
+                model_info.model.set_persistence_manager(cache)
 
-            model_info.model.set_persistence_manager(local_persistence_manager)
             model_info.model.train(data_x=transformed_data_x,
                                    data_y=data_y,
                                    hyper_params=model_info.hyper_params)
@@ -325,7 +365,6 @@ class ModelStacker(ModelWrapperBase):
         # do stacker-specific transformations
         transformed_train_meta = train_meta.drop(columns='actual_y')
         if self._stacking_model_pipeline is not None:
-            # noinspection PyTypeChecker
             transformed_train_meta = self._stacking_model_pipeline.fit_transform(data_x=transformed_train_meta)  # noqa
 
         if self._train_callback:
@@ -339,21 +378,22 @@ class ModelStacker(ModelWrapperBase):
                                           stacking_model=self._stacking_model,
                                           stacking_model_pipeline=self._stacking_model_pipeline)
 
+    # noinspection PyTypeChecker
     def _predict(self, model_object: object, data_x: pd.DataFrame) -> Union[np.ndarray, pd.DataFrame]:
         assert isinstance(model_object, ModelStackerTrainingObject)
         original_indexes = data_x.index.values
         # skeleton of test_meta, contains the original indexes and a column for each model
         test_meta = pd.DataFrame(index=original_indexes,
                                  columns=[model_info.description for model_info in model_object.base_models])
-        # for each model, apply applicable transformations, make predictions, and convert predictions to
-        # a single column if necessary
+        # for each base model, apply applicable transformations, make predictions, and convert predictions to
+        # a single column if necessary (i.e. build up predictions used previously fitted pipelines and trained
+        # models)
         for index, model_info in enumerate(model_object.base_models):
             # each model will either have an associated Pipeline, or None if no model-specific Transformations
             transformed_data_x = data_x
             pipeline = model_object.base_model_pipelines[index]
             if pipeline:
                 transformed_data_x = pipeline.transform(data_x=transformed_data_x)
-            # noinspection PyTypeChecker
             assert all(test_meta.index.values == original_indexes)
             predictions = model_info.model.predict(data_x=transformed_data_x)
             if isinstance(predictions, pd.DataFrame):
@@ -364,6 +404,13 @@ class ModelStacker(ModelWrapperBase):
                 predictions = self._converter.convert(values=predictions)
 
             test_meta[model_info.description] = predictions  # place predictions in associated column
+
+        if self._include_original_dataset:
+            # need to make sure that the columns aren't overlapping
+            assert set(test_meta.columns.values).isdisjoint(set(data_x.columns.values))
+            test_meta = test_meta.join(data_x)
+
+        assert all(test_meta.index.values == data_x.index.values)
 
         # now apply any necessary stacker-specific transformations to test_meta
         # for example, some models require center/scaling, which may or may not have been previously done.
