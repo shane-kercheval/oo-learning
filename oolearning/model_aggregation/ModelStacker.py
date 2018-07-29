@@ -89,6 +89,10 @@ class ModelStackerTrainingObject:
 
 class ModelStacker(ModelWrapperBase):
     """
+    NOTE: do not use caching/persistence-manager when tuning with ModelStacker, there is an unknown
+        race condition when working with the cached files. It needs to be investigated.
+        https://github.com/shane-kercheval/oo-learning/issues/44
+
     This class implements a "Model Stacker" adopted from
     http://blog.kaggle.com/2016/12/27/a-kagglers-guide-to-model-stacking-in-practice/
 
@@ -126,8 +130,9 @@ class ModelStacker(ModelWrapperBase):
                  base_models: List[ModelInfo],
                  scores: List[ScoreActualPredictedBase],
                  stacking_model: ModelWrapperBase,
-                 stacking_transformations: List[TransformerBase] = None,
-                 converter: ContinuousToClassConverterBase = None,
+                 stacking_transformations: List[TransformerBase]=None,
+                 include_original_dataset: bool=False,
+                 converter: ContinuousToClassConverterBase=None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None,
                  predict_callback: Callable[[pd.DataFrame], None] = None):
@@ -137,6 +142,9 @@ class ModelStacker(ModelWrapperBase):
             (The transformations that are specific to the base models will be included in the corresponding
             ModelInfo objects. Transformations applied to ALL models (base and stacker) could be passed in
             via (for example) a ModelTrainer.)
+        :param include_original_dataset: When training the 'stacker' (using the predictions of the base models
+            as features), this parameter indicates whether or not the original dataset should be also included
+            as features, along with the base-model predictions.
         :param scores: since we are cross-validating, we can get a score from each base-model
         :param converter: A Converter object specifying how the predictions (e.g. DataFrame of probabilities
             for a classification problem) should be converted to classes. If the base_models `predict()`
@@ -153,6 +161,7 @@ class ModelStacker(ModelWrapperBase):
         self._stacking_model = stacking_model
         self._stacking_model_pipeline = None if stacking_transformations is None \
             else TransformerPipeline(transformations=stacking_transformations)
+        self._include_original_dataset = include_original_dataset
         self._converter = converter
         self._resampler_results = list()
         self._base_model_pipelines = list()
@@ -287,6 +296,7 @@ class ModelStacker(ModelWrapperBase):
 
         return train_meta, resampler_results
 
+    # noinspection PyTypeChecker
     def _train(self,
                data_x: pd.DataFrame,
                data_y: np.ndarray,
@@ -312,7 +322,14 @@ class ModelStacker(ModelWrapperBase):
                                                                         self._scores,
                                                                         self._converter)
 
-        # need to fit each base model on all of the training data, because when we predict, we first have to
+        if self._include_original_dataset:
+            # need to make sure that the columns aren't overlapping
+            assert set(train_meta.columns.values).isdisjoint(set(data_x.columns.values))
+            train_meta = train_meta.join(data_x)
+
+        assert all(train_meta.index.values == data_x.index.values)
+
+        # need to fit each base model on ALL of the training data, because when we predict, we first have to
         # build the corresponding train_meta features that we will feed into the trained stacker.
         for model_info in self._base_models:
             transformed_data_x = data_x
@@ -348,7 +365,6 @@ class ModelStacker(ModelWrapperBase):
         # do stacker-specific transformations
         transformed_train_meta = train_meta.drop(columns='actual_y')
         if self._stacking_model_pipeline is not None:
-            # noinspection PyTypeChecker
             transformed_train_meta = self._stacking_model_pipeline.fit_transform(data_x=transformed_train_meta)  # noqa
 
         if self._train_callback:
@@ -362,21 +378,22 @@ class ModelStacker(ModelWrapperBase):
                                           stacking_model=self._stacking_model,
                                           stacking_model_pipeline=self._stacking_model_pipeline)
 
+    # noinspection PyTypeChecker
     def _predict(self, model_object: object, data_x: pd.DataFrame) -> Union[np.ndarray, pd.DataFrame]:
         assert isinstance(model_object, ModelStackerTrainingObject)
         original_indexes = data_x.index.values
         # skeleton of test_meta, contains the original indexes and a column for each model
         test_meta = pd.DataFrame(index=original_indexes,
                                  columns=[model_info.description for model_info in model_object.base_models])
-        # for each model, apply applicable transformations, make predictions, and convert predictions to
-        # a single column if necessary
+        # for each base model, apply applicable transformations, make predictions, and convert predictions to
+        # a single column if necessary (i.e. build up predictions used previously fitted pipelines and trained
+        # models)
         for index, model_info in enumerate(model_object.base_models):
             # each model will either have an associated Pipeline, or None if no model-specific Transformations
             transformed_data_x = data_x
             pipeline = model_object.base_model_pipelines[index]
             if pipeline:
                 transformed_data_x = pipeline.transform(data_x=transformed_data_x)
-            # noinspection PyTypeChecker
             assert all(test_meta.index.values == original_indexes)
             predictions = model_info.model.predict(data_x=transformed_data_x)
             if isinstance(predictions, pd.DataFrame):
@@ -387,6 +404,13 @@ class ModelStacker(ModelWrapperBase):
                 predictions = self._converter.convert(values=predictions)
 
             test_meta[model_info.description] = predictions  # place predictions in associated column
+
+        if self._include_original_dataset:
+            # need to make sure that the columns aren't overlapping
+            assert set(test_meta.columns.values).isdisjoint(set(data_x.columns.values))
+            test_meta = test_meta.join(data_x)
+
+        assert all(test_meta.index.values == data_x.index.values)
 
         # now apply any necessary stacker-specific transformations to test_meta
         # for example, some models require center/scaling, which may or may not have been previously done.

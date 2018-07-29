@@ -3273,6 +3273,11 @@ class ModelWrapperTests(TimerTestCase):
         score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class)),  # noqa
                       SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class))]  # noqa
 
+        def fh(file):
+            # file helper
+            return TestHelper.ensure_test_directory(os.path.join('data/test_ModelWrappers/helper_test_ModelStacker_Classification',  # noqa
+                                                                 file))
+
         cart_base_model = ModelInfo(description='cart',
                                     model=CartDecisionTreeClassifier(),
                                     transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
@@ -3297,9 +3302,9 @@ class ModelWrapperTests(TimerTestCase):
         expected_train_x = data.iloc[training_indexes].drop(columns=target_variable)
         expected_test_x = data.iloc[test_indexes].drop(columns=target_variable)
 
-        file_train_callback = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_train_callback_train_meta.pkl'))  # noqa
-        file_test_callback_traindata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_test_callback_test_meta_traindata.pkl'))  # noqa
-        file_test_callback_holdoutdata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_test_callback_test_meta_holdoutdata.pkl'))  # noqa
+        file_train_callback = fh('train_callback_train_meta.pkl')
+        file_test_callback_traindata = fh('test_callback_test_meta_traindata.pkl')
+        file_test_callback_holdoutdata = fh('test_callback_test_meta_holdoutdata.pkl')
 
         # these variables help us verify the callbacks were called
         train_callback_called = list()
@@ -3431,9 +3436,9 @@ class ModelWrapperTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
         # test resample data
-        file_test_model_stacker_resample_data_cart = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_cart.pkl'))  # noqa
-        file_test_model_stacker_resample_data_rf = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_rf.pkl'))  # noqa
-        file_test_model_stacker_resample_means = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_means.pkl'))  # noqa
+        file_test_model_stacker_resample_data_cart = fh('resample_data_cart.pkl')
+        file_test_model_stacker_resample_data_rf = fh('resample_data_rf.pkl')
+        file_test_model_stacker_resample_means = fh('resample_means.pkl')
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_cart,
                                                      expected_dataframe=fitter.model.get_resample_data(model_description='cart'))  # noqa
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_rf,
@@ -3442,11 +3447,11 @@ class ModelWrapperTests(TimerTestCase):
                                                      expected_dataframe=fitter.model.get_resample_means())
 
         if OOLearningHelpers.is_series_numeric(data[target_variable]):
-            file_test_model_stacker_train_meta_correlations = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_train_meta_correlations.pkl'))  # noqa
-            file_plot_correlations = 'data/test_ModelWrappers/test_modelModel_stacker_correlations.png'
+            file_test_model_stacker_train_meta_correlations = fh('train_meta_correlations.pkl')
+            file_plot_correlations = 'data/test_ModelWrappers/helper_test_ModelStacker_Classification/stacker_correlations.png'  # noqa
         else:
-            file_test_model_stacker_train_meta_correlations = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_train_meta_correlations_string_target.pkl'))  # noqa
-            file_plot_correlations = 'data/test_ModelWrappers/test_modelModel_stacker_correlations_string_target.png'  # noqa
+            file_test_model_stacker_train_meta_correlations = fh('train_meta_correlations_string_target.pkl')
+            file_plot_correlations = 'data/test_ModelWrappers/helper_test_ModelStacker_Classification/stacker_correlations_string_target.png'  # noqa
 
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_train_meta_correlations,
                                                      expected_dataframe=fitter.model._train_meta_correlations)
@@ -3508,6 +3513,206 @@ class ModelWrapperTests(TimerTestCase):
                                                             target_variable=target_variable,
                                                             hyper_params=LogisticClassifierHP()))
 
+    def test_ModelStacker_include_original_dataset_in_stacker(self):
+
+        def fhh(file):
+            # file helper
+            return TestHelper.ensure_test_directory(
+                os.path.join('data/test_ModelWrappers/helper_test_ModelStacker_Classification',
+                             file))
+
+        def fh(file):
+            # file helper
+            return TestHelper.ensure_test_directory(
+                os.path.join('data/test_ModelWrappers/test_ModelStacker_include_original_dataset_in_stacker',
+                             file))
+
+        data = TestHelper.get_titanic_data()
+        positive_class = 1
+        target_variable = 'Survived'
+        score_list = [
+            KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class)),
+            SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class))  # noqa
+        ]
+
+        global_transformations = [
+            RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),  # noqa
+            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),  # noqa
+            ImputationTransformer()
+        ]
+        stacker_transformations = [
+            CenterScaleTransformer(),
+            DummyEncodeTransformer(),
+        ]
+
+        cart_base_model = ModelInfo(description='cart',
+                                    model=CartDecisionTreeClassifier(),
+                                    transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                                    hyper_params=CartDecisionTreeHP())
+        rf_base_model = ModelInfo(description='random_forest',
+                                  model=RandomForestClassifier(),
+                                  transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                                  hyper_params=RandomForestHP())
+        base_models = [cart_base_model, rf_base_model]
+
+        # Use same splitter information to get the same training/holdout data that is used in the ModelTrainer
+        # apply the same transformations
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
+        training_indexes, test_indexes = splitter.split(target_values=data.Survived)
+        expected_train_y = data.iloc[training_indexes].Survived
+        expected_train_x = data.iloc[training_indexes].drop(columns=target_variable)
+        all_trans_copy = [x.clone() for x in global_transformations] + \
+                         [x.clone() for x in stacker_transformations]
+        # this is the dataset that the final base model should be training on (excluding the predictions meta)
+        all_trans_pipeline = TransformerPipeline(transformations=all_trans_copy)
+        expected_train_x = all_trans_pipeline.fit_transform(expected_train_x)
+        expected_test_x = all_trans_pipeline.transform(data.iloc[test_indexes].drop(columns=target_variable))
+
+        # these variables help us verify the callbacks were called
+        train_callback_called = list()
+        predict_callback_called = list()
+
+        # these are the cached predictions (i.e. meta features)
+        file_train_callback = fhh('train_callback_train_meta.pkl')
+        file_test_callback_traindata = fhh('test_callback_test_meta_traindata.pkl')
+        file_test_callback_holdoutdata = fhh('test_callback_test_meta_holdoutdata.pkl')
+
+        with open(file_train_callback, 'rb') as saved_object:
+            expected_predictions_raw = pickle.load(saved_object)
+
+        meta_data_pipeline = TransformerPipeline(transformations=[x.clone() for x in stacker_transformations])
+        # predictions from base models that the stacker will use as features
+        expected_meta_built = meta_data_pipeline.fit_transform(expected_predictions_raw)
+
+        with open(file_test_callback_traindata, 'rb') as saved_object:
+            expected_predictions_raw = pickle.load(saved_object)
+        # predictions after all models are trained on entire dataset
+        expected_meta_train = meta_data_pipeline.transform(expected_predictions_raw)
+
+        with open(file_test_callback_holdoutdata, 'rb') as saved_object:
+            expected_predictions_raw = pickle.load(saved_object)
+        # predictions of base models from holdout data
+        expected_meta_test = meta_data_pipeline.transform(expected_predictions_raw)
+
+        def train_callback(train_meta_x, train_meta_y, hyper_params):
+            # the `train_meta_x` that we built in `train_predict_eval()` should have the same indexes as
+            # `train_meta_x
+            assert all(train_meta_x.index.values == expected_train_x.index.values)
+            # cached dataframe in `file_train_callback` are the predictions from the base model we expect
+
+            # gets the predictions used from another unit test (where we don't have any stacker
+            # tarnsformations and makes sure that once we apply the same transformations, we get the
+            # expeted predictions (i.e. features that the stacker will use)
+            TestHelper.ensure_all_values_equal(data_frame1=expected_meta_built,
+                                               data_frame2=train_meta_x[['cart', 'random_forest']])
+
+            # in addition to using the predictions as features, we are also using the original dataset, but
+            # with the global and stacker transformations
+            TestHelper.ensure_all_values_equal(data_frame1=expected_train_x,
+                                               data_frame2=train_meta_x.drop(columns=['cart', 'random_forest']))  # noqa
+
+            assert all(train_meta_y.index.values == expected_train_x.index.values)
+            # check that the y values in `train_meta_y` which will be trained on match the y's from the split
+            assert all(train_meta_y == expected_train_y)
+            assert isinstance(hyper_params, LogisticClassifierHP)
+
+            # add value to the list so we know this callback was called and completed
+            train_callback_called.append('train_called')
+
+        # predict will be called twice, first for evaluating the training data; next for the holdout
+        def predict_callback(test_meta):
+            if len(predict_callback_called) == 0:  # first time called i.e. training evaluation
+                # the `test_meta` that we built in `predict()` should have the same indexes as `train_meta_x`
+                # when evaluating the training set
+                assert all(test_meta.index.values == expected_train_x.index.values)
+                # cached dataframe in `file_test_callback_traindata` are the predictions from the base
+                # models (refitted on the entire training set) on the dataset that was passed into `predict()`
+                # in this case the original training data, which will then be predicted on the final stacking
+                # model
+
+                TestHelper.ensure_all_values_equal(data_frame1=expected_meta_train,
+                                                   data_frame2=test_meta[['cart', 'random_forest']])
+                # in addition to using the predictions as features, we are also using the original dataset,
+                # but with the global and stacker transformations
+                TestHelper.ensure_all_values_equal(data_frame1=expected_train_x,
+                                                   data_frame2=test_meta.drop(columns=['cart', 'random_forest']))  # noqa
+                # add value to the list so we know this callback (and this if) was called
+                predict_callback_called.append('predict_called_train')
+
+            elif len(predict_callback_called) == 1:  # second time called i.e. holdout evaluation
+                # the `test_meta` that we built in `predict()` should have the same indexes as
+                # `expected_test_x` when evaluating the holdout set
+                assert all(test_meta.index.values == expected_test_x.index.values)
+                # cached dataframe in `file_test_callback_holdoutdata` are the predictions from the base
+                # models (refitted on the entire training set) on the dataset that was passed into `predict()`
+                # in this case the holdout data, which will then be predicted on the final stacking model
+                TestHelper.ensure_all_values_equal(data_frame1=expected_meta_test,
+                                                   data_frame2=test_meta[['cart', 'random_forest']])
+                # in addition to using the predictions as features, we are also using the original dataset,
+                # but with the global and stacker transformations
+                TestHelper.ensure_all_values_equal(data_frame1=expected_test_x,
+                                                   data_frame2=test_meta.drop(columns=['cart', 'random_forest']))  # noqa
+
+                # add value to the list so we know this callback (and this if) was called
+                predict_callback_called.append('predict_called_holdout')
+            else:
+                raise ValueError()
+
+        model_stacker = ModelStacker(base_models=base_models,
+                                     scores=score_list,
+                                     stacking_model=LogisticClassifier(),
+                                     # transformers will be applied to original dataset and predictions
+                                     stacking_transformations=[x.clone() for x in stacker_transformations],
+                                     include_original_dataset=True,  # new field
+                                     converter=ExtractPredictionsColumnConverter(column=positive_class),
+                                     train_callback=train_callback,
+                                     predict_callback=predict_callback)
+
+        trainer = ModelTrainer(model=model_stacker,
+                               # transformations for all models, not just stackers
+                               model_transformations=[x.clone() for x in global_transformations],
+                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                               evaluator=TwoClassProbabilityEvaluator(
+                                  converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                       positive_class=positive_class)))
+        trainer.train_predict_eval(data=data,
+                                   target_variable=target_variable,
+                                   hyper_params=LogisticClassifierHP())
+
+        # verify our callback is called. If it wasn't, we would never know and the assertions wouldn't run.
+        assert train_callback_called == ['train_called']
+        # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
+        assert predict_callback_called == ['predict_called_train', 'predict_called_holdout']
+
+        actual_metrics = trainer.training_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.9796156766544011, 'AUC Precision/Recall': 0.9716221234154416, 'Kappa': 0.8451830755325135, 'F1 Score': 0.9009708737864077, 'Two-Class Accuracy': 0.9283707865168539, 'Error Rate': 0.07162921348314606, 'True Positive Rate': 0.8498168498168498, 'True Negative Rate': 0.9772209567198178, 'False Positive Rate': 0.022779043280182234, 'False Negative Rate': 0.15018315018315018, 'Positive Predictive Value': 0.9586776859504132, 'Negative Predictive Value': 0.9127659574468086, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+        # holdout AUC/ROC for CART was: 0.7711462450592885; for Random Forest was 0.8198945981554676;
+        # slight increase to 0.8203557312252964; (default hyper-params for all models)
+        actual_metrics = trainer.holdout_evaluator.all_quality_metrics
+        expected_metrics = {'AUC ROC': 0.8491436100131751, 'AUC Precision/Recall': 0.8231511029698481, 'Kappa': 0.6364251861882192, 'F1 Score': 0.7656250000000001, 'Two-Class Accuracy': 0.8324022346368715, 'Error Rate': 0.16759776536312848, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.9090909090909091, 'False Positive Rate': 0.09090909090909091, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.8305084745762712, 'Negative Predictive Value': 0.8333333333333334, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
+        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+
+        # test resample data
+        # using ffh which points to the directory `helper_test_ModelStacker_Classification`
+        # should have the same resample data since the base transformations and models are the same
+        # we are only changing the transformations and training data for the Stacker
+        file_test_model_stacker_resample_data_cart = fhh('resample_data_cart.pkl')
+        file_test_model_stacker_resample_data_rf = fhh('resample_data_rf.pkl')
+        file_test_model_stacker_resample_means = fhh('resample_means.pkl')
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_cart,
+                                                     expected_dataframe=trainer.model.get_resample_data(model_description='cart'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_rf,
+                                                     expected_dataframe=trainer.model.get_resample_data(model_description='random_forest'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_means,
+                                                     expected_dataframe=trainer.model.get_resample_means())
+
+        file_test_model_stacker_train_meta_correlations = fh('train_meta_correlations.pkl')
+        TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_train_meta_correlations,
+                                                     expected_dataframe=trainer.model._train_meta_correlations)  # noqa
+
     def test_ModelStacker_Regression_no_stacker_transformations(self):
         ######################################################################################################
         # elastic_net stacker, svm & GBM & polynomial linear regression base models
@@ -3522,9 +3727,9 @@ class ModelWrapperTests(TimerTestCase):
         expected_train_x = data.iloc[training_indexes].drop(columns=target_variable)
         expected_test_x = data.iloc[test_indexes].drop(columns=target_variable)
 
-        file_train_callback = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_regression_train_callback_train_meta.pkl'))  # noqa
-        file_test_callback_traindata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_regression_test_callback_test_meta_traindata.pkl'))  # noqa
-        file_test_callback_holdoutdata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_regression_test_callback_test_meta_holdoutdata.pkl'))  # noqa
+        file_train_callback = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/train_callback_train_meta.pkl'))  # noqa
+        file_test_callback_traindata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/test_callback_test_meta_traindata.pkl'))  # noqa
+        file_test_callback_holdoutdata = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/test_callback_test_meta_holdoutdata.pkl'))  # noqa
 
         # these variables help us verify the callbacks were called
         train_callback_called = list()
@@ -3606,10 +3811,10 @@ class ModelWrapperTests(TimerTestCase):
 
         assert [x.description for x in model_stacker._base_models] == ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor']  # noqa
         # test resample data
-        file_test_model_stacker_resample_data_regression = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_regression.pkl'))  # noqa
-        file_test_model_stacker_resample_data_cart = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_cart_regression.pkl'))  # noqa
-        file_test_model_stacker_resample_data_gb = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_data_gb.pkl'))  # noqa
-        file_test_model_stacker_resample_means = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_resample_means_regression.pkl'))  # noqa
+        file_test_model_stacker_resample_data_regression = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/resample_data_regression.pkl'))  # noqa
+        file_test_model_stacker_resample_data_cart = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/resample_data_cart_regression.pkl'))  # noqa
+        file_test_model_stacker_resample_data_gb = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/resample_data_gb.pkl'))  # noqa
+        file_test_model_stacker_resample_means = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/resample_means_regression.pkl'))  # noqa
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_regression,
                                                      expected_dataframe=fitter.model.get_resample_data(model_description='LinearRegressor_polynomial_2'))  # noqa
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_data_cart,
@@ -3619,8 +3824,8 @@ class ModelWrapperTests(TimerTestCase):
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_resample_means,
                                                      expected_dataframe=fitter.model.get_resample_means())
 
-        file_test_model_stacker_train_meta_correlations = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_train_meta_correlations_regression.pkl'))  # noqa
-        file_plot_correlations = 'data/test_ModelWrappers/test_modelModel_stacker_correlations_regression.png'
+        file_test_model_stacker_train_meta_correlations = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/train_meta_correlations_regression.pkl'))  # noqa
+        file_plot_correlations = 'data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/stacker_correlations_regression.png'
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_train_meta_correlations,
                                                      expected_dataframe=fitter.model._train_meta_correlations)
         TestHelper.check_plot(file_plot_correlations, lambda: fitter.model.plot_correlation_heatmap())
@@ -3769,6 +3974,7 @@ class ModelWrapperTests(TimerTestCase):
     def test_ModelStacker_Tuning(self):
         """
         Ensure that we can re-use all of the objects passed into the ModelStacker so, e.g., we can Tune
+        Ensure we are caching correctly.
         """
         data = TestHelper.get_titanic_data()
         positive_class = 1
@@ -3806,8 +4012,7 @@ class ModelWrapperTests(TimerTestCase):
                                                      repeats=1,
                                                      # fold_decorators=[TwoClassThresholdDecorator(parallelization_cores=0)]
                                                      )
-        cache_directory = TestHelper.ensure_test_directory(
-            'data/test_ModelWrappers/test_tuning_stacker_caching')  # noqa
+        cache_directory = TestHelper.ensure_test_directory('data/test_ModelWrappers/test_tuning_stacker_caching')  # noqa
         tuner = ModelTuner(resampler=resampler,
                            hyper_param_object=LogisticClassifierHP(),
                            model_persistence_manager=LocalCacheManager(cache_directory=cache_directory),
