@@ -3720,7 +3720,7 @@ class ModelWrapperTests(TimerTestCase):
         def fh(file):
             # file helper
             return TestHelper.ensure_test_directory(
-                os.path.join('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations',
+                os.path.join('data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations',  # noqa
                              file))
 
         data = TestHelper.get_insurance_data()
@@ -3843,7 +3843,7 @@ class ModelWrapperTests(TimerTestCase):
         def fh(file):
             # file helper
             return TestHelper.ensure_test_directory(
-                os.path.join('data/test_ModelWrappers/test_ModelStacker_Regression_with_stacker_transformations',
+                os.path.join('data/test_ModelWrappers/test_ModelStacker_Regression_with_stacker_transformations',  # noqa
                              file))
         data = TestHelper.get_insurance_data()
         target_variable = 'expenses'
@@ -3962,6 +3962,7 @@ class ModelWrapperTests(TimerTestCase):
                                                      expected_dataframe=fitter.model._train_meta_correlations)
         TestHelper.check_plot(file_plot_correlations, lambda: fitter.model.plot_correlation_heatmap())
 
+    # noinspection PyUnusedLocal
     def test_ModelStacker_caching(self):
         cache_directory = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification')  # noqa
 
