@@ -1,9 +1,28 @@
-import os
 import shutil
+import os
+
+from time import sleep
 
 from oolearning import *
 from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
+
+
+def test_lock(x):
+    """
+    Just used for demonstration. It’s bad to use the ‘global’
+    statement in general.
+    """
+    if x[0]:
+        Lock().acquire()
+    sleep(x[1])
+    directory_existed = os.path.exists('directory')
+    if not os.path.exists('directory'):
+        os.makedirs('directory')
+
+    if x[0]:
+        Lock().release()
+    return directory_existed
 
 
 # noinspection PyMethodMayBeStatic
@@ -12,6 +31,45 @@ class PersistenceManagerTests(TimerTestCase):
     @classmethod
     def setUpClass(cls):
         pass
+
+    def test_Singleton_and_Lock(self):
+        # the Lock object should be a singleton, which means the object and underlying object should be the
+        # same (i.e. same memory; tested via `is`) regardless how it is created.
+        m1 = Lock()
+        m2 = Lock()
+        assert m1 is m2
+        assert m1._lock is m2._lock
+        assert Lock() is Lock()
+        assert Lock()._lock is Lock()._lock
+
+        # test, not only multi-threaded locking, but also that Lock() can be called as singleton (e.g.
+        # `Lock().aquire()` / `Lock().release()` on multiple threads, in the same manner we use
+        # multi-threading elsewhere
+        #####################
+        def rmd():
+            if os.path.exists('directory'):
+                os.removedirs('directory')
+
+        rmd()
+        from multiprocessing import Pool as ThreadPool
+        from multiprocessing import cpu_count
+        # if we don't lock, and we sleep on the first thread, then the thread will switch to the second,
+        # the directory should not exist on the second thread (and be created), it will then switch back
+        # to the first thread and should already exist.
+        with ThreadPool(cpu_count()) as pool:
+            lock = False
+            results = list(pool.map(test_lock, [[lock, 1],
+                                                [lock, 0]]))
+            assert results == [True, False]
+            rmd()
+        # if we do lock, and we sleep on the first thread, then directory should still not yet exist on the
+        # first thread (because we locked) and will be created, so then should exist on the second thread
+        with ThreadPool(cpu_count()) as pool:
+            lock = True
+            results = list(pool.map(test_lock, [[lock, 1],
+                                                [lock, 0]]))
+            assert results == [False, True]
+            rmd()
 
     def test_LocalCacheObject_with_constructor(self):
 
@@ -210,7 +268,7 @@ class PersistenceManagerTests(TimerTestCase):
         assert persistence_object.cache_path is None
         persistence_object.set_key(key=expected_key)
         assert persistence_object.cache_path == os.path.join(expected_directory,
-                                                              expected_prefix + expected_key + '.pkl')
+                                                             expected_prefix + expected_key + '.pkl')
         # test invalid prefix
         invalid_prefix = 'invalid prefix_'
         invalid_key = 'invalid key because it has spaces'

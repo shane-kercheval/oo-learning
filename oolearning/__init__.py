@@ -1,4 +1,4 @@
-from .OOLearningHelpers import OOLearningHelpers
+from .OOLearningHelpers import OOLearningHelpers, Lock, Singleton
 
 from .converters.ContinuousToClassConverterBase import ContinuousToClassConverterBase
 from .converters.ExtractPredictionsColumnConverter import ExtractPredictionsColumnConverter

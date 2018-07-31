@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as pl
+from multiprocessing import Lock as threading_Lock
 
 from oolearning.transformers.StatelessTransformer import StatelessTransformer
 from oolearning.transformers.TransformerPipeline import TransformerPipeline
@@ -111,3 +112,33 @@ class OOLearningHelpers:
             transformed_holdout_x = holdout_x
 
         return transformed_training_x, training_y, transformed_holdout_x, holdout_y, pipeline
+
+
+class Singleton(type):
+    """
+    Define an Instance operation that lets clients access its unique
+    instance.
+    """
+
+    def __init__(cls, name, bases, attrs):
+        super().__init__(name, bases, attrs)
+        cls._instance = None
+
+    def __call__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__call__(*args, **kwargs)
+        return cls._instance
+
+
+class Lock(metaclass=Singleton):
+    """
+    Example class.
+    """
+    def __init__(self):
+        self._lock = threading_Lock()
+
+    def acquire(self):
+        self._lock.acquire()
+
+    def release(self):
+        self._lock.release()

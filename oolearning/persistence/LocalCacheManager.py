@@ -69,7 +69,7 @@ class LocalCacheManager(PersistenceManagerBase):
         self._cache_path = None  # setting the prefix invalidates whatever the current cache_path is
         self._key_prefix = prefix
 
-    def get_object(self, fetch_function: Callable[[], object], key: str=None) -> object:
+    def _get_object(self, fetch_function: Callable[[], object], key: str=None) -> object:
         """
         # TODO document
         :param fetch_function:
