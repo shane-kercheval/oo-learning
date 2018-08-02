@@ -111,3 +111,19 @@ class OOLearningHelpers:
             transformed_holdout_x = holdout_x
 
         return transformed_training_x, training_y, transformed_holdout_x, holdout_y, pipeline
+
+
+class Singleton(type):
+    """
+    Define an Instance operation that lets clients access its unique
+    instance.
+    """
+
+    def __init__(cls, name, bases, attrs):
+        super().__init__(name, bases, attrs)
+        cls._instance = None
+
+    def __call__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super().__call__(*args, **kwargs)
+        return cls._instance
