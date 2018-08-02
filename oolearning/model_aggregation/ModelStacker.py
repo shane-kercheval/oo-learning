@@ -1,9 +1,10 @@
 from typing import Union, List, Callable
+from multiprocessing import Lock
 
 import numpy as np
 import pandas as pd
 
-from oolearning.OOLearningHelpers import OOLearningHelpers
+from oolearning.OOLearningHelpers import OOLearningHelpers, Singleton
 from oolearning.converters.ContinuousToClassConverterBase import ContinuousToClassConverterBase
 from oolearning.evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
 from oolearning.model_processors.DecoratorBase import DecoratorBase
@@ -170,6 +171,34 @@ class ModelStacker(ModelWrapperBase):
         self._train_meta_correlations = None
         self._stackerobject_persistence_manager = None
 
+    class StackerMetaLock(metaclass=Singleton):
+        """
+        Example class.
+        """
+
+        def __init__(self):
+            self._lock = Lock()
+
+        def acquire(self):
+            self._lock.acquire()
+
+        def release(self):
+            self._lock.release()
+
+    class StackerBaseLock(metaclass=Singleton):
+        """
+        Example class.
+        """
+
+        def __init__(self):
+            self._lock = Lock()
+
+        def acquire(self):
+            self._lock.acquire()
+
+        def release(self):
+            self._lock.release()
+
     @property
     def name(self) -> str:
         return "{0}_{1}".format(type(self).__name__, type(self._stacking_model).__name__)
@@ -309,12 +338,18 @@ class ModelStacker(ModelWrapperBase):
             # In the case of a Resampler, for example, this ensures a different `train_meta` is cached for
             # each fold
             cache.set_key('train_meta')
+            # NOTE: building the train meta dataset is exactly the same regardless of the type of model
+            # stacker or the model stacker's hyper-parameters. As such, the file name of the cache will be the
+            # same, which will cause problems for multi-threading, because the same file will be read/written
+            # simultaneously by multiple threads. Therefore, we will lock this action.
+            self.StackerMetaLock().acquire()
             train_meta, self._resampler_results = cache.\
                 get_object(fetch_function=lambda: self.build_train_meta(data_x,
                                                                         data_y,
                                                                         self._base_models,
                                                                         self._scores,
                                                                         self._converter))
+            self.StackerMetaLock().release()
         else:
             train_meta, self._resampler_results = self.build_train_meta(data_x,
                                                                         data_y,
@@ -355,9 +390,19 @@ class ModelStacker(ModelWrapperBase):
                 cache.set_key(key='{}_{}_{}'.format('base', model_info.description, hyper_params_string))
                 model_info.model.set_persistence_manager(cache)
 
+            # NOTE: training the base stackers is exactly the same regardless of the type of model
+            # stacker or the model stacker's hyper-parameters. As such, the file name of the cache will be the
+            # same, which will cause problems for multi-threading, because the same file will be read/written
+            # simultaneously by multiple threads
+            # Therefore, we will lock this action. This will have the affect of generating performance of
+            # training the base models similar to when it is single-threaded, although once created,
+            # it should get the benefits of multi-threading. A better version of this would have a separate
+            # lock for each base model, so we could still train them simultaneously.
+            self.StackerBaseLock().acquire()
             model_info.model.train(data_x=transformed_data_x,
                                    data_y=data_y,
                                    hyper_params=model_info.hyper_params)
+            self.StackerBaseLock().release()
 
         # get the correlations before any transformations on `train_meta` for the stacking model.
         self._train_meta_correlations = train_meta.corr()

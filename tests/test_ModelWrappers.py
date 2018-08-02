@@ -3988,50 +3988,105 @@ class ModelWrapperTests(TimerTestCase):
         Ensure that we can re-use all of the objects passed into the ModelStacker so, e.g., we can Tune
         Ensure we are caching correctly.
         """
+
+        ######################################################################################################
+        # first, ensure the Lock is truly a singleton
+        # internally, the stacker uses a Lock, because building the "meta training" dataset will reuse
+        # the same training set built by the stacker. i.e. regardless of which stacking model and/or
+        # model hyper-parameters we use, the "meta training" dataset is built exactly the same way, and
+        # will also have exactly the same cache file name. This creates problems for multi-threading
+        # because multiple threads are reading/writing to the same file. Therefore, we lock the process
+        # within ModelStacker._train(). This actually has the side affect of making performance similar to
+        # single-threading the first time the "meta training" dataset is built up, but should drastically
+        # increase once it is built and cached
+        ######################################################################################################
+        test1 = ModelStacker(base_models=[], scores=None, stacking_model=None)
+        test2 = ModelStacker(base_models=[], scores=None, stacking_model=None)
+        assert test1 is not test2  # different objections
+        assert test1.StackerMetaLock() is test2.StackerMetaLock()  # same objects via Singleton
+        assert test1.StackerBaseLock() is test2.StackerBaseLock()  # same objects via Singleton
+
+        ######################################################################################################
+        # now test tuner
+        ######################################################################################################
+        cache_directory = TestHelper.ensure_test_directory('data/test_ModelWrappers/test_tuning_stacker_caching')  # noqa
         data = TestHelper.get_titanic_data()
         positive_class = 1
         target_variable = 'Survived'
-        score_list = [
-            KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class)),
-            SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class)),  # noqa
-        ]
 
-        cart_base_model = ModelInfo(description='cart',
-                                    model=CartDecisionTreeClassifier(),
-                                    transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
-                                    hyper_params=CartDecisionTreeHP())
-        rf_base_model = ModelInfo(description='random_forest',
-                                  model=RandomForestClassifier(),
-                                  transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
-                                  hyper_params=RandomForestHP())
-        base_models = [cart_base_model, rf_base_model]
+        # noinspection PyShadowingNames
+        def create_tuner():
 
-        model_stacker = ModelStacker(base_models=base_models,
-                                     scores=score_list,
-                                     stacking_model=LogisticClassifier(),
-                                     stacking_transformations=None,
-                                     converter=ExtractPredictionsColumnConverter(column=positive_class))
+            score_list = [
+                KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class)),
+                SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class)),  # noqa
+            ]
 
-        transformations = [
-            RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
-            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
-            ImputationTransformer()
-        ]
-        resampler = RepeatedCrossValidationResampler(model=model_stacker,
-                                                     transformations=transformations,
-                                                     scores=score_list,
-                                                     folds=3,
-                                                     repeats=1,
-                                                     # fold_decorators=[TwoClassThresholdDecorator(parallelization_cores=0)]
-                                                     )
-        cache_directory = TestHelper.ensure_test_directory('data/test_ModelWrappers/test_tuning_stacker_caching')  # noqa
-        tuner = ModelTuner(resampler=resampler,
-                           hyper_param_object=LogisticClassifierHP(),
-                           model_persistence_manager=LocalCacheManager(cache_directory=cache_directory),
-                           # NOTE: do not use parallelization with model stacker; causes unknown error
-                           parallelization_cores=0,
-                           )  # Hyper-Parameter object specific to RF
+            cart_base_model = ModelInfo(description='cart',
+                                        model=CartDecisionTreeClassifier(),
+                                        transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                                        hyper_params=CartDecisionTreeHP())
+            rf_base_model = ModelInfo(description='random_forest',
+                                      model=RandomForestClassifier(),
+                                      transformations=[DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)],
+                                      hyper_params=RandomForestHP())
+            base_models = [cart_base_model, rf_base_model]
 
+            model_stacker = ModelStacker(base_models=base_models,
+                                         scores=score_list,
+                                         stacking_model=LogisticClassifier(),
+                                         stacking_transformations=None,
+                                         converter=ExtractPredictionsColumnConverter(column=positive_class))
+
+            transformations = [
+                RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                ImputationTransformer()
+            ]
+            resampler = RepeatedCrossValidationResampler(model=model_stacker,
+                                                         transformations=transformations,
+                                                         scores=score_list,
+                                                         folds=3,
+                                                         repeats=1,
+                                                         # fold_decorators=[TwoClassThresholdDecorator(parallelization_cores=0)]
+                                                         )
+            tuner = ModelTuner(resampler=resampler,
+                               hyper_param_object=LogisticClassifierHP(),
+                               model_persistence_manager=LocalCacheManager(cache_directory=cache_directory),
+                               parallelization_cores=-1,
+                               )  # Hyper-Parameter object specific to RF
+            return cart_base_model, rf_base_model, model_stacker, transformations, score_list, tuner
+
+        cart_base_model, rf_base_model, model_stacker, transformations, score_list, tuner = create_tuner()
+        # define the combinations of hyper-params that we want to evaluate
+        regularization_inverse = [0.001, 0.01, 0.05, 0.1, 1, 5, 8, 10]
+        grid = HyperParamsGrid(params_dict=dict(regularization_inverse=regularization_inverse))
+        tuner.tune(data_x=data.drop(columns=target_variable),
+                   data_y=data[target_variable],
+                   params_grid=grid)
+
+        # if these were actually reused each time they should still be None
+        assert model_stacker._model_object is None
+        assert all([x.value is None for x in score_list])
+        assert all([x.state is None for x in transformations])
+        assert cart_base_model.model._model_object is None
+        assert rf_base_model.model._model_object is None
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelStacker_tuner_data.pkl'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file, expected_dataframe=tuner.results.resampled_stats)  # noqa
+
+        for fold in ['repeat{}_fold{}_'.format(0, x) for x in range(3)]:
+            assert os.path.isfile(os.path.join(cache_directory, fold + 'train_meta.pkl'))
+            assert os.path.isfile(os.path.join(cache_directory, fold + 'base_cart_criterion_gini_splitter_best_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_max_features_None.pkl'))  # noqa
+            assert os.path.isfile(os.path.join(cache_directory, fold + 'base_random_forest_n_estimators_500_criterion_gini_max_features_None_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_min_impurity_decrease_0_bootstrap_True_oob_score_False.pkl'))  # noqa
+            stacker_file = 'ModelStacker_LogisticClassifier_penaltyl2_regularization_inverse{}_solverliblinear.pkl'  # noqa
+            for param in regularization_inverse:
+                assert os.path.isfile(os.path.join(cache_directory, fold + stacker_file.format(float(param))))
+
+        ######################################################################################################
+        # repeat same thing but now files are cached
+        ######################################################################################################
+        cart_base_model, rf_base_model, model_stacker, transformations, score_list, tuner = create_tuner()
         # define the combinations of hyper-params that we want to evaluate
         regularization_inverse = [0.001, 0.01, 0.05, 0.1, 1, 5, 8, 10]
         grid = HyperParamsGrid(params_dict=dict(regularization_inverse=regularization_inverse))
