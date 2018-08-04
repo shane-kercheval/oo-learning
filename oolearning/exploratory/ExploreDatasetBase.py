@@ -20,7 +20,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         than changing directly, since this class caches information about the dataset. If changes are made,
         the user can call `._update_cache()` manually.
     """
-    def __init__(self, dataset: pd.DataFrame, target_variable: str):
+    def __init__(self, dataset: pd.DataFrame, target_variable: Union[str, None]=None):
         """
         :param dataset: dataset to explore
         :param target_variable: the name of the target variable/column
@@ -57,8 +57,9 @@ class ExploreDatasetBase(metaclass=ABCMeta):
     @classmethod
     def from_csv(cls,
                  csv_file_path: str,
-                 target_variable: str,
-                 skip_initial_space: bool=True) -> 'ExploreDatasetBase':
+                 target_variable: Union[str, None] = None,
+                 skip_initial_space: bool=True,
+                 separator: str=',') -> 'ExploreDatasetBase':
         """
         Instantiates this class (via subclass) by first loading in a csv from `csv_file_path`.
 
@@ -67,9 +68,13 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         :param csv_file_path: path to the csv file
         :param target_variable: the name of the target variable/column
         :param skip_initial_space: Skip spaces after delimiter.
+        :param separator: Delimiter to use. If sep is None, the C engine cannot automatically detect the
+            separator ... https://pandas.pydata.org/pandas-docs/stable/generated/pandas.read_csv.html
         :return: an instance of this class (i.e. subclass)
         """
-        explore = cls(dataset=pd.read_csv(csv_file_path, skipinitialspace=skip_initial_space),
+        explore = cls(dataset=pd.read_csv(csv_file_path,
+                                          skipinitialspace=skip_initial_space,
+                                          sep=separator),
                       target_variable=target_variable)
 
         _, categoric_features = OOLearningHelpers.get_columns_by_type(data_dtypes=explore.dataset.dtypes,

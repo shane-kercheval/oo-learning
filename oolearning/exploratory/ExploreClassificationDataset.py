@@ -34,10 +34,13 @@ class ExploreClassificationDataset(ExploreDatasetBase):
         if self._is_target_numeric and map_numeric_target is not None:
             self.set_as_categoric(feature=target_variable, mapping=map_numeric_target, ordered=ordered)
 
+    # noinspection PyMethodOverriding
     @classmethod
     def from_csv(cls,
                  csv_file_path: str,
                  target_variable: str,
+                 skip_initial_space: bool = True,
+                 separator: str = ',',
                  map_numeric_target: dict=None,
                  ordered: bool=False) -> 'ExploreDatasetBase':
         """
@@ -47,11 +50,17 @@ class ExploreClassificationDataset(ExploreDatasetBase):
 
         :param csv_file_path: path to the csv file
         :param target_variable: the name of the target variable/column
-         :param map_numeric_target: same as `__init__()`
+        :param skip_initial_space: Skip spaces after delimiter.
+        :param separator: Delimiter to use. If sep is None, the C engine cannot automatically detect the
+            separator ... https://pandas.pydata.org/pandas-docs/stable/generated/pandas.read_csv.html
+        :param map_numeric_target: same as `__init__()`
         :param ordered: same as `__init__()`
         :return: an instance of this class (i.e. subclass)
         """
-        explore = super().from_csv(csv_file_path=csv_file_path, target_variable=target_variable)
+        explore = super().from_csv(csv_file_path=csv_file_path,
+                                   target_variable=target_variable,
+                                   skip_initial_space=skip_initial_space,
+                                   separator=separator)
         if explore._is_target_numeric:
             if map_numeric_target is None:
                 raise ValueError('need to provide `map_numeric_target` for numeric targets')

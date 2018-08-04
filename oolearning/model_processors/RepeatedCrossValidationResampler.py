@@ -89,7 +89,7 @@ def resample_repeat(args):
         # the transformations on the entire dataset; we fit/transform on the training and then
         # simply transform on the holdout
         pipeline = TransformerPipeline(transformations=None if transformations is None
-                                                       else [x.clone() for x in transformations])
+                                                            else [x.clone() for x in transformations])
         # before we fit the data, we actually want to 'peak' at what the expected columns will be with
         # ALL the data. The reason is that if we so some sort of encoding (dummy/one-hot), but not all
         # of the categories are included in the training set (i.e. maybe only a small number of
@@ -161,8 +161,12 @@ class RepeatedCrossValidationResampler(ResamplerBase):
         """
         :param model: The model to fit at each fold. A clone/copy of the model is created at each fold.
         :param transformations: The transformations that are to be applied at each fold. Specifically,
-            the transformations are fit/transformed on the training folds, and then transformed
-            (without being fit) on the holdout set. The objects are cloned/copied at each fold.
+            the transformations are fit/transformed on the training folds before passed to the ModelWrapper,
+            and then transformed (without being fit) on the holdout set. The objects are cloned/copied at each
+            fold. The transformations are applied to each fold rather than the entire dataset to avoid
+            "information leakage" i.e. the model being trained should not know anything about the holdout
+            dataset, if we fit the transformations on all of the data, the training model is actually being
+            influenced by data information from the holdout set.
         :param scores: the Scores that are evaluated at each fold/repeat.
         :param model_persistence_manager: an object describing how to save/cache the trained models.
         :param results_persistence_manager: an object describing how to save/cache the ResamplerResults,
@@ -199,7 +203,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
 
         # if there is a callback and we are using parallelization, raise error
         if self._train_callback is not None and (parallelization_cores != 0 and
-                                                      parallelization_cores != 1):
+                                                 parallelization_cores != 1):
             raise CallbackUsedWithParallelizationError()
 
         self._parallelization_cores = parallelization_cores
@@ -256,76 +260,9 @@ class RepeatedCrossValidationResampler(ResamplerBase):
         if self._decorators:
             decorators = [x[1] for x in results]
             # flatten out so there are folds*repeats number of list items
-            flattened_decorators = [decorators[x][y] if decorators[x] else None for x in range(self._repeats) for y in range(len(self._decorators))]  # noqa
+            flattened_decorators = [decorators[x][y] if decorators[x] else None for x in range(self._repeats)
+                                    for y in range(len(self._decorators))]
             self._decorators = flattened_decorators
-
-        # for repeat_index in range(self._repeats):
-        #     # consistent folds per repeat index, but different folds for different repeats
-        #     np.random.seed(repeat_index)
-        #     # generate random fold #s that correspond to each index of the data
-        #     random_folds = np.random.randint(low=0, high=self._folds, size=len(data_y))
-        #     for fold_index in range(self._folds):
-        #         holdout_indexes = random_folds == fold_index  # indexes that match the fold belong to holdout
-        #         training_indexes = ~holdout_indexes  # all other indexes belong to the training set
-        #
-        #         # odd naming serves as distinction between when we use transformed/non-transformed data
-        #         train_x_not_transformed, holdout_x_not_transformed = data_x[training_indexes],\
-        #                                                              data_x[holdout_indexes]
-        #         train_y, holdout_y = data_y[training_indexes], data_y[holdout_indexes]
-        #
-        #         # NOTE: we are fitting the transformations on the k-1 folds (i.e. local training data)
-        #         # for each k times we train/predict data. This is so we don't have any contamination/
-        #         # leakage into the local holdout/fold we are predicting on (just like we wouldn't fit
-        #         # the transformations on the entire dataset; we fit/transform on the training and then
-        #         # simply transform on the holdout
-        #         pipeline = TransformerPipeline(transformations=None if self._transformations is None else [x.clone() for x in self._transformations])  # noqa
-        #         # before we fit the data, we actually want to 'peak' at what the expected columns will be with
-        #         # ALL the data. The reason is that if we so some sort of encoding (dummy/one-hot), but not all
-        #         # of the categories are included in the training set (i.e. maybe only a small number of
-        #         # observations have the categoric value), then we can still ensure that we will be giving the
-        #         # same expected columns/encodings to the `predict` method with the holdout set.
-        #         # peak at all the data
-        #         pipeline.peak(data_x=data_x)
-        #         # fit on only the train dataset (and also transform)
-        #         train_x_transformed = pipeline.fit_transform(data_x=train_x_not_transformed)
-        #         # transform (but don't fit) on holdout
-        #         holdout_x_transformed = pipeline.transform(data_x=holdout_x_not_transformed)
-        #
-        #         # the callback allows callers to see/verify the data that is being trained, at each fold
-        #         if self._train_callback is not None:
-        #             self._train_callback(train_x_transformed, data_y, hyper_params)
-        #
-        #         model_copy = self._model.clone()  # need to reuse this object type for each fold/repeat
-        #
-        #         # set up persistence if applicable
-        #         if self._model_persistence_manager is not None:  # then build the key
-        #             cache_key = self.model_build_cache_key(model=model_copy,
-        #                                              hyper_params=hyper_params,
-        #                                              repeat_index=repeat_index,
-        #                                              fold_index=fold_index)
-        #             self._model_persistence_manager.set_key(key=cache_key)
-        #             model_copy.set_persistence_manager(persistence_manager=self._model_persistence_manager)
-        #
-        #         model_copy.train(data_x=train_x_transformed, data_y=train_y, hyper_params=hyper_params)
-        #         predicted_values = model_copy.predict(data_x=holdout_x_transformed)
-        #
-        #         fold_scores = list()
-        #         for score in self._scores:  # cycle through scores and store results of each fold
-        #             score_copy = score.clone()  # need to reuse this object type for each fold/repeat
-        #             score_copy.calculate(actual_values=holdout_y,
-        #                                  predicted_values=predicted_values)
-        #             fold_scores.append(score_copy)
-        #         result_scores.append(fold_scores)
-        #
-        #         # executed any functionality that is dynamically attached via decorators
-        #         if self._decorators:
-        #             for decorator in self._decorators:
-        #                 decorator.decorate(repeat_index=repeat_index,
-        #                                    fold_index=fold_index,
-        #                                    scores=self._scores,
-        #                                    holdout_actual_values=holdout_y,
-        #                                    holdout_predicted_values=predicted_values,
-        #                                    holdout_indexes=holdout_x_transformed.index.values)
 
         # result_scores is a list of list of holdout scores.
         # Each outer list represents a resampling result

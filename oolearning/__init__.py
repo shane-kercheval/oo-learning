@@ -46,6 +46,7 @@ from .evaluators.TwoClassProbabilityEvaluator import TwoClassProbabilityEvaluato
 from .evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 
 from .exploratory.ExploreClassificationDataset import ExploreClassificationDataset
+from .exploratory.ExploreDataset import ExploreDataset
 from .exploratory.ExploreDatasetBase import ExploreDatasetBase
 from .exploratory.ExploreRegressionDataset import ExploreRegressionDataset
 

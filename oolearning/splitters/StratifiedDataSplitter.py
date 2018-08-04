@@ -40,16 +40,16 @@ class StratifiedDataSplitter(DataSplitterBase):
             -> Tuple[List[np.ndarray], List[np.ndarray]]:
         """
         creates multiple samples (determined by `samples` parameter) of stratified training and test data
-            e.g. if `samples=5`, the length of the `target_values` array is 100, and `holdout_ratio` passed into
-            the constructor is 0.20, this function returns two tuples, each item being a list of indexes;
+            e.g. if `samples=5`, the length of the `target_values` array is 100, and `holdout_ratio` passed
+            into the constructor is 0.20, this function returns two tuples, each item being a list of indexes;
             the first item/list will have 5 arrays of 80 values, representing the training indexes, and
             the second item/list will have 5 arrays of 20 values, representing the test indexes
             (similar to description in Applied Predictive Modeling pg 71/72
         :param target_values: the values to stratify
         :param samples: the number of samples to return
         :param seed: seed used by the random number generator
-        :return: list of training and testing indexes for each fold, and based on the holdout_ratio passed into
-        the constructor
+        :return: list of training and testing indexes for each fold, and based on the holdout_ratio passed
+        into the constructor
         """
         pre_labels = self.labels_to_stratify(target_values=target_values)  # get labels to stratify
         labels = LabelEncoder().fit(pre_labels).transform(pre_labels)  # en
