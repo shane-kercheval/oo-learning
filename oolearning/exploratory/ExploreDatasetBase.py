@@ -41,7 +41,9 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         self._numeric_features, self._categoric_features = \
             OOLearningHelpers.get_columns_by_type(data_dtypes=self._dataset.dtypes,
                                                   target_variable=self._target_variable)
-        self._is_target_numeric = OOLearningHelpers.is_series_numeric(self._dataset[self._target_variable])
+
+        self._is_target_numeric = None if self._target_variable is None \
+            else OOLearningHelpers.is_series_numeric(self._dataset[self._target_variable])
 
     @abstractmethod
     def plot_against_target(self, feature: str):
@@ -156,10 +158,11 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         """
         # if there aren't any numeric features and the target variable is not numeric, we don't have anything
         # to display, return None
-        if len(self._numeric_features) == 0 and not self._is_target_numeric:
+        if len(self._numeric_features) == 0 and (self._target_variable is None or not self._is_target_numeric):  # noqa
             return None
 
-        numeric_columns = self._numeric_features + [self._target_variable] if self._is_target_numeric \
+        numeric_columns = self._numeric_features + [self._target_variable] \
+            if self._target_variable is not None and self._is_target_numeric \
             else self._numeric_features
 
         # column, number of nulls in column, percent of nulls in column
@@ -211,11 +214,12 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         """
         # if there aren't any categoric features and the target variable is numeric, we don't have anything
         # to display, return None
-        if len(self.categoric_features) == 0 and self._is_target_numeric:
+        if len(self.categoric_features) == 0 and (self._target_variable is None or self._is_target_numeric):
             return None
 
-        categoric_columns = self.categoric_features if self._is_target_numeric \
-            else self._categoric_features + [self._target_variable]
+        categoric_columns = self.categoric_features if (self._target_variable is None or
+                                                        self._is_target_numeric) \
+                                                    else self._categoric_features + [self._target_variable]
 
         # column, number of nulls in column, percent of nulls in column
         null_data = [(column,
@@ -270,8 +274,9 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         :return: a DataFrame showing the unique values (as rows) and frequencies.
         """
         # only for categoric features (and the target variable if it is categoric)
-        valid_features = self._categoric_features \
-            if self._is_target_numeric else self._categoric_features + [self._target_variable]
+        valid_features = self.categoric_features if (self._target_variable is None or
+                                                        self._is_target_numeric) \
+                                                 else self._categoric_features + [self._target_variable]
         assert categoric_feature in valid_features
         count_series = self._dataset[categoric_feature].value_counts(sort=not sort_by_feature)
         count_df = pd.DataFrame(count_series)
@@ -306,7 +311,8 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         """
         Creates a Box-plot of the numeric_feature.
         """
-        valid_features = self._numeric_features + [self._target_variable] if self._is_target_numeric \
+        valid_features = self._numeric_features + [self._target_variable] \
+            if self._target_variable is not None and self._is_target_numeric \
             else self._numeric_features
         assert numeric_feature in valid_features
         self._dataset[numeric_feature].plot(kind='box')
@@ -319,7 +325,8 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         Creates a Histogram of the numeric_feature.
         """
         # only for numeric features (and the target variable if it is numeric)
-        valid_features = self._numeric_features + [self._target_variable] if self._is_target_numeric \
+        valid_features = self._numeric_features + [self._target_variable] \
+            if self._target_variable is not None and self._is_target_numeric \
             else self._numeric_features
         assert numeric_feature in valid_features
         self._dataset[numeric_feature].hist(bins=num_bins)
@@ -334,7 +341,8 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         :return:
         """
         if numeric_columns is None:
-            numeric_columns = self._numeric_features + [self._target_variable] if self._is_target_numeric \
+            numeric_columns = self._numeric_features + [self._target_variable]\
+                if self._target_variable is not None and self._is_target_numeric \
                 else self._numeric_features
         scatter_matrix(self._dataset[numeric_columns], figsize=figure_size)
 

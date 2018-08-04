@@ -73,7 +73,7 @@ class ExploratoryTests(TimerTestCase):
         assert OOLearningHelpers.is_series_numeric(data.phone) is False
         assert OOLearningHelpers.is_series_numeric(data.default) is False
 
-    def test_ExploreDatasetBase_Categories(self):
+    def test_ExploreDatasetBase_with_target_Categories(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         categoric_columns = ['checking_balance', 'credit_history', 'purpose', 'savings_balance',
                              'employment_duration', 'other_credit', 'housing', 'job', 'phone']
@@ -87,7 +87,7 @@ class ExploratoryTests(TimerTestCase):
         for feature in [x for x in explore.dataset.columns if x not in categoric_columns]:
             assert explore.dataset[feature].dtype.name != 'category'
 
-    def test_ExploreDatasetBase_summary(self):
+    def test_ExploreDatasetBase_with_target_summary(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         numeric_columns = ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'age', 'existing_loans_count', 'dependents']  # noqa
         categoric_columns = ['checking_balance', 'credit_history', 'purpose', 'savings_balance', 'employment_duration', 'other_credit', 'housing', 'job', 'phone']  # noqa
@@ -188,7 +188,7 @@ class ExploratoryTests(TimerTestCase):
             assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
                                                       data_frame2=explore.categoric_summary())
 
-    def test_ExploreDatasetBase_summary_nulls_and_zeros(self):
+    def test_ExploreDatasetBase_with_target_summary_nulls_and_zeros(self):
         explore = ExploreDataset(dataset=TestHelper.get_titanic_data(), target_variable='Survived')
 
         # change the dataset so that age has nulls AND zeros
@@ -199,7 +199,7 @@ class ExploratoryTests(TimerTestCase):
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_summary_nulls_and_zeros.pkl'))  # noqa
         TestHelper.ensure_all_values_equal_from_file(file=file, expected_dataframe=explore.numeric_summary())
 
-    def test_ExploreDatasetBase_summary_no_features_drop_columns(self):
+    def test_ExploreDatasetBase_with_target_summary_no_features_drop_columns(self):
         ######################################################################################################
         # categoric target
         ######################################################################################################
@@ -239,7 +239,7 @@ class ExploratoryTests(TimerTestCase):
         assert explore.numeric_summary().shape == (1, 17)
         assert explore.numeric_summary().index.values[0] == target_variable
 
-    def test_ExploreDatasetBase_unique_values(self):
+    def test_ExploreDatasetBase_with_target_unique_values(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         target_variable = 'default'
 
@@ -297,7 +297,7 @@ class ExploratoryTests(TimerTestCase):
                                                                  sort_by_feature=True))
 
     # noinspection SpellCheckingInspection
-    def test_ExploreDatasetBase_set_as_categoric(self):
+    def test_ExploreDatasetBase_with_target_set_as_categoric(self):
         titanic_csv = TestHelper.ensure_test_directory('data/titanic.csv')
         target_variable = 'Survived'
 
@@ -329,7 +329,7 @@ class ExploratoryTests(TimerTestCase):
         assert all([x == y or (np.isnan(x) and np.isnan(y)) for x, y in
                     zip(explore.dataset.iloc[0:10][feature], ['c', np.nan, 'c', 'a', 'c', 'c', 'a', 'c', 'c', 'b'])])  # noqa
 
-    def test_ExploreDatasetBase_histogram(self):
+    def test_ExploreDatasetBase_with_target_histogram(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         target_variable = 'default'
 
@@ -347,7 +347,7 @@ class ExploratoryTests(TimerTestCase):
         TestHelper.check_plot('data/test_Exploratory/hist_years_at_residence.png',
                               lambda: explore.plot_histogram(numeric_feature='years_at_residence'))
 
-    def test_ExploreDatasetBase_boxplot(self):
+    def test_ExploreDatasetBase_with_target_boxplot(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         target_variable = 'default'
 
@@ -362,7 +362,7 @@ class ExploratoryTests(TimerTestCase):
         TestHelper.check_plot('data/test_Exploratory/boxplot_years_at_residence.png',
                               lambda: explore.plot_boxplot(numeric_feature='years_at_residence'))
 
-    def test_ExploreDatasetBase_scatter_plot_numerics(self):
+    def test_ExploreDatasetBase_with_target_scatter_plot_numerics(self):
         credit_csv = TestHelper.ensure_test_directory('data/housing.csv')
         target_variable = 'median_house_value'
 
@@ -371,7 +371,7 @@ class ExploratoryTests(TimerTestCase):
         TestHelper.check_plot('data/test_Exploratory/scatter_plot_numerics_subset.png',
                               lambda: explore.plot_scatterplot_numerics(numeric_columns=['median_house_value', 'median_income', 'total_rooms', 'housing_median_age']))  # noqa
 
-    def test_ExploreDatasetBase_correlations(self):
+    def test_ExploreDatasetBase_with_target_correlations(self):
         # generating: DeprecationWarning: object of type <class 'float'> cannot be safely interpreted as an
         # integer. pal = _ColorPalette(pal(np.linspace(0, 1, n_colors))), in unit test, but cannot replicate
         # while running manually, let's ignore for now
@@ -385,6 +385,318 @@ class ExploratoryTests(TimerTestCase):
             explore = ExploreDataset.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
 
             file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/credit_correlation_heatmap.png'))  # noqa
+            assert os.path.isfile(file)
+            os.remove(file)
+            assert os.path.isfile(file) is False
+            explore.plot_correlation_heatmap()
+            plt.savefig(file)
+            plt.gcf().clear()
+            assert os.path.isfile(file)
+
+    def test_ExploreDatasetBase_without_target_Categories(self):
+        credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
+        categoric_columns = ['checking_balance', 'credit_history', 'purpose', 'savings_balance',
+                             'employment_duration', 'other_credit', 'housing', 'job', 'phone', 'default']
+
+        explore = ExploreDataset.from_csv(csv_file_path=credit_csv)
+        # check all categoric columns are pandas categories
+        for feature in categoric_columns:
+            assert explore.dataset[feature].dtype.name == 'category'
+        # check all non-categoric columns are not pandas categories
+        for feature in [x for x in explore.dataset.columns if x not in categoric_columns]:
+            assert explore.dataset[feature].dtype.name != 'category'
+
+    def test_ExploreDatasetBase_without_target_summary(self):
+        credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
+        numeric_columns = ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'age', 'existing_loans_count', 'dependents']  # noqa
+        categoric_columns = ['checking_balance', 'credit_history', 'purpose', 'savings_balance', 'employment_duration', 'other_credit', 'housing', 'job', 'phone', 'default']  # noqa
+
+        explore_from_csv = ExploreDataset.from_csv(csv_file_path=credit_csv)
+        assert explore_from_csv is not None
+        assert isinstance(explore_from_csv.dataset, pd.DataFrame)
+        assert len(explore_from_csv.dataset) == 1000
+        assert explore_from_csv.numeric_features == ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'age', 'existing_loans_count', 'dependents']  # noqa
+        assert explore_from_csv.categoric_features == ['checking_balance', 'credit_history', 'purpose', 'savings_balance', 'employment_duration', 'other_credit', 'housing', 'job', 'phone', 'default']  # noqa
+
+        explore = ExploreDataset(dataset=pd.read_csv(credit_csv))
+        assert explore is not None
+        assert isinstance(explore.dataset, pd.DataFrame)
+        assert len(explore.dataset) == 1000
+
+        assert explore.numeric_features == numeric_columns
+        assert explore.categoric_features == categoric_columns
+
+        assert TestHelper.ensure_all_values_equal(data_frame1=explore_from_csv.dataset,
+                                                  data_frame2=explore.dataset,
+                                                  check_column_types=False)
+        assert explore_from_csv.target_variable == explore.target_variable
+
+        ######################################################################################################
+        # numeric
+        ######################################################################################################
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_before_mod_numeric.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(explore.numeric_summary(), output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            expected_summary = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
+                                                      data_frame2=explore.numeric_summary())
+
+        # introduce None's and Zeros into a couple of variable
+        explore.dataset.loc[0, 'months_loan_duration'] = None
+        explore.dataset.loc[5, 'months_loan_duration'] = None
+        explore.dataset.loc[60, 'months_loan_duration'] = None
+        explore.dataset.loc[75, 'months_loan_duration'] = None
+
+        explore.dataset.loc[1, 'percent_of_income'] = None
+        explore.dataset.loc[9, 'percent_of_income'] = None
+        explore.dataset.loc[68, 'percent_of_income'] = None
+
+        explore.dataset.loc[1, 'months_loan_duration'] = 0
+        explore.dataset.loc[6, 'months_loan_duration'] = 0
+        explore.dataset.loc[61, 'months_loan_duration'] = 0
+        explore.dataset.loc[76, 'months_loan_duration'] = 0
+        explore.dataset.loc[77, 'months_loan_duration'] = 0
+
+        explore.dataset.loc[10, 'percent_of_income'] = 0
+        explore.dataset.loc[69, 'percent_of_income'] = 0
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_after_mod_numeric.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(explore.numeric_summary(), output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            expected_summary = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
+                                                      data_frame2=explore.numeric_summary())
+
+        ######################################################################################################
+        # categoric
+        ######################################################################################################
+        explore = ExploreDataset(dataset=pd.read_csv(credit_csv))
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_before_mod_categoric.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(explore.categoric_summary(), output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            expected_summary = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
+                                                      data_frame2=explore.categoric_summary())
+            # ensure that changing the columns to Categorical (when loading from csv) doesn't affect anything
+            # make sure at least 1 column is a category
+            assert explore_from_csv.dataset['job'].dtype.name == 'category'
+            assert explore_from_csv.dataset['age'].dtype.name != 'category'
+
+            assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
+                                                      data_frame2=explore_from_csv.categoric_summary())
+
+        # introduce None's and Zeros into a couple of variable
+        explore.dataset.loc[0, 'checking_balance'] = None
+        explore.dataset.loc[5, 'checking_balance'] = None
+        explore.dataset.loc[60, 'checking_balance'] = None
+        explore.dataset.loc[75, 'checking_balance'] = None
+
+        explore.dataset.loc[1, 'savings_balance'] = None
+        explore.dataset.loc[9, 'savings_balance'] = None
+        explore.dataset.loc[68, 'savings_balance'] = None
+
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_after_mod_categoric.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(explore.categoric_summary(), output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            expected_summary = pickle.load(saved_object)
+            assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
+                                                      data_frame2=explore.categoric_summary())
+
+    def test_ExploreDatasetBase_without_target_summary_nulls_and_zeros(self):
+        explore = ExploreDataset(dataset=TestHelper.get_titanic_data(), target_variable='Survived')
+
+        # change the dataset so that age has nulls AND zeros
+        explore.dataset.loc[0:4, 'Age'] = 0
+        explore._update_cache()
+
+        # now check to make sure we get the expected number of zeros, even with NA values
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_summary_nulls_and_zeros.pkl'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file, expected_dataframe=explore.numeric_summary())
+
+    def test_ExploreDatasetBase_without_target_summary_no_features_drop_columns(self):
+        ######################################################################################################
+        # categoric target
+        ######################################################################################################
+        explore = ExploreDataset(dataset=TestHelper.get_credit_data())
+        assert explore.dataset.shape == (1000, 17)
+        explore.drop(columns=explore.numeric_features)
+        assert explore.numeric_features == []
+        assert explore.dataset.shape == (1000, 10)
+
+        # no numeric features and target variable is not numeric
+        assert explore.numeric_summary() is None
+        assert explore.categoric_summary().shape == (10, 6)
+        # if we drop all the categoric columns, we should still have the `default` column
+        explore.drop(columns=explore.categoric_features)
+        assert explore.categoric_features == []
+        assert explore.dataset.shape == (1000, 0)
+        assert explore.categoric_summary() is None
+
+        ######################################################################################################
+        # numeric target
+        ######################################################################################################
+        target_variable = 'expenses'
+        explore = ExploreDataset(dataset=TestHelper.get_insurance_data())
+        assert explore.dataset.shape == (1338, 7)
+
+        explore.drop(columns=explore.categoric_features)
+        assert explore.categoric_features == []
+        assert explore.dataset.shape == (1338, 4)
+        assert explore.categoric_summary() is None
+        assert explore.numeric_summary().shape == (4, 17)
+
+        explore.drop(columns=explore.numeric_features)
+        assert explore.numeric_features == []
+        assert explore.dataset.shape == (1338, 0)
+        assert explore.numeric_summary() is None
+        assert explore.categoric_summary() is None
+
+    def test_ExploreDatasetBase_without_target_unique_values(self):
+        credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
+        target_variable = 'default'
+
+        explore = ExploreDataset.from_csv(csv_file_path=credit_csv)
+        # cannot get unique values on numeric feature
+        self.assertRaises(AssertionError, lambda: explore.unique_values(categoric_feature='amount'))
+        self.assertRaises(AssertionError, lambda: explore.plot_unique_values(categoric_feature='amount'))
+
+        ######################################################################################################
+        # `sort_by_features=False`
+        ######################################################################################################
+        unique_values = explore.unique_values('checking_balance')
+        assert sorted(unique_values.index.values) == sorted(explore.dataset.checking_balance.unique())
+        assert all(unique_values.freq.values == [394, 274, 269, 63])
+        assert all(unique_values.perc.values == [0.394, 0.274, 0.269, 0.063])
+
+        # ensure `unique_values()` also works for the target variable since it is categoric as well
+        unique_values = explore.unique_values(target_variable)
+        assert sorted(unique_values.index.values) == sorted(explore.dataset[target_variable].unique())
+        assert all(unique_values.freq.values == [700, 300])
+        assert all(unique_values.perc.values == [0.7, 0.3])
+
+        TestHelper.check_plot('data/test_Exploratory/unique_purpose_without_target.png',  # noqa
+                              lambda: explore.plot_unique_values(categoric_feature='purpose'))
+
+        TestHelper.check_plot('data/test_Exploratory/unique_default_without_target.png',  # noqa
+                              lambda: explore.plot_unique_values(categoric_feature=target_variable))
+
+        ######################################################################################################
+        # `sort_by_features=True`
+        ######################################################################################################
+        # from_csv SETS COLUMNS TO CATEGORICAL
+        explore = ExploreDataset.from_csv(csv_file_path=credit_csv)
+        unique_values = explore.unique_values('checking_balance', sort_by_feature=True)
+        assert all(unique_values.index.values == ['1 - 200 DM', '< 0 DM', '> 200 DM', 'unknown'])
+        assert all(unique_values.freq.values == [269, 274, 63, 394])
+        assert all(unique_values.perc.values == [0.269, 0.274, 0.063, 0.394])
+
+        # now set the order of categorical
+        explore.set_level_order(categoric_feature='checking_balance',
+                                levels=['< 0 DM', '1 - 200 DM', '> 200 DM', 'unknown'])
+        unique_values = explore.unique_values('checking_balance', sort_by_feature=True)
+        assert all(unique_values.index.values == ['< 0 DM', '1 - 200 DM', '> 200 DM', 'unknown'])
+        assert all(unique_values.freq.values == [274, 269, 63, 394])
+        assert all(unique_values.perc.values == [0.274, 0.269, 0.063, 0.394])
+
+        # not ordered by feature, ordered by frequency
+        TestHelper.check_plot('data/test_Exploratory/unique_checking_balance_not_sorted_without_target.png',
+                              lambda: explore.plot_unique_values(categoric_feature='checking_balance',
+                                                                 sort_by_feature=False))
+
+        # ordered
+        TestHelper.check_plot('data/test_Exploratory/unique_checking_balance_sort_without_target.png',
+                              lambda: explore.plot_unique_values(categoric_feature='checking_balance',
+                                                                 sort_by_feature=True))
+
+    # noinspection SpellCheckingInspection
+    def test_ExploreDatasetBase_without_target_set_as_categoric(self):
+        titanic_csv = TestHelper.ensure_test_directory('data/titanic.csv')
+
+        explore = ExploreDataset.from_csv(csv_file_path=titanic_csv)
+        # we want Pclass to be a categoric feature but it is currently numeric
+
+        feature = 'Pclass'
+        assert feature in explore.numeric_features
+        assert feature not in explore.categoric_features
+
+        # set 1 to NAN to test what happens, should just be nan
+        import numpy as np
+        explore.dataset.loc[1, feature] = np.nan
+
+        # x and y are equal or they are both non.
+        assert all([x == y or (np.isnan(x) and np.isnan(y)) for x, y in
+                    zip(explore.dataset.iloc[0:10][feature], [3, np.nan, 3, 1, 3, 3, 1, 3, 3, 2])])
+
+        target_mapping = {1: 'a',
+                          2: 'b',
+                          3: 'c'}
+        explore.set_as_categoric(feature=feature, mapping=target_mapping)
+        assert feature in explore.categoric_features
+        assert feature not in explore.numeric_features
+        # make sure we mapped right values
+        assert all(explore.dataset[feature].values.categories.values == list(target_mapping.values()))
+        # spot check first 10
+
+        assert all([x == y or (np.isnan(x) and np.isnan(y)) for x, y in
+                    zip(explore.dataset.iloc[0:10][feature], ['c', np.nan, 'c', 'a', 'c', 'c', 'a', 'c', 'c', 'b'])])  # noqa
+
+    def test_ExploreDatasetBase_without_target_histogram(self):
+        credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
+
+        explore = ExploreDataset.from_csv(csv_file_path=credit_csv)
+
+        # cannot get unique values on numeric feature
+        self.assertRaises(AssertionError, lambda: explore.plot_histogram(numeric_feature='default'))
+
+        TestHelper.check_plot('data/test_Exploratory/hist_amount_without_targrt.png',
+                              lambda: explore.plot_histogram(numeric_feature='amount'))
+
+        TestHelper.check_plot('data/test_Exploratory/hist_amount_bins_without_targrt.png',
+                              lambda: explore.plot_histogram(numeric_feature='amount', num_bins=20))
+
+        TestHelper.check_plot('data/test_Exploratory/hist_years_at_residence_without_targrt.png',
+                              lambda: explore.plot_histogram(numeric_feature='years_at_residence'))
+
+    def test_ExploreDatasetBase_without_target_boxplot(self):
+        credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
+
+        explore = ExploreDataset.from_csv(csv_file_path=credit_csv)
+
+        # cannot get unique values on numeric feature
+        self.assertRaises(AssertionError, lambda: explore.plot_boxplot(numeric_feature='default'))
+
+        TestHelper.check_plot('data/test_Exploratory/boxplot_amount_without_target.png',
+                              lambda: explore.plot_boxplot(numeric_feature='amount'))
+
+        TestHelper.check_plot('data/test_Exploratory/boxplot_years_at_residence_without_target.png',
+                              lambda: explore.plot_boxplot(numeric_feature='years_at_residence'))
+
+    def test_ExploreDatasetBase_without_target_scatter_plot_numerics(self):
+        credit_csv = TestHelper.ensure_test_directory('data/housing.csv')
+
+        explore = ExploreDataset.from_csv(csv_file_path=credit_csv)
+
+        TestHelper.check_plot('data/test_Exploratory/scatter_plot_numerics_subset_without_target.png',
+                              lambda: explore.plot_scatterplot_numerics(numeric_columns=['median_house_value', 'median_income', 'total_rooms', 'housing_median_age']))  # noqa
+
+    def test_ExploreDatasetBase_without_target_correlations(self):
+        # generating: DeprecationWarning: object of type <class 'float'> cannot be safely interpreted as an
+        # integer. pal = _ColorPalette(pal(np.linspace(0, 1, n_colors))), in unit test, but cannot replicate
+        # while running manually, let's ignore for now
+        warnings.filterwarnings("ignore")
+        # noinspection PyUnusedLocal
+        with patch('sys.stdout', new=MockDevice()) as fake_out:  # suppress output of logistic model
+
+            credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
+            target_variable = 'default'
+
+            explore = ExploreDataset.from_csv(csv_file_path=credit_csv)
+
+            file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/credit_correlation_heatmap_without_target.png'))  # noqa
             assert os.path.isfile(file)
             os.remove(file)
             assert os.path.isfile(file) is False
