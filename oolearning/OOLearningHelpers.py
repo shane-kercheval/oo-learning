@@ -41,7 +41,10 @@ class OOLearningHelpers:
         return numeric_columns, non_numeric_columns
 
     @staticmethod
-    def plot_correlations(correlations: pd.DataFrame, title: str=None, mask_duplicates=True):
+    def plot_correlations(correlations: pd.DataFrame,
+                          title: str=None,
+                          mask_duplicates=True,
+                          figure_size=(8, 8)):
         if title is None:
             title = ''
 
@@ -52,7 +55,8 @@ class OOLearningHelpers:
             mask = np.zeros_like(correlations, dtype=np.bool)
 
         with sns.axes_style("white"):
-            f, ax = pl.subplots(figsize=(10, 8))
+            f, ax = pl.subplots()
+            f.set_size_inches(figure_size[0], figure_size[1])
             sns.heatmap(correlations,
                         mask=mask,
                         annot=True,
@@ -61,6 +65,7 @@ class OOLearningHelpers:
                         center=0)
             plt.xticks(rotation=20, ha='right')
             plt.title(title)
+            plt.tight_layout()
 
     @staticmethod
     def get_final_datasets(data, target_variable, splitter, transformations):

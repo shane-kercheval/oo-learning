@@ -157,7 +157,12 @@ class TestHelper:
 
     @staticmethod
     def check_plot(file_name: str, get_plot_function: Callable, set_size: bool=True):
-        plt.gcf().clear()
+        def clear():
+            plt.gcf().clear()
+            plt.cla()
+            plt.clf()
+
+        clear()
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory(file_name))
         if os.path.isfile(file):
             os.remove(file)
@@ -167,5 +172,5 @@ class TestHelper:
             fig = plt.gcf()
             fig.set_size_inches(11, 7)
         plt.savefig(file)
-        plt.gcf().clear()
+        clear()
         assert os.path.isfile(file)

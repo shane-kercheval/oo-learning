@@ -381,17 +381,30 @@ class ExploratoryTests(TimerTestCase):
 
             credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
             target_variable = 'default'
-
             explore = ExploreDataset.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
 
-            file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/credit_correlation_heatmap.png'))  # noqa
-            assert os.path.isfile(file)
-            os.remove(file)
-            assert os.path.isfile(file) is False
-            explore.plot_correlation_heatmap()
-            plt.savefig(file)
-            plt.gcf().clear()
-            assert os.path.isfile(file)
+            TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap.png',
+                                  lambda: explore.plot_correlation_heatmap(),
+                                  set_size=False)
+
+            # test correlation threshold
+            TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_fig_size.png',
+                                  lambda: explore.plot_correlation_heatmap(figure_size=(15, 15)),
+                                  set_size=False)
+
+            # test correlation threshold
+            TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_threshold.png',
+                                  lambda: explore.plot_correlation_heatmap(threshold=0.25),
+                                  set_size=False)
+
+            TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_threshold_fig_size.png',
+                                  lambda: explore.plot_correlation_heatmap(threshold=0.25,
+                                                                           figure_size=(6, 6)),
+                                  set_size=False)
+
+            # test correlation threshold that is too high for any columns
+            self.assertRaises(ExploreDatasetBase.NoFeaturesMatchThresholdException,
+                              lambda: explore.plot_correlation_heatmap(threshold=0.99))
 
     def test_ExploreDatasetBase_without_target_Categories(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
@@ -692,18 +705,30 @@ class ExploratoryTests(TimerTestCase):
         with patch('sys.stdout', new=MockDevice()) as fake_out:  # suppress output of logistic model
 
             credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
-            target_variable = 'default'
-
             explore = ExploreDataset.from_csv(csv_file_path=credit_csv)
 
-            file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/credit_correlation_heatmap_without_target.png'))  # noqa
-            assert os.path.isfile(file)
-            os.remove(file)
-            assert os.path.isfile(file) is False
-            explore.plot_correlation_heatmap()
-            plt.savefig(file)
-            plt.gcf().clear()
-            assert os.path.isfile(file)
+            TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_without_target.png',
+                                  lambda: explore.plot_correlation_heatmap(),
+                                  set_size=False)
+
+            # test correlation threshold
+            TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_without_target_fig_size.png',  # noqa
+                                  lambda: explore.plot_correlation_heatmap(figure_size=(15, 15)),
+                                  set_size=False)
+
+            # test correlation threshold
+            TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_without_target_threshold.png',  # noqa
+                                  lambda: explore.plot_correlation_heatmap(threshold=0.25),
+                                  set_size=False)
+
+            TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_without_target_threshold_fig_size.png',  # noqa
+                                  lambda: explore.plot_correlation_heatmap(threshold=0.25,
+                                                                           figure_size=(6, 6)),
+                                  set_size=False)
+
+            # test correlation threshold that is too high for any columns
+            self.assertRaises(ExploreDatasetBase.NoFeaturesMatchThresholdException,
+                              lambda: explore.plot_correlation_heatmap(threshold=0.99))
 
     def test_ExploreClassificationDataset(self):
         self.assertRaises(ValueError, lambda: ExploreClassificationDataset.from_csv(csv_file_path=TestHelper.ensure_test_directory('data/housing.csv'), target_variable='median_house_value'))  # noqa

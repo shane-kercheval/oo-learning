@@ -33,6 +33,9 @@ class ExploreDatasetBase(metaclass=ABCMeta):
 
         self._update_cache()
 
+    class NoFeaturesMatchThresholdException(Exception):
+        pass
+
     def _update_cache(self):
         """
         This class caches values, such as the numeric and categoric features of the dataset. If the dataset
@@ -346,9 +349,32 @@ class ExploreDatasetBase(metaclass=ABCMeta):
                 else self._numeric_features
         scatter_matrix(self._dataset[numeric_columns], figsize=figure_size)
 
-    def plot_correlation_heatmap(self):
+    def plot_correlation_heatmap(self, threshold: Union[float, None]=None, figure_size=(10, 8)):
         """
         Creates a heatmap of the correlations between all of the numeric features.
+
+        :param threshold: the heatmap only includes columns that have a correlation value, corresponding to at
+            least one other column, where the absolute value is higher than the threshold.
+
+            So for example, if the threshold is `0.8` then all columns that have a correlation (absolute)
+                value of `>=.80` anywhere in the correlation matrix (i.e. with any other column), will show in
+                the heatmap, even though a specific column might not have high correlations with every other
+                column included.
+        :param figure_size: width, height in inches.
         """
-        OOLearningHelpers.plot_correlations(correlations=self._dataset.corr(),
-                                            title='correlations')
+        correlations = self._dataset.corr()
+        if threshold is not None:
+
+            features = correlations.columns.values
+            correlation_matrix = np.abs(correlations.values)
+            np.fill_diagonal(correlation_matrix, np.NaN)
+            meets_threshold = np.apply_along_axis(lambda x: np.any(x), 0, correlation_matrix >= threshold)
+            if not meets_threshold.any():
+                raise self.NoFeaturesMatchThresholdException('correlation `threshold` set too high.')
+
+            features_meets_threshold = features[meets_threshold]
+            correlations = correlations.loc[features_meets_threshold, features_meets_threshold]
+
+        OOLearningHelpers.plot_correlations(correlations=correlations,
+                                            title='correlations',
+                                            figure_size=figure_size)
