@@ -3456,7 +3456,8 @@ class ModelWrapperTests(TimerTestCase):
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_train_meta_correlations,
                                                      expected_dataframe=fitter.model._train_meta_correlations)
 
-        TestHelper.check_plot(file_plot_correlations, lambda: fitter.model.plot_correlation_heatmap())
+        TestHelper.check_plot(file_plot_correlations, lambda: fitter.model.plot_correlation_heatmap(),
+                              set_size=False)
 
         return fit_time
 
@@ -3834,7 +3835,8 @@ class ModelWrapperTests(TimerTestCase):
         file_plot_correlations = 'data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations/stacker_correlations_regression.png'  # noqa
         TestHelper.ensure_all_values_equal_from_file(file=file_test_model_stacker_train_meta_correlations,
                                                      expected_dataframe=fitter.model._train_meta_correlations)
-        TestHelper.check_plot(file_plot_correlations, lambda: fitter.model.plot_correlation_heatmap())
+        TestHelper.check_plot(file_plot_correlations, lambda: fitter.model.plot_correlation_heatmap(),
+                              set_size=False)
 
     def test_ModelStacker_Regression_with_stacker_transformations(self):
         ######################################################################################################

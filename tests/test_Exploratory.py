@@ -339,13 +339,16 @@ class ExploratoryTests(TimerTestCase):
         self.assertRaises(AssertionError, lambda: explore.plot_histogram(numeric_feature=target_variable))
 
         TestHelper.check_plot('data/test_Exploratory/hist_amount.png',
-                              lambda: explore.plot_histogram(numeric_feature='amount'))
+                              lambda: explore.plot_histogram(numeric_feature='amount'),
+                              set_size=False)
 
         TestHelper.check_plot('data/test_Exploratory/hist_amount_bins.png',
-                              lambda: explore.plot_histogram(numeric_feature='amount', num_bins=20))
+                              lambda: explore.plot_histogram(numeric_feature='amount', num_bins=20),
+                              set_size=False)
 
         TestHelper.check_plot('data/test_Exploratory/hist_years_at_residence.png',
-                              lambda: explore.plot_histogram(numeric_feature='years_at_residence'))
+                              lambda: explore.plot_histogram(numeric_feature='years_at_residence'),
+                              set_size=False)
 
     def test_ExploreDatasetBase_with_target_boxplot(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
@@ -665,14 +668,17 @@ class ExploratoryTests(TimerTestCase):
         # cannot get unique values on numeric feature
         self.assertRaises(AssertionError, lambda: explore.plot_histogram(numeric_feature='default'))
 
-        TestHelper.check_plot('data/test_Exploratory/hist_amount_without_targrt.png',
-                              lambda: explore.plot_histogram(numeric_feature='amount'))
+        TestHelper.check_plot('data/test_Exploratory/hist_amount_without_target.png',
+                              lambda: explore.plot_histogram(numeric_feature='amount'),
+                              set_size=False)
 
-        TestHelper.check_plot('data/test_Exploratory/hist_amount_bins_without_targrt.png',
-                              lambda: explore.plot_histogram(numeric_feature='amount', num_bins=20))
+        TestHelper.check_plot('data/test_Exploratory/hist_amount_bins_without_target.png',
+                              lambda: explore.plot_histogram(numeric_feature='amount', num_bins=20),
+                              set_size=False)
 
-        TestHelper.check_plot('data/test_Exploratory/hist_years_at_residence_without_targrt.png',
-                              lambda: explore.plot_histogram(numeric_feature='years_at_residence'))
+        TestHelper.check_plot('data/test_Exploratory/hist_years_at_residence_without_target.png',
+                              lambda: explore.plot_histogram(numeric_feature='years_at_residence'),
+                              set_size=False)
 
     def test_ExploreDatasetBase_without_target_boxplot(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
