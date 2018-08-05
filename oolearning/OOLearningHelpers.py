@@ -43,8 +43,10 @@ class OOLearningHelpers:
     @staticmethod
     def plot_correlations(correlations: pd.DataFrame,
                           title: str=None,
-                          mask_duplicates=True,
-                          figure_size=(8, 8)):
+                          mask_duplicates: bool=True,
+                          figure_size: tuple=(8, 8),
+                          round_by: int=2):
+
         if title is None:
             title = ''
 
@@ -60,6 +62,7 @@ class OOLearningHelpers:
             sns.heatmap(correlations,
                         mask=mask,
                         annot=True,
+                        fmt='.{}f'.format(round_by),
                         cmap=sns.diverging_palette(220, 10, as_cmap=True),
                         square=True, ax=ax,
                         center=0)

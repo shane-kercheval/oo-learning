@@ -335,7 +335,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         self._dataset[numeric_feature].hist(bins=num_bins)
         plt.title(numeric_feature)
 
-    def plot_scatterplot_numerics(self, numeric_columns=None, figure_size=(12, 8)):
+    def plot_scatterplot_numerics(self, numeric_columns=None, figure_size: tuple=(12, 8)):
         """
         Creates a Scatter-plot among various numeric_features.
         :param numeric_columns: The numeric columns to include in the plot. If `numeric_columns` is none,
@@ -349,7 +349,10 @@ class ExploreDatasetBase(metaclass=ABCMeta):
                 else self._numeric_features
         scatter_matrix(self._dataset[numeric_columns], figsize=figure_size)
 
-    def plot_correlation_heatmap(self, threshold: Union[float, None]=None, figure_size=(10, 8)):
+    def plot_correlation_heatmap(self,
+                                 threshold: Union[float, None]=None,
+                                 figure_size: tuple=(10, 8),
+                                 round_by: int=2):
         """
         Creates a heatmap of the correlations between all of the numeric features.
 
@@ -361,6 +364,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
                 the heatmap, even though a specific column might not have high correlations with every other
                 column included.
         :param figure_size: width, height in inches.
+        :param round_by: the number of decimal places to round to when showing the correlations in the heatmap
         """
         correlations = self._dataset.corr()
         if threshold is not None:
@@ -377,4 +381,5 @@ class ExploreDatasetBase(metaclass=ABCMeta):
 
         OOLearningHelpers.plot_correlations(correlations=correlations,
                                             title='correlations',
-                                            figure_size=figure_size)
+                                            figure_size=figure_size,
+                                            round_by=round_by)
