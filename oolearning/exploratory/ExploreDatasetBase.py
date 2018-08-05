@@ -368,7 +368,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
             features = correlations.columns.values
             correlation_matrix = np.abs(correlations.values)
             np.fill_diagonal(correlation_matrix, np.NaN)
-            meets_threshold = np.apply_along_axis(lambda x: np.any(x), 0, correlation_matrix >= threshold)
+            meets_threshold = np.apply_along_axis(lambda x: np.any(x >= threshold), 0, correlation_matrix)
             if not meets_threshold.any():
                 raise self.NoFeaturesMatchThresholdException('correlation `threshold` set too high.')
 

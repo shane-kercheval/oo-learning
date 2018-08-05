@@ -2,10 +2,9 @@ import os
 import pickle
 import warnings
 
-import matplotlib.pyplot as plt
 import pandas as pd
-
 from mock import patch
+
 from oolearning import *
 from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
@@ -555,7 +554,6 @@ class ExploratoryTests(TimerTestCase):
         ######################################################################################################
         # numeric target
         ######################################################################################################
-        target_variable = 'expenses'
         explore = ExploreDataset(dataset=TestHelper.get_insurance_data())
         assert explore.dataset.shape == (1338, 7)
 
