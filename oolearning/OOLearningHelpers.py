@@ -1,3 +1,5 @@
+from typing import Union
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -45,7 +47,8 @@ class OOLearningHelpers:
                           title: str=None,
                           mask_duplicates: bool=True,
                           figure_size: tuple=(8, 8),
-                          round_by: int=2):
+                          round_by: int=2,
+                          features_to_highlight: Union[list, None]=None):
 
         if title is None:
             title = ''
@@ -70,6 +73,14 @@ class OOLearningHelpers:
             plt.yticks(rotation=0)
             plt.title(title)
             plt.tight_layout()
+
+            if features_to_highlight is not None:
+                indexes_to_highlight = [index for index, x in enumerate(correlations.index.values)
+                                        if x in features_to_highlight]
+
+                for index_to_highlight in indexes_to_highlight:
+                    plt.gca().get_xticklabels()[index_to_highlight].set_color('red')
+                    plt.gca().get_yticklabels()[index_to_highlight].set_color('red')
 
     @staticmethod
     def get_final_datasets(data, target_variable, splitter, transformations):

@@ -340,10 +340,11 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         scatter_matrix(self._dataset[numeric_columns], figsize=figure_size)
 
     def plot_correlation_heatmap(self,
-                                 numeric_columns: Union[list, None]=None,
+                                 numeric_features: Union[list, None]=None,
                                  threshold: Union[float, None]=None,
                                  figure_size: tuple=(10, 8),
-                                 round_by: int=2):
+                                 round_by: int=2,
+                                 features_to_highlight: Union[list, None]=None):
         """
         Creates a heatmap of the correlations between all of the numeric columns (feature + target if numeric).
 
@@ -356,13 +357,14 @@ class ExploreDatasetBase(metaclass=ABCMeta):
                 column included.
         :param figure_size: width, height in inches.
         :param round_by: the number of decimal places to round to when showing the correlations in the heatmap
-        :param numeric_columns: columns to include in heatmap; must be numeric columns
+        :param numeric_features: columns to include in heatmap; must be numeric columns
+        :param features_to_highlight: feature labels to highlight in red
         """
-        if numeric_columns is not None:
+        if numeric_features is not None:
             # ensure is a numeric column
             valid_columns = self.numeric_columns
-            assert all([x in valid_columns for x in numeric_columns])
-            correlations = self._dataset[numeric_columns].corr()
+            assert all([x in valid_columns for x in numeric_features])
+            correlations = self._dataset[numeric_features].corr()
         else:
             correlations = self._dataset.corr()
 
@@ -381,4 +383,5 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         OOLearningHelpers.plot_correlations(correlations=correlations,
                                             title='correlations',
                                             figure_size=figure_size,
-                                            round_by=round_by)
+                                            round_by=round_by,
+                                            features_to_highlight=features_to_highlight)

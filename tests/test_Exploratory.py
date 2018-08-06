@@ -451,7 +451,7 @@ class ExploratoryTests(TimerTestCase):
 
             columns = ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'dependents']  # noqa
             TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_columns.png',
-                                  lambda: explore.plot_correlation_heatmap(numeric_columns=columns),
+                                  lambda: explore.plot_correlation_heatmap(numeric_features=columns),
                                   set_size=False)
 
             # test correlation threshold that is too high for any columns
@@ -781,7 +781,12 @@ class ExploratoryTests(TimerTestCase):
 
             columns = ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'dependents']  # noqa
             TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_without_target_columns.png',  # noqa
-                                  lambda: explore.plot_correlation_heatmap(numeric_columns=columns),
+                                  lambda: explore.plot_correlation_heatmap(numeric_features=columns),
+                                  set_size=False)
+
+            features_to_highlight = ['amount', 'age']
+            TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_without_target_highlight_columns.png',  # noqa
+                                  lambda: explore.plot_correlation_heatmap(features_to_highlight=features_to_highlight),  # noqa
                                   set_size=False)
 
             # test correlation threshold that is too high for any columns
