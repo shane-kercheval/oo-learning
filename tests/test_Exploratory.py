@@ -72,6 +72,52 @@ class ExploratoryTests(TimerTestCase):
         assert OOLearningHelpers.is_series_numeric(data.phone) is False
         assert OOLearningHelpers.is_series_numeric(data.default) is False
 
+    def test_numeric_columns_categoric_columns(self):
+        ######################################################################################################
+        # numeric target
+        ######################################################################################################
+        titanic_csv = TestHelper.ensure_test_directory('data/titanic.csv')
+        target_variable = 'Survived'
+        explore = ExploreDataset.from_csv(csv_file_path=titanic_csv, target_variable=target_variable)
+        assert explore.numeric_columns == ['PassengerId', 'Survived', 'Pclass', 'Age', 'SibSp', 'Parch', 'Fare']  # noqa
+        # nothing in numeric_features that isn't in numeric_columns
+        assert len(set(explore.numeric_features).difference(explore.numeric_columns)) == 0
+        # but target_variable is in numeric_columns but not in numeric_features
+        assert set(explore.numeric_columns).difference(explore.numeric_features) == {target_variable}
+
+        assert explore.categoric_columns == ['Name', 'Sex', 'Ticket', 'Cabin', 'Embarked']
+        # categoric columns and features should be the same
+        assert explore.categoric_columns == explore.categoric_features
+
+        ######################################################################################################
+        # categoric target
+        ######################################################################################################
+        credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
+        categoric_columns = ['checking_balance', 'credit_history', 'purpose', 'savings_balance',
+                             'employment_duration', 'other_credit', 'housing', 'job', 'phone']
+        target_variable = 'default'
+        explore = ExploreDataset.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
+        assert explore.numeric_columns == ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'age', 'existing_loans_count', 'dependents']  # noqa
+        assert explore.numeric_columns == explore.numeric_features
+
+        # nothing in categoric_features that isn't in categoric_columns
+        assert len(set(explore.categoric_features).difference(explore.categoric_columns)) == 0
+        # but target_variable is in categoric_columns but not in categoric_features
+        assert set(explore.categoric_columns).difference(explore.categoric_features) == {target_variable}
+
+        ######################################################################################################
+        # no target
+        ######################################################################################################
+        titanic_csv = TestHelper.ensure_test_directory('data/titanic.csv')
+        explore = ExploreDataset.from_csv(csv_file_path=titanic_csv)
+        assert explore.numeric_columns == ['PassengerId', 'Survived', 'Pclass', 'Age', 'SibSp', 'Parch', 'Fare']  # noqa
+        # no target, features == columns
+        assert explore.numeric_columns == explore.numeric_features
+
+        assert explore.categoric_columns == ['Name', 'Sex', 'Ticket', 'Cabin', 'Embarked']
+        # categoric columns and features should be the same
+        assert explore.categoric_columns == explore.categoric_features
+
     def test_ExploreDatasetBase_with_target_Categories(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
         categoric_columns = ['checking_balance', 'credit_history', 'purpose', 'savings_balance',
@@ -192,7 +238,6 @@ class ExploratoryTests(TimerTestCase):
 
         # change the dataset so that age has nulls AND zeros
         explore.dataset.loc[0:4, 'Age'] = 0
-        explore._update_cache()
 
         # now check to make sure we get the expected number of zeros, even with NA values
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_summary_nulls_and_zeros.pkl'))  # noqa
@@ -404,6 +449,11 @@ class ExploratoryTests(TimerTestCase):
                                                                            figure_size=(6, 6)),
                                   set_size=False)
 
+            columns = ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'dependents']  # noqa
+            TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_columns.png',
+                                  lambda: explore.plot_correlation_heatmap(numeric_columns=columns),
+                                  set_size=False)
+
             # test correlation threshold that is too high for any columns
             self.assertRaises(ExploreDatasetBase.NoFeaturesMatchThresholdException,
                               lambda: explore.plot_correlation_heatmap(threshold=0.99))
@@ -522,11 +572,10 @@ class ExploratoryTests(TimerTestCase):
                                                       data_frame2=explore.categoric_summary())
 
     def test_ExploreDatasetBase_without_target_summary_nulls_and_zeros(self):
-        explore = ExploreDataset(dataset=TestHelper.get_titanic_data(), target_variable='Survived')
+        explore = ExploreDataset(dataset=TestHelper.get_titanic_data())
 
         # change the dataset so that age has nulls AND zeros
         explore.dataset.loc[0:4, 'Age'] = 0
-        explore._update_cache()
 
         # now check to make sure we get the expected number of zeros, even with NA values
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Exploratory/test_ExploreDatasetBase_summary_nulls_and_zeros.pkl'))  # noqa
@@ -730,6 +779,11 @@ class ExploratoryTests(TimerTestCase):
                                                                            figure_size=(6, 6)),
                                   set_size=False)
 
+            columns = ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'dependents']  # noqa
+            TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_without_target_columns.png',  # noqa
+                                  lambda: explore.plot_correlation_heatmap(numeric_columns=columns),
+                                  set_size=False)
+
             # test correlation threshold that is too high for any columns
             self.assertRaises(ExploreDatasetBase.NoFeaturesMatchThresholdException,
                               lambda: explore.plot_correlation_heatmap(threshold=0.99))
@@ -753,14 +807,14 @@ class ExploratoryTests(TimerTestCase):
         target_mapping = {0: 'died', 1: 'survived'}
 
         explore = ExploreDataset.from_csv(csv_file_path=titanic_csv, target_variable=target_variable)
-        assert explore._is_target_numeric  # target is numeric, but this could fuck with this
+        assert explore.is_target_numeric  # target is numeric, but this could fuck with this
         numeric_data = explore.dataset[target_variable]
         expected_categoric_data = numeric_data.map(target_mapping).values
 
         explore = ExploreClassificationDataset.from_csv(csv_file_path=titanic_csv,
                                                         target_variable=target_variable,
                                                         map_numeric_target=target_mapping)
-        assert explore._is_target_numeric is False
+        assert explore.is_target_numeric is False
         # noinspection PyTypeChecker
         assert all(explore.dataset[target_variable] == expected_categoric_data)
 

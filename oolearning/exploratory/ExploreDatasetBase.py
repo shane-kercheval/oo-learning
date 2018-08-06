@@ -27,26 +27,9 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         """
         self._dataset = dataset
         self._target_variable = target_variable
-        self._numeric_features = None
-        self._categoric_features = None
-        self._is_target_numeric = None
-
-        self._update_cache()
 
     class NoFeaturesMatchThresholdException(Exception):
         pass
-
-    def _update_cache(self):
-        """
-        This class caches values, such as the numeric and categoric features of the dataset. If the dataset
-            is changed, the cached values need to be updated, which is the purpose of this method.
-        """
-        self._numeric_features, self._categoric_features = \
-            OOLearningHelpers.get_columns_by_type(data_dtypes=self._dataset.dtypes,
-                                                  target_variable=self._target_variable)
-
-        self._is_target_numeric = None if self._target_variable is None \
-            else OOLearningHelpers.is_series_numeric(self._dataset[self._target_variable])
 
     @abstractmethod
     def plot_against_target(self, feature: str):
@@ -87,8 +70,6 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         for feature in categoric_features:
             explore.dataset[feature] = explore.dataset[feature].astype('category')
 
-        explore._update_cache()
-
         return explore
 
     @property
@@ -107,7 +88,6 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         :param columns: a list of column names to "drop" i.e. remove from the dataset
         """
         self._dataset.drop(columns=columns, inplace=True)
-        self._update_cache()
 
     @property
     def target_variable(self) -> str:
@@ -117,18 +97,44 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         return self._target_variable
 
     @property
+    def is_target_numeric(self) -> Union[List[str], None]:
+        """
+        Returns the names of the numeric features (columns without target variable).
+        """
+        if self.target_variable is None:
+            return None
+
+        return OOLearningHelpers.is_series_numeric(variable=self.dataset[self.target_variable])
+
+    @property
     def numeric_features(self) -> List[str]:
         """
-        Returns the names of the numeric features.
+        Returns the names of the numeric features (columns without target variable).
         """
-        return self._numeric_features
+        numeric_features, _ = OOLearningHelpers.get_columns_by_type(data_dtypes=self._dataset.dtypes,
+                                                                    target_variable=self._target_variable)
+        return numeric_features
 
     @property
     def categoric_features(self) -> List[str]:
         """
-        Returns the names of the categoric features.
+        Returns the names of the categoric features (columns without target variable).
         """
-        return self._categoric_features
+        _, categoric_features = OOLearningHelpers.get_columns_by_type(data_dtypes=self._dataset.dtypes,
+                                                                      target_variable=self._target_variable)
+        return categoric_features
+
+    @property
+    def numeric_columns(self) -> List[str]:
+        numeric_columns, _ = OOLearningHelpers.get_columns_by_type(data_dtypes=self._dataset.dtypes,
+                                                                   target_variable=None)
+        return numeric_columns
+
+    @property
+    def categoric_columns(self) -> List[str]:
+        _, categoric_columns = OOLearningHelpers.get_columns_by_type(data_dtypes=self._dataset.dtypes,
+                                                                     target_variable=None)
+        return categoric_columns
 
     def numeric_summary(self) -> Union[pd.DataFrame, None]:
         """
@@ -161,12 +167,10 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         """
         # if there aren't any numeric features and the target variable is not numeric, we don't have anything
         # to display, return None
-        if len(self._numeric_features) == 0 and (self._target_variable is None or not self._is_target_numeric):  # noqa
-            return None
+        numeric_columns = self.numeric_columns
 
-        numeric_columns = self._numeric_features + [self._target_variable] \
-            if self._target_variable is not None and self._is_target_numeric \
-            else self._numeric_features
+        if numeric_columns is None or len(numeric_columns) == 0:
+            return None
 
         # column, number of nulls in column, percent of nulls in column
         null_data = [(column,
@@ -217,12 +221,10 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         """
         # if there aren't any categoric features and the target variable is numeric, we don't have anything
         # to display, return None
-        if len(self.categoric_features) == 0 and (self._target_variable is None or self._is_target_numeric):
-            return None
 
-        categoric_columns = self.categoric_features if (self._target_variable is None or
-                                                        self._is_target_numeric) \
-                                                    else self._categoric_features + [self._target_variable]
+        categoric_columns = self.categoric_columns
+        if categoric_columns is None or len(categoric_columns) == 0:
+            return None
 
         # column, number of nulls in column, percent of nulls in column
         null_data = [(column,
@@ -255,7 +257,6 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         actual_to_expected_mapping = dict(zip(mapping.keys(), np.arange(len(mapping))))
         codes = pd.Series(self._dataset[feature]).map(actual_to_expected_mapping).fillna(-1)
         self._dataset[feature] = pd.Categorical.from_codes(codes, mapping.values(), ordered=ordered)
-        self._update_cache()
 
     def set_level_order(self, categoric_feature: str, levels: list):
         """
@@ -277,10 +278,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         :return: a DataFrame showing the unique values (as rows) and frequencies.
         """
         # only for categoric features (and the target variable if it is categoric)
-        valid_features = self.categoric_features if (self._target_variable is None or
-                                                        self._is_target_numeric) \
-                                                 else self._categoric_features + [self._target_variable]
-        assert categoric_feature in valid_features
+        assert categoric_feature in self.categoric_columns
         count_series = self._dataset[categoric_feature].value_counts(sort=not sort_by_feature)
         count_df = pd.DataFrame(count_series)
         count_df['perc'] = (count_series.values / count_series.values.sum()).round(3)
@@ -314,10 +312,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         """
         Creates a Box-plot of the numeric_feature.
         """
-        valid_features = self._numeric_features + [self._target_variable] \
-            if self._target_variable is not None and self._is_target_numeric \
-            else self._numeric_features
-        assert numeric_feature in valid_features
+        assert numeric_feature in self.numeric_columns
         self._dataset[numeric_feature].plot(kind='box')
         plt.title(numeric_feature)
 
@@ -328,10 +323,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         Creates a Histogram of the numeric_feature.
         """
         # only for numeric features (and the target variable if it is numeric)
-        valid_features = self._numeric_features + [self._target_variable] \
-            if self._target_variable is not None and self._is_target_numeric \
-            else self._numeric_features
-        assert numeric_feature in valid_features
+        assert numeric_feature in self.numeric_columns
         self._dataset[numeric_feature].hist(bins=num_bins)
         plt.title(numeric_feature)
 
@@ -344,17 +336,16 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         :return:
         """
         if numeric_columns is None:
-            numeric_columns = self._numeric_features + [self._target_variable]\
-                if self._target_variable is not None and self._is_target_numeric \
-                else self._numeric_features
+            numeric_columns = self.numeric_columns
         scatter_matrix(self._dataset[numeric_columns], figsize=figure_size)
 
     def plot_correlation_heatmap(self,
+                                 numeric_columns: Union[list, None]=None,
                                  threshold: Union[float, None]=None,
                                  figure_size: tuple=(10, 8),
                                  round_by: int=2):
         """
-        Creates a heatmap of the correlations between all of the numeric features.
+        Creates a heatmap of the correlations between all of the numeric columns (feature + target if numeric).
 
         :param threshold: the heatmap only includes columns that have a correlation value, corresponding to at
             least one other column, where the absolute value is higher than the threshold.
@@ -365,8 +356,16 @@ class ExploreDatasetBase(metaclass=ABCMeta):
                 column included.
         :param figure_size: width, height in inches.
         :param round_by: the number of decimal places to round to when showing the correlations in the heatmap
+        :param numeric_columns: columns to include in heatmap; must be numeric columns
         """
-        correlations = self._dataset.corr()
+        if numeric_columns is not None:
+            # ensure is a numeric column
+            valid_columns = self.numeric_columns
+            assert all([x in valid_columns for x in numeric_columns])
+            correlations = self._dataset[numeric_columns].corr()
+        else:
+            correlations = self._dataset.corr()
+
         if threshold is not None:
 
             features = correlations.columns.values

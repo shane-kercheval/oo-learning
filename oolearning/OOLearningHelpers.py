@@ -67,6 +67,7 @@ class OOLearningHelpers:
                         square=True, ax=ax,
                         center=0)
             plt.xticks(rotation=20, ha='right')
+            plt.yticks(rotation=0)
             plt.title(title)
             plt.tight_layout()
 

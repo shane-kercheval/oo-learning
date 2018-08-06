@@ -31,7 +31,7 @@ class ExploreClassificationDataset(ExploreDatasetBase):
             (pd.Categorical) as logically ordered.
         """
         super().__init__(dataset=dataset, target_variable=target_variable)
-        if self._is_target_numeric and map_numeric_target is not None:
+        if self.is_target_numeric and map_numeric_target is not None:
             self.set_as_categoric(feature=target_variable, mapping=map_numeric_target, ordered=ordered)
 
     # noinspection PyMethodOverriding
@@ -61,7 +61,7 @@ class ExploreClassificationDataset(ExploreDatasetBase):
                                    target_variable=target_variable,
                                    skip_initial_space=skip_initial_space,
                                    separator=separator)
-        if explore._is_target_numeric:
+        if explore.is_target_numeric:
             if map_numeric_target is None:
                 raise ValueError('need to provide `map_numeric_target` for numeric targets')
             explore.set_as_categoric(feature=target_variable, mapping=map_numeric_target, ordered=ordered)
@@ -93,7 +93,7 @@ class ExploreClassificationDataset(ExploreDatasetBase):
         """
         assert feature != self._target_variable
 
-        if feature in self._numeric_features:
+        if feature in self.numeric_features:
             self._dataset[[feature, self._target_variable]].boxplot(by=self._target_variable)
         else:
             self._dodged_barchart(dataset=self._dataset,

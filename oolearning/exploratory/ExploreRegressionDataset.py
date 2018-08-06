@@ -15,7 +15,7 @@ class ExploreRegressionDataset(ExploreDatasetBase):
     """
     def __init__(self, dataset: pd.DataFrame, target_variable: str):
         super().__init__(dataset=dataset, target_variable=target_variable)
-        if self._is_target_numeric is False:
+        if self.is_target_numeric is False:
             raise ValueError('the target variable must be numeric to use ExploreRegressionDataset')
 
     def plot_against_target(self, feature):
@@ -26,7 +26,7 @@ class ExploreRegressionDataset(ExploreDatasetBase):
         """
         assert feature != self._target_variable
 
-        if feature in self._numeric_features:
+        if feature in self.numeric_features:
             self._dataset[[feature, self._target_variable]].plot.scatter(x=feature,
                                                                          y=self._target_variable,
                                                                          alpha=0.1,
