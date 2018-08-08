@@ -832,6 +832,10 @@ class TransformerTests(TimerTestCase):
 
     def test_CategoricConverterTransformer(self):
         data = TestHelper.get_titanic_data()
+        # transform 'Embarked' so that it is already categoric, and we will try to convert it again, and make
+        # sure nothing breaks
+        data = CategoricConverterTransformer(columns=['Embarked']).fit_transform(data)
+
         test_splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.05)
         training_indexes, test_indexes = test_splitter.split(target_values=data.Survived)
 
@@ -840,28 +844,35 @@ class TransformerTests(TimerTestCase):
         # the transformed data contains all categories in the Categorical object
         test_data = data.iloc[test_indexes]
 
-        columns_to_convert = ['Pclass', 'SibSp', 'Parch']
+        # Cabin/Embarked are already categoric, shouldn't break anything
+        columns_to_convert = ['Pclass', 'SibSp', 'Parch', 'Cabin', 'Embarked']
         self.assertRaises(KeyError, lambda: CategoricConverterTransformer(columns=columns_to_convert+['doesnt exist']).fit(train_data))  # noqa
         transformer = CategoricConverterTransformer(columns=columns_to_convert)
         transformer.fit(train_data)
         assert test_data.Pclass.dtype.name != 'category'
         assert test_data.SibSp.dtype.name != 'category'
         assert test_data.Parch.dtype.name != 'category'
+        assert test_data.Cabin.dtype.name == 'object'  # object
+        assert test_data.Embarked.dtype.name == 'category'  # already categoric
         new_data = transformer.transform(test_data)
         assert new_data.Pclass.dtype.name == 'category'
         assert new_data.SibSp.dtype.name == 'category'
         assert new_data.Parch.dtype.name == 'category'
+        assert new_data.Cabin.dtype.name == 'category'
+        assert new_data.Embarked.dtype.name == 'category'  # already categoric
+
+        assert ExploreDataset(new_data).categoric_columns == ['Pclass', 'Name', 'Sex', 'SibSp', 'Parch', 'Ticket', 'Cabin', 'Embarked']  # noqa
 
         assert all([new_data[x].dtype.name != 'category'
                     for x in new_data.columns.values
                     if x not in columns_to_convert])
 
         # check state has all correct values
-        assert all([transformer.state[x] == sorted(data[x].dropna().unique().tolist())
+        assert all([transformer.state[x] == sorted(train_data[x].dropna().unique().tolist())
                     for x in columns_to_convert])
 
         # check Categorical objects have correct values
-        assert all([new_data[x].cat.categories.values.tolist() == sorted(data[x].dropna().unique().tolist())
+        assert all([new_data[x].cat.categories.values.tolist() == sorted(train_data[x].dropna().unique().tolist())
                     for x in columns_to_convert])
 
     def test_transformations_TitanicDataset_test_various_conditions(self):
