@@ -835,7 +835,9 @@ class TransformerTests(TimerTestCase):
 
         random_row_indexes = data.sample(n=400, random_state=42).index.values
         data.loc[random_row_indexes, 'sex'] = np.nan
+        data.loc[random_row_indexes, 'bmi'] = np.nan  # also set numeric field to NA; values should not change
         assert data.sex.isnull().sum() == 400
+        assert data.bmi.isnull().sum() == 400
 
         expected_columns_one_hot_ignore = ['age', 'bmi', 'children', 'expenses', 'sex_female', 'sex_male',
                             'smoker_no', 'smoker_yes', 'region_northeast', 'region_northwest',
@@ -859,6 +861,7 @@ class TransformerTests(TimerTestCase):
         # ensure all 800 values (i.e. 400 rows by 2 columns) equal 0 (because they are missing values)
         assert (transformed_data.loc[random_row_indexes, ['sex_female', 'sex_male']] == 0).sum().sum() == 800
         assert 'sex_NA' not in transformed_data.columns.values
+        assert transformed_data.loc[random_row_indexes, 'bmi'].isnull().sum() == 400  # i.e. all 400 still NA
 
         ######################################################################################################
         # ignore_na_values=True (defualt) / DUMMY
@@ -869,6 +872,7 @@ class TransformerTests(TimerTestCase):
         # ensure all 400 values of remaining column have 0s
         assert (transformed_data.loc[random_row_indexes, ['sex_male']] == 0).sum().sum() == 400
         assert 'sex_NA' not in transformed_data.columns.values
+        assert transformed_data.loc[random_row_indexes, 'bmi'].isnull().sum() == 400  # i.e. all 400 still NA
 
         ######################################################################################################
         # ignore_na_values=False / ONE_HOT
@@ -880,6 +884,7 @@ class TransformerTests(TimerTestCase):
         assert (transformed_data.loc[random_row_indexes, ['sex_female', 'sex_male']] == 0).sum().sum() == 800
         assert (transformed_data.loc[random_row_indexes, ['sex_NA']] == 1).sum().sum() == 400
         assert 'sex_NA' in transformed_data.columns.values
+        assert transformed_data.loc[random_row_indexes, 'bmi'].isnull().sum() == 400  # i.e. all 400 still NA
 
         ######################################################################################################
         # ignore_na_values=False / DUMMY
@@ -890,6 +895,7 @@ class TransformerTests(TimerTestCase):
         # ensure all 800 values (i.e. 400 rows by 2 columns) equal 0 (because they are missing values)
         assert (transformed_data.loc[random_row_indexes, ['sex_female', 'sex_male']] == 0).sum().sum() == 800
         assert 'sex_NA' not in transformed_data.columns.values
+        assert transformed_data.loc[random_row_indexes, 'bmi'].isnull().sum() == 400  # i.e. all 400 still NA
 
     def test_CategoricConverterTransformer(self):
         data = TestHelper.get_titanic_data()

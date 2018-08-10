@@ -151,8 +151,10 @@ class DummyEncodeTransformer(TransformerBase):
                                                                         target_variable=None)
         found_state = self.__generate_state(data_x=data_x)
 
-        # data_x is a copy (ensured by TransformerBase
-        data_x.fillna(value='NA', inplace=True)
+        if not self._ignore_na_values:
+            # data_x is a copy (ensured by TransformerBase
+            for feature in categorical_features:
+                data_x[feature] = data_x[feature].fillna(value='NA')
 
         # ensure no new values
         assert len(set(found_state.keys()).symmetric_difference(set(state.keys()))) == 0  # same keys
