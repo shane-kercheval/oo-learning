@@ -8,8 +8,10 @@ class DummyEncodeTransformer(TransformerBase):
     """
     Transforms categorical variables to either DUMMY or ONE-HOT encoding
     """
-    def __init__(self, encoding: CategoricalEncoding = CategoricalEncoding.DUMMY,
-                 leave_out_columns: dict=None):
+    def __init__(self,
+                 encoding: CategoricalEncoding = CategoricalEncoding.DUMMY,
+                 leave_out_columns: dict=None,
+                 ignore_na_values: bool=True):
         """
         :param encoding: type of encoding to use
         :param leave_out_columns: if CategoricalEncoding.DUMMY, this parameter specifies, per column,
@@ -18,6 +20,17 @@ class DummyEncodeTransformer(TransformerBase):
             is dropped.
 
             Example: `{'original_column': 'drop_column', ...}
+        :param ignore_na_values: if True, then NA values are ignored. So in the case of
+            `CategoricalEncoding.ONE_HOT`, a missing value would have 0's associated with all encoded columns;
+            but in the case of `CategoricalEncoding.DUMMY`, where one column is excluded, then if there are
+            all 0's found in the remaining encoded columns, then that could indicate that the value was either
+            `NA` or it was the value corresponding to the column left out. For example, if gender has `NA`
+            values, and the `male` column is left out. A value for `gender_female` could either be `male` or
+            `NA`. This behavior is probably not what is expected so it is recommended to use ONE_HOT if NA
+            values are in the data and `ignore_na_values` is set to `True`.
+
+            If `ignore_na_values` is set to `False`, then a column `XXX` will have a `XXX_NA` column (along
+            with the other columns expected for encoding) which will be set to 1 when the value is `NA`.
         """
         super().__init__()
         assert isinstance(encoding, CategoricalEncoding)
@@ -29,6 +42,7 @@ class DummyEncodeTransformer(TransformerBase):
         self._columns_to_reindex = None
         self._encoded_columns = None
         self._peak_state = None
+        self._ignore_na_values = ignore_na_values
 
     @property
     def encoded_columns(self):
@@ -36,6 +50,21 @@ class DummyEncodeTransformer(TransformerBase):
         :return: the transformed/final column names of the categorical columns encoded
         """
         return self._encoded_columns
+
+    def __generate_state(self, data_x) -> dict:
+        _, categorical_features = OOLearningHelpers.get_columns_by_type(data_dtypes=data_x.dtypes,
+                                                                        target_variable=None)
+
+        # save the state as columns, so that we can reindex with original columns
+        state = {}
+        for category in categorical_features:
+            unique_values = sorted(list(data_x[category].dropna().unique()))
+            if not self._ignore_na_values and data_x[category].isnull().sum() > 0:
+                unique_values = ['NA'] + unique_values
+
+            state[category] = unique_values
+
+        return state
 
     def peak(self, data_x: pd.DataFrame):
         """
@@ -51,14 +80,8 @@ class DummyEncodeTransformer(TransformerBase):
         But the class may be used directly, so in `_fit_definition`, if `_peak_state` is None, then we will
         call it manually. Technically, no "peak" happened, but it will be the same result in that scenario.
         """
-        _, categorical_features = OOLearningHelpers.get_columns_by_type(data_dtypes=data_x.dtypes,
-                                                                        target_variable=None)
 
-        # save the state as columns, so that we can reindex with original columns
-        state = {category: sorted(list(data_x[category].dropna().unique()))
-                 for category in categorical_features}
-
-        self._peak_state = state
+        self._peak_state = self.__generate_state(data_x=data_x)
 
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         ######################################################################################################
@@ -80,9 +103,16 @@ class DummyEncodeTransformer(TransformerBase):
         # or new features that were added (obviously they don't get the advantage of the peak
 
         # for the categoric_features that don't exist in state, we will need to add them
+        # NOTE: i could technically do this much easier by simply replacing all `NA` values with "NA" string,
+        # but i assume this is faster for large datasets, and I want _NA columns to be first, so i would still
+        # have to add in additional logic to change the ordering of the columns
         for feature in categoric_features:
             if feature not in state.keys():
-                state[feature] = sorted(list(data_x[feature].dropna().unique()))
+                unique_values = sorted(list(data_x[feature].dropna().unique()))
+                if not self._ignore_na_values and data_x[feature].isnull().sum() > 0:
+                    unique_values = ['NA'] + unique_values
+
+                state[feature] = unique_values
 
         # make a new dictionary, grabbing all of the keys associated with the existing categoric features
         # i.e. discarding previously removed columns
@@ -119,11 +149,13 @@ class DummyEncodeTransformer(TransformerBase):
         ######################################################################################################
         _, categorical_features = OOLearningHelpers.get_columns_by_type(data_dtypes=data_x.dtypes,
                                                                         target_variable=None)
-        found_state = {category: sorted(list(data_x[category].dropna().unique()))
-                       for category in categorical_features}
+        found_state = self.__generate_state(data_x=data_x)
+
+        # data_x is a copy (ensured by TransformerBase
+        data_x.fillna(value='NA', inplace=True)
 
         # ensure no new values
-        assert len(set(found_state.keys()).symmetric_difference(set(state.keys()))) == 0
+        assert len(set(found_state.keys()).symmetric_difference(set(state.keys()))) == 0  # same keys
         assert all([set(value).issubset(set(state[key])) for key, value in found_state.items()])
 
         dummied_data = pd.get_dummies(data=data_x,
