@@ -154,6 +154,9 @@ class DummyEncodeTransformer(TransformerBase):
         if not self._ignore_na_values:
             # data_x is a copy (ensured by TransformerBase
             for feature in categorical_features:
+                # if it is a categoric type, we need to add 'NA' to be a category before we fill
+                if data_x[feature].dtype.name == 'category':
+                    data_x[feature] = data_x[feature].cat.add_categories(['NA'])
                 data_x[feature] = data_x[feature].fillna(value='NA')
 
         # ensure no new values

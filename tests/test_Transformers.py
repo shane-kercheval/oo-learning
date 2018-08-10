@@ -831,71 +831,82 @@ class TransformerTests(TimerTestCase):
         assert all(test_x_transformed.columns.values == expected_columns)
 
     def test_transformations_DummyEncodeTransformer_na_values(self):
-        data = TestHelper.get_insurance_data()
+        insurance_data = TestHelper.get_insurance_data()
 
-        random_row_indexes = data.sample(n=400, random_state=42).index.values
-        data.loc[random_row_indexes, 'sex'] = np.nan
-        data.loc[random_row_indexes, 'bmi'] = np.nan  # also set numeric field to NA; values should not change
-        assert data.sex.isnull().sum() == 400
-        assert data.bmi.isnull().sum() == 400
+        def test_na_values(data):
+            random_row_indexes = data.sample(n=400, random_state=42).index.values
+            data.loc[random_row_indexes, 'sex'] = np.nan
+            # also set numeric field to NA; values should not change
+            data.loc[random_row_indexes, 'bmi'] = np.nan
+            assert data.sex.isnull().sum() == 400
+            assert data.bmi.isnull().sum() == 400
 
-        expected_columns_one_hot_ignore = ['age', 'bmi', 'children', 'expenses', 'sex_female', 'sex_male',
-                            'smoker_no', 'smoker_yes', 'region_northeast', 'region_northwest',
-                            'region_southeast', 'region_southwest']  # noqa
-        expected_columns_one_hot_not_ignore = ['age', 'bmi', 'children', 'expenses', 'sex_NA', 'sex_female', 'sex_male',
-                            'smoker_no', 'smoker_yes', 'region_northeast', 'region_northwest',
-                            'region_southeast', 'region_southwest']  # noqa
-        expected_columns_dummy_ignore = ['age', 'bmi', 'children', 'expenses', 'sex_male',
-                            'smoker_yes', 'region_northwest',
-                            'region_southeast', 'region_southwest']  # noqa
-        expected_columns_dummy_not_ignore = ['age', 'bmi', 'children', 'expenses', 'sex_female', 'sex_male',
-                            'smoker_yes', 'region_northwest',
-                            'region_southeast', 'region_southwest']  # noqa
+            expected_columns_one_hot_ignore = ['age', 'bmi', 'children', 'expenses', 'sex_female', 'sex_male',
+                                               'smoker_no', 'smoker_yes', 'region_northeast',
+                                               'region_northwest', 'region_southeast', 'region_southwest']
+            expected_columns_one_hot_not_ignore = ['age', 'bmi', 'children', 'expenses', 'sex_NA',
+                                                   'sex_female', 'sex_male', 'smoker_no', 'smoker_yes',
+                                                   'region_northeast', 'region_northwest', 'region_southeast',
+                                                   'region_southwest']
+            expected_columns_dummy_ignore = ['age', 'bmi', 'children', 'expenses', 'sex_male', 'smoker_yes',
+                                             'region_northwest', 'region_southeast', 'region_southwest']
+            expected_columns_dummy_not_ignore = ['age', 'bmi', 'children', 'expenses', 'sex_female',
+                                                 'sex_male', 'smoker_yes', 'region_northwest',
+                                                 'region_southeast', 'region_southwest']
 
-        ######################################################################################################
-        # ignore_na_values=True (defualt) / ONE_HOT
-        ######################################################################################################
-        transformation = DummyEncodeTransformer(encoding=CategoricalEncoding.ONE_HOT, ignore_na_values=True)
-        transformed_data = transformation.fit_transform(data)
-        assert transformation._columns_to_reindex == expected_columns_one_hot_ignore
-        # ensure all 800 values (i.e. 400 rows by 2 columns) equal 0 (because they are missing values)
-        assert (transformed_data.loc[random_row_indexes, ['sex_female', 'sex_male']] == 0).sum().sum() == 800
-        assert 'sex_NA' not in transformed_data.columns.values
-        assert transformed_data.loc[random_row_indexes, 'bmi'].isnull().sum() == 400  # i.e. all 400 still NA
+            ##################################################################################################
+            # ignore_na_values=True (defualt) / ONE_HOT
+            ##################################################################################################
+            transformation = DummyEncodeTransformer(encoding=CategoricalEncoding.ONE_HOT, ignore_na_values=True)  # noqa
+            transformed_data = transformation.fit_transform(data)
+            assert transformation._columns_to_reindex == expected_columns_one_hot_ignore
+            # ensure all 800 values (i.e. 400 rows by 2 columns) equal 0 (because they are missing values)
+            assert (transformed_data.loc[random_row_indexes, ['sex_female', 'sex_male']] == 0).sum().sum() == 800  # noqa
+            assert 'sex_NA' not in transformed_data.columns.values
+            assert transformed_data.loc[random_row_indexes, 'bmi'].isnull().sum() == 400  # i.e. all still NA
 
-        ######################################################################################################
-        # ignore_na_values=True (defualt) / DUMMY
-        ######################################################################################################
-        transformation = DummyEncodeTransformer(encoding=CategoricalEncoding.DUMMY, ignore_na_values=True)
-        transformed_data = transformation.fit_transform(data)
-        assert transformation._columns_to_reindex == expected_columns_dummy_ignore
-        # ensure all 400 values of remaining column have 0s
-        assert (transformed_data.loc[random_row_indexes, ['sex_male']] == 0).sum().sum() == 400
-        assert 'sex_NA' not in transformed_data.columns.values
-        assert transformed_data.loc[random_row_indexes, 'bmi'].isnull().sum() == 400  # i.e. all 400 still NA
+            ##################################################################################################
+            # ignore_na_values=True (defualt) / DUMMY
+            ##################################################################################################
+            transformation = DummyEncodeTransformer(encoding=CategoricalEncoding.DUMMY, ignore_na_values=True)
+            transformed_data = transformation.fit_transform(data)
+            assert transformation._columns_to_reindex == expected_columns_dummy_ignore
+            # ensure all 400 values of remaining column have 0s
+            assert (transformed_data.loc[random_row_indexes, ['sex_male']] == 0).sum().sum() == 400
+            assert 'sex_NA' not in transformed_data.columns.values
+            assert transformed_data.loc[random_row_indexes, 'bmi'].isnull().sum() == 400  # i.e. all still NA
 
-        ######################################################################################################
-        # ignore_na_values=False / ONE_HOT
-        ######################################################################################################
-        transformation = DummyEncodeTransformer(encoding=CategoricalEncoding.ONE_HOT, ignore_na_values=False)
-        transformed_data = transformation.fit_transform(data)
-        assert transformation._columns_to_reindex == expected_columns_one_hot_not_ignore
-        # ensure all 800 values (i.e. 400 rows by 2 columns) equal 0 (because they are missing values)
-        assert (transformed_data.loc[random_row_indexes, ['sex_female', 'sex_male']] == 0).sum().sum() == 800
-        assert (transformed_data.loc[random_row_indexes, ['sex_NA']] == 1).sum().sum() == 400
-        assert 'sex_NA' in transformed_data.columns.values
-        assert transformed_data.loc[random_row_indexes, 'bmi'].isnull().sum() == 400  # i.e. all 400 still NA
+            ##################################################################################################
+            # ignore_na_values=False / ONE_HOT
+            ##################################################################################################
+            transformation = DummyEncodeTransformer(encoding=CategoricalEncoding.ONE_HOT, ignore_na_values=False)  # noqa
+            transformed_data = transformation.fit_transform(data)
+            assert transformation._columns_to_reindex == expected_columns_one_hot_not_ignore
+            # ensure all 800 values (i.e. 400 rows by 2 columns) equal 0 (because they are missing values)
+            assert (transformed_data.loc[random_row_indexes, ['sex_female', 'sex_male']] == 0).sum().sum() == 800  # noqa
+            assert (transformed_data.loc[random_row_indexes, ['sex_NA']] == 1).sum().sum() == 400
+            assert 'sex_NA' in transformed_data.columns.values
+            assert transformed_data.loc[random_row_indexes, 'bmi'].isnull().sum() == 400  # i.e. all still NA
 
-        ######################################################################################################
-        # ignore_na_values=False / DUMMY
-        ######################################################################################################
-        transformation = DummyEncodeTransformer(encoding=CategoricalEncoding.DUMMY, ignore_na_values=False)
-        transformed_data = transformation.fit_transform(data)
-        assert transformation._columns_to_reindex == expected_columns_dummy_not_ignore
-        # ensure all 800 values (i.e. 400 rows by 2 columns) equal 0 (because they are missing values)
-        assert (transformed_data.loc[random_row_indexes, ['sex_female', 'sex_male']] == 0).sum().sum() == 800
-        assert 'sex_NA' not in transformed_data.columns.values
-        assert transformed_data.loc[random_row_indexes, 'bmi'].isnull().sum() == 400  # i.e. all 400 still NA
+            ##################################################################################################
+            # ignore_na_values=False / DUMMY
+            ##################################################################################################
+            transformation = DummyEncodeTransformer(encoding=CategoricalEncoding.DUMMY, ignore_na_values=False)  # noqa
+            transformed_data = transformation.fit_transform(data)
+            assert transformation._columns_to_reindex == expected_columns_dummy_not_ignore
+            # ensure all 800 values (i.e. 400 rows by 2 columns) equal 0 (because they are missing values)
+            assert (transformed_data.loc[random_row_indexes, ['sex_female', 'sex_male']] == 0).sum().sum() == 800  # noqa
+            assert 'sex_NA' not in transformed_data.columns.values
+            assert transformed_data.loc[random_row_indexes, 'bmi'].isnull().sum() == 400  # i.e. all still NA
+
+        test_na_values(data=insurance_data)
+
+        # fixing a bug where the column is of type categoric, and when we go to add NA, it isn't an expected
+        # category, and we would get `ValueError: fill value must be in categories`; solution was to add
+        # .cat.add_categories(['NA']) if the column was categoric
+        insurance_data_categoric = CategoricConverterTransformer(columns=['sex']).fit_transform(insurance_data)  # noqa
+        assert all(insurance_data_categoric.sex.cat.categories.values == ['female', 'male'])
+        test_na_values(data=insurance_data_categoric)
 
     def test_CategoricConverterTransformer(self):
         data = TestHelper.get_titanic_data()
@@ -939,7 +950,7 @@ class TransformerTests(TimerTestCase):
                     for x in columns_to_convert])
 
         # check Categorical objects have correct values
-        assert all([new_data[x].cat.categories.values.tolist() == sorted(train_data[x].dropna().unique().tolist())
+        assert all([new_data[x].cat.categories.values.tolist() == sorted(train_data[x].dropna().unique().tolist())  # noqa
                     for x in columns_to_convert])
 
     def test_transformations_TitanicDataset_test_various_conditions(self):
@@ -1431,7 +1442,7 @@ class TransformerTests(TimerTestCase):
         assert pca_transformer.state is None
 
         pca_transformer.fit(data_x=training_set)
-        assert all([isclose(x, y) for x, y in zip(pca_transformer.cumulative_explained_variance, [0.955751167228117])])
+        assert all([isclose(x, y) for x, y in zip(pca_transformer.cumulative_explained_variance, [0.955751167228117])])  # noqa
         assert pca_transformer.number_of_components == 1
         assert pca_transformer.state == {'categorical_features': ['ocean_proximity', 'temp_categorical']}
 
