@@ -908,6 +908,81 @@ class TransformerTests(TimerTestCase):
         assert all(insurance_data_categoric.sex.cat.categories.values == ['female', 'male'])
         test_na_values(data=insurance_data_categoric)
 
+    def test_EncodeNumericNAsTransformer(self):
+        data = TestHelper.get_insurance_data()
+        # insert missing values for int and float types
+        random_row_indexes = data.sample(n=400, random_state=42).index.values
+        data.loc[random_row_indexes, 'age'] = np.nan
+        # also set numeric field to NA; values should not change
+        data.loc[random_row_indexes, 'bmi'] = np.nan
+        assert data.age.isnull().sum() == 400
+        assert data.bmi.isnull().sum() == 400
+
+        transformer = EncodeNumericNAsTransformer()
+        transformed_data = transformer.fit_transform(data)
+
+        assert transformer.state == {'columns': ['age', 'bmi']}
+        assert transformer._columns_to_encode == ['age', 'bmi']
+        assert transformer._columns_to_reindex == ['age_NA', 'age', 'sex', 'bmi_NA', 'bmi', 'children', 'smoker', 'region', 'expenses']  # noqa
+
+        # ensure no other columns changed
+        assert all(data.sex.values == transformed_data.sex.values)
+        assert all(data.children.values == transformed_data.children.values)
+        assert all(data.smoker.values == transformed_data.smoker.values)
+        assert all(data.region.values == transformed_data.region.values)
+        assert all(data.expenses.values == transformed_data.expenses.values)
+
+        # ensure non-na values are the same for original column and 0 for new column
+        non_missing_index = data.index.isin(random_row_indexes)
+        assert all(data[~non_missing_index].age == transformed_data[~non_missing_index].age)
+        assert all(data[~non_missing_index].bmi == transformed_data[~non_missing_index].bmi)
+        assert all(transformed_data.loc[random_row_indexes, 'age'] == 0)
+        assert all(transformed_data.loc[random_row_indexes, 'bmi'] == 0)
+
+        # ensure na values are 1 for new column
+        assert all(transformed_data.loc[random_row_indexes, 'age_NA'] == 1)
+        assert all(transformed_data.loc[random_row_indexes, 'bmi_NA'] == 1)
+        assert all(transformed_data[~non_missing_index].age_NA == 0)
+        assert all(transformed_data[~non_missing_index].bmi_NA == 0)
+
+        ######################################################################################################
+        # test `columns_to_encode` and `replacement_value`
+        ######################################################################################################
+        # now, expenses should not have any NA, but we will encode it anyway, so we should get expenses_NA
+        # with all 0's and expenses should be the same as before. age/bmi should behave as previous,
+        # with the exception of the new replacement_value
+        transformer = EncodeNumericNAsTransformer(columns_to_encode=['age', 'bmi', 'expenses'],
+                                                  replacement_value=-1)
+        transformed_data = transformer.fit_transform(data)
+
+        assert transformer.state == {'columns': ['age', 'bmi', 'expenses']}
+        assert transformer._columns_to_encode == ['age', 'bmi', 'expenses']
+        assert transformer._columns_to_reindex == ['age_NA', 'age', 'sex', 'bmi_NA', 'bmi', 'children',
+                                                   'smoker', 'region', 'expenses_NA', 'expenses']
+
+        # ensure no other columns changed
+        assert all(data.sex.values == transformed_data.sex.values)
+        assert all(data.children.values == transformed_data.children.values)
+        assert all(data.smoker.values == transformed_data.smoker.values)
+        assert all(data.region.values == transformed_data.region.values)
+        assert all(data.expenses.values == transformed_data.expenses.values)  # expenses should be unchanged
+
+        # ensure non-na values are the same for original column and 0 for new column
+        non_missing_index = data.index.isin(random_row_indexes)
+        assert all(data[~non_missing_index].age == transformed_data[~non_missing_index].age)
+        assert all(data[~non_missing_index].bmi == transformed_data[~non_missing_index].bmi)
+        assert all(transformed_data.loc[random_row_indexes, 'age'] == -1)
+        assert all(transformed_data.loc[random_row_indexes, 'bmi'] == -1)
+
+        # ensure na values are 1 for new column
+        assert all(transformed_data.loc[random_row_indexes, 'age_NA'] == 1)
+        assert all(transformed_data.loc[random_row_indexes, 'bmi_NA'] == 1)
+        assert all(transformed_data[~non_missing_index].age_NA == 0)
+        assert all(transformed_data[~non_missing_index].bmi_NA == 0)
+
+        # expenses_NA should all be 0, because there where no missing values
+        assert all(transformed_data.expenses_NA == 0)
+
     def test_CategoricConverterTransformer(self):
         data = TestHelper.get_titanic_data()
         # transform 'Embarked' so that it is already categoric, and we will try to convert it again, and make

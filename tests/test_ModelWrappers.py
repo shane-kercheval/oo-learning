@@ -4020,8 +4020,10 @@ class ModelWrapperTests(TimerTestCase):
         def create_tuner():
 
             score_list = [
-                KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class)),
-                SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=positive_class)),  # noqa
+                KappaScore(converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                positive_class=positive_class)),
+                SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=positive_class)),
             ]
 
             cart_base_model = ModelInfo(description='cart',
