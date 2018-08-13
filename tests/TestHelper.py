@@ -150,6 +150,16 @@ class TestHelper:
                                                       data_frame2=expected_dataframe,
                                                       check_column_types=check_column_types)
 
+    # noinspection PyTypeChecker
+    @staticmethod
+    def ensure_series_equal_from_file(file, expected_series):
+        # with open(file, 'wb') as output:
+        #     pickle.dump(expected_series, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'rb') as saved_object:
+            found_series = pickle.load(saved_object)
+            assert all(found_series.index.values == expected_series.index.values)
+            assert all([isclose(x, y) for x, y in zip(found_series.values, expected_series.values)])
+
     @staticmethod
     def ensure_values_numeric_dictionary(dictionary_1, dictionary_2):
         assert set(dictionary_1.keys()) == set(dictionary_2.keys())

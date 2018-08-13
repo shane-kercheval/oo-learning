@@ -1518,8 +1518,20 @@ class TransformerTests(TimerTestCase):
 
         pca_transformer.fit(data_x=training_set)
         assert all([isclose(x, y) for x, y in zip(pca_transformer.cumulative_explained_variance, [0.955751167228117])])  # noqa
+        assert all([isclose(x, y) for x, y in zip(pca_transformer.component_explained_variance, [0.955751167228117])])  # noqa
         assert pca_transformer.number_of_components == 1
         assert pca_transformer.state == {'categorical_features': ['ocean_proximity', 'temp_categorical']}
+
+        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_Transformers/test_PCATransformer_loadings_1.pkl'),  # noqa
+                                                     expected_dataframe=pca_transformer.loadings)
+        TestHelper.ensure_series_equal_from_file(file=TestHelper.ensure_test_directory('data/test_Transformers/test_PCATransformer_comp_feature_ranking_1_all.pkl'),  # noqa
+                                                 expected_series=pca_transformer.component_feature_ranking(ith_component=1))  # noqa
+        TestHelper.ensure_series_equal_from_file(file=TestHelper.ensure_test_directory('data/test_Transformers/test_PCATransformer_comp_feature_ranking_1_1.pkl'),  # noqa
+                                                 expected_series=pca_transformer.component_feature_ranking(ith_component=1, top_n=1))  # noqa
+        TestHelper.ensure_series_equal_from_file(file=TestHelper.ensure_test_directory('data/test_Transformers/test_PCATransformer_comp_feature_ranking_1_4.pkl'),  # noqa
+                                                 expected_series=pca_transformer.component_feature_ranking(ith_component=1, top_n=4))  # noqa
+        TestHelper.check_plot('data/test_Transformers/test_plot_loadings_1.png',
+                              lambda: pca_transformer.plot_loadings())
 
         # transform training data
         transformed_data = pca_transformer.transform(data_x=training_set)
@@ -1540,7 +1552,24 @@ class TransformerTests(TimerTestCase):
         pca_transformer.fit(data_x=training_set)
 
         assert all([isclose(x, y) for x, y in zip(list(pca_transformer.cumulative_explained_variance), [0.955751167228117, 0.9976620662281546, 0.9999751439740711, 0.9999981341821631, 0.9999994868435985, 0.9999999583168993, 1.0])])  # noqa
+        assert all([isclose(x, y) for x, y in zip(list(pca_transformer.component_explained_variance), [0.955751167228117, 0.04191089900003746, 0.002313077745916491, 2.299020809206057e-05, 1.3526614353928983e-06, 4.714733007559294e-07, 4.16831008376836e-08])])  # noqa
         assert pca_transformer.number_of_components == 7
+        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_Transformers/test_PCATransformer_loadings_7.pkl'),  # noqa
+                                                     expected_dataframe=pca_transformer.loadings)
+
+        TestHelper.ensure_series_equal_from_file(file=TestHelper.ensure_test_directory('data/test_Transformers/test_PCATransformer_comp_feature_ranking_1_all.pkl'),  # noqa
+                                                 expected_series=pca_transformer.component_feature_ranking(ith_component=1))  # noqa
+        TestHelper.ensure_series_equal_from_file(file=TestHelper.ensure_test_directory('data/test_Transformers/test_PCATransformer_comp_feature_ranking_7_2.pkl'),  # noqa
+                                                 expected_series=pca_transformer.component_feature_ranking(ith_component=2))  # noqa
+        TestHelper.ensure_series_equal_from_file(file=TestHelper.ensure_test_directory('data/test_Transformers/test_PCATransformer_comp_feature_ranking_7_3_4.pkl'),  # noqa
+                                                 expected_series=pca_transformer.component_feature_ranking(ith_component=6, top_n=4))  # noqa
+
+        TestHelper.check_plot('data/test_Transformers/test_plot_loadings_7.png',
+                              lambda: pca_transformer.plot_loadings(font_size=5))
+        TestHelper.check_plot('data/test_Transformers/test_plot_loadings_7_no_annotate.png',
+                              lambda: pca_transformer.plot_loadings(annotate=False))
+
+
         assert pca_transformer.state == {'categorical_features': ['ocean_proximity', 'temp_categorical']}
 
         # transform training data

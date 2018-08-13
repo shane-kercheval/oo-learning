@@ -3,6 +3,7 @@ from typing import Union
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 from sklearn.decomposition import PCA
 
@@ -34,15 +35,49 @@ class PCATransformer(TransformerBase):
         self._percent_variance_explained = percent_variance_explained
         self._exclude_categorical_columns = exclude_categorical_columns
         self._cumulative_explained_variance = None
+        self._component_explained_variance = None
+        self._features = None
         self._number_of_components = None
         self._pca_object = None
+        self._loadings = None
 
     def peak(self, data_x: pd.DataFrame):
         pass
 
     @property
+    def component_explained_variance(self):
+        return self._component_explained_variance
+
+    @property
     def cumulative_explained_variance(self) -> np.array:
         return self._cumulative_explained_variance
+
+    @property
+    def loadings(self) -> pd.DataFrame:
+        return pd.DataFrame(self._loadings,
+                            columns=self._features,
+                            index=['PC-'+str(x+1) for x in range(self._loadings.shape[0])]).transpose()
+
+    def plot_loadings(self, annotate: bool=True, font_size: int=7):
+        plt.title('PCA Loadings')
+        sns.heatmap(self.loadings, annot=annotate, annot_kws={"size": font_size}, cmap='RdBu_r')
+        plt.gcf().tight_layout()
+
+    def component_feature_ranking(self, ith_component: int, top_n: Union[int, None]=None) -> pd.Series:
+        """
+
+        :param ith_component: the index of the component (indexing starts at `1`)
+        :param top_n: the number of top loadings to include (by absolute value of the loadings)
+        :return: a sorted pandas.Series containing the top_n loadings of the ith_component, sorted by absolute
+            value of the loadings of that component
+        """
+        if top_n is None:
+            top_n = len(self.loadings)
+
+        pca_column = 'PC-' + str(ith_component)
+        df_copy = self.loadings.copy()
+        df_copy['sort'] = self.loadings[pca_column].abs()
+        return df_copy.sort_values(by='sort', ascending=False).iloc[0:top_n][pca_column]
 
     @property
     def number_of_components(self) -> int:
@@ -51,12 +86,15 @@ class PCATransformer(TransformerBase):
     def _fit_definition(self, data_x: pd.DataFrame) -> dict:
         assert data_x.isna().sum().sum() == 0
 
-        _, categorical_features = OOLearningHelpers.get_columns_by_type(data_dtypes=data_x.dtypes,  # noqa
-                                                                        target_variable=None)
+        numeric_columns, categorical_features = OOLearningHelpers.get_columns_by_type(data_dtypes=data_x.dtypes,  # noqa
+                                                                                      target_variable=None)
         # perform PCA on numeric features, then add on categorical features
         self._pca_object = PCA(n_components=self._percent_variance_explained, random_state=42)
         self._pca_object.fit(X=data_x.drop(columns=categorical_features))
 
+        self._features = numeric_columns
+        self._loadings = self._pca_object.components_
+        self._component_explained_variance = self._pca_object.explained_variance_ratio_
         self._cumulative_explained_variance = np.cumsum(self._pca_object.explained_variance_ratio_)
         self._number_of_components = self._pca_object.n_components_
 
