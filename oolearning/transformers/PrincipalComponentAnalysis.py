@@ -52,15 +52,44 @@ class PCATransformer(TransformerBase):
     def cumulative_explained_variance(self) -> np.array:
         return self._cumulative_explained_variance
 
-    @property
-    def loadings(self) -> pd.DataFrame:
-        return pd.DataFrame(self._loadings,
-                            columns=self._features,
-                            index=['PC-'+str(x+1) for x in range(self._loadings.shape[0])]).transpose()
+    def loadings(self,
+                 top_n_components: Union[int, None]=None,
+                 top_n_features: Union[int, None]=None) -> pd.DataFrame:
+        """
+        returns the loading vectors for each compontent (columns are components, rows are features)
+        :param top_n_components: only include the top n components. If `None`, use all components.
+        :param top_n_features: only include the top n features for each component. If `None`, use all
+            features.
+        """
+        loadings_df = pd.DataFrame(self._loadings,
+                                   columns=self._features,
+                                   index=['PC-'+str(x+1) for x in range(self._loadings.shape[0])]).transpose()
 
-    def plot_loadings(self, annotate: bool=True, font_size: int=7):
+        if top_n_components is None:
+            top_n_components = loadings_df.shape[1]
+
+        loadings_df = loadings_df.iloc[:, 0:top_n_components]
+
+        if top_n_features is None:
+            return loadings_df
+        else:
+            return loadings_df[(loadings_df.abs().rank(ascending=False) <= top_n_features).any(axis=1)]
+
+    def plot_loadings(self,
+                      top_n_components: Union[int, None] = None,
+                      top_n_features: Union[int, None] = None,
+                      annotate: bool=True,
+                      font_size: int=7):
+        """
+        :param top_n_components: only include the top n components. If `None`, use all components.
+        :param top_n_features: only include the top n features for each component. If `None`, use all
+            features.
+        :param annotate: whether or not to include the loading value within each cell
+        :param font_size: the font size of the loading value within each cell
+        """
         plt.title('PCA Loadings')
-        sns.heatmap(self.loadings, annot=annotate, annot_kws={"size": font_size}, cmap='RdBu_r')
+        sns.heatmap(self.loadings(top_n_components=top_n_components, top_n_features=top_n_features),
+                    annot=annotate, annot_kws={"size": font_size}, cmap='RdBu_r', vmin=-1, vmax=1)
         plt.gcf().tight_layout()
 
     def component_feature_ranking(self, ith_component: int, top_n: Union[int, None]=None) -> pd.Series:
@@ -72,11 +101,11 @@ class PCATransformer(TransformerBase):
             value of the loadings of that component
         """
         if top_n is None:
-            top_n = len(self.loadings)
+            top_n = len(self.loadings())
 
         pca_column = 'PC-' + str(ith_component)
-        df_copy = self.loadings.copy()
-        df_copy['sort'] = self.loadings[pca_column].abs()
+        df_copy = self.loadings().copy()
+        df_copy['sort'] = df_copy[pca_column].abs()
         return df_copy.sort_values(by='sort', ascending=False).iloc[0:top_n][pca_column]
 
     @property
