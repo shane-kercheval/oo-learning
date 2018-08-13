@@ -32,26 +32,30 @@ class RemoveCorrelationsTransformer(TransformerBase):
         #   - Repeat until no absolute correlations are above the threshold (``r correlation_threshold``)
         columns_to_remove = list()
 
+        # noinspection PyUnresolvedReferences
+        # `corr()` automatically excludes categorical features
+        # we'll get the correlation outside the loop and remove features as we go because it is a very
+        # expensive function call for large datasets
+        correlation_matrix = data_x.corr()
+
         while True:
-            # noinspection PyUnresolvedReferences
-            # `corr()` automatically excludes categorical features
-            correlation_matrix = data_x.drop(columns=columns_to_remove).corr()
 
-            features = correlation_matrix.columns.values
-            correlation_matrix = np.abs(correlation_matrix.values)
-            np.fill_diagonal(correlation_matrix, np.NaN)
+            local_correlation_matrix = correlation_matrix
+            features = local_correlation_matrix.columns.values
+            local_correlation_matrix = np.abs(local_correlation_matrix.values)
+            np.fill_diagonal(local_correlation_matrix, np.NaN)
 
-            # correlation_matrix.unique()
-            # sorted(np.abs(np.unique(correlation_matrix)), reverse=True)
+            # local_correlation_matrix.unique()
+            # sorted(np.abs(np.unique(local_correlation_matrix)), reverse=True)
 
-            highest_abs_pairwise_correlation = np.nanmax(correlation_matrix)
+            highest_abs_pairwise_correlation = np.nanmax(local_correlation_matrix)
 
             if highest_abs_pairwise_correlation > self._max_correlation_threshold:
                 # `where()` will always be 2 instances for correlation matrices, grab the first
-                indexes = np.where(correlation_matrix == highest_abs_pairwise_correlation)[0]
+                indexes = np.where(local_correlation_matrix == highest_abs_pairwise_correlation)[0]
 
-                mean_a_correlation = np.nanmean(correlation_matrix[indexes[0], ])
-                mean_b_correlation = np.nanmean(correlation_matrix[indexes[1], ])
+                mean_a_correlation = np.nanmean(local_correlation_matrix[indexes[0], ])
+                mean_b_correlation = np.nanmean(local_correlation_matrix[indexes[1], ])
 
                 # A potential problem is that when we are e.g. resampling, there can be slight variations
                 # depending on the scaling/etc.. and if, for example, the 'RemoveCorrelationsTransformer'
@@ -62,9 +66,12 @@ class RemoveCorrelationsTransformer(TransformerBase):
                 # or becomes inconsistent when predicting on two different transformed dataset
                 # SO: we have to round (arbitrarily to 3) so that slight variations in correlations (e.g.
                 # between the same two features when resampling) are consistent.
-                columns_to_remove.append(features[indexes[0]]
-                                         if round(float(mean_a_correlation), 3) > round(float(mean_b_correlation), 3)  # noqa
-                                         else features[indexes[1]])
+                if round(float(mean_a_correlation), 3) > round(float(mean_b_correlation), 3):
+                    column_to_remove = features[indexes[0]]
+                else:
+                    column_to_remove = features[indexes[1]]
+                columns_to_remove.append(column_to_remove)
+                correlation_matrix.drop(index=column_to_remove, columns=column_to_remove, inplace=True)
             else:
                 break
 
