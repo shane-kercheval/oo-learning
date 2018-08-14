@@ -140,6 +140,13 @@ class UnsupervisedTests(TimerTestCase):
                                                                        num_clusters=list(range(1, 9)),
                                                                        transformations=[CenterScaleTransformer()]),  # noqa
                               set_size=False)
+        data = TestHelper.get_iris_data()
+        TestHelper.check_plot('data/test_unsupervised/test_kmeans_elbow_plot_not_parallelized.png',
+                              lambda: Clustering.kmeans_elbow_sse_plot(data=data.drop(columns='species'),
+                                                                       num_clusters=list(range(1, 9)),
+                                                                       transformations=[CenterScaleTransformer()],  # noqa
+                                                                       parallelization_cores=0),
+                              set_size=False)
 
     def test_KMeans_elbow_bss_tss(self):
         data = TestHelper.get_iris_data()

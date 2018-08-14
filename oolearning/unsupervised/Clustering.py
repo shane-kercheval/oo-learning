@@ -1,6 +1,8 @@
 from enum import Enum, unique
 from scipy.cluster import hierarchy
 from typing import List, Union
+from multiprocessing import cpu_count
+from multiprocessing import Pool as ThreadPool
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,6 +33,19 @@ class ClusteringHeatmapValues(Enum):
 class ClusteringHeatmapAggStrategy(Enum):
     MEAN = 0,
     MEDIAN = 1,
+
+
+def single_kmeans(args):
+    data = args['data']
+    transformations = args['transformations']
+    num_clusters = args['num_clusters']
+    trainer = ModelTrainer(model=ClusteringKMeans(),
+                           model_transformations=None if transformations is None else
+                           [x.clone() for x in transformations])
+    trainer.train_predict_eval(data=data, hyper_params=ClusteringKMeansHP(num_clusters=num_clusters))
+
+    # noinspection PyUnresolvedReferences
+    return abs(trainer.model.score)
 
 
 class Clustering:
@@ -149,15 +164,22 @@ class Clustering:
     @staticmethod
     def kmeans_elbow_sse_plot(data: pd.DataFrame,
                               num_clusters: list,
-                              transformations: List[TransformerBase]=None):
-        scores = []
-        for cluster in num_clusters:
-            trainer = ModelTrainer(model=ClusteringKMeans(),
-                                   model_transformations=None if transformations is None else
-                                   [x.clone() for x in transformations])
-            trainer.train_predict_eval(data=data, hyper_params=ClusteringKMeansHP(num_clusters=cluster))
-            # noinspection PyUnresolvedReferences
-            scores.append(abs(trainer.model.score))
+                              transformations: List[TransformerBase]=None,
+                              parallelization_cores: int = -1):
+
+        single_kmeans_args = [dict(data=data,
+                                   transformations=transformations,
+                                   num_clusters=x)
+                              for x in num_clusters]
+
+        if parallelization_cores == 0 or parallelization_cores == 1:
+            results = list(map(single_kmeans, single_kmeans_args))
+        else:
+            cores = cpu_count() if parallelization_cores == -1 else parallelization_cores
+            with ThreadPool(cores) as pool:
+                results = list(pool.map(single_kmeans, single_kmeans_args))
+
+        scores = [x for x in results]
 
         plt.plot(num_clusters, scores, linestyle='--', marker='o', color='b')
         plt.xlabel('K')
