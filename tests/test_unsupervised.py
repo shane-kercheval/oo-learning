@@ -133,6 +133,33 @@ class UnsupervisedTests(TimerTestCase):
         assert all(confusion_matrix.matrix.virginica.values == [0, 11, 36, 47])
         assert all(confusion_matrix.matrix.Total.values == [50, 50, 50, 150])
 
+    def test_silhouette_stats(self):
+        data = TestHelper.get_iris_data()
+
+        cluster_data = data.drop(columns='species')
+        cluster_data = CenterScaleTransformer().fit_transform(cluster_data)
+        trainer = ModelTrainer(model=ClusteringKMeans(evaluate_bss_tss=True),
+                               model_transformations=None,
+                               scores=[SilhouetteScore()])
+        clusters = trainer.train_predict_eval(data=cluster_data,
+                                              hyper_params=ClusteringKMeansHP(num_clusters=3))
+        assert trainer.model.model_object.n_clusters == 3
+
+        # make sure Score object, when manually calculated, is the expected value,
+        # then verify trainer.training_score
+        score = SilhouetteScore().calculate(
+            clustered_data=CenterScaleTransformer().fit_transform(cluster_data),  # noqa
+            clusters=clusters)
+        assert isclose(score, 0.4589717867018717)
+        assert isclose(score, trainer.training_scores[0].value)
+
+        assert isclose(trainer.model.score, -140.96581663074699)
+        assert isclose(trainer.model.bss_tss_ratio, 0.7650569722820886)
+        assert isclose(adjusted_rand_score(data.species, clusters), 0.6201351808870379)
+        silhouette_stats = Clustering.silhouette_stats(clustered_data=cluster_data, clusters=clusters)
+        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_unsupervised/test_silhouette_stats.pkl'))  # noqa
+        TestHelper.ensure_all_values_equal_from_file(file=file, expected_dataframe=silhouette_stats)
+
     def test_silhouette_plot(self):
         data = TestHelper.get_iris_data()
 

@@ -211,6 +211,10 @@ class Clustering:
         plt.title('BSS/TSS RATIO vs. K')
 
     @staticmethod
+    def silhouette_stats(clustered_data: pd.DataFrame, clusters: np.array) -> pd.DataFrame:
+        return pd.Series(silhouette_samples(clustered_data, clusters)).groupby(clusters).describe()
+
+    @staticmethod
     def silhouette_plot(clustered_data: pd.DataFrame, clusters: np.array, figure_size: tuple=(10, 10)):
         """
         modified from
