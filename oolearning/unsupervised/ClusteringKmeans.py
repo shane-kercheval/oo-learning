@@ -99,12 +99,12 @@ class ClusteringKMeans(ModelWrapperBase):
 
         if self._evaluate_bss_tss:
             # distances for each data-point to each cluster center
-            distances = cdist(data_x.as_matrix(), model_object.cluster_centers_, 'euclidean')
+            distances = cdist(data_x.values, model_object.cluster_centers_, 'euclidean')
             min_distances = np.min(distances, axis=1)
 
             # Total with-in sum of square
             self._wss = sum(min_distances ** 2)  # ends of being absolute value of self._score
-            self._tss = sum(pdist(data_x.as_matrix()) ** 2) / data_x.shape[0]
+            self._tss = sum(pdist(data_x.values) ** 2) / data_x.shape[0]
 
         return model_object
 

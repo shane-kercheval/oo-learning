@@ -3,8 +3,10 @@ from scipy.cluster import hierarchy
 from typing import List, Union
 from multiprocessing import cpu_count
 from multiprocessing import Pool as ThreadPool
+from sklearn.metrics import silhouette_samples, silhouette_score
 
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -107,7 +109,7 @@ class Clustering:
             # same as getting the cluster centers if using the underlying sklearn model, if STRATEGY was used:
             # cluster_centers = pd.DataFrame(fitter.model.model_object.cluster_centers_)
             # cluster_centers.columns = columns_to_keep
-            # round(cluster_centers.iloc[[4, 7, 5, 3, 1, 2, 6, 0]].transpose(), 2)
+
             transformed_data = CenterScaleTransformer().fit_transform(data)
             if color_scale_min is None:
                 color_scale_min = -2
@@ -132,6 +134,7 @@ class Clustering:
         cluster_size_lookup = cluster_size.values
 
         group_data = transformed_data.groupby('cluster').apply(agg_method).drop(columns='cluster')
+        # noinspection PyUnresolvedReferences
         indexes_with_sizes = ['{1} - ~{2}% ({0})'.format(index, size, int(round(size/len(clusters) * 100, 0)))
                               for index, size in zip(group_data.index.values, cluster_size_lookup)]
         group_data.index = indexes_with_sizes
@@ -208,10 +211,81 @@ class Clustering:
         plt.title('BSS/TSS RATIO vs. K')
 
     @staticmethod
+    def silhouette_plot(clustered_data: pd.DataFrame, clusters: np.array, figure_size: tuple=(10, 10)):
+        """
+        modified from
+            http://scikit-learn.org/stable/auto_examples/cluster/plot_kmeans_silhouette_analysis.html
+        :param clustered_data: this is the transformed data that the cluster algorithm used to cluster.
+        :param clusters: the resulting clusters.
+        :param figure_size: set (width, height) in inches.
+        :return:
+        """
+        # Create a subplot with 1 row and 1 columns
+        fig, ax1 = plt.subplots(1, 1)
+        fig.set_size_inches(figure_size[0], figure_size[1])
+
+        # The 1st subplot is the silhouette plot
+        # The silhouette coefficient can range from -1, 1 but in this example all
+        # lie within [-0.1, 1]
+        ax1.set_xlim([-0.1, 1])
+        # The (n_clusters+1)*10 is for inserting blank space between silhouette
+        # plots of individual clusters, to demarcate them clearly.
+        n_clusters = len(set(clusters))
+        ax1.set_ylim([0, len(clustered_data) + (n_clusters + 1) * 10])
+
+        cluster_labels = clusters
+
+        # The silhouette_score gives the average value for all the samples.
+        # This gives a perspective into the density and separation of the formed
+        # clusters
+        silhouette_avg = silhouette_score(clustered_data, cluster_labels)
+
+        # Compute the silhouette scores for each sample
+        sample_silhouette_values = silhouette_samples(clustered_data, cluster_labels)
+
+        y_lower = 10
+        for i in np.unique(clusters):
+            # Aggregate the silhouette scores for samples belonging to
+            # cluster i, and sort them
+            ith_cluster_silhouette_values = \
+                sample_silhouette_values[cluster_labels == i]
+
+            ith_cluster_silhouette_values.sort()
+
+            size_cluster_i = ith_cluster_silhouette_values.shape[0]
+            y_upper = y_lower + size_cluster_i
+
+            # noinspection PyUnresolvedReferences
+            color = cm.nipy_spectral(float(i) / n_clusters)
+            ax1.fill_betweenx(np.arange(y_lower, y_upper),
+                              0, ith_cluster_silhouette_values,
+                              facecolor=color, edgecolor=color, alpha=0.7)
+
+            # Label the silhouette plots with their cluster numbers at the middle
+            ax1.text(-0.05, y_lower + 0.5 * size_cluster_i, str(i))
+
+            # Compute the new y_lower for next plot
+            y_lower = y_upper + 10  # 10 for the 0 samples
+
+        ax1.set_title("The silhouette plot for the various clusters.")
+        ax1.set_xlabel("The silhouette coefficient values")
+        ax1.set_ylabel("Cluster label")
+
+        # The vertical line for average silhouette score of all the values
+        ax1.axvline(x=silhouette_avg, color="red", linestyle="--")
+
+        ax1.set_yticks([])  # Clear the yaxis labels / ticks
+        ax1.set_xticks([-0.1, 0, 0.2, 0.4, 0.6, 0.8, 1])
+
+        plt.suptitle(("Silhouette analysis for clustering on sample data "
+                      "with n_clusters = %d" % n_clusters),
+                     fontsize=14, fontweight='bold')
+
+    @staticmethod
     def hierarchical_dendogram_plot(data: pd.DataFrame,
                                     transformations: List[TransformerBase] = None,
                                     linkage: ClusteringHierarchicalLinkage=ClusteringHierarchicalLinkage.WARD,
-                                    figure_size: set=(22, 18)):
+                                    figure_size: tuple=(22, 18)):
 
         transformed_data = TransformerPipeline(transformations=transformations).fit_transform(data)
         # Specify the linkage type. Scipy accepts 'ward', 'complete', 'average', as well as other values

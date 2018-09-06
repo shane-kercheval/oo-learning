@@ -133,6 +133,40 @@ class UnsupervisedTests(TimerTestCase):
         assert all(confusion_matrix.matrix.virginica.values == [0, 11, 36, 47])
         assert all(confusion_matrix.matrix.Total.values == [50, 50, 50, 150])
 
+    def test_silhouette_plot(self):
+        data = TestHelper.get_iris_data()
+
+        cluster_data = data.drop(columns='species')
+        cluster_data = CenterScaleTransformer().fit_transform(cluster_data)
+        trainer = ModelTrainer(model=ClusteringKMeans(evaluate_bss_tss=True),
+                               model_transformations=None,
+                               scores=[SilhouetteScore()])
+        clusters = trainer.train_predict_eval(data=cluster_data,
+                                              hyper_params=ClusteringKMeansHP(num_clusters=3))
+        assert trainer.model.model_object.n_clusters == 3
+
+        # make sure Score object, when manually calculated, is the expected value,
+        # then verify trainer.training_score
+        score = SilhouetteScore().calculate(
+            clustered_data=CenterScaleTransformer().fit_transform(cluster_data),  # noqa
+            clusters=clusters)
+        assert isclose(score, 0.4589717867018717)
+        assert isclose(score, trainer.training_scores[0].value)
+
+        assert isclose(trainer.model.score, -140.96581663074699)
+        assert isclose(trainer.model.bss_tss_ratio, 0.7650569722820886)
+        assert isclose(adjusted_rand_score(data.species, clusters), 0.6201351808870379)
+
+        TestHelper.check_plot('data/test_unsupervised/test_silhouette_plot.png',
+                              lambda: Clustering.silhouette_plot(clustered_data=cluster_data,
+                                                                 clusters=clusters),
+                              set_size=False)
+        TestHelper.check_plot('data/test_unsupervised/test_silhouette_plot_size.png',
+                              lambda: Clustering.silhouette_plot(clustered_data=cluster_data,
+                                                                 clusters=clusters,
+                                                                 figure_size=(8, 6)),
+                              set_size=False)
+
     def test_KMeans_elbow_sse(self):
         data = TestHelper.get_iris_data()
         TestHelper.check_plot('data/test_unsupervised/test_kmeans_elbow_plot.png',
