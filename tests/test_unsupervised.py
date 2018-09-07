@@ -200,14 +200,14 @@ class UnsupervisedTests(TimerTestCase):
                               lambda: Clustering.kmeans_elbow_sse_plot(data=data.drop(columns='species'),
                                                                        num_clusters=list(range(1, 9)),
                                                                        transformations=[CenterScaleTransformer()]),  # noqa
-                              set_size=True)
+                              set_size=False)
         data = TestHelper.get_iris_data()
         TestHelper.check_plot('data/test_unsupervised/test_kmeans_elbow_plot_not_parallelized.png',
                               lambda: Clustering.kmeans_elbow_sse_plot(data=data.drop(columns='species'),
                                                                        num_clusters=list(range(1, 9)),
                                                                        transformations=[CenterScaleTransformer()],  # noqa
                                                                        parallelization_cores=0),
-                              set_size=True)
+                              set_size=False)
 
     def test_KMeans_elbow_bss_tss(self):
         data = TestHelper.get_iris_data()
@@ -249,6 +249,18 @@ class UnsupervisedTests(TimerTestCase):
                                   agg_strategy=ClusteringHeatmapAggStrategy.MEAN,
                                   display_values=ClusteringHeatmapValues.STRATEGY,
                                   y_axis_rotation=30))
+
+        TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_centerscale_strategy_mean_font_size.png',  # noqa
+                              lambda: Clustering.cluster_heatmap(
+                                  data=data.drop(columns='species'), clusters=clusters,
+                                  trans_strategy=ClusteringHeatmapTransStrategy.CENTER_SCALE,
+                                  agg_strategy=ClusteringHeatmapAggStrategy.MEAN,
+                                  display_values=ClusteringHeatmapValues.STRATEGY,
+                                  y_axis_rotation=0,
+                                  plot_size=(8, 4),
+                                  axis_font_size=5,
+                                  annotation_font_size=5)
+                              )
 
         TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_centerscale_strategy_mean_min_max.png',  # noqa
                               lambda: Clustering.cluster_heatmap(

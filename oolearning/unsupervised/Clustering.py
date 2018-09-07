@@ -60,7 +60,11 @@ class Clustering:
                         display_values: ClusteringHeatmapValues.ACTUAL,
                         color_scale_min: Union[int, float, None]=None,
                         color_scale_max: Union[int, float, None] = None,
-                        y_axis_rotation: int=0):
+                        plot_size: tuple=(7, 7),
+                        axis_font_size: int=10,
+                        annotation_font_size: int=10,
+                        y_axis_rotation: int=0,
+                        ):
         """
         :param data: data from which the clusters were generated
             It is recommended you use the pre-transformed data (i.e. could contain missing values), otherwise
@@ -92,6 +96,9 @@ class Clustering:
 
         :param color_scale_min: min value for the color scale
         :param color_scale_max: max value for the color scale
+        :param plot_size: size of the plot (width, height)
+        :param axis_font_size: the font size for the axis labels
+        :param annotation_font_size: the font size for the numbers (i.e. annotation) inside the cells
         :param y_axis_rotation: degrees to rotate the y-axis labels
         :return:
         """
@@ -156,11 +163,16 @@ class Clustering:
             values[column] = values[column].astype(str)
 
         sns.heatmap(group_data.iloc[np.argsort(cluster_size_lookup)].transpose(),
-                    annot=values.iloc[np.argsort(cluster_size_lookup)].transpose(), fmt='',  # fmt="f",
+                    annot=values.iloc[np.argsort(cluster_size_lookup)].transpose(),
+                    annot_kws={"size": annotation_font_size},
+                    fmt='',  # fmt="f",
                     robust=True, cmap='RdBu_r', vmin=color_scale_min, vmax=color_scale_max,
                     cbar_kws={'label': color_scale_title})
-        plt.yticks(rotation=y_axis_rotation * -1, va='center' if y_axis_rotation == 0 else 'bottom')
-        plt.xticks(rotation=30, ha='right')
+        plt.yticks(rotation=y_axis_rotation * -1,
+                   va='center' if y_axis_rotation == 0 else 'bottom',
+                   fontsize=axis_font_size)
+        plt.xticks(rotation=30, ha='right', fontsize=axis_font_size)
+        plt.gcf().set_size_inches(plot_size[0], plot_size[1])
         plt.tight_layout()
         # plt.title('Cluster Heatmap')
 
@@ -185,6 +197,7 @@ class Clustering:
         scores = [x for x in results]
 
         plt.plot(num_clusters, scores, linestyle='--', marker='o', color='b')
+        plt.gcf().set_size_inches(9, 6)
         plt.xlabel('K')
         plt.ylabel('SSE')
         plt.title('SSE vs. K')
@@ -206,6 +219,7 @@ class Clustering:
             ratios.append(abs(trainer.model.bss_tss_ratio))
 
         plt.plot(num_clusters, ratios, linestyle='--', marker='o', color='b')
+        plt.gcf().set_size_inches(9, 6)
         plt.xlabel('K')
         plt.ylabel('BSS/TSS RATIO')
         plt.title('BSS/TSS RATIO vs. K')
