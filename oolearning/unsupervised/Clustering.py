@@ -94,6 +94,11 @@ class Clustering:
             ClusteringHeatmapTransStrategy.CENTER_SCALE centers and scales each column/feature (i.e.
                 transforms to corresponding z-score values before aggregating and displaying
 
+            If set to `None`, then no underlying transformation happens and there is no difference between
+                `display_values` of `ClusteringHeatmapValues.STRATEGY` and `ClusteringHeatmapValues.ACTUAL`.
+                Also, the `color_scale_min` and `color_scale_max` parameters are defaulted to the min/max
+                of the values in the dataset.
+
         :param color_scale_min: min value for the color scale
         :param color_scale_max: max value for the color scale
         :param plot_size: size of the plot (width, height)
@@ -112,11 +117,18 @@ class Clustering:
         else:
             raise NotImplementedError()
 
-        if trans_strategy == ClusteringHeatmapTransStrategy.CENTER_SCALE:
+        if trans_strategy is None:
+            # if there is no transformation, then default the min/max scale to the min/max of the data
+            transformed_data = data
+            if color_scale_min is None:
+                color_scale_min = data.min().min()
+            if color_scale_max is None:
+                color_scale_max = data.max().max()
+            color_scale_title = ""
+        elif trans_strategy == ClusteringHeatmapTransStrategy.CENTER_SCALE:
             # same as getting the cluster centers if using the underlying sklearn model, if STRATEGY was used:
             # cluster_centers = pd.DataFrame(fitter.model.model_object.cluster_centers_)
             # cluster_centers.columns = columns_to_keep
-
             transformed_data = CenterScaleTransformer().fit_transform(data)
             if color_scale_min is None:
                 color_scale_min = -2
@@ -131,7 +143,6 @@ class Clustering:
             if color_scale_max is None:
                 color_scale_max = 1
             color_scale_title = "Cluster's {} Percentile Value for the Feature".format(agg_strategy_label)
-
         else:
             raise NotImplementedError()
 
@@ -167,7 +178,8 @@ class Clustering:
                     annot_kws={"size": annotation_font_size},
                     fmt='',  # fmt="f",
                     robust=True, cmap='RdBu_r', vmin=color_scale_min, vmax=color_scale_max,
-                    cbar_kws={'label': color_scale_title})
+                    cbar_kws={'label': color_scale_title},
+                    xticklabels=True, yticklabels=True)
         plt.yticks(rotation=y_axis_rotation * -1,
                    va='center' if y_axis_rotation == 0 else 'bottom',
                    fontsize=axis_font_size)

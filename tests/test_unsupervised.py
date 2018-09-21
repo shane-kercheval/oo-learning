@@ -328,6 +328,41 @@ class UnsupervisedTests(TimerTestCase):
                                   display_values=ClusteringHeatmapValues.STRATEGY,
                                   y_axis_rotation=30))
 
+        # NO transformations
+        TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_no_trans_actual_mean.png',
+                              lambda: Clustering.cluster_heatmap(
+                                  data=data.drop(columns='species'), clusters=clusters,
+                                  trans_strategy=None,
+                                  agg_strategy=ClusteringHeatmapAggStrategy.MEAN,
+                                  display_values=ClusteringHeatmapValues.ACTUAL,
+                                  ))
+
+        TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_no_trans_actual_mean_min_max.png',
+                              lambda: Clustering.cluster_heatmap(
+                                  data=data.drop(columns='species'), clusters=clusters,
+                                  trans_strategy=None,
+                                  agg_strategy=ClusteringHeatmapAggStrategy.MEAN,
+                                  display_values=ClusteringHeatmapValues.ACTUAL,
+                                  color_scale_min=-5,
+                                  color_scale_max=10,
+                                  ))
+
+        TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_no_trans_strategy_mean.png',
+                              lambda: Clustering.cluster_heatmap(
+                                  data=data.drop(columns='species'), clusters=clusters,
+                                  trans_strategy=None,
+                                  agg_strategy=ClusteringHeatmapAggStrategy.MEAN,
+                                  display_values=ClusteringHeatmapValues.STRATEGY,
+                                  ))
+
+        TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_no_trans_actual_median.png',
+                              lambda: Clustering.cluster_heatmap(
+                                  data=data.drop(columns='species'), clusters=clusters,
+                                  trans_strategy=None,
+                                  agg_strategy=ClusteringHeatmapAggStrategy.MEDIAN,
+                                  display_values=ClusteringHeatmapValues.ACTUAL,
+                                  ))
+
     def test_hierarchical_dendogram_plot(self):
         data = TestHelper.get_iris_data()
         cluster_data = data.drop(columns='species')
