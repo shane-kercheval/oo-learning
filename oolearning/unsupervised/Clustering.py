@@ -319,6 +319,6 @@ class Clustering:
 
         transformed_data = TransformerPipeline(transformations=transformations).fit_transform(data)
         # Specify the linkage type. Scipy accepts 'ward', 'complete', 'average', as well as other values
-        linkage_matrix = hierarchy.linkage(transformed_data.as_matrix(), linkage.value)
+        linkage_matrix = hierarchy.linkage(transformed_data.values, linkage.value)
         plt.figure(figsize=figure_size)
         hierarchy.dendrogram(linkage_matrix)

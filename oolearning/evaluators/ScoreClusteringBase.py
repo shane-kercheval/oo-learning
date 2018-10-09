@@ -15,7 +15,9 @@ class ScoreClusteringBase(ScoreBase):
         """
         assert self._value is None  # we don't want to be able to reuse test_evaluators
         self._value = self._calculate(clustered_data, clusters)
-        assert isinstance(self._value, float) or isinstance(self._value, int)
+        assert isinstance(self._value, float) or \
+               isinstance(self._value, np.floating) or \
+               isinstance(self._value, int)
         return self._value
 
     @abstractmethod
