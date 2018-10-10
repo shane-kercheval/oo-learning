@@ -64,7 +64,8 @@ class Clustering:
                         axis_font_size: int=10,
                         annotation_font_size: int=10,
                         y_axis_rotation: int=0,
-                        ):
+                        round_by: int=2,
+                        round_by_custom: Union[dict, None]=None):
         """
         :param data: data from which the clusters were generated
             It is recommended you use the pre-transformed data (i.e. could contain missing values), otherwise
@@ -105,6 +106,10 @@ class Clustering:
         :param axis_font_size: the font size for the axis labels
         :param annotation_font_size: the font size for the numbers (i.e. annotation) inside the cells
         :param y_axis_rotation: degrees to rotate the y-axis labels
+        :param round_by: the number of decimals to round aggregated (i.e. cell) values by
+        :param round_by_custom: a dictionary containing the feature to round as the key, and the value to
+            round by as the column. `round_by_custom` takes priority over `round_by`. Any column not specified
+            will be rounded by `round_by`.
         :return:
         """
         if agg_strategy == ClusteringHeatmapAggStrategy.MEAN:
@@ -164,12 +169,24 @@ class Clustering:
             values.index = indexes_with_sizes
 
         elif display_values == ClusteringHeatmapValues.STRATEGY:
-            values = group_data
+            values = group_data.copy()
 
         else:
             raise NotImplementedError()
 
-        values = values.round(2)
+        if round_by_custom is None:
+            values = values.round(round_by)
+        else:
+            for column in values.columns.values:
+                if column in round_by_custom:
+                    round_by_temp = round_by_custom[column]
+                    if round_by_temp == 0:
+                        values[column] = values[column].round(0).astype(int)
+                    else:
+                        values[column] = values[column].round(round_by_temp)
+                else:
+                    values[column] = values[column].round(round_by)
+
         for column in values.columns.values:
             values[column] = values[column].astype(str)
 

@@ -250,6 +250,28 @@ class UnsupervisedTests(TimerTestCase):
                                   display_values=ClusteringHeatmapValues.STRATEGY,
                                   y_axis_rotation=30))
 
+        # test rounding specific features/row rounding
+        TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_centerscale_strategy_mean_round_by_3.png',  # noqa
+                              lambda: Clustering.cluster_heatmap(
+                                  data=data.drop(columns='species'), clusters=clusters,
+                                  trans_strategy=ClusteringHeatmapTransStrategy.CENTER_SCALE,
+                                  agg_strategy=ClusteringHeatmapAggStrategy.MEAN,
+                                  display_values=ClusteringHeatmapValues.STRATEGY,
+                                  y_axis_rotation=30,
+                                  round_by=3,
+                              ))
+
+        TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_centerscale_strategy_mean_round_by_custom.png',  # noqa
+                              lambda: Clustering.cluster_heatmap(
+                                  data=data.drop(columns='species'), clusters=clusters,
+                                  trans_strategy=ClusteringHeatmapTransStrategy.CENTER_SCALE,
+                                  agg_strategy=ClusteringHeatmapAggStrategy.MEAN,
+                                  display_values=ClusteringHeatmapValues.STRATEGY,
+                                  y_axis_rotation=30,
+                                  round_by=1,
+                                  round_by_custom={'sepal_width': 0, 'petal_length': 2}
+                              ))
+
         TestHelper.check_plot('data/test_unsupervised/test_KMeans_heatmap_centerscale_strategy_mean_font_size.png',  # noqa
                               lambda: Clustering.cluster_heatmap(
                                   data=data.drop(columns='species'), clusters=clusters,
