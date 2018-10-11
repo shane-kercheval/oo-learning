@@ -332,10 +332,24 @@ class Clustering:
     def hierarchical_dendogram_plot(data: pd.DataFrame,
                                     transformations: List[TransformerBase] = None,
                                     linkage: ClusteringHierarchicalLinkage=ClusteringHierarchicalLinkage.WARD,
-                                    figure_size: tuple=(22, 18)):
+                                    color_threshold=None,
+                                    figure_size: tuple=(22, 18),
+                                    ):
+        """
 
+        :param data: dataset to cluster on
+        :param transformations: transformations to apply before clustering
+        :param linkage: the type of clustering to apply
+        :param color_threshold: the value of the y-axis to apply the 'horizontal cutoff' for clustering.
+            You'll likely need to first use `None`, then visualize a more appropriate value based off of the
+            dendogram.
+
+            For a more precise description, see
+            https://docs.scipy.org/doc/scipy/reference/generated/scipy.cluster.hierarchy.dendrogram.html
+        :param figure_size: size of the figure
+        """
         transformed_data = TransformerPipeline(transformations=transformations).fit_transform(data)
         # Specify the linkage type. Scipy accepts 'ward', 'complete', 'average', as well as other values
         linkage_matrix = hierarchy.linkage(transformed_data.values, linkage.value)
         plt.figure(figsize=figure_size)
-        hierarchy.dendrogram(linkage_matrix)
+        hierarchy.dendrogram(linkage_matrix, color_threshold=color_threshold)

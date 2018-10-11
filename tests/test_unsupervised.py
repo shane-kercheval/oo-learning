@@ -396,6 +396,13 @@ class UnsupervisedTests(TimerTestCase):
                                                                              linkage=ClusteringHierarchicalLinkage.WARD),  # noqa
                               set_size=False)
 
+        TestHelper.check_plot('data/test_unsupervised/test_hierarchical_dendogram_plot_threshold.png',
+                              lambda: Clustering.hierarchical_dendogram_plot(data=cluster_data,
+                                                                             transformations=[NormalizationVectorSpaceTransformer()],  # noqa
+                                                                             linkage=ClusteringHierarchicalLinkage.WARD,  # noqa
+                                                                             color_threshold=0.5),
+                              set_size=False)
+
     def test_Hierarchical_sklearn_normalization(self):
         data = TestHelper.get_iris_data()
         cluster_data = data.drop(columns='species')
