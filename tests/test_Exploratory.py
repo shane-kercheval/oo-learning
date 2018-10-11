@@ -2,6 +2,7 @@ import os
 import pickle
 import warnings
 
+import numpy as np
 import pandas as pd
 from mock import patch
 
@@ -232,6 +233,26 @@ class ExploratoryTests(TimerTestCase):
             expected_summary = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=expected_summary,
                                                       data_frame2=explore.categoric_summary())
+
+    def test_numeric_summary_with_mean_zero(self):
+        credit_data = TestHelper.get_credit_data()
+
+        # set a column to have the same value for each instance i.e. no variance i.e. standard deviation == 0
+        credit_data['months_loan_duration'] = [0] * len(credit_data)
+        assert all(credit_data.months_loan_duration == 0)
+
+        explore = ExploreDataset(dataset=credit_data)
+        numeric_summary = explore.numeric_summary()
+        assert numeric_summary.loc['months_loan_duration', 'count'] == 1000
+        assert numeric_summary.loc['months_loan_duration', 'nulls'] == 0
+        assert numeric_summary.loc['months_loan_duration', 'perc_nulls'] == 0
+        assert numeric_summary.loc['months_loan_duration', 'num_zeros'] == 1000
+        assert numeric_summary.loc['months_loan_duration', 'perc_zeros'] == 1
+        assert numeric_summary.loc['months_loan_duration', 'mean'] == 0
+        assert numeric_summary.loc['months_loan_duration', 'st_dev'] == 0
+        assert np.isnan(numeric_summary.loc['months_loan_duration', 'coef of var'])
+        assert numeric_summary.loc['months_loan_duration', 'skewness'] == 0
+        assert numeric_summary.loc['months_loan_duration', 'kurtosis'] == 0
 
     def test_ExploreDatasetBase_with_target_summary_nulls_and_zeros(self):
         explore = ExploreDataset(dataset=TestHelper.get_titanic_data(), target_variable='Survived')

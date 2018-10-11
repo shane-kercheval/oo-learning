@@ -192,6 +192,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
                              'mean': [round(self._dataset[x].mean(), 3) for x in numeric_columns],
                              'st_dev': [round(self._dataset[x].std(), 3) for x in numeric_columns],
                              'coef of var': [round(self._dataset[x].std() / self._dataset[x].mean(), 3)
+                                             if self._dataset[x].mean() != 0 else np.nan
                                              for x in numeric_columns],
                              'skewness': [round(self._dataset[x].skew(), 3) for x in numeric_columns],
                              'kurtosis': [round(self._dataset[x].kurt(), 3) for x in numeric_columns],
