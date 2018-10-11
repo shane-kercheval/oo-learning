@@ -385,6 +385,8 @@ class UnsupervisedTests(TimerTestCase):
                                   display_values=ClusteringHeatmapValues.ACTUAL,
                                   ))
 
+        assert 'cluster' not in data.columns.values  # make sure we are not changing the dataset
+
     def test_hierarchical_dendogram_plot(self):
         data = TestHelper.get_iris_data()
         cluster_data = data.drop(columns='species')

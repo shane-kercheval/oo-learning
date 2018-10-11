@@ -1310,6 +1310,36 @@ class TransformerTests(TimerTestCase):
         assert isclose(round(transformed_test['households'].std(ddof=0), 1), 1)  # less precision, but ~1
         assert isclose(round(transformed_test['population'].std(ddof=0), 0), 1)  # less precision, but ~1
 
+    def test_CenterScaleTransformer_column_all_same_values(self):
+        """
+        the standard deviation of a column containing all of the same number is 0, which creates a problem
+        because we divide by the standard deviation (i.e. 0) which gives NaN values.
+        in this case, if there is no standard deviation, all of the valuse should simply be 0 for
+        Center/Scaling around a mean of 0
+        """
+        data = TestHelper.get_housing_data()
+
+        data['longitude'] = [1] * len(data)
+        assert all(data.longitude.values == 1)
+        assert data.drop(columns='total_bedrooms').isna().sum().sum() == 0
+
+        target_variable = 'median_house_value'
+        training_set, _, test_set, _ = TestHelper.split_train_holdout_regression(data, target_variable)
+
+        transformer = CenterScaleTransformer()
+        transformed_training = transformer.fit_transform(data_x=training_set.copy())
+        assert transformed_training.drop(columns='total_bedrooms').isna().sum().sum() == 0
+        assert all(transformed_training.longitude == 0)
+
+        transformed_test = transformer.transform(data_x=test_set.copy())
+        assert transformed_test.drop(columns='total_bedrooms').isna().sum().sum() == 0
+        assert all(transformed_test.longitude == 0)
+
+        # introduce variation, should fail since we don't know how tocreate the z-score
+        test_set.loc[3396, 'longitude'] = 2
+        assert not all(test_set.longitude == 1)
+        self.assertRaises(AssertionError, lambda: transformer.transform(data_x=test_set.copy()))
+
     def test_CenterScaleTransformer_sklearn(self):
         data = TestHelper.get_housing_data()
         target_variable = 'median_house_value'
