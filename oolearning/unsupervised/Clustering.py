@@ -60,6 +60,7 @@ class Clustering:
                         display_values: ClusteringHeatmapValues.ACTUAL,
                         color_scale_min: Union[int, float, None]=None,
                         color_scale_max: Union[int, float, None] = None,
+                        color_map: str='RdBu_r',
                         plot_size: tuple=(7, 7),
                         axis_font_size: int=10,
                         annotation_font_size: int=10,
@@ -102,6 +103,9 @@ class Clustering:
 
         :param color_scale_min: min value for the color scale
         :param color_scale_max: max value for the color scale
+        :param color_map: "matplotlib colormap name or object, or list of colors, optional
+            The mapping from data values to color space. If not provided, the default will depend on whether
+            ``center`` is set."
         :param plot_size: size of the plot (width, height)
         :param axis_font_size: the font size for the axis labels
         :param annotation_font_size: the font size for the numbers (i.e. annotation) inside the cells
@@ -194,7 +198,7 @@ class Clustering:
                     annot=values.iloc[np.argsort(cluster_size_lookup)].transpose(),
                     annot_kws={"size": annotation_font_size},
                     fmt='',  # fmt="f",
-                    robust=True, cmap='RdBu_r', vmin=color_scale_min, vmax=color_scale_max,
+                    robust=True, cmap=color_map, vmin=color_scale_min, vmax=color_scale_max,
                     cbar_kws={'label': color_scale_title},
                     xticklabels=True, yticklabels=True)
         plt.yticks(rotation=y_axis_rotation * -1,
