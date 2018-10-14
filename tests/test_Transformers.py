@@ -945,7 +945,7 @@ class TransformerTests(TimerTestCase):
         assert all(transformed_data[expected_encoded_columns].apply(func=sum, axis=1) == 1)
         # temp = titanic_data[['Pclass', 'Sex']]
 
-        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_Transformers/test_EncodeInteractionEffectsTransformer_normal.pkl'),
+        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_Transformers/test_EncodeInteractionEffectsTransformer_normal.pkl'),  # noqa
                                                      expected_dataframe=transformed_data)
 
         # now test transforming on a subset (i.e. should still give all expected indexes
@@ -1007,7 +1007,7 @@ class TransformerTests(TimerTestCase):
         new_data = titanic_data.iloc[1:2]
         transformed_subset = transformer.transform(data_x=titanic_data.iloc[1:2])
 
-        assert all(transformed_subset[unchanged_columns].iloc[0].values == new_data[unchanged_columns].iloc[0].values)  # noq
+        assert all(transformed_subset[unchanged_columns].iloc[0].values == new_data[unchanged_columns].iloc[0].values)  # noqa
 
         assert len(transformed_subset.columns.values) == len(expected_new_columns)
         assert all(transformed_subset.columns.values == expected_new_columns)
