@@ -908,6 +908,129 @@ class TransformerTests(TimerTestCase):
         assert all(insurance_data_categoric.sex.cat.categories.values == ['female', 'male'])
         test_na_values(data=insurance_data_categoric)
 
+    def test_EncodeInteractionEffectsTransformer(self):
+        titanic_data = TestHelper.get_titanic_data()
+        expected_state = {'expected_column_names': ['Pclass1_Sexfemale',
+                                                    'Pclass1_Sexmale',
+                                                    'Pclass2_Sexfemale',
+                                                    'Pclass2_Sexmale',
+                                                    'Pclass3_Sexfemale',
+                                                    'Pclass3_Sexmale'],
+                          'columns': ['Pclass', 'Sex']}
+        expected_encoded_columns = ['Pclass1_Sexfemale', 'Pclass1_Sexmale', 'Pclass2_Sexfemale',
+                                    'Pclass2_Sexmale', 'Pclass3_Sexfemale', 'Pclass3_Sexmale']
+        unchanged_columns = ['PassengerId', 'Survived', 'Name', 'Age', 'SibSp', 'Parch', 'Ticket', 'Fare',
+                                'Cabin', 'Embarked']
+        expected_new_columns = unchanged_columns + expected_encoded_columns
+
+        self.assertRaises(AssertionError,
+                          lambda: EncodeInteractionEffectsTransformer(columns=None, possible_values=None))
+
+        self.assertRaises(AssertionError,
+                          lambda: EncodeInteractionEffectsTransformer(columns=[], possible_values={}))
+
+        self.assertRaises(AssertionError,
+                          lambda: EncodeInteractionEffectsTransformer(columns={}, possible_values=None))
+
+        self.assertRaises(AssertionError,
+                          lambda: EncodeInteractionEffectsTransformer(columns=None, possible_values=[]))
+
+        # test simple case
+        transformer = EncodeInteractionEffectsTransformer(columns=['Pclass', 'Sex'])
+        transformed_data = transformer.fit_transform(data_x=titanic_data)
+
+        assert transformer.state == expected_state
+        assert all(transformed_data.columns.values == expected_new_columns)
+        # ensure that all the rows add up to 1 (i.e. only one column is encoded)
+        assert all(transformed_data[expected_encoded_columns].apply(func=sum, axis=1) == 1)
+        # temp = titanic_data[['Pclass', 'Sex']]
+
+        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_Transformers/test_EncodeInteractionEffectsTransformer_normal.pkl'),
+                                                     expected_dataframe=transformed_data)
+
+        # now test transforming on a subset (i.e. should still give all expected indexes
+        transformed_subset = transformer.transform(data_x=titanic_data.iloc[0:1])
+        assert len(transformed_subset.columns.values) == len(expected_new_columns)
+        assert all(transformed_subset.columns.values == expected_new_columns)
+        assert len(transformed_subset) == 1
+        assert transformed_subset.loc[0, 'Pclass3_Sexmale'] == 1
+        assert all(transformed_subset[expected_encoded_columns].apply(func=sum, axis=1) == 1)
+
+        ######################################################################################################
+        # test the transformation if possible_values is used
+        ######################################################################################################
+        # give unordered values to make sure the columns are sorted
+        possible_values = {'Pclass': [3, 1, 2], 'Sex': ['male', 'female']}
+        transformer = EncodeInteractionEffectsTransformer(possible_values=possible_values)
+        transformed_data = transformer.fit_transform(data_x=titanic_data)
+
+        assert transformer.state == expected_state
+        assert all(transformed_data.columns.values == expected_new_columns)
+        # ensure that all the rows add up to 1 (i.e. only one column is encoded)
+        assert all(transformed_data[expected_encoded_columns].apply(func=sum, axis=1) == 1)
+        # temp = titanic_data[['Pclass', 'Sex']]
+
+        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory(
+            'data/test_Transformers/test_EncodeInteractionEffectsTransformer_normal.pkl'),
+                                                     expected_dataframe=transformed_data)
+        # now test transforming on a subset (i.e. should still give all expected indexes
+        transformed_subset = transformer.transform(data_x=titanic_data.iloc[0:1])
+        assert len(transformed_subset.columns.values) == len(expected_new_columns)
+        assert all(transformed_subset.columns.values == expected_new_columns)
+        assert len(transformed_subset) == 1
+        assert transformed_subset.loc[0, 'Pclass3_Sexmale'] == 1
+        assert all(transformed_subset[expected_encoded_columns].apply(func=sum, axis=1) == 1)
+
+        ######################################################################################################
+        # now `fit` on a dataset that is missing all of the values
+        ######################################################################################################
+        # give unordered values to make sure the columns are sorted
+        possible_values = {'Pclass': [3, 1, 2], 'Sex': ['male', 'female']}
+        transformer = EncodeInteractionEffectsTransformer(possible_values=possible_values)
+        # only fit on first row
+        transformed_data = transformer.fit_transform(data_x=titanic_data.iloc[0:1])
+
+        # all state and transformations should be the same since we passed in possible_values
+        assert transformer.state == expected_state
+        assert all(transformed_data.columns.values == expected_new_columns)
+        # ensure that all the rows add up to 1 (i.e. only one column is encoded)
+        assert all(transformed_data[expected_encoded_columns].apply(func=sum, axis=1) == 1)
+        # temp = titanic_data[['Pclass', 'Sex']]
+
+        assert len(transformed_data.columns.values) == len(expected_new_columns)
+        assert all(transformed_data.columns.values == expected_new_columns)
+        assert len(transformed_data) == 1
+        assert transformed_data.loc[0, 'Pclass3_Sexmale'] == 1
+        assert all(transformed_data[expected_encoded_columns].apply(func=sum, axis=1) == 1)
+
+        # now test transforming on a subset (i.e. should still give all expected indexes
+        new_data = titanic_data.iloc[1:2]
+        transformed_subset = transformer.transform(data_x=titanic_data.iloc[1:2])
+
+        assert all(transformed_subset[unchanged_columns].iloc[0].values == new_data[unchanged_columns].iloc[0].values)  # noq
+
+        assert len(transformed_subset.columns.values) == len(expected_new_columns)
+        assert all(transformed_subset.columns.values == expected_new_columns)
+        assert len(transformed_subset) == 1
+        assert transformed_subset.loc[1, 'Pclass1_Sexfemale'] == 1
+        assert all(transformed_subset[expected_encoded_columns].apply(func=sum, axis=1) == 1)
+
+    def test_EncodeInteractionEffectsTransformer_unexpected_values(self):
+        """
+        this test makes sure that any unexpected values raises an assertion error
+        (that's what `possible_values` is supposed to solve, so the user should never see new values
+        """
+        titanic_data = TestHelper.get_titanic_data()
+
+        transformer = EncodeInteractionEffectsTransformer(columns=['Pclass', 'Sex'])
+        transformer.fit_transform(data_x=titanic_data)
+
+        # new value, not expected by the `state` of the transformer
+        titanic_data.loc[0, 'Pclass'] = 4
+
+        self.assertRaises(AssertionError,
+                          lambda: transformer.transform(data_x=titanic_data))
+
     def test_EncodeNumericNAsTransformer(self):
         data = TestHelper.get_insurance_data()
         # insert missing values for int and float types

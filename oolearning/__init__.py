@@ -138,6 +138,7 @@ from .transformers.BoxCoxTransformer import BoxCoxTransformer
 from .transformers.CategoricConverterTransformer import CategoricConverterTransformer
 from .transformers.CenterScaleTransformer import CenterScaleTransformer
 from .transformers.DummyEncodeTransformer import DummyEncodeTransformer
+from .transformers.EncodeInteractionEffectsTransformer import EncodeInteractionEffectsTransformer
 from .transformers.EncodeNumericNAsTransformer import EncodeNumericNAsTransformer
 from .transformers.ImputationTransformer import ImputationTransformer
 from .transformers.NormalizationTransformer import NormalizationTransformer
