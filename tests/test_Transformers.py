@@ -920,7 +920,7 @@ class TransformerTests(TimerTestCase):
         expected_encoded_columns = ['Pclass1_Sexfemale', 'Pclass1_Sexmale', 'Pclass2_Sexfemale',
                                     'Pclass2_Sexmale', 'Pclass3_Sexfemale', 'Pclass3_Sexmale']
         unchanged_columns = ['PassengerId', 'Survived', 'Name', 'Age', 'SibSp', 'Parch', 'Ticket', 'Fare',
-                                'Cabin', 'Embarked']
+                             'Cabin', 'Embarked']
         expected_new_columns = unchanged_columns + expected_encoded_columns
 
         self.assertRaises(AssertionError,
@@ -972,7 +972,7 @@ class TransformerTests(TimerTestCase):
 
         TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory(
             'data/test_Transformers/test_EncodeInteractionEffectsTransformer_normal.pkl'),
-                                                     expected_dataframe=transformed_data)
+            expected_dataframe=transformed_data)
         # now test transforming on a subset (i.e. should still give all expected indexes
         transformed_subset = transformer.transform(data_x=titanic_data.iloc[0:1])
         assert len(transformed_subset.columns.values) == len(expected_new_columns)
@@ -1184,10 +1184,10 @@ class TransformerTests(TimerTestCase):
         transformed_training = pipeline.fit_transform(data_x=train_data)
         # transformed_training.to_csv('~/Desktop/trans_titanic.csv')
         assert transformed_training.columns.values.tolist() == \
-            ['Survived', 'Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male',
-             'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0',
-             'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q',
-             'Embarked_S']
+               ['Survived', 'Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male',
+                'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0',
+                'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q',
+                'Embarked_S']
         assert train_data.isnull().sum().sum() > 0
         assert transformed_training.isnull().sum().sum() == 0
 
@@ -1478,12 +1478,12 @@ class TransformerTests(TimerTestCase):
         standard_scaler = StandardScaler()
         sklearn_transformations = standard_scaler.fit_transform(X=training_set[['longitude',
                                                                                 'latitude',
-                                                                                 'housing_median_age',
-                                                                                 'total_rooms',
-                                                                                 # 'total_bedrooms',
-                                                                                 'population',
-                                                                                 'households',
-                                                                                 'median_income',
+                                                                                'housing_median_age',
+                                                                                'total_rooms',
+                                                                                # 'total_bedrooms',
+                                                                                'population',
+                                                                                'households',
+                                                                                'median_income',
                                                                                 ]].copy())
         assert all([isclose(x, y) for x, y in zip(sklearn_transformations[:, 0],
                                                   transformed_training.longitude)])
@@ -1508,12 +1508,12 @@ class TransformerTests(TimerTestCase):
         standard_scaler = MinMaxScaler()
         sklearn_transformations = standard_scaler.fit_transform(X=training_set[['longitude',
                                                                                 'latitude',
-                                                                                 'housing_median_age',
-                                                                                 'total_rooms',
-                                                                                 # 'total_bedrooms',
-                                                                                 'population',
-                                                                                 'households',
-                                                                                 'median_income',
+                                                                                'housing_median_age',
+                                                                                'total_rooms',
+                                                                                # 'total_bedrooms',
+                                                                                'population',
+                                                                                'households',
+                                                                                'median_income',
                                                                                 ]].copy())
         assert all([isclose(x, y) for x, y in zip(sklearn_transformations[:, 0], transformed_training.longitude)])  # noqa
         assert all([isclose(x, y) for x, y in zip(sklearn_transformations[:, 1], transformed_training.latitude)])  # noqa
@@ -1850,3 +1850,55 @@ class TransformerTests(TimerTestCase):
         assert len(data) == len(new_data2)
         assert all(new_data2.columns.values == expected_dummy_columns)
         assert all(data.columns.values == original_columns)
+
+    def test_encode_dates(self):
+
+        # test that the original dataframe is unchanged
+        # test on dataframe that doesn't have any date columns
+
+        date_range_1 = pd.date_range(start='1/1/2018', end='1/1/2019', freq='D')
+        date_range_2 = pd.date_range(start='1/1/2017', end='1/1/2018', freq='D')
+        assert len(date_range_1) == len(date_range_2)
+        date_dataframe = pd.DataFrame({'id': range(len(date_range_1)),
+                                       'dates_1': date_range_1,
+                                       'temp1': [1] * len(date_range_1),
+                                       'dates_2': date_range_2,
+                                       'temp2': [2] * len(date_range_1)})
+
+        transformed_data = EncodeDateColumnsTransformer().fit_transform(data_x=date_dataframe)
+
+        expected_columns = ['id', 'temp1', 'temp2', 'dates_1_year', 'dates_1_month', 'dates_1_day',
+                            'dates_1_hour', 'dates_1_minute', 'dates_1_second', 'dates_1_quarter',
+                            'dates_1_week', 'dates_1_days_in_month', 'dates_1_day_of_year',
+                            'dates_1_day_of_week', 'dates_1_is_leap_year', 'dates_1_is_month_end',
+                            'dates_1_is_month_start', 'dates_1_is_quarter_end', 'dates_1_is_quarter_start',
+                            'dates_1_is_year_end', 'dates_1_is_year_start', 'dates_1_is_us_federal_holiday',
+                            'dates_1_is_weekday', 'dates_1_is_weekend', 'dates_2_year', 'dates_2_month',
+                            'dates_2_day', 'dates_2_hour', 'dates_2_minute', 'dates_2_second',
+                            'dates_2_quarter', 'dates_2_week', 'dates_2_days_in_month', 'dates_2_day_of_year',
+                            'dates_2_day_of_week', 'dates_2_is_leap_year', 'dates_2_is_month_end',
+                            'dates_2_is_month_start', 'dates_2_is_quarter_end', 'dates_2_is_quarter_start',
+                            'dates_2_is_year_end', 'dates_2_is_year_start', 'dates_2_is_us_federal_holiday',
+                            'dates_2_is_weekday', 'dates_2_is_weekend']
+
+        assert all(transformed_data.columns.values == expected_columns)
+        # ensure original didn't change
+        assert all(date_dataframe.columns.values == ['id', 'dates_1', 'temp1', 'dates_2', 'temp2'])
+
+        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_Transformers/test_EncodeDateColumnsTransformer.pkl'),  # noqa
+                                                     expected_dataframe=transformed_data)
+
+        ######################################################################################################
+        # test `include_columns`
+        ######################################################################################################
+        include_columns = EncodeDateColumnsTransformer.encoded_columns()[0:5]
+        self.assertRaises(AssertionError,
+                          lambda: EncodeDateColumnsTransformer(include_columns=include_columns+['fail']))
+
+        transformed_data_subset = EncodeDateColumnsTransformer(include_columns=include_columns).\
+            fit_transform(data_x=date_dataframe)
+
+        assert all(transformed_data_subset.columns.values == ['id', 'temp1', 'temp2', 'dates_1_year', 'dates_1_month', 'dates_1_day', 'dates_1_hour', 'dates_1_minute', 'dates_2_year', 'dates_2_month', 'dates_2_day', 'dates_2_hour', 'dates_2_minute'])  # noqa
+
+        for column in transformed_data_subset.columns.values:
+            assert all(transformed_data_subset[column].values == transformed_data[column].values)

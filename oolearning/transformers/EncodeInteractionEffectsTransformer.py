@@ -53,10 +53,10 @@ class EncodeInteractionEffectsTransformer(TransformerBase):
         new_column_temp = [[columns[y] + str(x[y]) for y in range(len(x))] for x in value_combinations]
         expected_column_names = ['_'.join(map(str, x)) for x in new_column_temp]
         expected_column_names.sort()
-        self._state = {'expected_column_names': expected_column_names,
-                       'columns': columns}
 
-        return self._state
+        # return state
+        return {'expected_column_names': expected_column_names,
+                'columns': columns}
 
     def _transform_definition(self, data_x: pd.DataFrame, state: dict) -> pd.DataFrame:
         columns = self._state['columns']
