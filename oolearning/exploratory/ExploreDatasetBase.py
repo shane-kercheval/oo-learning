@@ -15,17 +15,14 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         exploring a new dataset by providing common functionality frequently needed during standard
         exploration.
 
-    
-    WARNING: The underlying dataset should be changed from these class methods (i.e. subclass), rather
-        than changing directly, since this class caches information about the dataset. If changes are made,
-        the user can call `._update_cache()` manually.
+    Note: a copy of the dataset is made and stored in this class.
     """
     def __init__(self, dataset: pd.DataFrame, target_variable: Union[str, None]=None):
         """
-        :param dataset: dataset to explore
+        :param dataset: dataset to explore. Note: a copy of the dataset is made and stored in this class.
         :param target_variable: the name of the target variable/column
         """
-        self._dataset = dataset
+        self._dataset = dataset.copy()
         self._target_variable = target_variable
 
     class NoFeaturesMatchThresholdException(Exception):
@@ -268,6 +265,15 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         """
         assert self._dataset[categoric_feature].dtype.name == 'category'  # must be a category
         self._dataset[categoric_feature].cat.reorder_categories(levels, inplace=True)
+
+    def as_type(self, columns_types: dict):
+        """
+        Cycles through each column (keys of dictionary) and sets the columns to the type specified in the
+            value of the dictionary.
+        :param columns_types:
+        """
+        for column, dtype in columns_types.items():
+            self._dataset[column] = self._dataset[column].astype(dtype=dtype)
 
     def unique_values(self, categoric_feature: str, sort_by_feature=False) -> pd.DataFrame:
         """

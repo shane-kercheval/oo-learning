@@ -903,3 +903,24 @@ class ExploratoryTests(TimerTestCase):
 
         TestHelper.check_plot('data/test_Exploratory/compare_against_target_median_income.png',
                               lambda: explore.plot_against_target(feature='median_income'))
+
+    # noinspection PyUnresolvedReferences
+    def test_as_type(self):
+        titanic_dataset = TestHelper.get_titanic_data()
+
+        expected_dtypes = [np.dtype('int64'), np.dtype('int64'), np.dtype('int64'), np.dtype('O'),
+                           np.dtype('O'), np.dtype('float64'), np.dtype('int64'), np.dtype('int64'),
+                           np.dtype('O'), np.dtype('float64'), np.dtype('O'), np.dtype('O')]
+
+        assert all(titanic_dataset.dtypes.values == expected_dtypes)
+
+        explore = ExploreDataset(titanic_dataset)
+        explore.as_type(columns_types={'Survived': 'category', 'Pclass': 'category'})
+        # make sure original dataset didn't change
+        assert all(titanic_dataset.dtypes.values == expected_dtypes)
+
+        expected_dtypes[1] = pd.api.types.CategoricalDtype(categories=[0, 1], ordered=False)
+        expected_dtypes[2] = pd.api.types.CategoricalDtype(categories=[1, 2, 3], ordered=False)
+
+        assert all(explore.dataset.dtypes.values == expected_dtypes)
+
