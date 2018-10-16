@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
+
 from oolearning.exploratory.ExploreDatasetBase import ExploreDatasetBase
 
 
@@ -84,6 +86,38 @@ class ExploreClassificationDataset(ExploreDatasetBase):
         self._dodged_barchart(dataset=subset,
                               feature=numeric_feature,
                               target_variable=self._target_variable)
+
+    def plot_scatter_against_target(self,
+                                    x: str,
+                                    y: str,
+                                    show_regression_line: bool=False,
+                                    show_loess: bool=False,
+                                    alpha: float=0.5,
+                                    legend_location: str='lower right',
+                                    ):
+        """
+        Compares two *numeric* features via scatter plot, coloring the points on the plot according to the
+            categoric target's labels
+        :param x: the feature to show on the x-axis
+        :param y: the feature to show on the y-axis
+        :param show_regression_line: show the regression line
+        :param show_loess: show the loess line (show_regression_line must be True)
+        :param alpha: alpha / transparency of points
+        :param legend_location: position of the legend location
+        """
+        sns.lmplot(data=self._dataset[[x, y, self._target_variable]],
+                   x=x,
+                   y=y,
+                   hue=self._target_variable,
+                   fit_reg=show_regression_line,
+                   lowess=show_loess,
+                   legend=False,
+                   x_jitter=None,
+                   y_jitter=None,
+                   scatter_kws={'alpha': alpha})
+
+        # Move the legend to an empty part of the plot
+        plt.legend(loc=legend_location)
 
     def plot_against_target(self, feature):
         """

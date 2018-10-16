@@ -94,8 +94,6 @@ class ExploratoryTests(TimerTestCase):
         # categoric target
         ######################################################################################################
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
-        categoric_columns = ['checking_balance', 'credit_history', 'purpose', 'savings_balance',
-                             'employment_duration', 'other_credit', 'housing', 'job', 'phone']
         target_variable = 'default'
         explore = ExploreDataset.from_csv(csv_file_path=credit_csv, target_variable=target_variable)
         assert explore.numeric_columns == ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'age', 'existing_loans_count', 'dependents']  # noqa
@@ -374,7 +372,6 @@ class ExploratoryTests(TimerTestCase):
         assert feature not in explore.categoric_features
 
         # set 1 to NAN to test what happens, should just be nan
-        import numpy as np
         explore.dataset.loc[1, feature] = np.nan
 
         # x and y are equal or they are both non.
@@ -708,7 +705,6 @@ class ExploratoryTests(TimerTestCase):
         assert feature not in explore.categoric_features
 
         # set 1 to NAN to test what happens, should just be nan
-        import numpy as np
         explore.dataset.loc[1, feature] = np.nan
 
         # x and y are equal or they are both non.
@@ -924,3 +920,13 @@ class ExploratoryTests(TimerTestCase):
 
         assert all(explore.dataset.dtypes.values == expected_dtypes)
 
+    def test_classification_plot_scatter_against_target(self):
+        iris_data = TestHelper.get_iris_data()
+
+        target_variable = 'species'
+        x = 'sepal_length'
+        y = 'sepal_width'
+
+        explore = ExploreClassificationDataset(iris_data, target_variable=target_variable)
+        TestHelper.check_plot('data/test_Exploratory/test_plot_scatter_against_target.png',
+                              lambda: explore.plot_scatter_against_target(x=x, y=y))
