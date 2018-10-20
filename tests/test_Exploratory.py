@@ -923,6 +923,7 @@ class ExploratoryTests(TimerTestCase):
     def test_classification_plot_scatter_against_target(self):
         iris_data = TestHelper.get_iris_data()
 
+
         target_variable = 'species'
         x = 'sepal_length'
         y = 'sepal_width'
@@ -930,3 +931,44 @@ class ExploratoryTests(TimerTestCase):
         explore = ExploreClassificationDataset(iris_data, target_variable=target_variable)
         TestHelper.check_plot('data/test_Exploratory/test_plot_scatter_against_target.png',
                               lambda: explore.plot_scatter_against_target(x=x, y=y))
+
+    def test_compare(self):
+        housing_data = TestHelper.get_housing_data()
+        housing_training_data = housing_data[housing_data.median_house_value > 200000]
+        housing_test_data = housing_data[housing_data.median_house_value <= 200000]
+
+        assert len(housing_data) == len(housing_training_data) + len(housing_test_data)
+
+        explore = ExploreDataset(housing_training_data)
+
+        explore.compare_categoric_summaries(other=housing_test_data)
+        explore.compare_numeric_summaries(other=housing_test_data)
+
+        TestHelper.check_plot('data/test_Exploratory/compare_numeric_summaries_heatmap.png',
+                              lambda: explore.compare_numeric_summaries_heatmap(other=housing_test_data))
+        TestHelper.check_plot('data/test_Exploratory/compare_numeric_boxplot.png',
+                              lambda: explore.compare_numeric_boxplot(column='median_house_value',
+                                                                      other=housing_test_data))
+
+        numeric_indexes = RandomShuffleDataSplitter(holdout_ratio=0.4).split(housing_data.median_house_value)
+        housing_training_data_random = housing_data.iloc[numeric_indexes[0]]
+        housing_test_data_random = housing_data.iloc[numeric_indexes[1]]
+
+        explore = ExploreDataset(housing_training_data_random)
+
+        TestHelper.check_plot('data/test_Exploratory/compare_numeric_summaries_heatmap_random_split.png',
+                              lambda: explore.compare_numeric_summaries_heatmap(other=housing_test_data_random))  # noqa
+
+        TestHelper.check_plot('data/test_Exploratory/compare_numeric_boxplot_random_split.png',
+                              lambda: explore.compare_numeric_boxplot(column='median_house_value',
+                                                                      other=housing_test_data_random))
+
+        TestHelper.check_plot('data/test_Exploratory/compare_numeric_boxplot_random_split_households.png',
+                              lambda: explore.compare_numeric_boxplot(column='households',
+                                                                      other=housing_test_data_random))
+
+        explore = ExploreRegressionDataset(dataset=housing_training_data,
+                                           target_variable='median_house_value')
+
+        TestHelper.check_plot('data/test_Exploratory/compare_numeric_summaries_heatmap_regression.png',
+                              lambda: explore.compare_target_boxplot(other=housing_test_data))

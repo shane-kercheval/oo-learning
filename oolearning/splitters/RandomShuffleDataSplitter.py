@@ -12,8 +12,8 @@ class RandomShuffleDataSplitter(DataSplitterBase):
     def split(self, target_values: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         :param target_values: the target values of the full dataset you want to split
-        :return: randomized/shuffled splits into training indexes (index 1 of tuple) and holdout indexes
-            (index 2 of tuple); indexes are numeric locations (e.g. for index pandas DataFrame use `.iloc` not
+        :return: randomized/shuffled splits into training indexes (index 0 of tuple) and holdout indexes
+            (index 1 of tuple); indexes are numeric locations (e.g. for index pandas DataFrame use `.iloc` not
             `.loc`)
         """
         indexes = np.arange(0, len(target_values))

@@ -1,9 +1,9 @@
 import pandas as pd
 
-from oolearning import ExploreDatasetBase
+from oolearning.exploratory.ExploreDataset import ExploreDataset
 
 
-class ExploreRegressionDataset(ExploreDatasetBase):
+class ExploreRegressionDataset(ExploreDataset):
     """
     ExploreRegressionDataset gives convenience while exploring a new dataset (with a numeric target
         variable) by providing common functionality frequently needed during standard exploration.
@@ -35,3 +35,6 @@ class ExploreRegressionDataset(ExploreDatasetBase):
                                                                                 self._target_variable))
         else:
             self._dataset[[feature, self._target_variable]].boxplot(by=feature)
+
+    def compare_target_boxplot(self, other: pd.DataFrame):
+        self.compare_numeric_boxplot(column=self._target_variable, other=other)

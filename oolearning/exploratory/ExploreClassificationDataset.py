@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from oolearning.exploratory.ExploreDatasetBase import ExploreDatasetBase
+from oolearning.exploratory.ExploreDataset import ExploreDataset
 
 
-class ExploreClassificationDataset(ExploreDatasetBase):
+class ExploreClassificationDataset(ExploreDataset):
     """
     ExploreClassificationDataset gives convenience while exploring a new dataset (with a categoric target
         variable) by providing common functionality frequently needed during standard exploration.
@@ -44,7 +44,7 @@ class ExploreClassificationDataset(ExploreDatasetBase):
                  skip_initial_space: bool = True,
                  separator: str = ',',
                  map_numeric_target: dict=None,
-                 ordered: bool=False) -> 'ExploreDatasetBase':
+                 ordered: bool=False) -> 'ExploreDataset':
         """
         Instantiates this class (via subclass) by first loading in a csv from `csv_file_path`.
 
