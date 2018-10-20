@@ -118,6 +118,55 @@ class EvaluatorTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [2.9154759474226504, 3.5355339059327378])])
 
+    def test_MseScore(self):
+        predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
+        actual = np.array([6, 10, 14, 16, 7, 5, 5, 13, 12, 13, 8, 5])
+        mse_eval = MseScore()
+        assert isinstance(mse_eval, CostFunctionMixin)
+        assert isinstance(mse_eval, ScoreBase)
+        assert mse_eval.name == Metric.MEAN_SQUARED_ERROR.value
+        score = mse_eval.calculate(actual_values=actual, predicted_values=predicted)
+
+        assert score == 8.5
+        assert isclose(score, RmseScore().calculate(actual_values=actual, predicted_values=predicted) ** 2)
+
+        ######################################################################################################
+        # Test sorting
+        ######################################################################################################
+        mse_other = MseScore()
+        mse_other.calculate(actual_values=actual - 1, predicted_values=predicted + 1)  # create more spread
+        assert isclose(mse_other.value, 12.5)  # "worse"
+        eval_list = [mse_other, mse_eval]  # "worse, better"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [12.5, 8.5])])
+        eval_list.sort()  # "better, worse"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [8.5, 12.5])])
+
+    def test_R_Squared_Score(self):
+        predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
+        actual = np.array([6, 10, 14, 16, 7, 5, 5, 13, 12, 13, 8, 5])
+        r2_eval = RSquaredScore()
+        assert isinstance(r2_eval, UtilityFunctionMixin)
+        assert isinstance(r2_eval, ScoreBase)
+        assert r2_eval.name == Metric.R_SQUARED.value
+        r2_eval.calculate(actual_values=actual, predicted_values=predicted)
+        assert isclose(0.41714285714285715, r2_eval.value)
+
+        ######################################################################################################
+        # Test sorting
+        ######################################################################################################
+        r2_worse = RSquaredScore()
+        r2_worse.calculate(actual_values=actual - 1, predicted_values=predicted + 1)  # create more spread
+        assert isclose(r2_worse.value, 0.1428571428571429)  # "worse"
+        eval_list = [r2_worse, r2_eval]  # "worse, better"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [0.1428571428571429, 0.41714285714285715])])
+        eval_list.sort()  # "better, worse"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [0.41714285714285715, 0.1428571428571429])])
+
+
     def test_MaeScore(self):
         predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
         actual = np.array([6, 10, 14, 16, 7, 5, 5, 13, 12, 13, 8, 5])

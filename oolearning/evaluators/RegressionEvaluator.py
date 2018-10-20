@@ -6,7 +6,10 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=Warning)
     from statsmodels import api as sm  # https://github.com/statsmodels/statsmodels/issues/3814
 
-from oolearning.evaluators.EvaluatorBase import EvaluatorBase  # noqa
+from oolearning.evaluators.EvaluatorBase import EvaluatorBase
+from oolearning.evaluators.MaeScore import MaeScore
+from oolearning.evaluators.MseScore import MseScore
+from oolearning.evaluators.RSquaredScore import RSquaredScore
 
 
 # noinspection SpellCheckingInspection
@@ -28,17 +31,20 @@ class RegressionEvaluator(EvaluatorBase):
         self._predicted_values = predicted_values
         self._residuals = actual_values - predicted_values
         self._standard_deviation = np.std(actual_values)
-        self._mean_squared_error = np.mean(np.square(self._residuals))
-        self._mean_absolute_error = np.mean(np.abs(self._residuals))
-
+        self._mean_squared_error = MseScore().calculate(actual_values=actual_values,
+                                                        predicted_values=predicted_values)
+        self._mean_absolute_error = MaeScore().calculate(actual_values=actual_values,
+                                                         predicted_values=predicted_values)
+        self._r_squared = RSquaredScore().calculate(actual_values=actual_values,
+                                                    predicted_values=predicted_values)
         return self
 
     @property
-    def mean_absolute_error(self):
+    def mean_absolute_error(self) -> float:
         return self._mean_absolute_error
 
     @property
-    def mean_squared_error(self):
+    def mean_squared_error(self) -> float:
         return self._mean_squared_error
 
     @property
@@ -46,7 +52,7 @@ class RegressionEvaluator(EvaluatorBase):
         return np.sqrt(self.mean_squared_error)
 
     @property
-    def rmse_to_st_dev(self):
+    def rmse_to_st_dev(self) -> float:
         return self.root_mean_squared_error / self._standard_deviation
 
     @property

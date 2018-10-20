@@ -27,9 +27,11 @@ from .evaluators.FBetaScore import FBetaScore
 from .evaluators.F1Score import F1Score
 from .evaluators.KappaScore import KappaScore
 from .evaluators.MaeScore import MaeScore
+from .evaluators.MseScore import MseScore
 from .evaluators.MultiClassEvaluator import MultiClassEvaluator
 from .evaluators.NegativePredictiveValueScore import NegativePredictiveValueScore
 from .evaluators.PositivePredictiveValueScore import PositivePredictiveValueScore
+from .evaluators.RSquaredScore import RSquaredScore
 from .evaluators.RegressionEvaluator import RegressionEvaluator
 from .evaluators.RmseScore import RmseScore
 from .evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase

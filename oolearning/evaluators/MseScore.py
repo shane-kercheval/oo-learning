@@ -5,10 +5,10 @@ from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
 from oolearning.evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
 
 
-class RmseScore(CostFunctionMixin, ScoreActualPredictedBase):
+class MseScore(CostFunctionMixin, ScoreActualPredictedBase):
     @property
     def name(self) -> str:
-        return Metric.ROOT_MEAN_SQUARE_ERROR.value
+        return Metric.MEAN_SQUARED_ERROR.value
 
     def _calculate(self, actual_values: np.ndarray, predicted_values: np.ndarray) -> float:
-        return np.sqrt(np.mean(np.square(actual_values - predicted_values)))
+        return np.mean(np.square(actual_values - predicted_values))

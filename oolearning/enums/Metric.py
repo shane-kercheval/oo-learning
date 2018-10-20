@@ -15,6 +15,7 @@ class Metric(Enum):
     MEAN_SQUARED_ERROR = 'MSE'
     NEGATIVE_PREDICTIVE_VALUE = 'negative_predictive_value'
     POSITIVE_PREDICTIVE_VALUE = 'positive_predictive_value'
+    R_SQUARED = 'r_squared'
     ROOT_MEAN_SQUARE_ERROR = 'RMSE'
     SENSITIVITY = 'sensitivity'
     SILHOUETTE = 'silhouette'
