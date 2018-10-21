@@ -11,4 +11,4 @@ class MseScore(CostFunctionMixin, ScoreActualPredictedBase):
         return Metric.MEAN_SQUARED_ERROR.value
 
     def _calculate(self, actual_values: np.ndarray, predicted_values: np.ndarray) -> float:
-        return np.mean(np.square(actual_values - predicted_values))
+        return float(np.mean(np.square(actual_values - predicted_values)))

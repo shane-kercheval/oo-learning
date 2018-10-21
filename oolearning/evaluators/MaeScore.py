@@ -11,5 +11,4 @@ class MaeScore(CostFunctionMixin, ScoreActualPredictedBase):
         return Metric.MEAN_ABSOLUTE_ERROR.value
 
     def _calculate(self, actual_values: np.ndarray, predicted_values: np.ndarray) -> float:
-        # noinspection PyTypeChecker
-        return np.mean(np.abs(actual_values-predicted_values))
+        return float(np.mean(np.abs(actual_values-predicted_values)))

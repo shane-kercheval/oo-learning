@@ -16,10 +16,13 @@ class ExploreDataset(ExploreDatasetBase):
         :return: if `x` is this .dataset's numeric_summary() and `y` is `other`'s numeric_summary() then this
             function returns `(y-x)/x`
         """
-        # needed because if the numeric_summary contains zero, we get NA; so we add a very small amount to
-        # each value of each summary
         # noinspection PyTypeChecker
         assert all(self.dataset.columns.values == other.columns.values)
+
+        # needed because if the numeric_summary contains zero, we get NA; so we add a very small amount to
+        # each value of each summary
+        # should not affect the final outcome because we round to 5 digits; small possibility that adding
+        # the constant results in a 0
 
         constant = 0.0000001
         self_numeric_summary = self.numeric_summary().apply(lambda x: x + constant)
@@ -28,7 +31,7 @@ class ExploreDataset(ExploreDatasetBase):
         # need to drop these columns because they will be different simply because of the size of the dataset
         # which is already captured in `count` column
 
-        return diff.drop(columns=['nulls', 'num_zeros'])
+        return diff.drop(columns=['nulls', 'num_zeros']).round(5)
 
     def compare_categoric_summaries(self, other: pd.DataFrame) -> pd.DataFrame:
         """
@@ -41,8 +44,6 @@ class ExploreDataset(ExploreDatasetBase):
 
             x_diff_y can be thought of set(x).difference(set(y))
         """
-        # needed because if the numeric_summary contains zero, we get NA; so we add a very small amount to
-        # each value of each summary
         # noinspection PyTypeChecker
         assert all(self.dataset.columns.values == other.columns.values)
 
@@ -58,6 +59,11 @@ class ExploreDataset(ExploreDatasetBase):
         self_difference_other = [self_unique_categores[x].difference(other_unique_categores[x]) for x in self.categoric_features]
         other_difference_self = [other_unique_categores[x].difference(self_unique_categores[x]) for x in self.categoric_features]
 
+        # needed because if the numeric_summary contains zero, we get NA; so we add a very small amount to
+        # each value of each summary
+        # should not affect the final outcome because we round to 5 digits; small possibility that adding
+        # the constant results in a 0
+
         constant = 0.0000001
         columns_to_drop = ['nulls', 'top', 'unique']
         self_categoric_summary = self_categoric_summary.drop(columns=columns_to_drop).\
@@ -65,6 +71,7 @@ class ExploreDataset(ExploreDatasetBase):
         other_categoric_summary = other_categoric_summary.drop(columns=columns_to_drop).\
             apply(lambda x: x + constant)
         diff = (other_categoric_summary - self_categoric_summary) / self_categoric_summary
+        diff = diff.round(5)
 
         diff['self_top_categories'] = self_top_categories
         diff['other_top_categories'] = other_top_categories

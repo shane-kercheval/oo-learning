@@ -7,6 +7,12 @@ from oolearning.evaluators.ScoreActualPredictedBase import ScoreActualPredictedB
 
 
 class RSquaredScore(UtilityFunctionMixin, ScoreActualPredictedBase):
+    """
+    http://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html
+        "Best possible score is 1.0 and it can be negative (because the model can be arbitrarily worse).
+        A constant model that always predicts the expected value of y, disregarding the input features,
+        would get a R^2 score of 0.0."
+    """
     @property
     def name(self) -> str:
         return Metric.R_SQUARED.value

@@ -18,6 +18,7 @@ class ScoreActualPredictedBase(ScoreBase):
         :return: calculated score
         """
         assert self._value is None  # we don't want to be able to reuse test_evaluators
+        assert len(actual_values) == len(predicted_values)
         self._value = self._calculate(actual_values, predicted_values)
         assert isinstance(self._value, float) or isinstance(self._value, int)
         return self._value

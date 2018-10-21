@@ -27,7 +27,9 @@ from .evaluators.FBetaScore import FBetaScore
 from .evaluators.F1Score import F1Score
 from .evaluators.KappaScore import KappaScore
 from .evaluators.MaeScore import MaeScore
+from .evaluators.MapeScore import MapeScore
 from .evaluators.MseScore import MseScore
+from .evaluators.MspeScore import MspeScore
 from .evaluators.MultiClassEvaluator import MultiClassEvaluator
 from .evaluators.NegativePredictiveValueScore import NegativePredictiveValueScore
 from .evaluators.PositivePredictiveValueScore import PositivePredictiveValueScore

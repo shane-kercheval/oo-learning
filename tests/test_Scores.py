@@ -13,7 +13,7 @@ from tests.TimerTestCase import TimerTestCase
 
 
 # noinspection PyMethodMayBeStatic
-class EvaluatorTests(TimerTestCase):
+class ScoreTests(TimerTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -143,6 +143,44 @@ class EvaluatorTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [8.5, 12.5])])
 
+    def test_MspeScore(self):
+        predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
+        actual = np.array([6, 10, 14, 16, 7, 5, 5, 13, 12, 13, 8, 5])
+        expected_score = float(np.mean(np.square((actual - predicted) / actual)))
+        mspe_eval = MspeScore()
+        assert isinstance(mspe_eval, CostFunctionMixin)
+        assert isinstance(mspe_eval, ScoreBase)
+        assert mspe_eval.name == Metric.MEAN_SQUARED_PERCENTAGE_ERROR.value
+        score = mspe_eval.calculate(actual_values=actual, predicted_values=predicted)
+
+        # need to round because of the small noise we get from adding a constant to help avoid divide-by-zero
+        assert isclose(score, expected_score)
+
+        ######################################################################################################
+        # Test sorting
+        ######################################################################################################
+        mspe_other = MspeScore()
+        mspe_other.calculate(actual_values=actual - 1, predicted_values=predicted + 1)  # create more spread
+        assert isclose(mspe_other.value, 0.4770842603697943)  # "worse"
+        eval_list = [mspe_other, mspe_eval]  # "worse, better"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [0.4770842603697943, 0.12248815407984363])])
+        eval_list.sort()  # "better, worse"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [0.12248815407984363, 0.4770842603697943])])
+
+        ######################################################################################################
+        # make sure we don't get a divide by zero
+        ######################################################################################################
+        predicted = np.array([0, 11, 0, 11, 0.1, 0, 7, 8, 11, 13, 0.5, 0])
+        actual = np.array([0, 11, 1, 16, 0, 0.3, 5, 13, 12, 13, 1, 0.24])
+        constant = 1
+        expected_score = float(np.mean(np.square(((actual + constant) - (predicted + constant)) / (actual + constant))))
+        mspe_eval = MspeScore(constant=constant)
+        score = mspe_eval.calculate(actual_values=actual, predicted_values=predicted)
+
+        assert isclose(expected_score, score)
+
     def test_R_Squared_Score(self):
         predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
         actual = np.array([6, 10, 14, 16, 7, 5, 5, 13, 12, 13, 8, 5])
@@ -166,7 +204,6 @@ class EvaluatorTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [0.41714285714285715, 0.1428571428571429])])
 
-
     def test_MaeScore(self):
         predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
         actual = np.array([6, 10, 14, 16, 7, 5, 5, 13, 12, 13, 8, 5])
@@ -180,16 +217,53 @@ class EvaluatorTests(TimerTestCase):
         ######################################################################################################
         # Test sorting
         ######################################################################################################
-        rmse_other = RmseScore()
-        rmse_other.calculate(actual_values=actual - 1, predicted_values=predicted + 1)  # create more spread
-        assert isclose(rmse_other.value, 3.5355339059327378)  # "worse"
+        mae_other = MaeScore()
+        mae_other.calculate(actual_values=actual - 1, predicted_values=predicted + 1)  # create more spread
+        assert isclose(mae_other.value, 3.1666666666666665)  # "worse"
 
-        eval_list = [rmse_other, mae_eval]  # "worse, better"
+        eval_list = [mae_other, mae_eval]  # "worse, better"
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
-                                                  [3.5355339059327378, 2.3333333333333335])])
+                                                  [3.1666666666666665, 2.3333333333333335])])
         eval_list.sort()  # "better, worse"
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
-                                                  [2.3333333333333335, 3.5355339059327378])])
+                                                  [2.3333333333333335, 3.1666666666666665])])
+
+    def test_MapeScore(self):
+        predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
+        actual = np.array([6, 10, 14, 16, 7, 5, 5, 13, 12, 13, 8, 5])
+        expected_score = float(np.mean(np.abs((actual - predicted) / actual)))
+        mspe_eval = MapeScore()
+        assert isinstance(mspe_eval, CostFunctionMixin)
+        assert isinstance(mspe_eval, ScoreBase)
+        assert mspe_eval.name == Metric.MEAN_ABSOLUTE_PERCENTAGE_ERROR.value
+        score = mspe_eval.calculate(actual_values=actual, predicted_values=predicted)
+
+        # need to round because of the small noise we get from adding a constant to help avoid divide-by-zero
+        assert isclose(score, expected_score)
+
+        ######################################################################################################
+        # Test sorting
+        ######################################################################################################
+        mspe_other = MapeScore()
+        mspe_other.calculate(actual_values=actual - 1, predicted_values=predicted + 1)  # create more spread
+        assert isclose(mspe_other.value, 0.5417688792688793)  # "worse"
+        eval_list = [mspe_other, mspe_eval]  # "worse, better"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [0.5417688792688793, 0.2859203296703297])])
+        eval_list.sort()  # "better, worse"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [0.2859203296703297, 0.5417688792688793])])
+        ######################################################################################################
+        # make sure we don't get a divide by zero
+        ######################################################################################################
+        predicted = np.array([0, 11, 0, 11, 0.1, 0, 7, 8, 11, 13, 0.5, 0])
+        actual = np.array([0, 11, 1, 16, 0, 0.3, 5, 13, 12, 13, 1, 0.24])
+        constant = 1
+        expected_score = float(np.mean(np.abs(((actual + constant) - (predicted + constant)) / (actual + constant))))
+        mspe_eval = MapeScore(constant=constant)
+        score = mspe_eval.calculate(actual_values=actual, predicted_values=predicted)
+
+        assert isclose(expected_score, score)
 
     def test_AucROCScore(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_mock_actual_predictions.csv')))  # noqa
@@ -388,7 +462,7 @@ class EvaluatorTests(TimerTestCase):
         score = MockScore()
         # ensure .calculate doesn't explode
         # noinspection PyTypeChecker
-        score.calculate(actual_values=None, predicted_values=None)
+        score.calculate(actual_values=[], predicted_values=[])
 
     def test_Misc_scores(self):
         """
