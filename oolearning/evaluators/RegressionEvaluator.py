@@ -48,12 +48,16 @@ class RegressionEvaluator(EvaluatorBase):
         return self._mean_squared_error
 
     @property
-    def root_mean_squared_error(self):
+    def root_mean_squared_error(self) -> float:
         return np.sqrt(self.mean_squared_error)
 
     @property
     def rmse_to_st_dev(self) -> float:
         return self.root_mean_squared_error / self._standard_deviation
+
+    @property
+    def r_squared(self) -> float:
+        return self._r_squared
 
     @property
     def total_observations(self):
@@ -65,6 +69,7 @@ class RegressionEvaluator(EvaluatorBase):
                 'Mean Squared Error (MSE)': self.mean_squared_error,
                 'Root Mean Squared Error (RMSE)': self.root_mean_squared_error,
                 'RMSE to Standard Deviation of Target': self.rmse_to_st_dev,
+                'R Squared': self.r_squared,
                 'Total Observations': self.total_observations}
 
     def plot_residuals_vs_fits(self):

@@ -48,6 +48,7 @@ class CenterScaleTransformer(TransformerBase):
             # Therefore, we ignore the scenario if there really isn't any variation (either when fitting or
             # transforming on future data), unless variation appears.
             if standard_deviations[feature] == 0:
+                # noinspection PyTypeChecker
                 assert all(data_x[feature] == averages[feature])  # make sure still no variation from original
                 data_x[feature] = [0] * len(data_x)  # all z-score of 0 since no variation
 

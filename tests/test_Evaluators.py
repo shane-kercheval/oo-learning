@@ -409,12 +409,23 @@ class EvaluatorTests(TimerTestCase):
         assert isclose(fitter.training_evaluator.mean_absolute_error, 8.360259532214116)
         assert isclose(fitter.training_evaluator.root_mean_squared_error, np.sqrt(fitter.training_evaluator.mean_squared_error))  # noqa
         assert isclose(fitter.training_evaluator.rmse_to_st_dev, 0.6246072972091289)
+        assert isclose(fitter.training_evaluator.r_squared, 0.6098657242731069)
 
-        expected_dictionary = {'Mean Absolute Error (MAE)': 8.360259532214116, 'Mean Squared Error (MSE)': 109.68243774089586, 'Root Mean Squared Error (RMSE)': 10.472938352768809, 'RMSE to Standard Deviation of Target': 0.6246072972091289, 'Total Observations': 824}  # noqa
+        expected_dictionary = {'Mean Absolute Error (MAE)': 8.360259532214116,
+                               'Mean Squared Error (MSE)': 109.68243774089586,
+                               'Root Mean Squared Error (RMSE)': 10.472938352768809,
+                               'RMSE to Standard Deviation of Target': 0.6246072972091289,
+                               'R Squared': 0.6098657242731069,
+                               'Total Observations': 824}
         TestHelper.ensure_values_numeric_dictionary(dictionary_1=expected_dictionary,
                                                     dictionary_2=fitter.training_evaluator.all_quality_metrics)  # noqa
 
-        expected_dictionary = {'Mean Absolute Error (MAE)': 7.991612520472382, 'Mean Squared Error (MSE)': 100.07028301004217, 'Root Mean Squared Error (RMSE)': 10.003513533256312, 'RMSE to Standard Deviation of Target': 0.6093913833941373, 'Total Observations': 206}  # noqa
+        expected_dictionary = {'Mean Absolute Error (MAE)': 7.991612520472382,
+                               'Mean Squared Error (MSE)': 100.07028301004217,
+                               'Root Mean Squared Error (RMSE)': 10.003513533256312,
+                               'RMSE to Standard Deviation of Target': 0.6093913833941373,
+                               'R Squared': 0.6286421418449796,
+                               'Total Observations': 206}
         TestHelper.ensure_values_numeric_dictionary(dictionary_1=expected_dictionary,
                                                     dictionary_2=fitter.holdout_evaluator.all_quality_metrics)
 

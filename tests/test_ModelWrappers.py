@@ -1104,11 +1104,11 @@ class ModelWrapperTests(TimerTestCase):
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
 
-        expected_dictionary = {'Mean Absolute Error (MAE)': 8.239183296671666, 'Mean Squared Error (MSE)': 105.83192307350386, 'Root Mean Squared Error (RMSE)': 10.287464365600682, 'RMSE to Standard Deviation of Target': 0.6194779398676552, 'Total Observations': 824}  # noqa
+        expected_dictionary = {'Mean Absolute Error (MAE)': 8.239183296671666, 'Mean Squared Error (MSE)': 105.83192307350386, 'Root Mean Squared Error (RMSE)': 10.287464365600682, 'RMSE to Standard Deviation of Target': 0.6194779398676552, 'R Squared': 0.6162470820173258, 'Total Observations': 824}  # noqa
         TestHelper.ensure_values_numeric_dictionary(dictionary_1=expected_dictionary,
                                                     dictionary_2=fitter.training_evaluator.all_quality_metrics)  # noqa
 
-        expected_dictionary = {'Mean Absolute Error (MAE)': 8.381063270249973, 'Mean Squared Error (MSE)': 114.99391155644095, 'Root Mean Squared Error (RMSE)': 10.723521415861534, 'RMSE to Standard Deviation of Target': 0.6287320504285148, 'Total Observations': 206}  # noqa
+        expected_dictionary = {'Mean Absolute Error (MAE)': 8.381063270249973, 'Mean Squared Error (MSE)': 114.99391155644095, 'Root Mean Squared Error (RMSE)': 10.723521415861534, 'RMSE to Standard Deviation of Target': 0.6287320504285148, 'R Squared': 0.6046960087639556, 'Total Observations': 206}  # noqa
         TestHelper.ensure_values_numeric_dictionary(dictionary_1=expected_dictionary,
                                                     dictionary_2=fitter.holdout_evaluator.all_quality_metrics)
 
@@ -1153,7 +1153,7 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.holdout_scores is None
         # ensure the number of observations in the Training Evaluator matches the number of observations in
         # the entire dataset.
-        expected_dictionary = {'Mean Absolute Error (MAE)': 8.264694852478934, 'Mean Squared Error (MSE)': 107.57095170273888, 'Root Mean Squared Error (RMSE)': 10.371641707210044, 'RMSE to Standard Deviation of Target': 0.6211445248863783, 'Total Observations': 1030}  # noqa
+        expected_dictionary = {'Mean Absolute Error (MAE)': 8.264694852478934, 'Mean Squared Error (MSE)': 107.57095170273888, 'Root Mean Squared Error (RMSE)': 10.371641707210044, 'RMSE to Standard Deviation of Target': 0.6211445248863783, 'R Squared': 0.6141794792036753, 'Total Observations': 1030}  # noqa
         TestHelper.ensure_values_numeric_dictionary(dictionary_1=expected_dictionary,
                                                     dictionary_2=fitter.training_evaluator.all_quality_metrics)  # noqa
 
@@ -1584,10 +1584,10 @@ class ModelWrapperTests(TimerTestCase):
                                                          'oob_score': False}
 
         keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 1.6050794902912628, 'Mean Squared Error (MSE)': 6.946366367415049, 'Root Mean Squared Error (RMSE)': 2.6355960174911193, 'RMSE to Standard Deviation of Target': 0.15718726202422936, 'Total Observations': 824}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 1.6050794902912628, 'Mean Squared Error (MSE)': 6.946366367415049, 'Root Mean Squared Error (RMSE)': 2.6355960174911193, 'RMSE to Standard Deviation of Target': 0.15718726202422936, 'R Squared': 0.9752921646573263, 'Total Observations': 824}  # noqa
         assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
-        expected_values = {'Mean Absolute Error (MAE)': 3.7880849514563115, 'Mean Squared Error (MSE)': 29.015298598300976, 'Root Mean Squared Error (RMSE)': 5.3865850590426, 'RMSE to Standard Deviation of Target': 0.3281385595158624, 'Total Observations': 206}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 3.7880849514563115, 'Mean Squared Error (MSE)': 29.015298598300976, 'Root Mean Squared Error (RMSE)': 5.3865850590426, 'RMSE to Standard Deviation of Target': 0.3281385595158624, 'R Squared': 0.8923250857588548, 'Total Observations': 206}  # noqa
         assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
     def test_RandomForestClassifier_multiclass(self):
@@ -1761,10 +1761,10 @@ class ModelWrapperTests(TimerTestCase):
                                                          'oob_score': False}
 
         keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 1.687515776699029, 'Mean Squared Error (MSE)': 7.131085667475727, 'Root Mean Squared Error (RMSE)': 2.6704092696580664, 'RMSE to Standard Deviation of Target': 0.15926352855140777, 'Total Observations': 824}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 1.687515776699029, 'Mean Squared Error (MSE)': 7.131085667475727, 'Root Mean Squared Error (RMSE)': 2.6704092696580664, 'RMSE to Standard Deviation of Target': 0.15926352855140777, 'R Squared': 0.9746351284733549, 'Total Observations': 824}  # noqa
         assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
-        expected_values = {'Mean Absolute Error (MAE)': 3.767553398058253, 'Mean Squared Error (MSE)': 27.160341936893207, 'Root Mean Squared Error (RMSE)': 5.211558494048897, 'RMSE to Standard Deviation of Target': 0.3174763376657444, 'Total Observations': 206}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 3.767553398058253, 'Mean Squared Error (MSE)': 27.160341936893207, 'Root Mean Squared Error (RMSE)': 5.211558494048897, 'RMSE to Standard Deviation of Target': 0.3174763376657444, 'R Squared': 0.8992087750223462, 'Total Observations': 206}  # noqa
         assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
     def test_ExtraTreesClassifier_multiclass(self):
@@ -2272,10 +2272,10 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.model.hyper_params.params_dict == {'epsilon': 0.1, 'penalty_c': 1.0}
 
         keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 35.78470873786408, 'Mean Squared Error (MSE)': 1561.6856036407662, 'Root Mean Squared Error (RMSE)': 39.518168019795226, 'RMSE to Standard Deviation of Target': 2.3568682719281746, 'Total Observations': 824}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 35.78470873786408, 'Mean Squared Error (MSE)': 1561.6856036407662, 'Root Mean Squared Error (RMSE)': 39.518168019795226, 'RMSE to Standard Deviation of Target': 2.3568682719281746, 'R Squared': -4.554828051221705, 'Total Observations': 824}  # noqa
         assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
-        expected_values = {'Mean Absolute Error (MAE)': 35.950970873786396, 'Mean Squared Error (MSE)': 1561.9436019417367, 'Root Mean Squared Error (RMSE)': 39.5214321848505, 'RMSE to Standard Deviation of Target': 2.4075561204348044, 'Total Observations': 206}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 35.950970873786396, 'Mean Squared Error (MSE)': 1561.9436019417367, 'Root Mean Squared Error (RMSE)': 39.5214321848505, 'RMSE to Standard Deviation of Target': 2.4075561204348044, 'R Squared': -4.796326473043095, 'Total Observations': 206}  # noqa
         assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
     def test_SvmPolynomialRegressor(self):
@@ -2300,10 +2300,10 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.model.hyper_params.params_dict == {'degree': 3, 'epsilon': 0.1, 'penalty_c': 1.0}
 
         keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 8.884181650910488, 'Mean Squared Error (MSE)': 132.52397635503377, 'Root Mean Squared Error (RMSE)': 11.511905852422256, 'RMSE to Standard Deviation of Target': 0.6865714432766075, 'Total Observations': 824}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 8.884181650910488, 'Mean Squared Error (MSE)': 132.52397635503377, 'Root Mean Squared Error (RMSE)': 11.511905852422256, 'RMSE to Standard Deviation of Target': 0.6865714432766075, 'R Squared': 0.5286196532770762, 'Total Observations': 824}  # noqa
         assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
-        expected_values = {'Mean Absolute Error (MAE)': 9.013573723533986, 'Mean Squared Error (MSE)': 130.1151697621433, 'Root Mean Squared Error (RMSE)': 11.406803661067517, 'RMSE to Standard Deviation of Target': 0.6948766390942753, 'Total Observations': 206}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 9.013573723533986, 'Mean Squared Error (MSE)': 130.1151697621433, 'Root Mean Squared Error (RMSE)': 11.406803661067517, 'RMSE to Standard Deviation of Target': 0.6948766390942753, 'R Squared': 0.5171464564410442, 'Total Observations': 206}  # noqa
         assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
     def test_CartDecisionTreeRegressor(self):
@@ -2336,10 +2336,10 @@ class ModelWrapperTests(TimerTestCase):
                                                          'max_features': None}
 
         keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 0.0887135922330097, 'Mean Squared Error (MSE)': 1.608594963592233, 'Root Mean Squared Error (RMSE)': 1.2683039712908861, 'RMSE to Standard Deviation of Target': 0.07564180069275088, 'Total Observations': 824}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 0.0887135922330097, 'Mean Squared Error (MSE)': 1.608594963592233, 'Root Mean Squared Error (RMSE)': 1.2683039712908861, 'RMSE to Standard Deviation of Target': 0.07564180069275088, 'R Squared': 0.9942783179879582, 'Total Observations': 824}  # noqa
         assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
-        expected_values = {'Mean Absolute Error (MAE)': 4.878082524271845, 'Mean Squared Error (MSE)': 65.98628021844661, 'Root Mean Squared Error (RMSE)': 8.123193966565529, 'RMSE to Standard Deviation of Target': 0.4948465748966606, 'Total Observations': 206}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 4.878082524271845, 'Mean Squared Error (MSE)': 65.98628021844661, 'Root Mean Squared Error (RMSE)': 8.123193966565529, 'RMSE to Standard Deviation of Target': 0.4948465748966606, 'R Squared': 0.7551268673130436, 'Total Observations': 206}  # noqa
         assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
     def test_CartDecisionTreeClassifier(self):
@@ -2457,10 +2457,10 @@ class ModelWrapperTests(TimerTestCase):
         assert all([actual_params[key] == value for key, value in expected_params.items()])
 
         keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 1.5431027895916443, 'Mean Squared Error (MSE)': 7.862081902399274, 'Root Mean Squared Error (RMSE)': 2.8039404241886587, 'RMSE to Standard Deviation of Target': 0.16722734259434227, 'Total Observations': 824}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 1.5431027895916443, 'Mean Squared Error (MSE)': 7.862081902399274, 'Root Mean Squared Error (RMSE)': 2.8039404241886587, 'RMSE to Standard Deviation of Target': 0.16722734259434227, 'R Squared': 0.9720350158888345, 'Total Observations': 824}  # noqa
         assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
-        expected_values = {'Mean Absolute Error (MAE)': 3.9066797652274916, 'Mean Squared Error (MSE)': 30.344412064467065, 'Root Mean Squared Error (RMSE)': 5.508576228433902, 'RMSE to Standard Deviation of Target': 0.33556998520745485, 'Total Observations': 206}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 3.9066797652274916, 'Mean Squared Error (MSE)': 30.344412064467065, 'Root Mean Squared Error (RMSE)': 5.508576228433902, 'RMSE to Standard Deviation of Target': 0.33556998520745485, 'R Squared': 0.8873927850278686, 'Total Observations': 206}  # noqa
         assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
     def test_AdaBoostClassifier(self):
@@ -2594,10 +2594,10 @@ class ModelWrapperTests(TimerTestCase):
                                                          'subsample': 1.0}
 
         keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 2.921039389435212, 'Mean Squared Error (MSE)': 14.909877151863128, 'Root Mean Squared Error (RMSE)': 3.861331007808464, 'RMSE to Standard Deviation of Target': 0.23029024359523864, 'Total Observations': 824}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 2.921039389435212, 'Mean Squared Error (MSE)': 14.909877151863128, 'Root Mean Squared Error (RMSE)': 3.861331007808464, 'RMSE to Standard Deviation of Target': 0.23029024359523864, 'R Squared': 0.9469664037048456, 'Total Observations': 824}  # noqa
         assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
-        expected_values = {'Mean Absolute Error (MAE)': 4.004637648118118, 'Mean Squared Error (MSE)': 26.996454670801214, 'Root Mean Squared Error (RMSE)': 5.195811262045727, 'RMSE to Standard Deviation of Target': 0.3165170519644618, 'Total Observations': 206}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 4.004637648118118, 'Mean Squared Error (MSE)': 26.996454670801214, 'Root Mean Squared Error (RMSE)': 5.195811262045727, 'RMSE to Standard Deviation of Target': 0.3165170519644618, 'R Squared': 0.8998169558157262, 'Total Observations': 206}  # noqa
         assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
     def test_GradientBoostingClassifier(self):
@@ -2831,10 +2831,10 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
         assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'reg:linear', 'booster': 'gblinear', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 0, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
         keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 9.15756252779544, 'Mean Squared Error (MSE)': 131.63721402456707, 'Root Mean Squared Error (RMSE)': 11.47332619707847, 'RMSE to Standard Deviation of Target': 0.6842705480130379, 'Total Observations': 824}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 9.15756252779544, 'Mean Squared Error (MSE)': 131.63721402456707, 'Root Mean Squared Error (RMSE)': 11.47332619707847, 'RMSE to Standard Deviation of Target': 0.6842705480130379, 'R Squared': 0.5317738171219369, 'Total Observations': 824}  # noqa
         assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
-        expected_values = {'Mean Absolute Error (MAE)': 8.915862154543978, 'Mean Squared Error (MSE)': 123.05050668005934, 'Root Mean Squared Error (RMSE)': 11.092813289696142, 'RMSE to Standard Deviation of Target': 0.6757490569556269, 'Total Observations': 206}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 8.915862154543978, 'Mean Squared Error (MSE)': 123.05050668005934, 'Root Mean Squared Error (RMSE)': 11.092813289696142, 'RMSE to Standard Deviation of Target': 0.6757490569556269, 'R Squared': 0.5433632120235808, 'Total Observations': 206}  # noqa
         assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
     def test_XGBoostRegressor_tree(self):
@@ -2856,10 +2856,10 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'reg:linear', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
 
         keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 2.8658370747265303, 'Mean Squared Error (MSE)': 14.912708706965894, 'Root Mean Squared Error (RMSE)': 3.861697645720842, 'RMSE to Standard Deviation of Target': 0.2303121099242278, 'Total Observations': 824}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 2.8658370747265303, 'Mean Squared Error (MSE)': 14.912708706965894, 'Root Mean Squared Error (RMSE)': 3.861697645720842, 'RMSE to Standard Deviation of Target': 0.2303121099242278, 'R Squared': 0.9469563320222504, 'Total Observations': 824}  # noqa
         assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
-        expected_values = {'Mean Absolute Error (MAE)': 3.8831358670725407, 'Mean Squared Error (MSE)': 26.19099478429751, 'Root Mean Squared Error (RMSE)': 5.117713823993826, 'RMSE to Standard Deviation of Target': 0.31175953295318953, 'Total Observations': 206}  # noqa
+        expected_values = {'Mean Absolute Error (MAE)': 3.8831358670725407, 'Mean Squared Error (MSE)': 26.19099478429751, 'Root Mean Squared Error (RMSE)': 5.117713823993826, 'RMSE to Standard Deviation of Target': 0.31175953295318953, 'R Squared': 0.9028059936128091, 'Total Observations': 206}  # noqa
         assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
     def test_ModelAggregator(self):
@@ -3224,7 +3224,7 @@ class ModelWrapperTests(TimerTestCase):
         evaluator = RegressionEvaluator()
         evaluator.evaluate(actual_values=holdout_y, predicted_values=predictions_aggregation)
         TestHelper.ensure_values_numeric_dictionary(dictionary_1=evaluator.all_quality_metrics,
-                                                    dictionary_2={'Mean Absolute Error (MAE)': 2924.9208144505114, 'Mean Squared Error (MSE)': 26111091.521699697, 'Root Mean Squared Error (RMSE)': 5109.901322109821, 'RMSE to Standard Deviation of Target': 0.41260457075927714, 'Total Observations': 268})  # noqa
+                                                    dictionary_2={'Mean Absolute Error (MAE)': 2924.9208144505114, 'Mean Squared Error (MSE)': 26111091.521699697, 'Root Mean Squared Error (RMSE)': 5109.901322109821, 'RMSE to Standard Deviation of Target': 0.41260457075927714, 'R Squared': 0.8297574681884556, 'Total Observations': 268})  # noqa
 
     def test_ModelAggregator_regression_median_transformations(self):
         """
@@ -3261,7 +3261,7 @@ class ModelWrapperTests(TimerTestCase):
         evaluator = RegressionEvaluator()
         evaluator.evaluate(actual_values=holdout_y, predicted_values=predictions_aggregation)
         TestHelper.ensure_values_numeric_dictionary(dictionary_1=evaluator.all_quality_metrics,
-                                                    dictionary_2={'Mean Absolute Error (MAE)': 2219.068192315147, 'Mean Squared Error (MSE)': 24703523.577163797, 'Root Mean Squared Error (RMSE)': 4970.263934356383, 'RMSE to Standard Deviation of Target': 0.40132939716900407, 'Total Observations': 268})  # noqa
+                                                    dictionary_2={'Mean Absolute Error (MAE)': 2219.068192315147, 'Mean Squared Error (MSE)': 24703523.577163797, 'Root Mean Squared Error (RMSE)': 4970.263934356383, 'RMSE to Standard Deviation of Target': 0.40132939716900407, 'R Squared': 0.8389347149678968, 'Total Observations': 268})  # noqa
 
     def helper_test_ModelStacker_Classification(self, data, positive_class, cache_directory=None):
         """
@@ -3811,9 +3811,9 @@ class ModelWrapperTests(TimerTestCase):
         # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
         assert predict_callback_called == ['predict_called_train', 'predict_called_holdout']
 
-        expected_training_evaluator_metrics = {'Mean Absolute Error (MAE)': 1986.2912789878249, 'Mean Squared Error (MSE)': 13417752.365422385, 'Root Mean Squared Error (RMSE)': 3663.0250293196723, 'RMSE to Standard Deviation of Target': 0.3043811875255302, 'Total Observations': 1070}  # noqa
+        expected_training_evaluator_metrics = {'Mean Absolute Error (MAE)': 1986.2912789878249, 'Mean Squared Error (MSE)': 13417752.365422385, 'Root Mean Squared Error (RMSE)': 3663.0250293196723, 'RMSE to Standard Deviation of Target': 0.3043811875255302, 'R Squared': 0.9073520926805481, 'Total Observations': 1070}  # noqa
         assert all([isclose(expected_training_evaluator_metrics[key], fitter.training_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
-        expected_holdout_evaluator_metrics = {'Mean Absolute Error (MAE)': 2540.1233867075684, 'Mean Squared Error (MSE)': 22559042.48804891, 'Root Mean Squared Error (RMSE)': 4749.63603742949, 'RMSE to Standard Deviation of Target': 0.3835145563392683, 'Total Observations': 268}  # noqa
+        expected_holdout_evaluator_metrics = {'Mean Absolute Error (MAE)': 2540.1233867075684, 'Mean Squared Error (MSE)': 22559042.48804891, 'Root Mean Squared Error (RMSE)': 4749.63603742949, 'RMSE to Standard Deviation of Target': 0.3835145563392683, 'R Squared': 0.8529165850758942, 'Total Observations': 268}  # noqa
         assert all([isclose(expected_holdout_evaluator_metrics[key], fitter.holdout_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
 
         assert [x.description for x in model_stacker._base_models] == ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor']  # noqa
@@ -3939,9 +3939,9 @@ class ModelWrapperTests(TimerTestCase):
         # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
         assert predict_callback_called == ['predict_called_train', 'predict_called_holdout']
 
-        expected_training_evaluator_metrics = {'Mean Absolute Error (MAE)': 2352.23265884996, 'Mean Squared Error (MSE)': 12284297.510075146, 'Root Mean Squared Error (RMSE)': 3504.8962195869863, 'RMSE to Standard Deviation of Target': 0.29124138244552694, 'Total Observations': 1070}  # noqa
+        expected_training_evaluator_metrics = {'Mean Absolute Error (MAE)': 2352.23265884996, 'Mean Squared Error (MSE)': 12284297.510075146, 'Root Mean Squared Error (RMSE)': 3504.8962195869863, 'RMSE to Standard Deviation of Target': 0.29124138244552694, 'R Squared': 0.9151784571512183, 'Total Observations': 1070}  # noqa
         assert all([isclose(expected_training_evaluator_metrics[key], fitter.training_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
-        expected_holdout_evaluator_metrics = {'Mean Absolute Error (MAE)': 3130.0282071040265, 'Mean Squared Error (MSE)': 25681167.074077167, 'Root Mean Squared Error (RMSE)': 5067.658934269074, 'RMSE to Standard Deviation of Target': 0.4091936629541765, 'Total Observations': 268}  # noqa
+        expected_holdout_evaluator_metrics = {'Mean Absolute Error (MAE)': 3130.0282071040265, 'Mean Squared Error (MSE)': 25681167.074077167, 'Root Mean Squared Error (RMSE)': 5067.658934269074, 'RMSE to Standard Deviation of Target': 0.4091936629541765, 'R Squared': 0.8325605461981438, 'Total Observations': 268}  # noqa
         assert all([isclose(expected_holdout_evaluator_metrics[key], fitter.holdout_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
         assert all([x == y for x, y in zip([x.description for x in model_stacker._base_models], ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor'])])  # noqa
         # test resample data
