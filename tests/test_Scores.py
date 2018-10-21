@@ -118,6 +118,31 @@ class ScoreTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
                                                   [2.9154759474226504, 3.5355339059327378])])
 
+    def test_RmsleScore(self):
+        predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
+        actual = np.array([6, 10, 14, 16, 7, 5, 5, 13, 12, 13, 8, 5])
+        expected_score = np.sqrt(np.mean((np.log(1+actual) - np.log(1+predicted))**2))
+        rmse_eval = RmsleScore()
+        assert isinstance(rmse_eval, CostFunctionMixin)
+        assert isinstance(rmse_eval, ScoreBase)
+        assert rmse_eval.name == Metric.ROOT_MEAN_SQUARE_LOGARITHMIC_ERROR.value
+        rmse_eval.calculate(actual_values=actual, predicted_values=predicted)
+        assert isclose(expected_score, rmse_eval.value)
+
+        ######################################################################################################
+        # Test sorting
+        ######################################################################################################
+        rmse_other = RmsleScore()
+        rmse_other.calculate(actual_values=actual - 1, predicted_values=predicted + 1)  # create more spread
+        expected_other_score = 0.42204286369153776
+        assert isclose(rmse_other.value, expected_other_score)  # "worse"
+        eval_list = [rmse_other, rmse_eval]  # "worse, better"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [expected_other_score, expected_score])])
+        eval_list.sort()  # "better, worse"
+        assert all([isclose(x, y) for x, y in zip([x.value for x in eval_list],
+                                                  [expected_score, expected_other_score])])
+
     def test_MseScore(self):
         predicted = np.array([7, 10, 12, 10, 10, 8, 7, 8, 11, 13, 10, 8])
         actual = np.array([6, 10, 14, 16, 7, 5, 5, 13, 12, 13, 8, 5])

@@ -36,6 +36,7 @@ from .evaluators.PositivePredictiveValueScore import PositivePredictiveValueScor
 from .evaluators.RSquaredScore import RSquaredScore
 from .evaluators.RegressionEvaluator import RegressionEvaluator
 from .evaluators.RmseScore import RmseScore
+from .evaluators.RmsleScore import RmsleScore
 from .evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
 
 from .evaluators.ScoreClusteringBase import ScoreClusteringBase

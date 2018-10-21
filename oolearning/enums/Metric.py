@@ -19,6 +19,7 @@ class Metric(Enum):
     POSITIVE_PREDICTIVE_VALUE = 'positive_predictive_value'
     R_SQUARED = 'r_squared'
     ROOT_MEAN_SQUARE_ERROR = 'RMSE'
+    ROOT_MEAN_SQUARE_LOGARITHMIC_ERROR = 'RMSLE'
     SENSITIVITY = 'sensitivity'
     SILHOUETTE = 'silhouette'
     SPECIFICITY = 'specificity'
