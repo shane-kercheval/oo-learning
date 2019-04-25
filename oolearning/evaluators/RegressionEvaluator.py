@@ -1,15 +1,15 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-import warnings
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=Warning)
-    from statsmodels import api as sm  # https://github.com/statsmodels/statsmodels/issues/3814
-
 from oolearning.evaluators.EvaluatorBase import EvaluatorBase
 from oolearning.evaluators.MaeScore import MaeScore
 from oolearning.evaluators.MseScore import MseScore
 from oolearning.evaluators.RSquaredScore import RSquaredScore
+
+import warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=Warning)
+    from statsmodels import api as sm  # https://github.com/statsmodels/statsmodels/issues/3814
 
 
 # noinspection SpellCheckingInspection
@@ -24,6 +24,7 @@ class RegressionEvaluator(EvaluatorBase):
         self._standard_deviation = None
         self._mean_squared_error = None
         self._mean_absolute_error = None
+        self._r_squared = None
 
     def evaluate(self, actual_values: np.ndarray, predicted_values: np.ndarray):
         assert len(actual_values) == len(predicted_values)
