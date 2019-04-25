@@ -325,7 +325,10 @@ class TunerResults:
         if line is None:  # then we also know grid is None as well
             hyper_params = [x_axis]
             df = self.resampled_stats[hyper_params + [score_value]]
-            df.groupby(hyper_params).mean().plot(figsize=(10, 7))
+            ax = df.groupby(hyper_params).mean().plot(figsize=(10, 7))
+            x_limits = ax.get_xlim()
+            padding = (x_limits[1] - x_limits[0]) * 0.05
+            ax.set_xlim(x_limits[0] - padding, x_limits[1] + padding)
 
         elif grid is None:  # then we know line is NOT None, but grid is,
             hyper_params = [x_axis, line]
@@ -334,6 +337,9 @@ class TunerResults:
             plot_df = df_grouped.unstack(line).loc[:, score_value]
             ax = plot_df.plot(figsize=(10, 7))
             ax.set_ylabel(score_value)
+            x_limits = ax.get_xlim()
+            padding = (x_limits[1] - x_limits[0]) * 0.05
+            ax.set_xlim(x_limits[0] - padding, x_limits[1] + padding)
 
         else:  # line and grid are not None
             hyper_params = [grid, line, x_axis]
@@ -351,6 +357,9 @@ class TunerResults:
                 df_grouped.loc[index].unstack(line).loc[:, score_value].plot(ax=ax)
                 ax.set_ylabel(score_value)
                 ax.set_title('{0}={1}'.format(grid, index))
+                x_limits = ax.get_xlim()
+                padding = (x_limits[1] - x_limits[0]) * 0.05
+                ax.set_xlim(x_limits[0] - padding, x_limits[1] + padding)
                 # ax.tick_params(axis='both', which='both')
 
             # Now use the matplotlib .remove() method to

@@ -149,6 +149,7 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         ax = plt.gca()
         ax.set_xticks(np.arange(len(bin_labels)))
         ax.set_xticklabels(labels=bin_labels, rotation=20, ha='right', size=9)
+        ax.set_xlim(-0.5, len(bin_labels) - 0.5)
         ax.figure.set_size_inches(8, 8)
         ax.grid(which='major', alpha=0.1)
         for index in range(10):
@@ -254,10 +255,13 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         #####################################
         gain_lift_group_data[['Model Gain', 'Random Gain']].plot(xticks=range(0, 110, 10),
                                                                  yticks=range(0, 110, 10))
+
+        x_tick_labels = ['{}%'.format(x) for x in range(0, 110, 10)]
         ax = plt.gca()
         ax.figure.set_size_inches(8, 8)
-        ax.set_xticklabels(labels=['{}%'.format(x) for x in range(0, 110, 10)], size=9)
+        ax.set_xticklabels(labels=x_tick_labels, size=9)
         ax.set_yticklabels(labels=['{}%'.format(x) for x in range(0, 110, 10)], size=9)
+        ax.set_xlim(-5, 105)
         ax.grid(which='major', alpha=10)
         for index in range(10, 110, 10):
             ax.annotate('{}%'.format(round(gain_lift_group_data.loc[index]['Model Gain'], 1)),
@@ -301,6 +305,7 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         ax = plt.gca()
         ax.figure.set_size_inches(8, 8)
         ax.set_xticklabels(labels=['{}%'.format(x) for x in range(0, 110, 10)], size=9)
+        ax.set_xlim(0, 105)
         ax.grid(which='major', alpha=10)
         for index in range(10, 110, 10):
             ax.annotate(round(gain_lift_group_data.loc[index]['Model Lift'], 1),
