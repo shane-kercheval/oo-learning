@@ -235,12 +235,12 @@ class XGBoostBase(ModelWrapperBase):
 
     @property
     def feature_importance(self):
-        return pd.DataFrame(self.model_object.feature_importances_,
-                            columns=['weights'],
-                            index=self._data_x_columns)
+        return pd.DataFrame.from_dict(self.model_object.get_booster().get_score(importance_type='gain'),
+                                      orient='index',
+                                      columns=['gain_values']).sort_values('gain_values', ascending=False)
 
     def plot_feature_importance(self):
-        return plot_importance(self.model_object)
+        return plot_importance(self.model_object, importance_type='gain', max_num_features=30)
 
     def xgb_fit(self, model, data_x, data_y):
         self._data_x_columns = data_x.columns.values

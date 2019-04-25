@@ -58,8 +58,8 @@ class ScoreTests(TimerTestCase):
                                            data_x=NormalizationVectorSpaceTransformer().fit_transform(cluster_data),  # noqa
                                            actual_target_variables=None,
                                            predicted_values=clusters)
-        assert isclose(accuracy, 0.556059949257158)  # check the score is returned
-        assert isclose(score.value, 0.556059949257158)  # check the score object's `value` is set
+        assert isclose(accuracy, 0.5562322357473719)  # check the score is returned
+        assert isclose(score.value, 0.5562322357473719)  # check the score object's `value` is set
 
         ######################################################################################################
         # test ScoreMediator with unsupported ScoreBaseObject

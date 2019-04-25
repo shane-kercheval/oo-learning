@@ -110,11 +110,11 @@ class UnsupervisedTests(TimerTestCase):
         # then verify trainer.training_score
         score = SilhouetteScore().calculate(clustered_data=CenterScaleTransformer().fit_transform(cluster_data),  # noqa
                                             clusters=clusters)
-        assert isclose(score, 0.4589717867018717)
+        assert isclose(score, 0.45994823920518646)
         assert isclose(score, trainer.training_scores[0].value)
 
-        assert isclose(trainer.model.score, -140.96581663074699)
-        assert isclose(trainer.model.bss_tss_ratio, 0.7650569722820886)
+        assert isclose(trainer.model.score, -139.82049635974977)
+        assert isclose(trainer.model.bss_tss_ratio, 0.7669658394004155)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.6201351808870379)
         num_cached = trainer.model.data_x_trained_head.shape[0]
         assert all(data.drop(columns='species').iloc[0:num_cached] == trainer.model.data_x_trained_head)
@@ -150,11 +150,11 @@ class UnsupervisedTests(TimerTestCase):
         score = SilhouetteScore().calculate(
             clustered_data=CenterScaleTransformer().fit_transform(cluster_data),  # noqa
             clusters=clusters)
-        assert isclose(score, 0.4589717867018717)
+        assert isclose(score, 0.45994823920518646)
         assert isclose(score, trainer.training_scores[0].value)
 
-        assert isclose(trainer.model.score, -140.96581663074699)
-        assert isclose(trainer.model.bss_tss_ratio, 0.7650569722820886)
+        assert isclose(trainer.model.score, -139.82049635974977)
+        assert isclose(trainer.model.bss_tss_ratio, 0.7669658394004155)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.6201351808870379)
         silhouette_stats = Clustering.silhouette_stats(clustered_data=cluster_data, clusters=clusters)
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_unsupervised/test_silhouette_stats.pkl'))  # noqa
@@ -177,22 +177,22 @@ class UnsupervisedTests(TimerTestCase):
         score = SilhouetteScore().calculate(
             clustered_data=CenterScaleTransformer().fit_transform(cluster_data),  # noqa
             clusters=clusters)
-        assert isclose(score, 0.4589717867018717)
+        assert isclose(score, 0.45994823920518646)
         assert isclose(score, trainer.training_scores[0].value)
 
-        assert isclose(trainer.model.score, -140.96581663074699)
-        assert isclose(trainer.model.bss_tss_ratio, 0.7650569722820886)
+        assert isclose(trainer.model.score, -139.82049635974977)
+        assert isclose(trainer.model.bss_tss_ratio, 0.7669658394004155)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.6201351808870379)
 
         TestHelper.check_plot('data/test_unsupervised/test_silhouette_plot.png',
                               lambda: Clustering.silhouette_plot(clustered_data=cluster_data,
                                                                  clusters=clusters),
-                              set_size=False)
+                              set_size_w_h=None)
         TestHelper.check_plot('data/test_unsupervised/test_silhouette_plot_size.png',
                               lambda: Clustering.silhouette_plot(clustered_data=cluster_data,
                                                                  clusters=clusters,
                                                                  figure_size=(8, 6)),
-                              set_size=False)
+                              set_size_w_h=None)
 
     def test_KMeans_elbow_sse(self):
         data = TestHelper.get_iris_data()
@@ -200,14 +200,14 @@ class UnsupervisedTests(TimerTestCase):
                               lambda: Clustering.kmeans_elbow_sse_plot(data=data.drop(columns='species'),
                                                                        num_clusters=list(range(1, 9)),
                                                                        transformations=[CenterScaleTransformer()]),  # noqa
-                              set_size=False)
+                              set_size_w_h=None)
         data = TestHelper.get_iris_data()
         TestHelper.check_plot('data/test_unsupervised/test_kmeans_elbow_plot_not_parallelized.png',
                               lambda: Clustering.kmeans_elbow_sse_plot(data=data.drop(columns='species'),
                                                                        num_clusters=list(range(1, 9)),
                                                                        transformations=[CenterScaleTransformer()],  # noqa
                                                                        parallelization_cores=0),
-                              set_size=False)
+                              set_size_w_h=None)
 
     def test_KMeans_elbow_bss_tss(self):
         data = TestHelper.get_iris_data()
@@ -215,7 +215,7 @@ class UnsupervisedTests(TimerTestCase):
                               lambda: Clustering.kmeans_elbow_bss_tss_plot(data=data.drop(columns='species'),
                                                                            num_clusters=list(range(1, 9)),
                                                                            transformations=[CenterScaleTransformer()]),  # noqa
-                              set_size=False)
+                              set_size_w_h=None)
 
     # noinspection SpellCheckingInspection
     def test_KMeans_heatmap(self):
@@ -406,14 +406,14 @@ class UnsupervisedTests(TimerTestCase):
                               lambda: Clustering.hierarchical_dendogram_plot(data=cluster_data,
                                                                              transformations=[NormalizationVectorSpaceTransformer()],  # noqa
                                                                              linkage=ClusteringHierarchicalLinkage.WARD),  # noqa
-                              set_size=False)
+                              set_size_w_h=None)
 
         TestHelper.check_plot('data/test_unsupervised/test_hierarchical_dendogram_plot_threshold.png',
                               lambda: Clustering.hierarchical_dendogram_plot(data=cluster_data,
                                                                              transformations=[NormalizationVectorSpaceTransformer()],  # noqa
                                                                              linkage=ClusteringHierarchicalLinkage.WARD,  # noqa
                                                                              color_threshold=0.5),
-                              set_size=False)
+                              set_size_w_h=None)
 
     def test_Hierarchical_sklearn_normalization(self):
         data = TestHelper.get_iris_data()
@@ -426,7 +426,7 @@ class UnsupervisedTests(TimerTestCase):
         score = SilhouetteScore().calculate(
             clustered_data=NormalizationVectorSpaceTransformer().fit_transform(cluster_data),
             clusters=clusters)
-        assert isclose(score, 0.556059949257158)
+        assert isclose(score, 0.5562322357473719)
         assert isclose(score, trainer.training_scores[0].value)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.8856970310281228)
 
@@ -443,7 +443,7 @@ class UnsupervisedTests(TimerTestCase):
         score = SilhouetteScore().calculate(
             clustered_data=NormalizationTransformer().fit_transform(cluster_data),
             clusters=clusters)
-        assert isclose(score, 0.5043490792923951)
+        assert isclose(score, 0.5047999262278894)
         assert isclose(score, trainer.training_scores[0].value)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.7195837484778037)
 
@@ -478,7 +478,7 @@ class UnsupervisedTests(TimerTestCase):
         score = SilhouetteScore().calculate(
             clustered_data=NormalizationTransformer().fit_transform(cluster_data),
             clusters=clusters)
-        assert isclose(score, 0.5043490792923951)
+        assert isclose(score, 0.5047999262278894)
         assert isclose(score, trainer.training_scores[0].value)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.7195837484778037)
 
@@ -527,12 +527,12 @@ class UnsupervisedTests(TimerTestCase):
         score = SilhouetteScore().calculate(
             clustered_data=transformed_cluster_data,
             clusters=clusters)
-        assert isclose(score, 0.5759307352949353)
+        assert isclose(score, 0.5765941443131803)
         assert isclose(score, trainer.training_scores[0].value)
         assert isclose(adjusted_rand_score(data.species, clusters), 0.5557898627256278)
 
         assert isclose(trainer.training_scores[1].value,
-                       hdbscan.validity.validity_index(X=transformed_cluster_data.as_matrix(),
+                       hdbscan.validity.validity_index(X=transformed_cluster_data.values,
                                                        labels=clusters))
 
         num_cached = trainer.model.data_x_trained_head.shape[0]
@@ -565,7 +565,7 @@ class UnsupervisedTests(TimerTestCase):
         score = SilhouetteScore().calculate(
             clustered_data=transformed_cluster_data,
             clusters=clusters)
-        assert isclose(score, 0.6294675561906642)
+        assert isclose(score, 0.630047128435471)
         assert isclose(score, trainer.training_scores[0].value)
         assert trainer.training_scores[0].name == Metric.SILHOUETTE.value
         assert isclose(adjusted_rand_score(data.species, clusters), 0.5681159420289855)
@@ -573,7 +573,7 @@ class UnsupervisedTests(TimerTestCase):
         # validity_index
         assert trainer.training_scores[1].name == Metric.DENSITY_BASED_CLUSTERING_VALIDATION.value
         assert isclose(trainer.training_scores[1].value,
-                       hdbscan.validity.validity_index(X=transformed_cluster_data.as_matrix(),
+                       hdbscan.validity.validity_index(X=transformed_cluster_data.values,
                                                        labels=clusters))
 
     # noinspection SpellCheckingInspection
@@ -709,4 +709,4 @@ class UnsupervisedTests(TimerTestCase):
         results = searcher.search(data=data)
         TestHelper.check_plot('data/test_unsupervised/ClusteringSearcher_heatmap.png',
                               lambda: results.heatmap(),
-                              set_size=False)
+                              set_size_w_h=None)

@@ -2,7 +2,7 @@ import math
 import os
 import pickle
 from math import isclose
-from typing import Callable
+from typing import Callable, Union
 from sklearn import datasets
 
 import matplotlib.pyplot as plt
@@ -166,7 +166,7 @@ class TestHelper:
         assert all([isclose(dictionary_1[x], dictionary_2[x]) for x in dictionary_1.keys()])  # noqa
 
     @staticmethod
-    def check_plot(file_name: str, get_plot_function: Callable, set_size: bool=True):
+    def check_plot(file_name: str, get_plot_function: Callable, set_size_w_h: Union[tuple, None]=(11, 7)):
         def clear():
             plt.gcf().clear()
             plt.cla()
@@ -178,9 +178,9 @@ class TestHelper:
             os.remove(file)
         assert os.path.isfile(file) is False
         get_plot_function()
-        if set_size:
+        if set_size_w_h is not None:
             fig = plt.gcf()
-            fig.set_size_inches(11, 7)
+            fig.set_size_inches(set_size_w_h[0], set_size_w_h[1])
         plt.savefig(file)
         clear()
         assert os.path.isfile(file)

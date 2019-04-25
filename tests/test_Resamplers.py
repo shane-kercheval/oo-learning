@@ -186,6 +186,8 @@ class ResamplerTests(TimerTestCase):
         assert resampler.results.score_stats.loc['coefficients of variation'].to_dict() == resampler.results.score_coefficients_of_variation  # noqa
 
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Resamplers/test_resamplers_score_stats.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(resampler.results.score_stats, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             expected_score_stats = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=expected_score_stats,
@@ -735,7 +737,7 @@ class ResamplerTests(TimerTestCase):
             fold_decorators=[decorator])
         resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
         expected_roc_thresholds = [0.35, 0.48]
-        expected_precision_recall_thresholds = [0.35, 0.48]
+        expected_precision_recall_thresholds = [0.47, 0.48]
         assert decorator.roc_ideal_thresholds == expected_roc_thresholds
         assert decorator.precision_recall_ideal_thresholds == expected_precision_recall_thresholds
 

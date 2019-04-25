@@ -402,15 +402,15 @@ class ExploratoryTests(TimerTestCase):
 
         TestHelper.check_plot('data/test_Exploratory/hist_amount.png',
                               lambda: explore.plot_histogram(numeric_feature='amount'),
-                              set_size=False)
+                              set_size_w_h=None)
 
         TestHelper.check_plot('data/test_Exploratory/hist_amount_bins.png',
                               lambda: explore.plot_histogram(numeric_feature='amount', num_bins=20),
-                              set_size=False)
+                              set_size_w_h=None)
 
         TestHelper.check_plot('data/test_Exploratory/hist_years_at_residence.png',
                               lambda: explore.plot_histogram(numeric_feature='years_at_residence'),
-                              set_size=False)
+                              set_size_w_h=None)
 
     def test_ExploreDatasetBase_with_target_boxplot(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
@@ -450,27 +450,27 @@ class ExploratoryTests(TimerTestCase):
 
             TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap.png',
                                   lambda: explore.plot_correlation_heatmap(),
-                                  set_size=False)
+                                  set_size_w_h=None)
 
             # test correlation threshold
             TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_fig_size.png',
                                   lambda: explore.plot_correlation_heatmap(figure_size=(15, 15)),
-                                  set_size=False)
+                                  set_size_w_h=None)
 
             # test correlation threshold
             TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_threshold.png',
                                   lambda: explore.plot_correlation_heatmap(threshold=0.25),
-                                  set_size=False)
+                                  set_size_w_h=None)
 
             TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_threshold_fig_size.png',
                                   lambda: explore.plot_correlation_heatmap(threshold=0.25,
                                                                            figure_size=(6, 6)),
-                                  set_size=False)
+                                  set_size_w_h=None)
 
             columns = ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'dependents']  # noqa
             TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_columns.png',
                                   lambda: explore.plot_correlation_heatmap(numeric_features=columns),
-                                  set_size=False)
+                                  set_size_w_h=None)
 
             # test correlation threshold that is too high for any columns
             self.assertRaises(ExploreDatasetBase.NoFeaturesMatchThresholdException,
@@ -734,15 +734,15 @@ class ExploratoryTests(TimerTestCase):
 
         TestHelper.check_plot('data/test_Exploratory/hist_amount_without_target.png',
                               lambda: explore.plot_histogram(numeric_feature='amount'),
-                              set_size=False)
+                              set_size_w_h=None)
 
         TestHelper.check_plot('data/test_Exploratory/hist_amount_bins_without_target.png',
                               lambda: explore.plot_histogram(numeric_feature='amount', num_bins=20),
-                              set_size=False)
+                              set_size_w_h=None)
 
         TestHelper.check_plot('data/test_Exploratory/hist_years_at_residence_without_target.png',
                               lambda: explore.plot_histogram(numeric_feature='years_at_residence'),
-                              set_size=False)
+                              set_size_w_h=None)
 
     def test_ExploreDatasetBase_without_target_boxplot(self):
         credit_csv = TestHelper.ensure_test_directory('data/credit.csv')
@@ -779,32 +779,32 @@ class ExploratoryTests(TimerTestCase):
 
             TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_without_target.png',
                                   lambda: explore.plot_correlation_heatmap(),
-                                  set_size=False)
+                                  set_size_w_h=None)
 
             # test correlation threshold
             TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_without_target_fig_size.png',  # noqa
                                   lambda: explore.plot_correlation_heatmap(figure_size=(15, 15)),
-                                  set_size=False)
+                                  set_size_w_h=None)
 
             # test correlation threshold
             TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_without_target_threshold.png',  # noqa
                                   lambda: explore.plot_correlation_heatmap(threshold=0.25),
-                                  set_size=False)
+                                  set_size_w_h=None)
 
             TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_without_target_threshold_fig_size.png',  # noqa
                                   lambda: explore.plot_correlation_heatmap(threshold=0.25,
                                                                            figure_size=(6, 6)),
-                                  set_size=False)
+                                  set_size_w_h=None)
 
             columns = ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'dependents']  # noqa
             TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_without_target_columns.png',  # noqa
                                   lambda: explore.plot_correlation_heatmap(numeric_features=columns),
-                                  set_size=False)
+                                  set_size_w_h=None)
 
             features_to_highlight = ['amount', 'age']
             TestHelper.check_plot('data/test_Exploratory/credit_correlation_heatmap_without_target_highlight_columns.png',  # noqa
                                   lambda: explore.plot_correlation_heatmap(features_to_highlight=features_to_highlight),  # noqa
-                                  set_size=False)
+                                  set_size_w_h=None)
 
             # test correlation threshold that is too high for any columns
             self.assertRaises(ExploreDatasetBase.NoFeaturesMatchThresholdException,

@@ -480,7 +480,9 @@ class TunerTests(TimerTestCase):
                                                                       folds=5,
                                                                       repeats=2),
                            hyper_param_object=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC),
-                           parallelization_cores=-1)
+                           # XGBoost does not work with multi-processors (even though it used to)
+                           # https: // github.com / dmlc / xgboost / issues / 4246
+                           parallelization_cores=1)
 
         params_dict = dict(colsample_bytree=[0.7, 1.0],
                            subsample=[0.75, 1.0],
@@ -523,8 +525,8 @@ class TunerTests(TimerTestCase):
                                                                     'error_rate_st_dev', 'error_rate_cv'])
 
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelTuner_XGB_results.pkl'))  # noqa
-        # with open(file, 'wb') as output:
-        #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
+        with open(file, 'wb') as output:
+            pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             tune_results = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.resampled_stats,
@@ -532,7 +534,7 @@ class TunerTests(TimerTestCase):
             assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
                                                       data_frame2=tuner.results.sorted_best_models)
 
-        assert all(tuner.results.sorted_best_models.index.values == [2, 4, 1, 3, 6, 5, 0, 7])
+        assert all(tuner.results.sorted_best_models.index.values == [2, 1, 4, 3, 5, 6, 0, 7])
 
     def test_tuner_with_no_hyper_params(self):
         data = TestHelper.get_cement_data()

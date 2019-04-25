@@ -39,7 +39,8 @@ class MockRegressionModelWrapper(ModelWrapperBase):
 
         # gets the distribution of unique values, unique values being .index.values
         value_distributions = data_y.value_counts(normalize=True, bins=10)
-        self._target_intervals = value_distributions.index.values.tolist()
+        self._target_intervals = value_distributions.index.values
+
         self._target_probabilities = value_distributions.values.tolist()
 
     def _train(self,
