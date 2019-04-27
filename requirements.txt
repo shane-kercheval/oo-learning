@@ -1,9 +1,11 @@
+bayesian-optimization==1.0.1
 certifi==2019.3.9
 cycler==0.10.0
 Cython==0.29.7
 dill==0.2.9
 hdbscan==0.8.20
 kiwisolver==1.0.1
+lightgbm==2.2.2
 matplotlib==3.0.3
 mkl-fft==1.0.10
 mkl-random==1.0.2

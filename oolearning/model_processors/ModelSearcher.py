@@ -35,6 +35,18 @@ class ModelSearcher:
             used for selecting the "best" hyper parameters via (Tuner & Resampler) and then the model will be
             retrained and evaluated with selected hyper parameters with the holdout set.
 
+        Order of Operations:
+            Split Data into Training/Holdout
+            For Each Model (using Training Set):
+                Tune (i.e. find best hyper-params based on hyper_params_grid)
+                    i.e.:
+                    For each Hyper Params Combination in the Hyper Params Grid:
+                        Resample
+                            Do Global Transformations
+                            Do Model Transformations (via `model_infos`)
+                Get Best Hyper Params from Tuner object
+            Retrain Best Hyper Params on All Training Data and Get Holdout Scores
+
         :param model_infos: modelInfo object (i.e. wraps/encapsulates model information)
         :param splitter: defines how to split the data. The training set will be used for selecting the
             "best" hyper parameters via resampling and then the model will be retrained with selected
@@ -92,7 +104,7 @@ class ModelSearcher:
         data_y = data[target_variable]
 
         training_indexes, _ = self._splitter.split(target_values=data_y)
-        # we don't need the holdout data.. we will send the data to the ModelTrainer which will use the sameee
+        # we don't need the holdout data.. we will send the data to the ModelTrainer which will use the same
         # splitter and will use the training/holdout data appropriately
         # so, we will only get the training data, use that with the tuner, then the tuner's best model, refit
         # the entire training set with the specific model/hyper-params (same training set is used under the
@@ -113,8 +125,8 @@ class ModelSearcher:
 
         tuner_results = list()
         holdout_scores = list()
-        # for each model: tune; get the best hyper-parameters; train_predict_eval all the training data on the best
-        # hyper-parameters; then calculate the final model on the holdout data
+        # for each model: tune; get the best hyper-parameters; train_predict_eval all the training data on the
+        # best hyper-parameters; then calculate the final model on the holdout data
         for index in range(len(self._models)):
             local_model_description = self._model_descriptions[index]
             local_model = self._models[index]

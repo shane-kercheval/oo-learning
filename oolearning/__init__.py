@@ -96,6 +96,10 @@ from .model_wrappers.HyperParamsBase import HyperParamsBase
 from .model_wrappers.HyperParamsGrid import HyperParamsGrid
 from .model_wrappers.LassoRegressor import LassoRegressor
 from .model_wrappers.LassoRegressor import LassoRegressorHP
+
+from .model_wrappers.LightGBM import LightGBMClassifier, LightGBMRegressor, LightGBMBoostingType, \
+    LightGBMObjective, LightGBMHP
+
 from .model_wrappers.LinearRegressor import LinearRegressor
 from .model_wrappers.LinearRegressorSK import LinearRegressorSK
 from .model_wrappers.LogisticClassifier import LogisticClassifier

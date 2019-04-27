@@ -2685,6 +2685,234 @@ class ModelWrapperTests(TimerTestCase):
         assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
         assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
 
+    def test_LGBClassifier(self):
+        data = TestHelper.get_titanic_data()
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        fitter = ModelTrainer(model=LightGBMClassifier(),
+                              model_transformations=transformations,
+                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                              evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=1)))
+        fitter.train_predict_eval(data=data,
+                                  target_variable='Survived',
+                                  hyper_params=LightGBMHP())
+
+        assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+        assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+        assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+
+        assert fitter.model.model_object.get_params() == {'boosting_type': 'gbdt',
+                                                          'class_weight': None,
+                                                          'colsample_bytree': 1.0,
+                                                          'importance_type': 'split',
+                                                          'learning_rate': 0.1,
+                                                          'max_depth': -1,
+                                                          'min_child_samples': 20,
+                                                          'min_child_weight': 0.001,
+                                                          'min_split_gain': 0.0,
+                                                          'n_estimators': 100,
+                                                          'n_jobs': -1,
+                                                          'num_leaves': 31,
+                                                          'objective': 'binary',
+                                                          'random_state': 42,
+                                                          'reg_alpha': 0.0,
+                                                          'reg_lambda': 0.0,
+                                                          'silent': True,
+                                                          'subsample': 1.0,
+                                                          'subsample_for_bin': 200000,
+                                                          'subsample_freq': 0,
+                                                          'scale_pos_weight': 1.0,
+                                                          'max_bin': 255}  # noqa
+
+        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.991764499737165, 'AUC Precision/Recall': 0.9876674558147052, 'Kappa': 0.8955276440896819, 'F1 Score': 0.935064935064935, 'Two-Class Accuracy': 0.9508426966292135, 'Error Rate': 0.04915730337078652, 'True Positive Rate': 0.9230769230769231, 'True Negative Rate': 0.9681093394077449, 'False Positive Rate': 0.03189066059225513, 'False Negative Rate': 0.07692307692307693, 'Positive Predictive Value': 0.9473684210526315, 'Negative Predictive Value': 0.952914798206278, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.800197628458498, 'AUC Precision/Recall': 0.793043403765747, 'Kappa': 0.5685014061872238, 'F1 Score': 0.7272727272727272, 'Two-Class Accuracy': 0.7988826815642458, 'Error Rate': 0.2011173184357542, 'True Positive Rate': 0.6956521739130435, 'True Negative Rate': 0.8636363636363636, 'False Positive Rate': 0.13636363636363635, 'False Negative Rate': 0.30434782608695654, 'Positive Predictive Value': 0.7619047619047619, 'Negative Predictive Value': 0.8189655172413793, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+
+        TestHelper.check_plot('data/test_ModelWrappers/test_LightGBMClassifier_plot_feature_importance.png',
+                              lambda: fitter.model.plot_feature_importance())
+
+    def test_LGBClassifier_non_defaults(self):
+        data = TestHelper.get_titanic_data()
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        fitter = ModelTrainer(model=LightGBMClassifier(boosting_type=LightGBMBoostingType.RANDOM_FOREST,
+                                                       seed=666),
+                              model_transformations=transformations,
+                              splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
+                              evaluator=TwoClassProbabilityEvaluator(
+                                 converter=TwoClassThresholdConverter(threshold=0.5,
+                                                                      positive_class=1)))
+        fitter.train_predict_eval(data=data,
+                                  target_variable='Survived',
+                                  hyper_params=LightGBMHP(num_leaves=33,
+                                                          min_data_in_leaf=22,
+                                                          max_depth=55,
+                                                          bagging_fraction=0.5,
+                                                          bagging_freq=1,
+                                                          feature_fraction=0.7,
+                                                          lambda_l1=1,
+                                                          lambda_l2=2,
+                                                          learning_rate=0.9,
+                                                          max_bin=265,
+                                                          min_gain_to_split=0.1,
+                                                          min_sum_hessian_in_leaf=0.11,
+                                                          n_estimators=111,
+                                                          # is_unbalanced=False,
+                                                          scale_pos_weight=1.1,
+                                                          save_binary=False))
+
+        assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
+        assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
+        assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
+
+        assert fitter.model.model_object.get_params() == {'boosting_type': 'random_forest',
+                                                          'class_weight': None,
+                                                          'colsample_bytree': 0.7,
+                                                          'importance_type': 'split',
+                                                          'learning_rate': 0.9,
+                                                          'max_depth': 55,
+                                                          'min_child_samples': 22,
+                                                          'min_child_weight': 0.11,
+                                                          'min_split_gain': 0.1,
+                                                          'n_estimators': 111,
+                                                          'n_jobs': -1,
+                                                          'num_leaves': 33,
+                                                          'objective': 'binary',
+                                                          'random_state': 666,
+                                                          'reg_alpha': 1,
+                                                          'reg_lambda': 2,
+                                                          'silent': True,
+                                                          'subsample': 0.5,
+                                                          'subsample_for_bin': 200000,
+                                                          'subsample_freq': 1,
+                                                          'scale_pos_weight': 1.1,
+                                                          'max_bin': 265}
+
+        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.8687826979398734, 'AUC Precision/Recall': 0.8398940085782158, 'Kappa': 0.548173657001193, 'F1 Score': 0.714828897338403, 'Two-Class Accuracy': 0.7893258426966292, 'Error Rate': 0.21067415730337077, 'True Positive Rate': 0.6886446886446886, 'True Negative Rate': 0.8519362186788155, 'False Positive Rate': 0.1480637813211845, 'False Negative Rate': 0.31135531135531136, 'Positive Predictive Value': 0.7430830039525692, 'Negative Predictive Value': 0.8148148148148148, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
+        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8215415019762845, 'AUC Precision/Recall': 0.7818863085786913, 'Kappa': 0.5179100457850795, 'F1 Score': 0.6923076923076924, 'Two-Class Accuracy': 0.776536312849162, 'Error Rate': 0.22346368715083798, 'True Positive Rate': 0.6521739130434783, 'True Negative Rate': 0.8545454545454545, 'False Positive Rate': 0.14545454545454545, 'False Negative Rate': 0.34782608695652173, 'Positive Predictive Value': 0.7377049180327869, 'Negative Predictive Value': 0.7966101694915254, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+
+        TestHelper.check_plot('data/test_ModelWrappers/test_LightGBMClassifier_non_default_plot_feature_importance.png',  # noqa
+                              lambda: fitter.model.plot_feature_importance())
+
+    def test_LightGBMRegressor(self):
+        data = TestHelper.get_cement_data()
+        transformations = None
+
+        fitter = ModelTrainer(model=LightGBMRegressor(),
+                              model_transformations=transformations,
+                              splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
+                              evaluator=RegressionEvaluator())
+        ######################################################################################################
+        # test default hyper-parameters
+        ######################################################################################################
+        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=LightGBMHP())
+
+        assert isinstance(fitter.training_evaluator, RegressionEvaluator)
+        assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+
+        assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
+
+        assert fitter.model.model_object.get_params() == {'boosting_type': 'gbdt',
+                                                          'class_weight': None,
+                                                          'colsample_bytree': 1.0,
+                                                          'importance_type': 'split',
+                                                          'learning_rate': 0.1,
+                                                          'max_depth': -1,
+                                                          'min_child_samples': 20,
+                                                          'min_child_weight': 0.001,
+                                                          'min_split_gain': 0.0,
+                                                          'n_estimators': 100,
+                                                          'n_jobs': -1,
+                                                          'num_leaves': 31,
+                                                          'objective': 'regression',
+                                                          'random_state': 42,
+                                                          'reg_alpha': 0.0,
+                                                          'reg_lambda': 0.0,
+                                                          'silent': True,
+                                                          'subsample': 1.0,
+                                                          'subsample_for_bin': 200000,
+                                                          'subsample_freq': 0,
+                                                          # 'scale_pos_weight': 1.0,
+                                                          'max_bin': 255}
+
+        keys = fitter.training_evaluator.all_quality_metrics.keys()
+        expected_values = {'Mean Absolute Error (MAE)': 1.4608506060939466, 'Mean Squared Error (MSE)': 5.283694519005636, 'Root Mean Squared Error (RMSE)': 2.298628834545855, 'RMSE to Standard Deviation of Target': 0.1370904988907033, 'R Squared': 0.9812061951138981, 'Total Observations': 824}  # noqa
+        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+        expected_values = {'Mean Absolute Error (MAE)': 2.7728460063980496, 'Mean Squared Error (MSE)': 15.822359410543571, 'Root Mean Squared Error (RMSE)': 3.977732948620806, 'RMSE to Standard Deviation of Target': 0.24231448043469808, 'R Squared': 0.9412836925716623, 'Total Observations': 206}  # noqa
+        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+    def test_LightGBMRegressor_non_defualt_params(self):
+        data = TestHelper.get_cement_data()
+        transformations = None
+
+        fitter = ModelTrainer(model=LightGBMRegressor(boosting_type=LightGBMBoostingType.RANDOM_FOREST,
+                                                      seed=666),
+                              model_transformations=transformations,
+                              splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
+                              evaluator=RegressionEvaluator())
+        ######################################################################################################
+        # test default hyper-parameters
+        ######################################################################################################
+        fitter.train_predict_eval(data=data,
+                                  target_variable='strength',
+                                  hyper_params=LightGBMHP(num_leaves=33,
+                                                          min_data_in_leaf=22,
+                                                          max_depth=55,
+                                                          bagging_fraction=0.5,
+                                                          bagging_freq=1,
+                                                          feature_fraction=0.7,
+                                                          lambda_l1=1,
+                                                          lambda_l2=2,
+                                                          learning_rate=0.9,
+                                                          max_bin=265,
+                                                          min_gain_to_split=0.1,
+                                                          min_sum_hessian_in_leaf=0.11,
+                                                          n_estimators=111,
+                                                          save_binary=False))
+
+        assert isinstance(fitter.training_evaluator, RegressionEvaluator)
+        assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
+
+        assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
+
+        assert fitter.model.model_object.get_params() == {'boosting_type': 'random_forest',
+                                                          'class_weight': None,
+                                                          'colsample_bytree': 0.7,
+                                                          'importance_type': 'split',
+                                                          'learning_rate': 0.9,
+                                                          'max_depth': 55,
+                                                          'min_child_samples': 22,
+                                                          'min_child_weight': 0.11,
+                                                          'min_split_gain': 0.1,
+                                                          'n_estimators': 111,
+                                                          'n_jobs': -1,
+                                                          'num_leaves': 33,
+                                                          'objective': 'regression',
+                                                          'random_state': 666,
+                                                          'reg_alpha': 1,
+                                                          'reg_lambda': 2,
+                                                          'silent': True,
+                                                          'subsample': 0.5,
+                                                          'subsample_for_bin': 200000,
+                                                          'subsample_freq': 1,
+                                                          # 'scale_pos_weight': 1.1,
+                                                          'max_bin': 265}
+
+        keys = fitter.training_evaluator.all_quality_metrics.keys()
+        expected_values = {'Mean Absolute Error (MAE)': 7.583666166063456, 'Mean Squared Error (MSE)': 94.60137787996703, 'Root Mean Squared Error (RMSE)': 9.726323965402706, 'RMSE to Standard Deviation of Target': 0.5800791257598144, 'R Squared': 0.6635082078577296, 'Total Observations': 824}  # noqa
+        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+        expected_values = {'Mean Absolute Error (MAE)': 7.569454380888242, 'Mean Squared Error (MSE)': 104.87360596423564, 'Root Mean Squared Error (RMSE)': 10.240781511400174, 'RMSE to Standard Deviation of Target': 0.6238452111373135, 'R Squared': 0.6108171525410406, 'Total Observations': 206}  # noqa
+        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
     def test_XGBoostClassifier(self):
         data = TestHelper.get_titanic_data()
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
