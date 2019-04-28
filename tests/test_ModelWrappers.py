@@ -2735,6 +2735,45 @@ class ModelWrapperTests(TimerTestCase):
         TestHelper.check_plot('data/test_ModelWrappers/test_LightGBMClassifier_plot_feature_importance.png',
                               lambda: fitter.model.plot_feature_importance())
 
+        ######################################################################################################
+        # Compare against actual model
+        ######################################################################################################
+        data = TestHelper.get_titanic_data()
+        target_variable = 'Survived'
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+        pipeline = TransformerPipeline(transformations=transformations)
+
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
+        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
+
+        training_y = data.iloc[training_indexes][target_variable]
+        training_x = data.iloc[training_indexes]
+
+        holdout_x = data.iloc[holdout_indexes]
+
+        transformed_training_data = pipeline.fit_transform(training_x)
+        transformed_holdout_data = pipeline.transform(holdout_x)
+
+        model = LightGBMClassifier()
+        model.train(data_x=transformed_training_data, data_y=training_y, hyper_params=LightGBMHP())
+        training_predictions = model.predict(data_x=transformed_training_data)
+        holdout_predictions = model.predict(data_x=transformed_holdout_data)
+
+        from lightgbm import LGBMClassifier
+        lgbm_model = LGBMClassifier()
+        lgbm_model.fit(X=transformed_training_data, y=training_y)
+        lgbm_training_predictions = pd.DataFrame(lgbm_model.predict_proba(X=transformed_training_data))
+        lgbm_holdout_predictions = pd.DataFrame(lgbm_model.predict_proba(X=transformed_holdout_data))
+
+        assert all(training_predictions[0].values == lgbm_training_predictions[0].values)
+        assert all(training_predictions[1].values == lgbm_training_predictions[1].values)
+
+        assert all(holdout_predictions[0].values == lgbm_holdout_predictions[0].values)
+        assert all(holdout_predictions[1].values == lgbm_holdout_predictions[1].values)
+
     def test_LGBClassifier_non_defaults(self):
         data = TestHelper.get_titanic_data()
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
@@ -2848,6 +2887,38 @@ class ModelWrapperTests(TimerTestCase):
 
         expected_values = {'Mean Absolute Error (MAE)': 2.7728460063980496, 'Mean Squared Error (MSE)': 15.822359410543571, 'Root Mean Squared Error (RMSE)': 3.977732948620806, 'RMSE to Standard Deviation of Target': 0.24231448043469808, 'R Squared': 0.9412836925716623, 'Total Observations': 206}  # noqa
         assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+
+        ######################################################################################################
+        # Compare against actual model
+        ######################################################################################################
+        data = TestHelper.get_cement_data()
+        target_variable = 'strength'
+
+        splitter = RegressionStratifiedDataSplitter(holdout_ratio=0.2)
+        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
+
+        training_y = data.iloc[training_indexes][target_variable]
+        training_x = data.iloc[training_indexes]
+
+        holdout_x = data.iloc[holdout_indexes]
+
+        model = LightGBMRegressor()
+        hyper_params = LightGBMHP()
+        model.train(data_x=training_x, data_y=training_y, hyper_params=LightGBMHP())
+        training_predictions = model.predict(data_x=training_x)
+        holdout_predictions = model.predict(data_x=holdout_x)
+
+        from lightgbm import LGBMRegressor
+        lgbm_model = LGBMRegressor()
+        lgbm_model.fit(X=training_x, y=training_y)
+        lgbm_training_predictions = lgbm_model.predict(X=training_x)
+        lgbm_holdout_predictions = lgbm_model.predict(X=holdout_x)
+
+        assert all(training_predictions == lgbm_training_predictions)
+        assert all(training_predictions == lgbm_training_predictions)
+
+        assert all(holdout_predictions == lgbm_holdout_predictions)
+        assert all(holdout_predictions == lgbm_holdout_predictions)
 
     def test_LightGBMRegressor_non_defualt_params(self):
         data = TestHelper.get_cement_data()
