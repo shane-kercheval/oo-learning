@@ -2750,9 +2750,9 @@ class ModelWrapperTests(TimerTestCase):
         training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
 
         training_y = data.iloc[training_indexes][target_variable]
-        training_x = data.iloc[training_indexes]
+        training_x = data.iloc[training_indexes].drop(columns='Survived')
 
-        holdout_x = data.iloc[holdout_indexes]
+        holdout_x = data.iloc[holdout_indexes].drop(columns='Survived')
 
         transformed_training_data = pipeline.fit_transform(training_x)
         transformed_holdout_data = pipeline.transform(holdout_x)
@@ -2898,9 +2898,9 @@ class ModelWrapperTests(TimerTestCase):
         training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
 
         training_y = data.iloc[training_indexes][target_variable]
-        training_x = data.iloc[training_indexes]
+        training_x = data.iloc[training_indexes].drop(columns=target_variable)
 
-        holdout_x = data.iloc[holdout_indexes]
+        holdout_x = data.iloc[holdout_indexes].drop(columns=target_variable)
 
         model = LightGBMRegressor()
         hyper_params = LightGBMHP()
