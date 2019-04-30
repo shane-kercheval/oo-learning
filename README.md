@@ -39,7 +39,7 @@ After model selection, if implementing the model in a production system, the use
 - `Aggregator`: Aggregators combine the predictions of various models into a single prediction.
 - `Stacker`: This class implements a simple 'Model Stacker', taking the predictions of base models and feeding the values into a 'stacking' model.
 - `Resampler`: A Resampler accesses the accuracy of the model by training the model many times via a particular resampling strategy.
-- `Tuner`:  A ModelTuner uses a Resampler for tuning a single model across various hyper-parameters, finding the "best" hyper-parameters supplied as well as related information.
+- `Tuner`:  A GridSearchModelTuner uses a Resampler for tuning a single model across various hyper-parameters, finding the "best" hyper-parameters supplied as well as related information.
 - `Searcher`: A "Searcher" searches across different models and hyper-parameters (or the same models and hyper-parameters with different tranformations, for example) with the goal of finding the "best" or ideal model candidates for further tuning and optimization.
 - `Decorator`: Intent is to add responsibility objects dynamically. (For example, to piggy-back off of the Resampler and do a calculation or capture data at the end of each fold.)
     
@@ -96,7 +96,7 @@ trainer.holdout_evaluator.all_quality_metrics
 
 *Code Snippet from [Training a model](https://github.com/shane-kercheval/oo-learning/blob/master/examples/classification-titanic/2-Basic%20Modeling.ipynb) notebook.*
 
-### ModelTuner Snippet
+### GridSearchModelTuner Snippet
 
 ```python
 # define the transformations
@@ -118,8 +118,8 @@ resampler = RepeatedCrossValidationResampler(model=RandomForestClassifier(),  # 
                                              scores=score_list,
                                              folds=5,
                                              repeats=5)
-# define/configure the ModelTuner
-tuner = ModelTuner(resampler=resampler,
+GridSearchModelTuner
+tuModelTunerGridSearchlTuner(reModelTunerGridSearchsampler,
                    hyper_param_object=RandomForestHP())  # Hyper-Parameter object specific to RFTBD
 
 # define the parameter values (and, therefore, combinations) we want to try 

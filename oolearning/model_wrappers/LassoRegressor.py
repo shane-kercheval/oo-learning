@@ -15,7 +15,7 @@ class LassoRegressorHP(HyperParamsBase):
     """
 
     # noinspection SpellCheckingInspection
-    def __init__(self, alpha: float=0.5):
+    def __init__(self, alpha: float = 0.5):
         super().__init__()
         self._params_dict = dict(alpha=alpha)
 
@@ -25,7 +25,7 @@ class LassoRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
     fits Linear Regression model on the data
     """
 
-    def __init__(self, fit_intercept: bool=True, seed: int=42):
+    def __init__(self, fit_intercept: bool = True, seed: int = 42):
         super().__init__()
         self._fit_intercept = fit_intercept
         self._seed = seed
@@ -37,7 +37,7 @@ class LassoRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
     def _train(self,
                data_x: pd.DataFrame,
                data_y: np.ndarray,
-               hyper_params: LassoRegressorHP=None) -> object:
+               hyper_params: LassoRegressorHP = None) -> object:
 
         assert hyper_params is not None
         assert isinstance(hyper_params, LassoRegressorHP)

@@ -5,7 +5,7 @@ import pandas as pd
 from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.model_processors.ModelTrainer import ModelTrainer
 from oolearning.model_processors.ModelInfo import ModelInfo
-from oolearning.model_processors.ModelTuner import ModelTuner
+from oolearning.model_processors.GridSearchModelTuner import GridSearchModelTuner
 from oolearning.model_processors.ResamplerBase import ResamplerBase
 from oolearning.model_processors.SearcherResults import SearcherResults
 from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError
@@ -51,7 +51,7 @@ class ModelSearcher:
         :param splitter: defines how to split the data. The training set will be used for selecting the
             "best" hyper parameters via resampling and then the model will be retrained with selected
             hyper parameters over holdout set.
-        :param resampler_function: For each model, the Searcher will use a ModelTuner for selecting the "best"
+        :param resampler_function: For each model, the Searcher will use a GridSearchModelTuner for selecting the "best"
             hyper parameters, using the resampler_function to define the Resampler. 
 
             The reason we use a function rather than passing in the object itself is that not everything that
@@ -73,7 +73,7 @@ class ModelSearcher:
         :param resampler_persistence_manager: a PersistenceManager defining how the underlying
             ResamplerResults should be cached, optional.
         :param parallelization_cores: the number of cores to use for parallelization (via underlying
-            ModelTuner). -1 is all, 0 or 1 is "off"
+            GridSearchModelTuner). -1 is all, 0 or 1 is "off"
         """
         model_descriptions = [x.description for x in model_infos]
         models = [x.model for x in model_infos]
@@ -159,15 +159,16 @@ class ModelSearcher:
                                                                              local_model_description)
 
             # clone all the objects to be reused with the ModelTrainer after tuning
-            tuner = ModelTuner(resampler=self._resampler_function(local_model.clone(),
-                                                                  None if local_model_trans is None else
+            tuner = GridSearchModelTuner(resampler=self._resampler_function(local_model.clone(),
+                                                                            None if local_model_trans is None else
                                                                   [x.clone() for x in local_model_trans]),
-                               hyper_param_object=None if local_model_params_object is None
+                                         hyper_param_object=None if local_model_params_object is None
                                                        else local_model_params_object.clone(),
-                               resampler_decorators=self._resampler_decorators,
-                               model_persistence_manager=local_model_pers_manager,
-                               resampler_persistence_manager=local_resampler_pers_manager,
-                               parallelization_cores=self._parallelization_cores)
+                                         params_grid=local_model_params_grid,
+                                         resampler_decorators=self._resampler_decorators,
+                                         model_persistence_manager=local_model_pers_manager,
+                                         resampler_persistence_manager=local_resampler_pers_manager,
+                                         parallelization_cores=self._parallelization_cores)
 
             # noinspection PyProtectedMember
             # before we tune, we need to steel (i.e. clone) the Scores from the resampler so we can use the
@@ -175,9 +176,8 @@ class ModelSearcher:
             scores = [x.clone() for x in tuner._resampler._scores]
 
             tuner.tune(data_x=train_data_x_not_transformed,
-                       data_y=train_data_y,
-                       params_grid=local_model_params_grid)
-            # TunerResults.resampled_stats will have resampled means/st_devs
+                       data_y=train_data_y)
+            # GridSearchTunerResults.resampled_stats will have resampled means/st_devs
             tuner_results.append(tuner.results)
 
             # set prefix rather than sub_structure for refitting model on all data

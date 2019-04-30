@@ -89,8 +89,8 @@ class ModelWrapperBase(metaclass=ABCMeta):
 
     def train(self,
               data_x: pd.DataFrame,
-              data_y: Union[np.ndarray, None]=None,
-              hyper_params: HyperParamsBase=None):
+              data_y: Union[np.ndarray, None] = None,
+              hyper_params: HyperParamsBase = None):
         """
         trains the model on the training_set; assumes the parent class has transformed/etc. the
         data appropriately
@@ -142,7 +142,7 @@ class ModelWrapperBase(metaclass=ABCMeta):
     def _train(self,
                data_x: pd.DataFrame,
                data_y: Union[np.ndarray, None],
-               hyper_params: HyperParamsBase=None) -> object:
+               hyper_params: HyperParamsBase = None) -> object:
         """
         contains the logic of training the data, to be implemented by the sub-class
 

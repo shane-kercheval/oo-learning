@@ -83,9 +83,9 @@ class XGBoostLinearHP(HyperParamsBase):
     # noinspection SpellCheckingInspection
     def __init__(self,
                  objective: XGBObjective,
-                 n_estimators: int=100,
-                 reg_alpha: float=0,
-                 reg_lambda: float=0):
+                 n_estimators: int = 100,
+                 reg_alpha: float = 0.0,
+                 reg_lambda: float = 0.0):
         """
         See
             https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/
@@ -111,15 +111,15 @@ class XGBoostLinearHP(HyperParamsBase):
                                  booster='gblinear',
                                  n_jobs=1,
                                  nthread=None,
-                                 gamma=0,
+                                 gamma=0.0,
                                  min_child_weight=1,
                                  max_delta_step=0,
-                                 subsample=1,
-                                 colsample_bytree=1,
-                                 colsample_bylevel=1,
+                                 subsample=1.0,
+                                 colsample_bytree=1.0,
+                                 colsample_bylevel=1.0,
                                  reg_alpha=reg_alpha,
                                  reg_lambda=reg_lambda,
-                                 scale_pos_weight=1,
+                                 scale_pos_weight=1.0,
                                  base_score=0.5,
                                  missing=None)
 
@@ -128,23 +128,23 @@ class XGBoostLinearHP(HyperParamsBase):
 class XGBoostTreeHP(HyperParamsBase):
     def __init__(self,
                  objective: XGBObjective,
-                 max_depth: int=3,
-                 learning_rate: float=0.1,
-                 n_estimators: int=100,
-                 silent: bool=True,
-                 n_jobs: int=1,
-                 nthread: int=None,
-                 gamma: float=0,
-                 min_child_weight: int=1,
-                 max_delta_step: int=0,
-                 subsample: float=1,
-                 colsample_bytree: float=1,
-                 colsample_bylevel: float=1,
-                 reg_alpha: float=0,
-                 reg_lambda: float=1,
-                 scale_pos_weight: float=1,
-                 base_score: float=0.5,
-                 missing: float=None):
+                 max_depth: int = 3,
+                 learning_rate: float = 0.1,
+                 n_estimators: int = 100,
+                 silent: bool = True,
+                 n_jobs: int = 1,
+                 nthread: int = None,
+                 gamma: float = 0.0,
+                 min_child_weight: int = 1,
+                 max_delta_step: int = 0,
+                 subsample: float = 1.0,
+                 colsample_bytree: float = 1.0,
+                 colsample_bylevel: float = 1.0,
+                 reg_alpha: float = 0.0,
+                 reg_lambda: float = 1.0,
+                 scale_pos_weight: float = 1.0,
+                 base_score: float = 0.5,
+                 missing: float = None):
         """
         See
             https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/
@@ -185,10 +185,10 @@ class XGBoostDartHP(HyperParamsBase):
 # noinspection SpellCheckingInspection,PyAbstractClass
 class XGBoostBase(ModelWrapperBase):
     def __init__(self,
-                 early_stopping_rounds: int=None,
-                 eval_metric: Union[XGBEvalMetric, str, callable, None]=None,
-                 eval_set: Union[list, None]=None,
-                 seed: int=42):
+                 early_stopping_rounds: int = None,
+                 eval_metric: Union[XGBEvalMetric, str, callable, None] = None,
+                 eval_set: Union[list, None] = None,
+                 seed: int = 42):
         """
         Note: sklearn takes an additional parameter (in the fit method) called eval_set. I simply set the
             eval set to the training set based to `train()`.

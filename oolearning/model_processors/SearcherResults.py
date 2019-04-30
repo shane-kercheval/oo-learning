@@ -8,17 +8,17 @@ import matplotlib.pyplot as plt
 from oolearning.enums.Metric import Metric
 from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
 from oolearning.evaluators.ScoreBase import ScoreBase
-from oolearning.model_processors.TunerResults import TunerResults
+from oolearning.model_processors.GridSearchTunerResults import GridSearchTunerResults
 
 
 class SearcherResults:
     def __init__(self,
                  model_descriptions: List[str],
                  model_names: List[str],
-                 tuner_results: List[TunerResults],
+                 tuner_results: List[GridSearchTunerResults],
                  holdout_scores=List[List[ScoreBase]]):
         """
-        :param tuner_results: list of TunerResults (one per model)
+        :param tuner_results: list of GridSearchTunerResults (one per model)
         :param holdout_scores: list of (list of Scores). Each outer list item (one per model),
             contains a list of Scores (same Scores as the Tuner)
         """
@@ -28,7 +28,7 @@ class SearcherResults:
         self._holdout_scores = holdout_scores
 
     @property
-    def tuner_results(self) -> List[TunerResults]:
+    def tuner_results(self) -> List[GridSearchTunerResults]:
         """
         :return: a list of TunerResult objects
         """

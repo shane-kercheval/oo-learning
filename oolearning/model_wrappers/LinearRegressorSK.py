@@ -26,7 +26,7 @@ class LinearRegressorSK(SklearnPredictArrayMixin, ModelWrapperBase):
     def _train(self,
                data_x: pd.DataFrame,
                data_y: np.ndarray,
-               hyper_params: HyperParamsBase=None) -> object:
+               hyper_params: HyperParamsBase = None) -> object:
 
         assert hyper_params is None
 

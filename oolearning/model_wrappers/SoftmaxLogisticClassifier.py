@@ -15,9 +15,10 @@ class SoftmaxLogisticHP(HyperParamsBase):
     on tuning parameters
     """
     # noinspection SpellCheckingInspection
-    def __init__(self, regularization_inverse: float=1.0, solver='lbfgs'):
+    def __init__(self, regularization_inverse: float = 1.0, solver: str = 'lbfgs'):
         # http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html
-        # (Currently the ‘multinomial’ option is supported only by the ‘lbfgs’, ‘sag’ and ‘newton-cg’ solvers.)
+        # (Currently the ‘multinomial’ option is supported only by the ‘lbfgs’, ‘sag’ and ‘newton-cg’
+        # solvers.)
         # "The ‘newton-cg’, ‘sag’ and ‘lbfgs’ solvers support only l2 penalties."
         # it would be misleading to give the option for `penalty` since it can only be l2, so it is manually
         # set in the call to sklearn.LogisticRegression
@@ -29,7 +30,7 @@ class SoftmaxLogisticHP(HyperParamsBase):
 
 
 class SoftmaxLogisticClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
-    def __init__(self, fit_intercept: bool=True, seed: int=42):
+    def __init__(self, fit_intercept: bool = True, seed: int = 42):
         """
         need to set fit_intercept to False if using One-Hot-Encoding
         :param fit_intercept:

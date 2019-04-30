@@ -777,16 +777,19 @@ class ModelWrapperTests(TimerTestCase):
         train_data_y = data[target_variable]
         train_data = data.drop(columns=target_variable)
         evaluators = [MaeScore(), RmseScore()]
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RidgeRegressor(),
-                                                                      transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
-                                                                                       CenterScaleTransformer()],  # noqa
-                                                                      scores=evaluators),
-                           hyper_param_object=RidgeRegressorHP())
         grid = HyperParamsGrid(params_dict={'alpha': [0, 0.5, 1]})
-        tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
+        tuner = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=RidgeRegressor(),
+                                                                                transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
+                                                                                       CenterScaleTransformer()],  # noqa
+                                                                                scores=evaluators),
+                                     hyper_param_object=RidgeRegressorHP(),
+                                     params_grid=grid)
+        tuner.tune(data_x=train_data, data_y=train_data_y)
         assert len(tuner.results._tune_results_objects) == 3
-        assert tuner.results.num_param_combos == 3
+        assert tuner.results.number_of_cycles == 3
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Ridge_can_tune.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             saved_results = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.resampled_stats,
@@ -825,16 +828,19 @@ class ModelWrapperTests(TimerTestCase):
         train_data_y = data[target_variable]
         train_data = data.drop(columns=target_variable)
         evaluators = [MaeScore(), RmseScore()]
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=LassoRegressor(),
-                                                                      transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
-                                                                                       CenterScaleTransformer()],  # noqa
-                                                                      scores=evaluators),
-                           hyper_param_object=LassoRegressorHP())
         grid = HyperParamsGrid(params_dict={'alpha': [0.1, 0.5, 1]})
-        tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
+        tuner = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=LassoRegressor(),
+                                                                                transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
+                                                                                       CenterScaleTransformer()],  # noqa
+                                                                                scores=evaluators),
+                                     hyper_param_object=LassoRegressorHP(),
+                                     params_grid=grid)
+        tuner.tune(data_x=train_data, data_y=train_data_y)
         assert len(tuner.results._tune_results_objects) == 3
-        assert tuner.results.num_param_combos == 3
+        assert tuner.results.number_of_cycles == 3
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Lasso_can_tune.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             saved_results = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.resampled_stats,
@@ -874,17 +880,20 @@ class ModelWrapperTests(TimerTestCase):
         train_data_y = data[target_variable]
         train_data = data.drop(columns=target_variable)
         evaluators = [MaeScore(), RmseScore()]
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=ElasticNetRegressor(),
-                                                                      transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
-                                                                                       CenterScaleTransformer()],  # noqa
-                                                                      scores=evaluators),
-                           hyper_param_object=ElasticNetRegressorHP())
         grid = HyperParamsGrid(params_dict={'alpha': [0.1, 0.5, 1], 'l1_ratio': [0.2, 0.6]})
-        tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
+        tuner = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=ElasticNetRegressor(),
+                                                                                transformations=[RemoveColumnsTransformer(columns=['fineagg']),  # noqa
+                                                                                       CenterScaleTransformer()],  # noqa
+                                                                                scores=evaluators),
+                                     hyper_param_object=ElasticNetRegressorHP(),
+                                     params_grid=grid)
+        tuner.tune(data_x=train_data, data_y=train_data_y)
         assert len(tuner.results._tune_results_objects) == 6
-        assert tuner.results.num_param_combos == 6
+        assert tuner.results.number_of_cycles == 6
 
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ElasticNet_can_tune.pkl'))  # noqa
+        # with open(file, 'wb') as output:
+        #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             saved_results = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.resampled_stats,
@@ -3720,7 +3729,7 @@ class ModelWrapperTests(TimerTestCase):
             assert os.path.isdir(fitter._persistence_manager._cache_directory)
             expected_stacker_cached_file = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification/ModelStacker_LogisticClassifier_penalty_l2_regularization_inverse_1.0_solver_liblinear.pkl')  # noqa
             expected_base_cart_cached_file = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification/base_cart_criterion_gini_splitter_best_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_max_features_None.pkl')  # noqa
-            expected_base_rf_cached_file = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification/base_random_forest_n_estimators_500_criterion_gini_max_features_None_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_min_impurity_decrease_0_bootstrap_True_oob_score_False.pkl')  # noqa
+            expected_base_rf_cached_file = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification/base_random_forest_n_estimators_500_criterion_gini_max_features_None_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_min_impurity_decrease_0.0_bootstrap_True_oob_score_False.pkl')  # noqa
             expected_train_meta_file = TestHelper.ensure_test_directory('data/test_ModelWrappers/cached_test_models/test_ModelStacker_classification/train_meta.pkl')  # noqa
             # ensure the cache path of the stacker is the final stacked model
             assert fitter._persistence_manager._cache_path == expected_stacker_cached_file
@@ -4346,6 +4355,9 @@ class ModelWrapperTests(TimerTestCase):
         positive_class = 1
         target_variable = 'Survived'
 
+        regularization_inverse = [0.001, 0.01, 0.05, 0.1, 1, 5, 8, 10]
+        grid = HyperParamsGrid(params_dict=dict(regularization_inverse=regularization_inverse))
+
         # noinspection PyShadowingNames
         def create_tuner():
 
@@ -4384,20 +4396,18 @@ class ModelWrapperTests(TimerTestCase):
                                                          repeats=1,
                                                          # fold_decorators=[TwoClassThresholdDecorator(parallelization_cores=0)]
                                                          )
-            tuner = ModelTuner(resampler=resampler,
-                               hyper_param_object=LogisticClassifierHP(),
-                               model_persistence_manager=LocalCacheManager(cache_directory=cache_directory),
-                               parallelization_cores=-1,
-                               )  # Hyper-Parameter object specific to RF
+
+            tuner = GridSearchModelTuner(resampler=resampler,
+                                         hyper_param_object=LogisticClassifierHP(),
+                                         params_grid=grid,
+                                         model_persistence_manager=LocalCacheManager(cache_directory=cache_directory),  # noqa
+                                         parallelization_cores=-1)  # Hyper-Parameter object specific to RF
             return cart_base_model, rf_base_model, model_stacker, transformations, score_list, tuner
 
         cart_base_model, rf_base_model, model_stacker, transformations, score_list, tuner = create_tuner()
         # define the combinations of hyper-params that we want to evaluate
-        regularization_inverse = [0.001, 0.01, 0.05, 0.1, 1, 5, 8, 10]
-        grid = HyperParamsGrid(params_dict=dict(regularization_inverse=regularization_inverse))
         tuner.tune(data_x=data.drop(columns=target_variable),
-                   data_y=data[target_variable],
-                   params_grid=grid)
+                   data_y=data[target_variable])
 
         # if these were actually reused each time they should still be None
         assert model_stacker._model_object is None
@@ -4412,7 +4422,7 @@ class ModelWrapperTests(TimerTestCase):
         for fold in ['repeat{}_fold{}_'.format(0, x) for x in range(3)]:
             assert os.path.isfile(os.path.join(cache_directory, fold + 'train_meta.pkl'))
             assert os.path.isfile(os.path.join(cache_directory, fold + 'base_cart_criterion_gini_splitter_best_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_max_features_None.pkl'))  # noqa
-            assert os.path.isfile(os.path.join(cache_directory, fold + 'base_random_forest_n_estimators_500_criterion_gini_max_features_None_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_min_impurity_decrease_0_bootstrap_True_oob_score_False.pkl'))  # noqa
+            assert os.path.isfile(os.path.join(cache_directory, fold + 'base_random_forest_n_estimators_500_criterion_gini_max_features_None_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_min_impurity_decrease_0.0_bootstrap_True_oob_score_False.pkl'))  # noqa
             stacker_file = 'ModelStacker_LogisticClassifier_penaltyl2_regularization_inverse{}_solverliblinear.pkl'  # noqa
             for param in regularization_inverse:
                 assert os.path.isfile(os.path.join(cache_directory, fold + stacker_file.format(float(param))))
@@ -4422,11 +4432,8 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         cart_base_model, rf_base_model, model_stacker, transformations, score_list, tuner = create_tuner()
         # define the combinations of hyper-params that we want to evaluate
-        regularization_inverse = [0.001, 0.01, 0.05, 0.1, 1, 5, 8, 10]
-        grid = HyperParamsGrid(params_dict=dict(regularization_inverse=regularization_inverse))
         tuner.tune(data_x=data.drop(columns=target_variable),
-                   data_y=data[target_variable],
-                   params_grid=grid)
+                   data_y=data[target_variable])
 
         # if these were actually reused each time they should still be None
         assert model_stacker._model_object is None
@@ -4441,7 +4448,7 @@ class ModelWrapperTests(TimerTestCase):
         for fold in ['repeat{}_fold{}_'.format(0, x) for x in range(3)]:
             assert os.path.isfile(os.path.join(cache_directory, fold + 'train_meta.pkl'))
             assert os.path.isfile(os.path.join(cache_directory, fold + 'base_cart_criterion_gini_splitter_best_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_max_features_None.pkl'))  # noqa
-            assert os.path.isfile(os.path.join(cache_directory, fold + 'base_random_forest_n_estimators_500_criterion_gini_max_features_None_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_min_impurity_decrease_0_bootstrap_True_oob_score_False.pkl'))  # noqa
+            assert os.path.isfile(os.path.join(cache_directory, fold + 'base_random_forest_n_estimators_500_criterion_gini_max_features_None_max_depth_None_min_samples_split_2_min_samples_leaf_1_min_weight_fraction_leaf_0.0_max_leaf_nodes_None_min_impurity_decrease_0.0_bootstrap_True_oob_score_False.pkl'))  # noqa
             stacker_file = 'ModelStacker_LogisticClassifier_penaltyl2_regularization_inverse{}_solverliblinear.pkl'  # noqa
             for param in regularization_inverse:
                 assert os.path.isfile(os.path.join(cache_directory, fold + stacker_file.format(float(param))))

@@ -63,20 +63,24 @@ from .model_aggregation.SoftVotingAggregationStrategy import SoftVotingAggregati
 from oolearning.model_aggregation.MeanAggregationStrategy import MeanAggregationStrategy
 from oolearning.model_aggregation.MedianAggregationStrategy import MedianAggregationStrategy
 
+from .model_processors.BayesianOptimizationModelTuner import BayesianOptimizationModelTuner
+from .model_processors.BayesianOptimizationTunerResults import BayesianOptimizationTunerResults
 from .model_processors.DecoratorBase import DecoratorBase
 from .model_processors.TwoClassThresholdDecorator import TwoClassThresholdDecorator
 from .model_processors.ModelFitter import ModelFitterRemoving
 from .model_processors.ModelTrainer import ModelTrainer
 from .model_processors.ModelInfo import ModelInfo
 from .model_processors.ModelSearcher import ModelSearcher
-from .model_processors.ModelTuner import ModelTuner
+from .model_processors.GridSearchModelTuner import GridSearchModelTuner
+from .model_processors.GridSearchTunerResults import GridSearchTunerResults
 from .model_processors.RepeatedCrossValidationResampler import RepeatedCrossValidationResampler
 from .model_processors.ResamplerBase import ResamplerBase
 from .model_processors.ResamplerResults import ResamplerResults
 from .model_processors.SearcherResults import SearcherResults
 from .model_processors.StratifiedMonteCarloResampler import StratifiedMonteCarloResampler
-from .model_processors.TunerResults import TunerResults
 from .model_processors.ProcessingExceptions import CallbackUsedWithParallelizationError
+from .model_processors.TunerResultsBase import TunerResultsBase
+
 
 from .model_wrappers.AdaBoost import AdaBoostClassifier
 from .model_wrappers.AdaBoost import AdaBoostClassifierHP

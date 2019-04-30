@@ -13,14 +13,14 @@ from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictProbabil
 
 class GradientBoostingClassifierHP(HyperParamsBase):
     def __init__(self,
-                 loss: str='deviance',
-                 learning_rate: float=0.1,
-                 n_estimators: int=100,
-                 max_depth: int=3,
-                 min_samples_split: Union[int, float]=2,
-                 min_samples_leaf: Union[int, float]=1,
-                 max_features: Union[int, float, str, None]=None,
-                 subsample: Union[float, None]=1.0):
+                 loss: str = 'deviance',
+                 learning_rate: float = 0.1,
+                 n_estimators: int = 100,
+                 max_depth: int = 3,
+                 min_samples_split: Union[int, float] = 2,
+                 min_samples_leaf: Union[int, float] = 1,
+                 max_features: Union[int, float, str, None] = None,
+                 subsample: Union[float, None] = 1.0):
         """
         for more info, see
             http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingClassifier.html
@@ -37,7 +37,7 @@ class GradientBoostingClassifierHP(HyperParamsBase):
 
 
 class GradientBoostingClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
-    def __init__(self, seed: int=42):
+    def __init__(self, seed: int = 42):
         super().__init__()
         self._seed = seed
 
@@ -66,14 +66,14 @@ class GradientBoostingClassifier(SklearnPredictProbabilityMixin, ModelWrapperBas
 
 class GradientBoostingRegressorHP(HyperParamsBase):
     def __init__(self,
-                 loss: str='ls',
-                 learning_rate: float=0.1,
-                 n_estimators: int=100,
-                 max_depth: int=3,
-                 min_samples_split: Union[int, float]=2,
-                 min_samples_leaf: Union[int, float]=1,
-                 max_features: Union[int, float, str, None]=None,
-                 subsample: Union[float, None]=1.0):
+                 loss: str = 'ls',
+                 learning_rate: float = 0.1,
+                 n_estimators: int = 100,
+                 max_depth: int = 3,
+                 min_samples_split: Union[int, float] = 2,
+                 min_samples_leaf: Union[int, float] = 1,
+                 max_features: Union[int, float, str, None] = None,
+                 subsample: Union[float, None] = 1.0):
         """
         for more info, see
             http://scikit-learn.org/stable/modules/generated/sklearn.ensemble.GradientBoostingRegressor.html
@@ -90,7 +90,7 @@ class GradientBoostingRegressorHP(HyperParamsBase):
 
 
 class GradientBoostingRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
-    def __init__(self, seed: int=42):
+    def __init__(self, seed: int = 42):
         super().__init__()
         self._seed = seed
 

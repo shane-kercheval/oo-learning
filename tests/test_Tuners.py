@@ -47,7 +47,7 @@ class TunerTests(TimerTestCase):
         assert grid.tuned_hyper_params == ['max_features', 'n_estimators', 'min_samples_leaf']
 
     @unittest.skip("test takes several minutes")
-    def test_ModelTuner_RandomForest_classification(self):
+    def test_GridSearchModelTuner_RandomForest_classification(self):
         """
         I want to keep this to run manually in the future, but running the Tuner/Resampler for a
         RandomForestClassifier model takes several minutes, and is not practical. I've saved the
@@ -69,14 +69,6 @@ class TunerTests(TimerTestCase):
                           SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
                           ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
 
-        cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/cached_test_models/test_ModelTuner_RandomForest_classification')  # noqa
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=RandomForestClassifier(),
-                                                                      transformations=transformations,
-                                                                      scores=evaluator_list),
-                           hyper_param_object=RandomForestHP(),
-                           model_persistence_manager=LocalCacheManager(cache_directory=cache_directory),
-                           parallelization_cores=0)
-
         columns = TransformerPipeline.get_expected_columns(transformations=transformations, data=train_data)
         params_dict = dict(criterion='gini',
                            max_features=[int(round(len(columns) ** (1 / 2.0))),
@@ -86,9 +78,20 @@ class TunerTests(TimerTestCase):
                            min_samples_leaf=[1, 50, 100])
         grid = HyperParamsGrid(params_dict=params_dict)
 
+        cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/cached_test_models/test_ModelTuner_RandomForest_classification')  # noqa
+        tuner = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=RandomForestClassifier(),  # noqa
+                                                                                transformations=transformations,  # noqa
+                                                                                scores=evaluator_list),
+                                     hyper_param_object=RandomForestHP(),
+                                     params_grid=grid,
+                                     model_persistence_manager=LocalCacheManager(cache_directory=cache_directory),  # noqa
+                                     parallelization_cores=0)
+
+
+
         # import time
         # t0 = time.time()
-        tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
+        tuner.tune(data_x=train_data, data_y=train_data_y)
 
         assert os.path.isdir(cache_directory)
         assert len(tuner.results._tune_results_objects) == 27
@@ -120,13 +123,13 @@ class TunerTests(TimerTestCase):
         assert all(tuner.results.sorted_best_models.index.values == [24, 21, 9, 15, 12, 18, 6, 3, 0, 23, 20, 17, 16, 14, 13, 11, 4, 26, 10, 7, 5, 1, 19, 8, 2, 22, 25])  # noqa
         shutil.rmtree(cache_directory)
 
-    def test_ModelTuner_mock_classification(self):
+    def test_GridSearchModelTuner_mock_classification(self):
         """
         This unit test uses a Mock Resampler (and other necessary mocks), because testing an actual tuner
         would take too long. The Mock Resampler simply looks up the kappa/sensitivity/specificity values from
         a previously run (actual) Resampler, based on each iteration's hyper-parameters.
-        So in theory, each line of the ModelTuner should still be tested, it is just relaying on fake data
-        fro the Mock Resampler.
+        So in theory, each line of the GridSearchModelTuner should still be tested, it is just relaying on
+        fake data from the Mock Resampler.
         """
         data = TestHelper.get_titanic_data()
 
@@ -144,12 +147,6 @@ class TunerTests(TimerTestCase):
                            ImputationTransformer(),
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
-        tuner = ModelTuner(resampler=MockResampler(model=MockClassificationModelWrapper(data_y=data.Survived),
-                                                   transformations=transformations,
-                                                   scores=evaluators),
-                           hyper_param_object=MockHyperParams(),
-                           parallelization_cores=0)
-
         columns = TransformerPipeline.get_expected_columns(transformations=transformations, data=train_data)
         assert len(columns) == 24
         params_dict = dict(criterion='gini',
@@ -160,11 +157,18 @@ class TunerTests(TimerTestCase):
                            min_samples_leaf=[1, 50, 100])
         grid = HyperParamsGrid(params_dict=params_dict)
 
+        tuner = GridSearchModelTuner(resampler=MockResampler(model=MockClassificationModelWrapper(data_y=data.Survived),  # noqa
+                                                             transformations=transformations,
+                                                             scores=evaluators),
+                                     hyper_param_object=MockHyperParams(),
+                                     params_grid=grid,
+                                     parallelization_cores=0)
+
         assert len(grid.params_grid == 27)
-        tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
+        tuner.tune(data_x=train_data, data_y=train_data_y)
 
         assert len(tuner.results._tune_results_objects) == 27
-        assert tuner.results.num_param_combos == 27
+        assert tuner.results.number_of_cycles == 27
         assert all([isinstance(x, ResamplerResults)
                     for x in tuner.results._tune_results_objects.resampler_object])
 
@@ -268,7 +272,7 @@ class TunerTests(TimerTestCase):
 
         self.assertRaises(AssertionError, lambda: tuner.results.plot_hyper_params_profile(metric=metric, x_axis=x_axis, line=None, grid=grid))  # noqa
 
-    def test_ModelTuner_GradientBoosting_classification(self):
+    def test_GridSearchModelTuner_GradientBoosting_classification(self):
 
         data = TestHelper.get_titanic_data()
 
@@ -289,17 +293,6 @@ class TunerTests(TimerTestCase):
                           SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
                           ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
 
-        model_cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/cached_test_models/test_ModelTuner_GradientBoostingClassifier')  # noqa
-        resampler_cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/temp_cache/')
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=GradientBoostingClassifier(),
-                                                                      transformations=transformations,
-                                                                      scores=evaluator_list),
-                           hyper_param_object=GradientBoostingClassifierHP(),
-                           model_persistence_manager=LocalCacheManager(cache_directory=model_cache_directory),
-                           resampler_persistence_manager=LocalCacheManager(cache_directory=resampler_cache_directory,  # noqa
-                                                                           sub_directory='tune_test'),
-                           parallelization_cores=-1)
-
         columns = TransformerPipeline.get_expected_columns(transformations=transformations, data=train_data)
         params_dict = dict(max_features=[int(round(len(columns) ** (1 / 2.0))),
                                          # int(round(len(columns) / 2)),
@@ -312,7 +305,19 @@ class TunerTests(TimerTestCase):
                                              100])
         grid = HyperParamsGrid(params_dict=params_dict)
 
-        tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
+        model_cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/cached_test_models/test_ModelTuner_GradientBoostingClassifier')  # noqa
+        resampler_cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/temp_cache/')
+        tuner = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=GradientBoostingClassifier(),
+                                                                                transformations=transformations,
+                                                                                scores=evaluator_list),
+                                     hyper_param_object=GradientBoostingClassifierHP(),
+                                     params_grid=grid,
+                                     model_persistence_manager=LocalCacheManager(cache_directory=model_cache_directory),
+                                     resampler_persistence_manager=LocalCacheManager(cache_directory=resampler_cache_directory,  # noqa
+                                                                           sub_directory='tune_test'),
+                                     parallelization_cores=-1)
+
+        tuner.tune(data_x=train_data, data_y=train_data_y)
 
         # assert tuner.total_tune_time < 25  # Non-Parallelization: ~26 seconds; Parallelization: ~7 seconds
 
@@ -401,20 +406,22 @@ class TunerTests(TimerTestCase):
         #                   SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
         #                   ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
 
-        tuner_cached = ModelTuner(resampler=RepeatedCrossValidationResampler(model=GradientBoostingClassifier(),  # noqa
-                                                                      transformations=None,  # diff
-                                                                      scores=[]),  # diff
-                           hyper_param_object=GradientBoostingClassifierHP(),
-                           # including model_persistence_manager but it shouldn't be used (and cached models
-                           # don't exist any longer
-                           model_persistence_manager=LocalCacheManager(cache_directory=model_cache_directory),
-                           resampler_persistence_manager=LocalCacheManager(cache_directory=resampler_cache_directory,  # noqa
+        tuner_cached = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=GradientBoostingClassifier(),  # noqa
+                                                                                       transformations=None,  # diff
+                                                                                       scores=[]),  # diff
+                                            hyper_param_object=GradientBoostingClassifierHP(),
+                                            params_grid=grid,
+                                            # including model_persistence_manager but it shouldn't be used (and cached models
+                                            # don't exist any longer
+                                            model_persistence_manager=LocalCacheManager(cache_directory=model_cache_directory),
+                                            resampler_persistence_manager=LocalCacheManager(cache_directory=resampler_cache_directory,  # noqa
                                                                            sub_directory='tune_test'),
-                           parallelization_cores=-1)
+                                            parallelization_cores=-1)
 
-        tuner_cached.tune(data_x=None, data_y=None, params_grid=grid)
+        tuner_cached.tune(data_x=None, data_y=None)
 
-        assert tuner_cached.total_tune_time < 1  # should be super quick with only 8 cached files to load
+        if not TestHelper.is_debugging():
+            assert tuner_cached.total_tune_time < 1  # should be super quick with only 8 cached files to load
 
         assert len(tuner_cached.results._tune_results_objects) == len(grid.params_grid)
         assert all([isinstance(x, ResamplerResults)
@@ -474,22 +481,24 @@ class TunerTests(TimerTestCase):
         SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
         ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
 
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=XGBoostClassifier(),
-                                                                      transformations=transformations,
-                                                                      scores=evaluator_list,
-                                                                      folds=5,
-                                                                      repeats=2),
-                           hyper_param_object=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC),
-                           # XGBoost does not work with multi-processors (even though it used to)
-                           # https: // github.com / dmlc / xgboost / issues / 4246
-                           parallelization_cores=1)
-
         params_dict = dict(colsample_bytree=[0.7, 1.0],
                            subsample=[0.75, 1.0],
                            max_depth=[6, 9])
         grid = HyperParamsGrid(params_dict=params_dict)
 
-        tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
+        tuner = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=XGBoostClassifier(),
+                                                                                transformations=transformations,
+                                                                                scores=evaluator_list,
+                                                                                folds=5,
+                                                                                repeats=2),
+                                     hyper_param_object=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC),
+                                     params_grid=grid,
+                                     # XGBoost does not work with multi-processors (even though it used to)
+                                     # https: // github.com / dmlc / xgboost / issues / 4246
+                                     parallelization_cores=1)
+
+        tuner.tune(data_x=train_data, data_y=train_data_y)
+
         assert tuner.results.best_hyper_params == {'colsample_bytree': 0.7, 'subsample': 1.0, 'max_depth': 6}
         assert isinstance(tuner.results.best_hyper_params['colsample_bytree'], float)
         assert isinstance(tuner.results.best_hyper_params['subsample'], float)
@@ -525,8 +534,8 @@ class TunerTests(TimerTestCase):
                                                                     'error_rate_st_dev', 'error_rate_cv'])
 
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelTuner_XGB_results.pkl'))  # noqa
-        with open(file, 'wb') as output:
-            pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
+        # with open(file, 'wb') as output:
+        #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             tune_results = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.resampled_stats,
@@ -543,16 +552,17 @@ class TunerTests(TimerTestCase):
         train_data_y = train_data.strength
         train_data = train_data.drop(columns='strength')
 
-        tuner = ModelTuner(resampler=RepeatedCrossValidationResampler(model=LinearRegressorSK(),
-                                                                      transformations=[ImputationTransformer(),  # noqa
+        tuner = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=LinearRegressorSK(),
+                                                                                transformations=[ImputationTransformer(),  # noqa
                                                                                        DummyEncodeTransformer(CategoricalEncoding.DUMMY)],  # noqa
-                                                                      scores=[RmseScore(),
+                                                                                scores=[RmseScore(),
                                                                               MaeScore()],
-                                                                      folds=5,
-                                                                      repeats=5),
-                           hyper_param_object=None)
+                                                                                folds=5,
+                                                                                repeats=5),
+                                     hyper_param_object=None,
+                                     params_grid=None)
 
-        tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=None)
+        tuner.tune(data_x=train_data, data_y=train_data_y)
 
         assert len(tuner.results._tune_results_objects) == 1
 
@@ -608,21 +618,23 @@ class TunerTests(TimerTestCase):
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
         score_list = [AucRocScore(positive_class=1)]
+
+        params_dict = {'criterion': 'gini', 'max_features': [5]}
+        grid = HyperParamsGrid(params_dict=params_dict)
+        assert len(grid.params_grid) == 1  # just need to test 1 hyper-param combination
+
         resampler = RepeatedCrossValidationResampler(model=RandomForestClassifier(),
                                                      transformations=transformations,
                                                      scores=score_list,
                                                      folds=2,
                                                      repeats=1,
                                                      fold_decorators=[decorator])
-        tuner = ModelTuner(resampler=resampler,
-                           hyper_param_object=RandomForestHP(),
-                           parallelization_cores=0)
-
-        params_dict = {'criterion': 'gini', 'max_features': [5]}
-        grid = HyperParamsGrid(params_dict=params_dict)
-        assert len(grid.params_grid) == 1  # just need to test 1 hyper-param combination
+        tuner = GridSearchModelTuner(resampler=resampler,
+                                     hyper_param_object=RandomForestHP(),
+                                     params_grid=grid,
+                                     parallelization_cores=0)
         # just need to test the first row
-        tuner.tune(data_x=train_data, data_y=train_data_y, params_grid=grid)
+        tuner.tune(data_x=train_data, data_y=train_data_y)
 
         # should have cloned the decorator each time, so it should not have been used
         assert len(decorator._roc_ideal_thresholds) == 0
@@ -652,3 +664,36 @@ class TunerTests(TimerTestCase):
         assert isclose(decorator.resampled_precision_recall_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
         assert isclose(decorator.roc_ideal_thresholds_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
         assert isclose(decorator.resampled_precision_recall_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa
+
+    def test_GridSearchModelTuner_regression(self):
+        # Test sorting & getting best model parameters works for models that are minimizing the score
+        data = TestHelper.get_cement_data()
+
+        train_data = data
+        train_data_y = train_data.strength
+        train_data = train_data.drop(columns='strength')
+
+        ######################################################################################################
+        # Build from scratch, cache models and Resampler results; then, second time, use the Resampler cache
+        ######################################################################################################
+        evaluator_list = [RmseScore()]  # noqa
+        params_dict = dict(max_depth=[-1, 6],
+                           num_leaves=[10, 50])
+        grid = HyperParamsGrid(params_dict=params_dict)
+
+        tuner = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=LightGBMRegressor(),
+                                                                                transformations=None,
+                                                                                scores=evaluator_list),
+                                     hyper_param_object=LightGBMHP(),
+                                     params_grid=grid,
+                                     parallelization_cores=-1)
+
+        tuner.tune(data_x=train_data, data_y=train_data_y)
+
+        assert tuner.results.best_index == 1
+        assert tuner.results.best_hyper_params == {'max_depth': -1, 'num_leaves': 50}
+        assert all(tuner.results.sorted_best_indexes == [1, 3, 0, 2])
+
+    ##########################################################################################################
+    # Test Bayesian Optimization Model Tuner
+    ##########################################################################################################

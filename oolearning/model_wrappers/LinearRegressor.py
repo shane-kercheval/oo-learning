@@ -140,8 +140,8 @@ class LinearRegressor(ModelWrapperBase):
     @property
     def results_summary(self) -> pd.DataFrame:
         """
-        :return: a traditional view of the regression resampled_stats (feature coefficient estimates, p-values,
-            etc.)
+        :return: a traditional view of the regression resampled_stats (feature coefficient estimates,
+            p-values, etc.)
         """
         summary = pd.DataFrame(OrderedDict(zip(['(intercept)'] + self.feature_names,
                                                self._model_object.params.values.tolist())),
@@ -159,7 +159,7 @@ class LinearRegressor(ModelWrapperBase):
     def _train(self,
                data_x: pd.DataFrame,
                data_y: np.ndarray,
-               hyper_params: HyperParamsBase=None) -> object:
+               hyper_params: HyperParamsBase = None) -> object:
 
         assert hyper_params is None  # no hyper-params for regression
 

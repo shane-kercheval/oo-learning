@@ -33,18 +33,18 @@ class RandomForestHP(HyperParamsBase):
             -----------------
     """
     def __init__(self,
-                 criterion: str='gini',
-                 num_features: int=None,
-                 max_features: Union[int, float, str]=None,
-                 n_estimators: int=500,
-                 max_depth: int=None,
-                 min_samples_split: Union[int, float]=2,
-                 min_samples_leaf: Union[int, float]=1,
-                 min_weight_fraction_leaf: float=0.0,
-                 max_leaf_nodes: int=None,
-                 min_impurity_decrease: float=0,
-                 bootstrap: bool=True,
-                 oob_score: bool=False):
+                 criterion: str = 'gini',
+                 num_features: int = None,
+                 max_features: Union[int, float, str] = None,
+                 n_estimators: int = 500,
+                 max_depth: int = None,
+                 min_samples_split: Union[int, float] = 2,
+                 min_samples_leaf: Union[int, float] = 1,
+                 min_weight_fraction_leaf: float = 0.0,
+                 max_leaf_nodes: int = None,
+                 min_impurity_decrease: float = 0.0,
+                 bootstrap: bool = True,
+                 oob_score: bool = False):
         """
         :param criterion: Supported `criterion` values
             - for classifiers are 'gini' & 'entropy';
@@ -107,7 +107,10 @@ class RandomForestClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
         forest will typically be helpful when we have a large number of correlated features." (ISLR pg
         319-320)
     """
-    def __init__(self, extra_trees_implementation: bool=False, _num_jobs_in_parallel: int=-1, seed: int=42):
+    def __init__(self,
+                 extra_trees_implementation: bool = False,
+                 _num_jobs_in_parallel: int = -1,
+                 seed: int = 42):
         """
         :param extra_trees_implementation: uses sklearn.ensemble.ExtraTreesClassifier/Regressor rather than
             sklearn.ensemble.RandomForestClassifier/Regressor
@@ -172,7 +175,10 @@ class RandomForestClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
 
 
 class RandomForestRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
-    def __init__(self, extra_trees_implementation: bool=False, _num_jobs_in_parallel: int=-1, seed: int=42):
+    def __init__(self,
+                 extra_trees_implementation: bool = False,
+                 _num_jobs_in_parallel: int = -1,
+                 seed: int = 42):
         """
         :param extra_trees_implementation: uses sklearn.ensemble.ExtraTreesClassifier/Regressor rather than
             sklearn.ensemble.RandomForestClassifier/Regressor

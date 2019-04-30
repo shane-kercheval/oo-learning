@@ -477,7 +477,7 @@ class ResamplerTests(TimerTestCase):
         assert resampler.results.num_resamples == 25
 
         # noinspection SpellCheckingInspection
-        expected_file = 'repeat{0}_fold{1}_RandomForestClassifier_n_estimators500_criteriongini_max_featuresNone_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_min_impurity_decrease0_bootstrapTrue_oob_scoreFalse.pkl'  # noqa
+        expected_file = 'repeat{0}_fold{1}_RandomForestClassifier_n_estimators500_criteriongini_max_featuresNone_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_min_impurity_decrease0.0_bootstrapTrue_oob_scoreFalse.pkl'  # noqa
         for fold_index in range(5):
             for repeat_index in range(5):
                 assert os.path.isfile(os.path.join(cache_directory,
@@ -1005,7 +1005,7 @@ class ResamplerTests(TimerTestCase):
                     for x in resampler.results._scores])
         assert resampler.results.num_resamples == 25
 
-        expected_file = 'repeat{0}_fold{1}_RandomForestClassifier_n_estimators500_criteriongini_max_featuresNone_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_min_impurity_decrease0_bootstrapTrue_oob_scoreFalse.pkl'  # noqa
+        expected_file = 'repeat{0}_fold{1}_RandomForestClassifier_n_estimators500_criteriongini_max_featuresNone_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_min_impurity_decrease0.0_bootstrapTrue_oob_scoreFalse.pkl'  # noqa
         for fold_index in range(5):
             for repeat_index in range(5):
                 assert os.path.isfile(os.path.join(model_cache_directory,

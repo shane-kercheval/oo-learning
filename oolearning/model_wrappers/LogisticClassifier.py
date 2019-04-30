@@ -16,7 +16,7 @@ class LogisticClassifierHP(HyperParamsBase):
     """
 
     # noinspection SpellCheckingInspection
-    def __init__(self, penalty: str='l2', regularization_inverse: float=1.0, solver: str='liblinear'):
+    def __init__(self, penalty: str = 'l2', regularization_inverse: float = 1.0, solver: str = 'liblinear'):
         super().__init__()
         self._params_dict = dict(penalty=penalty,
                                  regularization_inverse=regularization_inverse,
@@ -25,7 +25,7 @@ class LogisticClassifierHP(HyperParamsBase):
 
 class LogisticClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
     # noinspection SpellCheckingInspection
-    def __init__(self, fit_intercept: bool=True, seed: int=42):
+    def __init__(self, fit_intercept: bool = True, seed: int = 42):
         """
         need to set fit_intercept to False if using One-Hot-Encoding
         :param fit_intercept:

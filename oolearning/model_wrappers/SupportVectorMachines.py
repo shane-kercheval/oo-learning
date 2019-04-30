@@ -14,7 +14,7 @@ from oolearning.model_wrappers.SklearnPredictMixin import SklearnPredictProbabil
 # Classification
 ##############################################################################################################
 class SvmLinearClassifierHP(HyperParamsBase):
-    def __init__(self, penalty: str='l2', penalty_c: float=1.0, loss='hinge'):
+    def __init__(self, penalty: str = 'l2', penalty_c: float = 1.0, loss: str = 'hinge'):
         """
         for more info, see http://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html
         :param penalty: "Specifies the norm used in the penalization. The ‘l2’ penalty is the standard used in
@@ -28,7 +28,7 @@ class SvmLinearClassifierHP(HyperParamsBase):
 
 
 class SvmLinearClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
-    def __init__(self, fit_intercept: bool=False, class_weights: dict=None, seed: int=42):
+    def __init__(self, fit_intercept: bool = False, class_weights: dict = None, seed: int = 42):
         # noinspection SpellCheckingInspection
         """
         :param fit_intercept: set to False by default, since the expectation is that One-Hot encoding will
@@ -83,7 +83,7 @@ class SvmLinearClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
 
 
 class SvmPolynomialClassifierHP(HyperParamsBase):
-    def __init__(self, degree: int=3, coef0: float=0.0, penalty_c: float=1.0):
+    def __init__(self, degree: int = 3, coef0: float = 0.0, penalty_c: float = 1.0):
         """
         for more info, see http://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html
         :param degree: "Degree of the polynomial kernel function (‘poly’). Ignored by all other kernels."
@@ -95,7 +95,7 @@ class SvmPolynomialClassifierHP(HyperParamsBase):
 
 
 class SvmPolynomialClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
-    def __init__(self, class_weights: dict = None, seed: int=42):
+    def __init__(self, class_weights: dict = None, seed: int = 42):
         """
         :param class_weights: from http://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html
             Set the parameter C of class i to class_weight[i]*C for SVC. If not given, all classes are
@@ -141,7 +141,7 @@ class SvmPolynomialClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
 ##############################################################################################################
 class SvmLinearRegressorHP(HyperParamsBase):
     # noinspection SpellCheckingInspection
-    def __init__(self, epsilon: float=0.1, penalty_c: float=1.0):
+    def __init__(self, epsilon: float = 0.1, penalty_c: float = 1.0):
         """
         for more info, see http://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVR.html
         :param epsilon: "Epsilon parameter in the epsilon-insensitive loss function. Note that the value of
@@ -154,7 +154,7 @@ class SvmLinearRegressorHP(HyperParamsBase):
 
 
 class SvmLinearRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
-    def __init__(self, fit_intercept: bool=False, seed: int=42):
+    def __init__(self, fit_intercept: bool = False, seed: int = 42):
         """
         :param fit_intercept: set to False by default, since the expectation is that One-Hot encoding will
             be used
@@ -187,7 +187,7 @@ class SvmLinearRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
 
 class SvmPolynomialRegressorHP(HyperParamsBase):
     # noinspection SpellCheckingInspection
-    def __init__(self, degree: int=3, epsilon: float=0.1, penalty_c: float=1.0):
+    def __init__(self, degree: int = 3, epsilon: float = 0.1, penalty_c: float = 1.0):
         """
         for more info, see http://scikit-learn.org/stable/modules/generated/sklearn.svm.SVR.html
         :param degree: "Degree of the polynomial kernel function (‘poly’). Ignored by all other kernels."

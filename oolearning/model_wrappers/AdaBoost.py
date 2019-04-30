@@ -18,19 +18,19 @@ class AdaBoostClassifierHP(HyperParamsBase):
                  # Adaboost-specific hyper-params
                  n_estimators: int = 50,
                  learning_rate: float = 1.0,
-                 algorithm: str='SAMME.R',
+                 algorithm: str = 'SAMME.R',
                  # Tree-specific hyper-params
-                 criterion: str='gini',
-                 splitter: str='best',
-                 max_depth: Union[int, None]=None,
-                 min_samples_split: Union[int, float]=2,
-                 min_samples_leaf: Union[int, float]=1,
-                 min_weight_fraction_leaf: float=0.,
-                 max_features: Union[int, float, str, None]=None,
-                 max_leaf_nodes: Union[int, None]=None,
-                 min_impurity_decrease: float=0.,
-                 class_weight: Union[dict, List[dict], str, None]=None,
-                 presort: bool=False,
+                 criterion: str = 'gini',
+                 splitter: str = 'best',
+                 max_depth: Union[int, None] = None,
+                 min_samples_split: Union[int, float] = 2,
+                 min_samples_leaf: Union[int, float] = 1,
+                 min_weight_fraction_leaf: float = 0.,
+                 max_features: Union[int, float, str, None] = None,
+                 max_leaf_nodes: Union[int, None] = None,
+                 min_impurity_decrease: float = 0.0,
+                 class_weight: Union[dict, List[dict], str, None] = None,
+                 presort: bool = False,
                  ):
         """
         for more info, see
@@ -99,20 +99,20 @@ class AdaBoostRegressorHP(HyperParamsBase):
     # noinspection SpellCheckingInspection
     def __init__(self,
                  # Adaboost-specific hyper-params
-                 n_estimators: int=50,
-                 learning_rate: float=1.,
-                 loss: str='linear',
+                 n_estimators: int = 50,
+                 learning_rate: float = 1.0,
+                 loss: str = 'linear',
                  # Tree-specific hyper-params
-                 criterion='mse',
-                 splitter='best',
-                 max_depth: Union[int, None]=None,
-                 min_samples_split: Union[int, float]=2,
-                 min_samples_leaf: Union[int, float]=1,
-                 min_weight_fraction_leaf: float=0.,
-                 max_features: Union[int, float, str, None]=None,
-                 max_leaf_nodes: Union[int, None]=None,
-                 min_impurity_decrease: float=0.,
-                 presort: bool=False,
+                 criterion: str = 'mse',
+                 splitter: str = 'best',
+                 max_depth: Union[int, None] = None,
+                 min_samples_split: Union[int, float] = 2,
+                 min_samples_leaf: Union[int, float] = 1,
+                 min_weight_fraction_leaf: float = 0.,
+                 max_features: Union[int, float, str, None] = None,
+                 max_leaf_nodes: Union[int, None] = None,
+                 min_impurity_decrease: float = 0.0,
+                 presort: bool = False,
                  ):
         """
         for more info, see

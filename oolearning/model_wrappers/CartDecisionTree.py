@@ -12,14 +12,14 @@ from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 
 class CartDecisionTreeHP(HyperParamsBase):
     def __init__(self,
-                 criterion: str='gini',
-                 splitter: str='best',
-                 max_depth: Union[int, None]=None,
-                 min_samples_split: Union[int, float]=2,
-                 min_samples_leaf: Union[int, float]=1,
-                 min_weight_fraction_leaf: float=0.0,
-                 max_leaf_nodes: Union[int, None]=None,
-                 max_features: Union[int, float, str, None]=None):
+                 criterion: str = 'gini',
+                 splitter: str = 'best',
+                 max_depth: Union[int, None] = None,
+                 min_samples_split: Union[int, float] = 2,
+                 min_samples_leaf: Union[int, float] = 1,
+                 min_weight_fraction_leaf: float = 0.0,
+                 max_leaf_nodes: Union[int, None] = None,
+                 max_features: Union[int, float, str, None] = None):
         """
         See http://scikit-learn.org/stable/modules/generated/sklearn.tree.DecisionTreeClassifier.html
         :param criterion: Supported `criterion` values
@@ -55,7 +55,7 @@ class CartDecisionTreeHP(HyperParamsBase):
 
 
 class CartDecisionTreeClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
-    def __init__(self, seed: int=42):
+    def __init__(self, seed: int = 42):
         super().__init__()
         self._seed = seed
 
@@ -85,7 +85,7 @@ class CartDecisionTreeClassifier(SklearnPredictProbabilityMixin, ModelWrapperBas
 
 
 class CartDecisionTreeRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
-    def __init__(self, seed: int=42):
+    def __init__(self, seed: int = 42):
         super().__init__()
         self._seed = seed
 

@@ -122,7 +122,8 @@ class LightGBMHP(HyperParamsBase):
                  n_estimators: int = 100,
                  # is_unbalanced: bool = False,
                  scale_pos_weight: float = 1.0,
-                 save_binary: bool = False):
+                 save_binary: bool = False,
+                 match_type=False):
 
         """
         https://lightgbm.readthedocs.io/en/latest/Parameters.html
@@ -171,7 +172,17 @@ class LightGBMHP(HyperParamsBase):
         assert scale_pos_weight > 0.0
         assert isinstance(save_binary, bool)
 
-        super().__init__()
+
+        # TODO REMOVE
+        # REQUIRED FOR BAYESIAN OPTIMIZATION
+        num_leaves = int(round(num_leaves))
+        min_data_in_leaf = int(round(min_data_in_leaf))
+        max_depth = int(round(max_depth))
+        bagging_freq = int(round(bagging_freq))
+        max_bin = int(round(max_bin))
+        n_estimators = int(round(n_estimators))
+
+        super().__init__(match_type=match_type)
 
         self._params_dict = dict(num_leaves=num_leaves,
                                  min_data_in_leaf=min_data_in_leaf,
