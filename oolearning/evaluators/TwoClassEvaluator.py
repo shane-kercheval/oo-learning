@@ -34,6 +34,12 @@ class TwoClassEvaluator(EvaluatorBase):
         evaluator.evaluate(actual_values=actual_classes, predicted_values=predicted_classes)
         return evaluator
 
+    def __str__(self):
+        val = super().__str__()
+        val += "\n\nConfusion Matrix\n================\n\n" + self.matrix.to_string()
+
+        return val
+
     @property
     def matrix(self) -> pd.DataFrame:
         return self._confusion_matrix.matrix

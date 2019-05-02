@@ -29,6 +29,16 @@ class TunerResultsBase(metaclass=ABCMeta):
                                                pd.DataFrame(results_list)], axis=1)
         self._time_results = time_results
 
+    def __str__(self):
+        val = "Best Hyper-Parameters\n=====================\n\n"
+        val += str(self.best_hyper_params).replace(", ", "\n ")
+        val += "\n\nTuner Results\n=============\n\n"
+
+        temp = self.resampled_stats.copy()
+        temp['rank'] = self._tune_results_objects.resampler_object.rank()
+
+        return val + temp[['rank'] + list(self.resampled_stats.columns.values)].to_string()
+
     @property
     def number_of_cycles(self) -> int:
         return self._tune_results_objects.shape[0]

@@ -14,6 +14,9 @@ class ScoreBase(metaclass=ABCMeta):
     def __init__(self):
         self._value = None
 
+    def __str__(self):
+        return self.name + ": " + str(self.value)
+
     def clone(self):
         """
         when, for example, resampling, an Evaluator will have to be cloned several times (before using)

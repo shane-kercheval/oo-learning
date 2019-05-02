@@ -10,6 +10,8 @@ import numpy as np
 import pandas as pd
 
 from oolearning.OOLearningHelpers import OOLearningHelpers
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.splitters.RegressionStratifiedDataSplitter import RegressionStratifiedDataSplitter
 from oolearning.splitters.ClassificationStratifiedDataSplitter import ClassificationStratifiedDataSplitter
 
@@ -184,3 +186,39 @@ class TestHelper:
         plt.savefig(file)
         clear()
         assert os.path.isfile(file)
+
+    @staticmethod
+    def assert_hyper_params_match(hyper_params: HyperParamsBase,
+                                  model: ModelWrapperBase = None,
+                                  mapping: dict = None,
+                                  remove_keys: list = None):
+        """
+        :param hyper_params:
+        :param model:
+        :param mapping: when the hyper-parameter names don't between the HyperParamsBase object and the model,
+            provide a dictionary with the HyperParamsBase name as the key, and the model's name as the value
+        :return:
+        """
+        subset = hyper_params.params_dict
+        superset = model.model_object.get_params()
+
+        if remove_keys is not None:
+            for key in remove_keys:
+                del subset[key]
+
+        if mapping is not None:
+            subset = dict((mapping[key], value) if key in mapping else (key, value)
+                          for (key, value) in subset.items())
+        #[item for item in subset.items() if item not in superset.items() ]
+
+        assert all(item in superset.items() for item in subset.items())
+
+    @staticmethod
+    def save_string(value: str, file: str):
+        with open(TestHelper.ensure_test_directory(file), "w") as text_file:
+            print(value, file=text_file)
+
+    @staticmethod
+    def save_df(df: pd.DataFrame, file:str):
+        with open(TestHelper.ensure_test_directory(file), "w") as text_file:
+            print(df.to_string(), file=text_file)

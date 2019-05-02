@@ -25,6 +25,21 @@ class ModelWrapperBase(metaclass=ABCMeta):
         self._persistence_manager = None
         self._data_x_trained_head = None
 
+    def __str__(self):
+        val = self.name
+
+        if self.model_object is not None:
+            invert_op = getattr(self.model_object, "get_params", None)
+            if callable(invert_op):
+                val += "\n\nHyper-Parameters\n================\n\n" + str(self.model_object.get_params()).replace(", ", "\n ")
+
+            if self.feature_importance is not None and isinstance(self.feature_importance, pd.DataFrame):
+                val += "\n\nFeature Importance\n==================\n\n" + self.feature_importance.to_string()
+            else:
+                val += "\n\nFeatures Trained\n================\n\n" + str(self._feature_names).replace(", ", "\n ")
+
+        return val
+
     def clone(self):
         """
         when, for example, resampling, a model will have to be cloned several times (before fitting)

@@ -96,7 +96,7 @@ class GradientBoostingRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
 
     @property
     def feature_importance(self):
-        raise NotImplementedError()
+        return None
 
     # noinspection PyMethodOverriding
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray,

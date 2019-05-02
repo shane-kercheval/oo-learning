@@ -39,7 +39,7 @@ class ModelAggregator(ModelWrapperBase):
     def __init__(self,
                  base_models: List[ModelInfo],
                  aggregation_strategy: AggregationStrategyBase,
-                 parallelization_cores: int=-1):
+                 parallelization_cores: int = -1):
         """
 
         :param base_models: list of ModelInfos describing the models to train
@@ -55,6 +55,21 @@ class ModelAggregator(ModelWrapperBase):
         self._aggregation_strategy = aggregation_strategy
 
         self._parallelization_cores = parallelization_cores
+
+    def __str__(self):
+        val = "Strategy: " + type(self._aggregation_strategy).__name__
+
+        val += "\n" + ("=" * len(val)) + "\n"
+
+        for model_info in self._base_models:
+            val += "\n" + model_info.model.name + "\n" + ("-" * len(model_info.model.name)) + "\n"
+
+            if model_info.model.model_object is not None:
+                invert_op = getattr(model_info.model.model_object, "get_params", None)
+                if callable(invert_op):
+                    val += str(model_info.model.model_object.get_params()) + "\n"
+
+        return val
 
     @property
     def feature_importance(self):

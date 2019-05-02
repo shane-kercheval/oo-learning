@@ -1,0 +1,24 @@
+{'AUC ROC': 0.8599047118409305
+ 'AUC Precision/Recall': 0.8447391418292325
+ 'Kappa': 0.5987967881203543
+ 'F1 Score': 0.7553956834532375
+ 'Two-Class Accuracy': 0.8089887640449438
+ 'Error Rate': 0.19101123595505617
+ 'True Positive Rate': 0.7692307692307693
+ 'True Negative Rate': 0.8337129840546698
+ 'False Positive Rate': 0.1662870159453303
+ 'False Negative Rate': 0.23076923076923078
+ 'Positive Predictive Value': 0.7420494699646644
+ 'Negative Predictive Value': 0.8531468531468531
+ 'Prevalence': 0.38342696629213485
+ 'No Information Rate': 0.6165730337078652
+ 'Total Observations': 712}
+
+Confusion Matrix
+================
+
+predicted    0    1  Total
+actual                    
+0          366   73    439
+1           63  210    273
+Total      429  283    712

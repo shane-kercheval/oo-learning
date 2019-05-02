@@ -31,7 +31,7 @@ class DummyClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
 
     @property
     def feature_importance(self):
-        raise NotImplementedError()
+        return None
 
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray,
                hyper_params: HyperParamsBase = None) -> object:

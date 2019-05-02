@@ -48,7 +48,7 @@ class SvmLinearClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
 
     @property
     def feature_importance(self):
-        raise NotImplementedError()
+        return None
 
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray,
                hyper_params: SvmLinearClassifierHP = None) -> object:
@@ -109,7 +109,7 @@ class SvmPolynomialClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
 
     @property
     def feature_importance(self):
-        raise NotImplementedError()
+        return None
 
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray,
                hyper_params: SvmPolynomialClassifierHP = None) -> object:
@@ -165,7 +165,7 @@ class SvmLinearRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
 
     @property
     def feature_importance(self):
-        raise NotImplementedError()
+        return None
 
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray,
                hyper_params: SvmLinearRegressorHP = None) -> object:
@@ -203,7 +203,7 @@ class SvmPolynomialRegressorHP(HyperParamsBase):
 class SvmPolynomialRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
     @property
     def feature_importance(self):
-        raise NotImplementedError()
+        return None
 
     def _train(self, data_x: pd.DataFrame, data_y: np.ndarray,
                hyper_params: HyperParamsBase = None) -> object:

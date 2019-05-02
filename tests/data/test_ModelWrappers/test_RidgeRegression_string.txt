@@ -1,0 +1,24 @@
+RidgeRegressor
+
+Hyper-Parameters
+================
+
+{'alpha': 0
+ 'copy_X': True
+ 'fit_intercept': True
+ 'max_iter': None
+ 'normalize': False
+ 'random_state': 42
+ 'solver': 'cholesky'
+ 'tol': 0.001}
+
+Features Trained
+================
+
+['cement'
+ 'slag'
+ 'ash'
+ 'water'
+ 'superplastic'
+ 'coarseagg'
+ 'age']

@@ -1,0 +1,55 @@
+LightGBMClassifier
+
+Hyper-Parameters
+================
+
+{'boosting_type': 'random_forest'
+ 'class_weight': None
+ 'colsample_bytree': 0.7
+ 'importance_type': 'split'
+ 'learning_rate': 0.9
+ 'max_depth': 55
+ 'min_child_samples': 22
+ 'min_child_weight': 0.11
+ 'min_split_gain': 0.1
+ 'n_estimators': 111
+ 'n_jobs': -1
+ 'num_leaves': 33
+ 'objective': 'binary'
+ 'random_state': 666
+ 'reg_alpha': 1
+ 'reg_lambda': 2
+ 'silent': True
+ 'subsample': 0.5
+ 'subsample_for_bin': 200000
+ 'subsample_freq': 1
+ 'scale_pos_weight': 1.1
+ 'max_bin': 265}
+
+Features Trained
+================
+
+['Age'
+ 'Fare'
+ 'Pclass_1'
+ 'Pclass_2'
+ 'Pclass_3'
+ 'Sex_female'
+ 'Sex_male'
+ 'SibSp_0'
+ 'SibSp_1'
+ 'SibSp_2'
+ 'SibSp_3'
+ 'SibSp_4'
+ 'SibSp_5'
+ 'SibSp_8'
+ 'Parch_0'
+ 'Parch_1'
+ 'Parch_2'
+ 'Parch_3'
+ 'Parch_4'
+ 'Parch_5'
+ 'Parch_6'
+ 'Embarked_C'
+ 'Embarked_Q'
+ 'Embarked_S']

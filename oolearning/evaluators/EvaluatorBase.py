@@ -25,4 +25,6 @@ class EvaluatorBase(metaclass=ABCMeta):
         """
         :return: dictionary with all the score_names and associated values
         """
-        pass
+
+    def __str__(self):
+        return str(self.all_quality_metrics).replace(", ", "\n ")

@@ -711,6 +711,9 @@ class ModelWrapperTests(TimerTestCase):
                               train_callback=None)
 
         fitter.train_predict_eval(data=data, target_variable=target_variable, hyper_params=None)
+
+        TestHelper.save_string(fitter, 'data/test_ModelWrappers/test_Regression_string.txt')
+
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
         assert isclose(fitter.training_evaluator.mean_squared_error, 109.68243774089586)
@@ -749,9 +752,19 @@ class ModelWrapperTests(TimerTestCase):
                               persistence_manager=None,
                               train_callback=None)
 
+        hyper_params = RidgeRegressorHP(alpha=0)
         holdout_predictions = fitter.train_predict_eval(data=data,
                                                         target_variable=target_variable,
-                                                        hyper_params=RidgeRegressorHP(alpha=0))
+                                                        hyper_params=hyper_params)
+
+        TestHelper.assert_hyper_params_match(hyper_params, fitter.model)
+        assert fitter.model.hyper_params.params_dict == {'alpha': 0, 'solver': 'cholesky'}
+        TestHelper.save_string(fitter, 'data/test_ModelWrappers/test_RidgeRegression_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_RidgeRegression_training_evaluator.txt')
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_RidgeRegression_holdout_evaluator.txt')
+
         # because we supplied a Splitter, we will get the holdout-predictions
         # check to make sure it gives the same MAE
         assert len(holdout_predictions) == len(data) * 0.20
@@ -762,12 +775,6 @@ class ModelWrapperTests(TimerTestCase):
 
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
-        assert fitter.model.hyper_params.params_dict == {'alpha': 0, 'solver': 'cholesky'}
-        # alpha of 0 should be the same as plain Linear Regression (values are copied from above
-        assert isclose(fitter.training_evaluator.mean_squared_error, 109.68243774089586)
-        assert isclose(fitter.training_evaluator.mean_absolute_error, 8.360259532214116)
-        assert isclose(fitter.holdout_evaluator.mean_squared_error, 100.07028301004217)
-        assert isclose(fitter.holdout_evaluator.mean_absolute_error, 7.99161252047238)
 
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'age']  # noqa
 
@@ -787,15 +794,9 @@ class ModelWrapperTests(TimerTestCase):
         tuner.tune(data_x=train_data, data_y=train_data_y)
         assert len(tuner.results._tune_results_objects) == 3
         assert tuner.results.number_of_cycles == 3
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Ridge_can_tune.pkl'))  # noqa
-        # with open(file, 'wb') as output:
-        #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
-        with open(file, 'rb') as saved_object:
-            saved_results = pickle.load(saved_object)
-            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.resampled_stats,
-                                                      data_frame2=tuner.results.resampled_stats)
-            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.sorted_best_models,
-                                                      data_frame2=tuner.results.sorted_best_models)
+
+        TestHelper.save_string(tuner.results,
+                               'data/test_ModelWrappers/test_RidgeRegressionr_tuner_results.txt')
 
     def test_LassoRegression(self):
         data = TestHelper.get_cement_data()
@@ -808,17 +809,19 @@ class ModelWrapperTests(TimerTestCase):
                               persistence_manager=None,
                               train_callback=None)
 
+        hyper_params = LassoRegressorHP(alpha=0)
         fitter.train_predict_eval(data=data,
                                   target_variable=target_variable,
-                                  hyper_params=LassoRegressorHP(alpha=0))
+                                  hyper_params=hyper_params)
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
         assert fitter.model.hyper_params.params_dict == {'alpha': 0}
-        # alpha of 0 should be the same as plain Linear Regression (values are copied from above
-        assert isclose(fitter.training_evaluator.mean_squared_error, 109.68243774089586)
-        assert isclose(fitter.training_evaluator.mean_absolute_error, 8.360259532214116)
-        assert isclose(fitter.holdout_evaluator.mean_squared_error, 100.07028301004217)
-        assert isclose(fitter.holdout_evaluator.mean_absolute_error, 7.99161252047238)
+        TestHelper.assert_hyper_params_match(hyper_params, fitter.model)
+        TestHelper.save_string(fitter, 'data/test_ModelWrappers/test_LassoRegression_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_LassoRegression_training_evaluator.txt')
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_LassoRegression_holdout_evaluator.txt')
 
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'age']  # noqa
 
@@ -838,15 +841,9 @@ class ModelWrapperTests(TimerTestCase):
         tuner.tune(data_x=train_data, data_y=train_data_y)
         assert len(tuner.results._tune_results_objects) == 3
         assert tuner.results.number_of_cycles == 3
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Lasso_can_tune.pkl'))  # noqa
-        # with open(file, 'wb') as output:
-        #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
-        with open(file, 'rb') as saved_object:
-            saved_results = pickle.load(saved_object)
-            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.resampled_stats,
-                                                      data_frame2=tuner.results.resampled_stats)
-            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.sorted_best_models,
-                                                      data_frame2=tuner.results.sorted_best_models)
+
+        TestHelper.save_string(tuner.results,
+                               'data/test_ModelWrappers/test_LassoRegression_tuner_results.txt')
 
     def test_ElasticNetRegressor(self):
         data = TestHelper.get_cement_data()
@@ -859,18 +856,20 @@ class ModelWrapperTests(TimerTestCase):
                               persistence_manager=None,
                               train_callback=None)
 
+        hyper_params = ElasticNetRegressorHP(alpha=0)
         fitter.train_predict_eval(data=data,
                                   target_variable=target_variable,
-                                  hyper_params=ElasticNetRegressorHP(alpha=0))
+                                  hyper_params=hyper_params)
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
         assert fitter.model.hyper_params.params_dict == {'alpha': 0, 'l1_ratio': 0.5}
 
-        # alpha of 0 should be the same as plain Linear Regression (values are copied from above
-        assert isclose(fitter.training_evaluator.mean_squared_error, 109.68243774089586)
-        assert isclose(fitter.training_evaluator.mean_absolute_error, 8.360259532214116)
-        assert isclose(fitter.holdout_evaluator.mean_squared_error, 100.07028301004217)
-        assert isclose(fitter.holdout_evaluator.mean_absolute_error, 7.99161252047238)
+        TestHelper.assert_hyper_params_match(hyper_params, fitter.model)
+        TestHelper.save_string(fitter, 'data/test_ModelWrappers/test_ElasticNetRegressor_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_ElasticNetRegressor_training_evaluator.txt')
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_ElasticNetRegressor_holdout_evaluator.txt')
 
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'age']  # noqa
 
@@ -891,15 +890,8 @@ class ModelWrapperTests(TimerTestCase):
         assert len(tuner.results._tune_results_objects) == 6
         assert tuner.results.number_of_cycles == 6
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ElasticNet_can_tune.pkl'))  # noqa
-        # with open(file, 'wb') as output:
-        #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
-        with open(file, 'rb') as saved_object:
-            saved_results = pickle.load(saved_object)
-            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.resampled_stats,
-                                                      data_frame2=tuner.results.resampled_stats)
-            assert TestHelper.ensure_all_values_equal(data_frame1=saved_results.sorted_best_models,
-                                                      data_frame2=tuner.results.sorted_best_models)
+        TestHelper.save_string(tuner.results,
+                               'data/test_ModelWrappers/test_ElasticNetRegressor_tuner_results.txt')
 
     def test_ModelFitter_callback(self):
         # make sure that the ModelTrainer->train_callback works, other tests rely on it to work correctly.
@@ -1182,21 +1174,21 @@ class ModelWrapperTests(TimerTestCase):
                                   splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                                   evaluator=TwoClassProbabilityEvaluator(
                                      converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))  # noqa
+            hp = LogisticClassifierHP()
             fitter.train_predict_eval(data=data,
                                       target_variable='Survived',
-                                      hyper_params=LogisticClassifierHP())
+                                      hyper_params=hp)
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
-            assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0, 'solver': 'liblinear'}  # noqa
+            TestHelper.assert_hyper_params_match(hyper_params=hp, model=fitter.model,
+                                                 mapping={'regularization_inverse': 'C'})
+            TestHelper.save_string(fitter, 'data/test_ModelWrappers/test_Logistic_string.txt')
+            TestHelper.save_string(fitter.training_evaluator,
+                                   'data/test_ModelWrappers/test_Logistic_training_evaluator.txt')
+            TestHelper.save_string(fitter.holdout_evaluator,
+                                   'data/test_ModelWrappers/test_Logistic_holdout_evaluator.txt')
 
-            con_matrix = fitter.training_evaluator._confusion_matrix
-            assert con_matrix.matrix.loc[:, 0].values.tolist() == [386, 85, 471]
-            assert con_matrix.matrix.loc[:, 1].values.tolist() == [53, 188, 241]
-            assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
-            assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
-            assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-            assert isclose(fitter.training_evaluator.auc_roc, 0.8603803182390881)
             TestHelper.check_plot(file_name='data/test_ModelWrappers/test_LogisticMW_training_ROC.png',
                                   get_plot_function=lambda: fitter.training_evaluator.plot_roc_curve(),
                                   set_size_w_h=(8, 8))
@@ -1204,29 +1196,12 @@ class ModelWrapperTests(TimerTestCase):
                                   lambda: fitter.training_evaluator.plot_ppv_tpr_curve(),
                                   set_size_w_h=(8, 8))
 
-            con_matrix = fitter.holdout_evaluator._confusion_matrix
-            assert con_matrix.matrix.loc[:, 0].values.tolist() == [98, 22, 120]
-            assert con_matrix.matrix.loc[:, 1].values.tolist() == [12, 47, 59]
-            assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
-            assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
-            assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-            assert isclose(fitter.holdout_evaluator.auc_roc, 0.8458498023715415)
             TestHelper.check_plot('data/test_ModelWrappers/test_LogisticMW_holdout_ROC.png',
                                   lambda: fitter.holdout_evaluator.plot_roc_curve(),
                                   set_size_w_h=(8, 8))
             TestHelper.check_plot('data/test_ModelWrappers/test_LogisticMW_holdout_PrecRecal.png',
                                   lambda: fitter.holdout_evaluator.plot_ppv_tpr_curve(),
                                   set_size_w_h=(8, 8))
-
-            actual_metrics = fitter.training_evaluator.all_quality_metrics
-            expected_metrics = {'AUC ROC': 0.8603803182390881, 'AUC Precision/Recall': 0.838917030827769, 'Kappa': 0.5807869204973077, 'F1 Score': 0.7315175097276264, 'Two-Class Accuracy': 0.8061797752808989, 'Error Rate': 0.19382022471910113, 'True Positive Rate': 0.6886446886446886, 'True Negative Rate': 0.8792710706150342, 'False Positive Rate': 0.12072892938496584, 'False Negative Rate': 0.31135531135531136, 'Positive Predictive Value': 0.7800829875518672, 'Negative Predictive Value': 0.8195329087048833, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-            assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-            assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
-
-            actual_metrics = fitter.holdout_evaluator.all_quality_metrics
-            expected_metrics = {'AUC ROC': 0.8458498023715415, 'AUC Precision/Recall': 0.7926428620672208, 'Kappa': 0.5879485443466486, 'F1 Score': 0.7343750000000001, 'Two-Class Accuracy': 0.8100558659217877, 'Error Rate': 0.18994413407821228, 'True Positive Rate': 0.6811594202898551, 'True Negative Rate': 0.8909090909090909, 'False Positive Rate': 0.10909090909090909, 'False Negative Rate': 0.3188405797101449, 'Positive Predictive Value': 0.7966101694915254, 'Negative Predictive Value': 0.8166666666666667, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
-            assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-            assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
 
     def test_LogisticMW_string_target(self):
         data = TestHelper.get_titanic_data()
@@ -1246,37 +1221,18 @@ class ModelWrapperTests(TimerTestCase):
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5,
                                                                       positive_class=positive_class)))
-        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=LogisticClassifierHP())
+        hp = LogisticClassifierHP()
+        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=hp)
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
-        assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'regularization_inverse': 1.0, 'solver': 'liblinear'}  # noqa
-
-        con_matrix = fitter.training_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [386, 85, 471]
-        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [53, 188, 241]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
-        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
-        assert isclose(round(fitter.training_evaluator.auc_roc, 4), round(0.8603803182390881, 4))
-
-        con_matrix = fitter.holdout_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [98, 22, 120]
-        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [12, 47, 59]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
-        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
-        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8458498023715415)
-
-        actual_metrics = fitter.training_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8603803182390881, 'AUC Precision/Recall': 0.838917030827769, 'Kappa': 0.5807869204973077, 'F1 Score': 0.7315175097276264, 'Two-Class Accuracy': 0.8061797752808989, 'Error Rate': 0.19382022471910113, 'True Positive Rate': 0.6886446886446886, 'True Negative Rate': 0.8792710706150342, 'False Positive Rate': 0.12072892938496584, 'False Negative Rate': 0.31135531135531136, 'Positive Predictive Value': 0.7800829875518672, 'Negative Predictive Value': 0.8195329087048833, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
-
-        actual_metrics = fitter.holdout_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8458498023715415, 'AUC Precision/Recall': 0.7926428620672208, 'Kappa': 0.5879485443466486, 'F1 Score': 0.7343750000000001, 'Two-Class Accuracy': 0.8100558659217877, 'Error Rate': 0.18994413407821228, 'True Positive Rate': 0.6811594202898551, 'True Negative Rate': 0.8909090909090909, 'False Positive Rate': 0.10909090909090909, 'False Negative Rate': 0.3188405797101449, 'Positive Predictive Value': 0.7966101694915254, 'Negative Predictive Value': 0.8166666666666667, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
-        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+        TestHelper.assert_hyper_params_match(hp, fitter.model, mapping={'regularization_inverse': 'C'})
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_LogisticMW_string_target_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_LogisticMW_string_target_training_evaluator.txt')
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_LogisticMW_string_target_holdout_evaluator.txt')
 
     def test_RandomForestHP_classification(self):
         # ensure n_features should be passed in OR all others, but not both
@@ -1402,9 +1358,10 @@ class ModelWrapperTests(TimerTestCase):
         if os.path.isdir(fitter._persistence_manager._cache_directory):
             shutil.rmtree(fitter._persistence_manager._cache_directory)
         assert not os.path.isdir(fitter._persistence_manager._cache_directory)
+        hp = RandomForestHP(criterion='gini')
         fitter.train_predict_eval(data=data,
                                   target_variable='Survived',
-                                  hyper_params=RandomForestHP(criterion='gini'))
+                                  hyper_params=hp)
         assert os.path.isfile(fitter._persistence_manager._cache_path)
         assert isinstance(fitter.model.model_object, sk.ensemble.RandomForestClassifier)
 
@@ -1423,9 +1380,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'min_impurity_decrease': 0,
                                                          'bootstrap': True,
                                                          'oob_score': False}
-
-        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9977638155314693, 'AUC Precision/Recall': 0.9963857279946995, 'Kappa': 0.9642058165548097, 'F1 Score': 0.9777777777777779, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.967032967032967, 'True Negative Rate': 0.9931662870159453, 'False Positive Rate': 0.00683371298405467, 'False Negative Rate': 0.03296703296703297, 'Positive Predictive Value': 0.9887640449438202, 'Negative Predictive Value': 0.9797752808988764, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8198945981554676, 'AUC Precision/Recall': 0.7693830218733662, 'Kappa': 0.581636060100167, 'F1 Score': 0.736842105263158, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8636363636363636, 'False Positive Rate': 0.13636363636363635, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.765625, 'Negative Predictive Value': 0.8260869565217391, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_RandomForestClassifier_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_RandomForestClassifier_training_evaluator.txt')
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_RandomForestClassifier_holdout_evaluator.txt')
 
         ######################################################################################################
         # test custom hyper-parameters
@@ -1448,11 +1409,10 @@ class ModelWrapperTests(TimerTestCase):
         assert fitter._persistence_manager._cache_directory == cache_directory
         shutil.rmtree(fitter._persistence_manager._cache_directory)
         assert not os.path.isdir(fitter._persistence_manager._cache_directory)
+        hp = RandomForestHP(criterion='gini', max_features='auto', n_estimators=10)
         fitter.train_predict_eval(data=data,
                                   target_variable='Survived',
-                                  hyper_params=RandomForestHP(criterion='gini',
-                                                              max_features='auto',
-                                                              n_estimators=10))
+                                  hyper_params=hp)
         assert os.path.isfile(fitter._persistence_manager._cache_path)
         assert isinstance(fitter.model.model_object, sk.ensemble.RandomForestClassifier)
 
@@ -1472,8 +1432,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'bootstrap': True,
                                                          'oob_score': False}
 
-        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9962785885337139, 'AUC Precision/Recall': 0.9941773735463619, 'Kappa': 0.9491855583543242, 'F1 Score': 0.9683426443202979, 'Two-Class Accuracy': 0.976123595505618, 'Error Rate': 0.023876404494382022, 'True Positive Rate': 0.9523809523809523, 'True Negative Rate': 0.9908883826879271, 'False Positive Rate': 0.009111617312072893, 'False Negative Rate': 0.047619047619047616, 'Positive Predictive Value': 0.9848484848484849, 'Negative Predictive Value': 0.9709821428571429, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.83399209486166, 'AUC Precision/Recall': 0.756480622334744, 'Kappa': 0.5503428610224728, 'F1 Score': 0.7086614173228347, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.6521739130434783, 'True Negative Rate': 0.8818181818181818, 'False Positive Rate': 0.11818181818181818, 'False Negative Rate': 0.34782608695652173, 'Positive Predictive Value': 0.7758620689655172, 'Negative Predictive Value': 0.8016528925619835, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_RandomForestClassifier2_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_RandomForestClassifier2_training_evaluator.txt')
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_RandomForestClassifier2_holdout_evaluator.txt')
 
     def test_RandomForestClassifier_string_target(self):
         data = TestHelper.get_titanic_data()
@@ -1495,9 +1460,10 @@ class ModelWrapperTests(TimerTestCase):
                                  converter=TwoClassThresholdConverter(threshold=0.5,
                                                                       positive_class=positive_class)))
 
+        hp = RandomForestHP(criterion='gini')
         fitter.train_predict_eval(data=data,
                                   target_variable='Survived',
-                                  hyper_params=RandomForestHP(criterion='gini'))
+                                  hyper_params=hp)
         assert isinstance(fitter.model.model_object, sk.ensemble.RandomForestClassifier)
 
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
@@ -1515,41 +1481,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'min_impurity_decrease': 0,
                                                          'bootstrap': True,
                                                          'oob_score': False}
-
-        expected_training_metrics = {'AUC ROC': 0.9977638155314693, 'AUC Precision/Recall': 0.9963857279946995, 'Kappa': 0.9642058165548097, 'F1 Score': 0.9777777777777779, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.967032967032967, 'True Negative Rate': 0.9931662870159453, 'False Positive Rate': 0.00683371298405467, 'False Negative Rate': 0.03296703296703297, 'Positive Predictive Value': 0.9887640449438202, 'Negative Predictive Value': 0.9797752808988764, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        expected_holdout_metrics = {'AUC ROC': 0.8198945981554676, 'AUC Precision/Recall': 0.7693830218733662, 'Kappa': 0.581636060100167, 'F1 Score': 0.736842105263158, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8636363636363636, 'False Positive Rate': 0.13636363636363635, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.765625, 'Negative Predictive Value': 0.8260869565217391, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
-
-        list(fitter.holdout_evaluator.all_quality_metrics.values())
-
-        assert all([x == y for x, y in
-                    zip(fitter.training_evaluator.all_quality_metrics.keys(),
-                        expected_training_metrics.keys())])
-
-        assert all([isclose(round(x, 5), round(y, 5)) for x, y in
-                    zip(fitter.training_evaluator.all_quality_metrics.values(),
-                        expected_training_metrics.values())])
-
-        assert all([x == y for x, y in
-                    zip(fitter.holdout_evaluator.all_quality_metrics.keys(),
-                        expected_holdout_metrics.keys())])
-
-        assert all([isclose(round(x, 5), round(y, 5)) for x, y in
-                    zip(fitter.holdout_evaluator.all_quality_metrics.values(),
-                        expected_holdout_metrics.values())])
-
-        con_matrix = fitter.training_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [436, 9, 445]
-        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [3, 264, 267]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
-        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
-
-        con_matrix = fitter.holdout_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [95, 20, 115]
-        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [15, 49, 64]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
-        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_RandomForestClassifier_string_target_string.txt')  # noqa
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_RandomForestClassifier_string_target_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_RandomForestClassifier_string_target_holdout_evaluator.txt')  # noqa
 
     def test_RandomForestClassifier_scores(self):
         data = TestHelper.get_titanic_data()
@@ -1568,20 +1506,15 @@ class ModelWrapperTests(TimerTestCase):
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                               scores=score_list)
 
+        hp = RandomForestHP(criterion='gini')
         fitter.train_predict_eval(data=data,
                                   target_variable='Survived',
-                                  hyper_params=RandomForestHP(criterion='gini'))
+                                  hyper_params=hp)
         assert isinstance(fitter.model.model_object, sk.ensemble.RandomForestClassifier)
 
-        assert isclose(fitter.training_scores[0].value, 0.9642058165548097)
-        assert isclose(fitter.training_scores[1].value, 0.967032967032967)
-        assert isclose(fitter.training_scores[2].value, 0.9931662870159453)
-        assert isclose(fitter.training_scores[3].value, 0.016853932584269662)
-
-        assert isclose(fitter.holdout_scores[0].value, 0.581636060100167)
-        assert isclose(fitter.holdout_scores[1].value, 0.7101449275362319)
-        assert isclose(fitter.holdout_scores[2].value, 0.8636363636363636)
-        assert isclose(fitter.holdout_scores[3].value, 0.19553072625698323)
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_RandomForestClassifier_scores_string.txt')
 
     def test_RandomForestRegressor(self):
         data = TestHelper.get_cement_data()
@@ -1595,7 +1528,8 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # test default hyper-parameters
         ######################################################################################################
-        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=RandomForestHP(criterion='MAE', n_estimators=10))  # noqa
+        hp = RandomForestHP(criterion='MAE', n_estimators=10)
+        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=hp)
         assert isinstance(fitter.model.model_object, sk.ensemble.RandomForestRegressor)
 
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
@@ -1614,12 +1548,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'bootstrap': True,
                                                          'oob_score': False}
 
-        keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 1.6196875, 'Mean Squared Error (MSE)': 6.604963058555824, 'Root Mean Squared Error (RMSE)': 2.5700122681722406, 'RMSE to Standard Deviation of Target': 0.15327583936297826, 'R Squared': 0.9765065170675745, 'Total Observations': 824}  # noqa
-        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
-
-        expected_values = {'Mean Absolute Error (MAE)': 3.900456310679611, 'Mean Squared Error (MSE)': 31.24361778640777, 'Root Mean Squared Error (RMSE)': 5.589599072063019, 'RMSE to Standard Deviation of Target': 0.34050571329954277, 'R Squared': 0.8840558592103696, 'Total Observations': 206}  # noqa
-        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_RandomForestRegressor_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_RandomForestRegressor_training_evaluator.txt')
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_RandomForestRegressor_holdout_evaluator.txt')
 
     def test_RandomForestClassifier_multiclass(self):
         data = TestHelper.get_iris_data()
@@ -1629,11 +1564,10 @@ class ModelWrapperTests(TimerTestCase):
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                               evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
 
+        hp = RandomForestHP(criterion='gini', n_estimators=10, max_features='auto')
         fitter.train_predict_eval(data=data,
                                   target_variable=target_variable,
-                                  hyper_params=RandomForestHP(criterion='gini',
-                                                              n_estimators=10,
-                                                              max_features='auto'))  # noqa
+                                  hyper_params=hp)
         assert isinstance(fitter.model.model_object, sk.ensemble.RandomForestClassifier)
 
         assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
@@ -1652,16 +1586,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'bootstrap': True,
                                                          'oob_score': False}
 
-        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.841995841995842, 'Accuracy': 0.8947368421052632, 'Error Rate': 0.10526315789473684, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa
-
-        con_matrix = fitter.holdout_evaluator.matrix
-        assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
-        assert con_matrix['versicolor'].values.tolist() == [0, 12, 3, 15]
-        assert con_matrix['virginica'].values.tolist() == [0, 1, 10, 11]
-        assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
-        assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
-        assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_RandomForestClassifier_multiclass_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_RandomForestClassifier_multiclass_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_RandomForestClassifier_multiclass_holdout_evaluator.txt')  # noqa
 
     def test_ExtraTreesClassifier(self):
         data = TestHelper.get_titanic_data()
@@ -1677,9 +1608,10 @@ class ModelWrapperTests(TimerTestCase):
                                  converter=TwoClassThresholdConverter(threshold=0.5,
                                                                       positive_class=1)))
 
+        hp = RandomForestHP(criterion='gini')
         fitter.train_predict_eval(data=data,
                                   target_variable='Survived',
-                                  hyper_params=RandomForestHP(criterion='gini'))
+                                  hyper_params=hp)
         assert isinstance(fitter.model.model_object, sk.ensemble.ExtraTreesClassifier)
 
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
@@ -1698,8 +1630,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'bootstrap': True,
                                                          'oob_score': False}
 
-        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9976303119811093, 'AUC Precision/Recall': 0.9961455436444634, 'Kappa': 0.9642058165548097, 'F1 Score': 0.9777777777777779, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.967032967032967, 'True Negative Rate': 0.9931662870159453, 'False Positive Rate': 0.00683371298405467, 'False Negative Rate': 0.03296703296703297, 'Positive Predictive Value': 0.9887640449438202, 'Negative Predictive Value': 0.9797752808988764, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8379446640316205, 'AUC Precision/Recall': 0.8053536737588968, 'Kappa': 0.5924735502879335, 'F1 Score': 0.7424242424242424, 'Two-Class Accuracy': 0.8100558659217877, 'Error Rate': 0.18994413407821228, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8727272727272727, 'False Positive Rate': 0.12727272727272726, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.7777777777777778, 'Negative Predictive Value': 0.8275862068965517, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_ExtraTreesClassifier_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_ExtraTreesClassifier_training_evaluator.txt')
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_ExtraTreesClassifier_holdout_evaluator.txt')
 
     def test_ExtraTreesClassifier_string_target(self):
         data = TestHelper.get_titanic_data()
@@ -1721,9 +1658,10 @@ class ModelWrapperTests(TimerTestCase):
                                  converter=TwoClassThresholdConverter(threshold=0.5,
                                                                       positive_class=positive_class)))
 
+        hp = RandomForestHP(criterion='gini')
         fitter.train_predict_eval(data=data,
                                   target_variable='Survived',
-                                  hyper_params=RandomForestHP(criterion='gini'))
+                                  hyper_params=hp)
         assert isinstance(fitter.model.model_object, sk.ensemble.ExtraTreesClassifier)
 
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
@@ -1742,22 +1680,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'bootstrap': True,
                                                          'oob_score': False}
 
-        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9976303119811093, 'AUC Precision/Recall': 0.9961455436444634, 'Kappa': 0.9642058165548097, 'F1 Score': 0.9777777777777779, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.967032967032967, 'True Negative Rate': 0.9931662870159453, 'False Positive Rate': 0.00683371298405467, 'False Negative Rate': 0.03296703296703297, 'Positive Predictive Value': 0.9887640449438202, 'Negative Predictive Value': 0.9797752808988764, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8379446640316205, 'AUC Precision/Recall': 0.8053536737588968, 'Kappa': 0.5924735502879335, 'F1 Score': 0.7424242424242424, 'Two-Class Accuracy': 0.8100558659217877, 'Error Rate': 0.18994413407821228, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8727272727272727, 'False Positive Rate': 0.12727272727272726, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.7777777777777778, 'Negative Predictive Value': 0.8275862068965517, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
-
-        con_matrix = fitter.training_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [436, 9, 445]
-        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [3, 264, 267]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
-        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
-
-        con_matrix = fitter.holdout_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [96, 20, 116]
-        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [14, 49, 63]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
-        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_ExtraTreesClassifier_string_target_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_ExtraTreesClassifier_string_target_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_ExtraTreesClassifier_string_target_holdout_evaluator.txt')  # noqa
 
     def test_ExtraTreesRegressor(self):
         data = TestHelper.get_cement_data()
@@ -1771,9 +1700,10 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # test default hyper-parameters
         ######################################################################################################
+        hp = RandomForestHP(criterion='MAE', n_estimators=10)
         fitter.train_predict_eval(data=data,
                                   target_variable='strength',
-                                  hyper_params=RandomForestHP(criterion='MAE', n_estimators=10))
+                                  hyper_params=hp)
         assert isinstance(fitter.model.model_object, sk.ensemble.ExtraTreesRegressor)
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
@@ -1791,12 +1721,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'bootstrap': True,
                                                          'oob_score': False}
 
-        keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 1.6908944174757286, 'Mean Squared Error (MSE)': 7.270130009708737, 'Root Mean Squared Error (RMSE)': 2.6963178614007544, 'RMSE to Standard Deviation of Target': 0.16080872006479205, 'R Squared': 0.9741405555511233, 'Total Observations': 824}  # noqa
-        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
-
-        expected_values = {'Mean Absolute Error (MAE)': 3.7428349514563113, 'Mean Squared Error (MSE)': 25.51530114805826, 'Root Mean Squared Error (RMSE)': 5.051267281391697, 'RMSE to Standard Deviation of Target': 0.30771176009983603, 'R Squared': 0.905313472696261, 'Total Observations': 206}  # noqa
-        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_ExtraTreesRegressor_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_ExtraTreesRegressor_training_evaluator.txt')
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_ExtraTreesRegressor_holdout_evaluator.txt')
 
     def test_ExtraTreesClassifier_multiclass(self):
         data = TestHelper.get_iris_data()
@@ -1806,11 +1737,10 @@ class ModelWrapperTests(TimerTestCase):
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                               evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
 
+        hp = RandomForestHP(criterion='gini', n_estimators=10, max_features='auto')
         fitter.train_predict_eval(data=data,
                                   target_variable=target_variable,
-                                  hyper_params=RandomForestHP(criterion='gini',
-                                                              n_estimators=10,
-                                                              max_features='auto'))
+                                  hyper_params=hp)
         assert isinstance(fitter.model.model_object, sk.ensemble.ExtraTreesClassifier)
         assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
         assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
@@ -1828,16 +1758,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'bootstrap': True,
                                                          'oob_score': False}
 
-        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.920997920997921, 'Accuracy': 0.9473684210526315, 'Error Rate': 0.052631578947368474, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa
-
-        con_matrix = fitter.holdout_evaluator.matrix
-        assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
-        assert con_matrix['versicolor'].values.tolist() == [0, 13, 2, 15]
-        assert con_matrix['virginica'].values.tolist() == [0, 0, 11, 11]
-        assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
-        assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
-        assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_ExtraTreesClassifier_multiclass_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_ExtraTreesClassifier_multiclass_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_ExtraTreesClassifier_multiclass_holdout_evaluator.txt')  # noqa
 
     def test_SoftmaxRegression_multiclass(self):
         data = TestHelper.get_iris_data()
@@ -1846,7 +1773,8 @@ class ModelWrapperTests(TimerTestCase):
                               model_transformations=None,
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                               evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
-        fitter.train_predict_eval(data=data, target_variable=target_variable, hyper_params=SoftmaxLogisticHP())  # noqa
+        hp = SoftmaxLogisticHP()
+        fitter.train_predict_eval(data=data, target_variable=target_variable, hyper_params=hp)
 
         assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
         assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
@@ -1855,25 +1783,13 @@ class ModelWrapperTests(TimerTestCase):
                                                    'petal_width']  # noqa
         assert fitter.model.hyper_params.params_dict == {'regularization_inverse': 1.0, 'solver': 'lbfgs'}  # noqa
 
-        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 0.959818225304951,
-                                                                 'Accuracy': 0.9732142857142857,
-                                                                 'Error Rate': 0.0267857142857143,
-                                                                 'No Information Rate': 0.3392857142857143,
-                                                                 'Total Observations': 112}
-
-        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.920997920997921,
-                                                                'Accuracy': 0.9473684210526315,
-                                                                'Error Rate': 0.052631578947368474,
-                                                                'No Information Rate': 0.34210526315789475,
-                                                                'Total Observations': 38}
-
-        con_matrix = fitter.holdout_evaluator.matrix
-        assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
-        assert con_matrix['versicolor'].values.tolist() == [0, 12, 1, 13]
-        assert con_matrix['virginica'].values.tolist() == [0, 1, 12, 13]
-        assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
-        assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
-        assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        TestHelper.assert_hyper_params_match(hp, fitter.model, mapping={'regularization_inverse': 'C'})
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_SoftmaxRegression_multiclass_string.txt')  # noqa
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_SoftmaxRegression_multiclass_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_SoftmaxRegression_multiclass_holdout_evaluator.txt')  # noqa
 
     def test_DummyClassifier_most_frequent(self):
         data = TestHelper.get_titanic_data()
@@ -2002,38 +1918,23 @@ class ModelWrapperTests(TimerTestCase):
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))
-        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=SvmLinearClassifierHP())
+        hp = SvmLinearClassifierHP()
+        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=hp)
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
         assert fitter.model._class_weights is None
 
         assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}
 
-        con_matrix = fitter.training_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 0].values.tolist() == [386, 85, 471]
-        assert con_matrix.matrix.loc[:, 1].values.tolist() == [53, 188, 241]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
-        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.training_evaluator.auc_roc, 0.860063247306983)
-
-        con_matrix = fitter.holdout_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 0].values.tolist() == [99, 24, 123]
-        assert con_matrix.matrix.loc[:, 1].values.tolist() == [11, 45, 56]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
-        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8404479578392622)
-
-        actual_metrics = fitter.training_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.860063247306983, 'AUC Precision/Recall': 0.8309551302990441, 'Kappa': 0.5807869204973077, 'F1 Score': 0.7315175097276264, 'Two-Class Accuracy': 0.8061797752808989, 'Error Rate': 0.19382022471910113, 'True Positive Rate': 0.6886446886446886, 'True Negative Rate': 0.8792710706150342, 'False Positive Rate': 0.12072892938496584, 'False Negative Rate': 0.31135531135531136, 'Positive Predictive Value': 0.7800829875518672, 'Negative Predictive Value': 0.8195329087048833, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
-
-        actual_metrics = fitter.holdout_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8404479578392622, 'AUC Precision/Recall': 0.7855258319080893, 'Kappa': 0.5722673585034479, 'F1 Score': 0.7200000000000001, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6521739130434783, 'True Negative Rate': 0.9, 'False Positive Rate': 0.1, 'False Negative Rate': 0.34782608695652173, 'Positive Predictive Value': 0.8035714285714286, 'Negative Predictive Value': 0.8048780487804879, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
-        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+        TestHelper.assert_hyper_params_match(hp, fitter.model, mapping={'penalty': 'base_estimator__penalty',
+                                                                        'penalty_c': 'base_estimator__C',
+                                                                        'loss': 'base_estimator__loss'})
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_SVM_classification_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_SVM_classification_training_evaluator.txt')
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_SVM_classification_holdout_evaluator.txt')
 
         ######################################################################################################
         # Class Weights
@@ -2049,37 +1950,23 @@ class ModelWrapperTests(TimerTestCase):
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))
-        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=SvmLinearClassifierHP())
+        hp = SvmLinearClassifierHP()
+        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=hp)
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
         assert fitter.model._class_weights == {0: 0.3, 1: 0.7}
         assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}
 
-        con_matrix = fitter.training_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 0].values.tolist() == [374, 80, 454]
-        assert con_matrix.matrix.loc[:, 1].values.tolist() == [65, 193, 258]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
-        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.training_evaluator.auc_roc, 0.8557076939764867)
+        TestHelper.assert_hyper_params_match(hp, fitter.model, mapping={'penalty': 'base_estimator__penalty',
+                                                                        'penalty_c': 'base_estimator__C',
+                                                                        'loss': 'base_estimator__loss'})
 
-        con_matrix = fitter.holdout_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 0].values.tolist() == [92, 23, 115]
-        assert con_matrix.matrix.loc[:, 1].values.tolist() == [18, 46, 64]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
-        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.holdout_evaluator.auc_roc, 0.825691699604743)
-
-        actual_metrics = fitter.training_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8557076939764867, 'AUC Precision/Recall': 0.8088979642448655, 'Kappa': 0.5647628201885297, 'F1 Score': 0.7269303201506591, 'Two-Class Accuracy': 0.7963483146067416, 'Error Rate': 0.20365168539325842, 'True Positive Rate': 0.706959706959707, 'True Negative Rate': 0.8519362186788155, 'False Positive Rate': 0.1480637813211845, 'False Negative Rate': 0.29304029304029305, 'Positive Predictive Value': 0.748062015503876, 'Negative Predictive Value': 0.8237885462555066, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
-
-        actual_metrics = fitter.holdout_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.825691699604743, 'AUC Precision/Recall': 0.7585708147490251, 'Kappa': 0.5099165275459098, 'F1 Score': 0.6917293233082707, 'Two-Class Accuracy': 0.770949720670391, 'Error Rate': 0.22905027932960895, 'True Positive Rate': 0.6666666666666666, 'True Negative Rate': 0.8363636363636363, 'False Positive Rate': 0.16363636363636364, 'False Negative Rate': 0.3333333333333333, 'Positive Predictive Value': 0.71875, 'Negative Predictive Value': 0.8, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
-        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_SVM_classification_class_weights_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_SVM_classification_class_weights_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_SVM_classification_class_weights_holdout_evaluator.txt')  # noqa
 
     def test_SVM_classification_string(self):
         data = TestHelper.get_titanic_data()
@@ -2101,38 +1988,22 @@ class ModelWrapperTests(TimerTestCase):
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived')))
-        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=SvmLinearClassifierHP())
+        hp = SvmLinearClassifierHP()
+        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=hp)
         assert fitter.model._class_weights is None
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
         assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}
-
-        con_matrix = fitter.training_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [386, 85, 471]
-        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [53, 188, 241]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
-        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
-        assert isclose(fitter.training_evaluator.auc_roc, 0.860063247306983)
-
-        con_matrix = fitter.holdout_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [99, 24, 123]
-        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [11, 45, 56]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
-        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
-        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8404479578392622)
-
-        actual_metrics = fitter.training_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.860063247306983, 'AUC Precision/Recall': 0.8309551302990441, 'Kappa': 0.5807869204973077, 'F1 Score': 0.7315175097276264, 'Two-Class Accuracy': 0.8061797752808989, 'Error Rate': 0.19382022471910113, 'True Positive Rate': 0.6886446886446886, 'True Negative Rate': 0.8792710706150342, 'False Positive Rate': 0.12072892938496584, 'False Negative Rate': 0.31135531135531136, 'Positive Predictive Value': 0.7800829875518672, 'Negative Predictive Value': 0.8195329087048833, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
-
-        actual_metrics = fitter.holdout_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8404479578392622, 'AUC Precision/Recall': 0.7855258319080893, 'Kappa': 0.5722673585034479, 'F1 Score': 0.7200000000000001, 'Two-Class Accuracy': 0.8044692737430168, 'Error Rate': 0.19553072625698323, 'True Positive Rate': 0.6521739130434783, 'True Negative Rate': 0.9, 'False Positive Rate': 0.1, 'False Negative Rate': 0.34782608695652173, 'Positive Predictive Value': 0.8035714285714286, 'Negative Predictive Value': 0.8048780487804879, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
-        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+        TestHelper.assert_hyper_params_match(hp, fitter.model, mapping={'penalty': 'base_estimator__penalty',
+                                                                        'penalty_c': 'base_estimator__C',
+                                                                        'loss': 'base_estimator__loss'})
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_SVM_classification_string_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_SVM_classification_string_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_SVM_classification_string_holdout_evaluator.txt')  # noqa
 
         ######################################################################################################
         # Class class weights
@@ -2148,37 +2019,21 @@ class ModelWrapperTests(TimerTestCase):
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5, positive_class='lived')))
-        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=SvmLinearClassifierHP())
+        hp = SvmLinearClassifierHP()
+        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=hp)
         assert fitter.model._class_weights == {'died': 0.3, 'lived': 0.7}
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
         assert fitter.model.hyper_params.params_dict == {'penalty': 'l2', 'penalty_c': 1.0, 'loss': 'hinge'}
-
-        con_matrix = fitter.training_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [374, 80, 454]
-        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [65, 193, 258]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
-        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
-        assert isclose(fitter.training_evaluator.auc_roc, 0.8557076939764867)
-
-        con_matrix = fitter.holdout_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 'died'].values.tolist() == [92, 23, 115]
-        assert con_matrix.matrix.loc[:, 'lived'].values.tolist() == [18, 46, 64]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
-        assert con_matrix.matrix.index.values.tolist() == ['died', 'lived', 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == ['died', 'lived', 'Total']
-        assert isclose(fitter.holdout_evaluator.auc_roc, 0.825691699604743)
-
-        actual_metrics = fitter.training_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8557076939764867, 'AUC Precision/Recall': 0.8088979642448655, 'Kappa': 0.5647628201885297, 'F1 Score': 0.7269303201506591, 'Two-Class Accuracy': 0.7963483146067416, 'Error Rate': 0.20365168539325842, 'True Positive Rate': 0.706959706959707, 'True Negative Rate': 0.8519362186788155, 'False Positive Rate': 0.1480637813211845, 'False Negative Rate': 0.29304029304029305, 'Positive Predictive Value': 0.748062015503876, 'Negative Predictive Value': 0.8237885462555066, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
-
-        actual_metrics = fitter.holdout_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.825691699604743, 'AUC Precision/Recall': 0.7585708147490251, 'Kappa': 0.5099165275459098, 'F1 Score': 0.6917293233082707, 'Two-Class Accuracy': 0.770949720670391, 'Error Rate': 0.22905027932960895, 'True Positive Rate': 0.6666666666666666, 'True Negative Rate': 0.8363636363636363, 'False Positive Rate': 0.16363636363636364, 'False Negative Rate': 0.3333333333333333, 'Positive Predictive Value': 0.71875, 'Negative Predictive Value': 0.8, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
-        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+        TestHelper.assert_hyper_params_match(hp, fitter.model, mapping={'penalty': 'base_estimator__penalty',
+                                                                        'penalty_c': 'base_estimator__C',
+                                                                        'loss': 'base_estimator__loss'})
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_SVM_classification_string_class_weights_string.txt')  # noqa
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_SVM_classification_string_class_weights_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_SVM_classification_string_class_weights_holdout_evaluator.txt')  # noqa
 
     def test_SvmPolynomial_classification(self):
         data = TestHelper.get_titanic_data()
@@ -2198,40 +2053,25 @@ class ModelWrapperTests(TimerTestCase):
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))
+        hp = SvmPolynomialClassifierHP()
         fitter.train_predict_eval(data=data,
                                   target_variable='Survived',
-                                  hyper_params=SvmPolynomialClassifierHP())
+                                  hyper_params=hp)
         assert fitter.model._class_weights is None
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
         assert fitter.model.hyper_params.params_dict == {'degree': 3, 'coef0': 0.0, 'penalty_c': 1.0}
 
-        con_matrix = fitter.training_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 0].values.tolist() == [403, 100, 503]
-        assert con_matrix.matrix.loc[:, 1].values.tolist() == [36, 173, 209]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
-        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.training_evaluator.auc_roc, 0.8623077757474112)
-
-        con_matrix = fitter.holdout_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 0].values.tolist() == [104, 31, 135]
-        assert con_matrix.matrix.loc[:, 1].values.tolist() == [6, 38, 44]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
-        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.holdout_evaluator.auc_roc, 0.829776021080369)
-
-        actual_metrics = fitter.training_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8623077757474112, 'AUC Precision/Recall': 0.8282970071095012, 'Kappa': 0.5772820535207578, 'F1 Score': 0.7178423236514523, 'Two-Class Accuracy': 0.8089887640449438, 'Error Rate': 0.19101123595505617, 'True Positive Rate': 0.6336996336996337, 'True Negative Rate': 0.9179954441913439, 'False Positive Rate': 0.08200455580865604, 'False Negative Rate': 0.3663003663003663, 'Positive Predictive Value': 0.8277511961722488, 'Negative Predictive Value': 0.8011928429423459, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
-
-        actual_metrics = fitter.holdout_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.829776021080369, 'AUC Precision/Recall': 0.7965252719501299, 'Kappa': 0.5321087954786295, 'F1 Score': 0.672566371681416, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.5507246376811594, 'True Negative Rate': 0.9454545454545454, 'False Positive Rate': 0.05454545454545454, 'False Negative Rate': 0.4492753623188406, 'Positive Predictive Value': 0.8636363636363636, 'Negative Predictive Value': 0.7703703703703704, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
-        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+        TestHelper.assert_hyper_params_match(hp, fitter.model, mapping={'degree': 'base_estimator__degree',
+                                                                        'coef0': 'base_estimator__coef0',
+                                                                        'penalty_c': 'base_estimator__C'})
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_SvmPolynomial_classification_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_SvmPolynomial_classification_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_SvmPolynomial_classification_holdout_evaluator.txt')  # noqa
 
         ######################################################################################################
         # class weights
@@ -2248,40 +2088,25 @@ class ModelWrapperTests(TimerTestCase):
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.2),
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)))
+        hp = SvmPolynomialClassifierHP()
         fitter.train_predict_eval(data=data,
                                   target_variable='Survived',
-                                  hyper_params=SvmPolynomialClassifierHP())
+                                  hyper_params=hp)
         assert fitter.model._class_weights == {0: 0.3, 1: 0.7}
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
 
         assert fitter.model.hyper_params.params_dict == {'degree': 3, 'coef0': 0.0, 'penalty_c': 1.0}
 
-        con_matrix = fitter.training_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 0].values.tolist() == [366, 63, 429]
-        assert con_matrix.matrix.loc[:, 1].values.tolist() == [73, 210, 283]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [439, 273, 712]
-        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.training_evaluator.auc_roc, 0.8599047118409305)
-
-        con_matrix = fitter.holdout_evaluator._confusion_matrix
-        assert con_matrix.matrix.loc[:, 0].values.tolist() == [88, 21, 109]
-        assert con_matrix.matrix.loc[:, 1].values.tolist() == [22, 48, 70]
-        assert con_matrix.matrix.loc[:, 'Total'].values.tolist() == [110, 69, 179]
-        assert con_matrix.matrix.index.values.tolist() == [0, 1, 'Total']
-        assert con_matrix.matrix.columns.values.tolist() == [0, 1, 'Total']
-        assert isclose(fitter.holdout_evaluator.auc_roc, 0.8292490118577075)
-
-        actual_metrics = fitter.training_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8599047118409305, 'AUC Precision/Recall': 0.8447391418292325, 'Kappa': 0.5987967881203543, 'F1 Score': 0.7553956834532375, 'Two-Class Accuracy': 0.8089887640449438, 'Error Rate': 0.19101123595505617, 'True Positive Rate': 0.7692307692307693, 'True Negative Rate': 0.8337129840546698, 'False Positive Rate': 0.1662870159453303, 'False Negative Rate': 0.23076923076923078, 'Positive Predictive Value': 0.7420494699646644, 'Negative Predictive Value': 0.8531468531468531, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
-
-        actual_metrics = fitter.holdout_evaluator.all_quality_metrics
-        expected_metrics = {'AUC ROC': 0.8292490118577075, 'AUC Precision/Recall': 0.7764102175364866, 'Kappa': 0.49431706195387953, 'F1 Score': 0.6906474820143885, 'Two-Class Accuracy': 0.7597765363128491, 'Error Rate': 0.24022346368715083, 'True Positive Rate': 0.6956521739130435, 'True Negative Rate': 0.8, 'False Positive Rate': 0.2, 'False Negative Rate': 0.30434782608695654, 'Positive Predictive Value': 0.6857142857142857, 'Negative Predictive Value': 0.8073394495412844, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
-        assert all([x == y for x, y in zip(actual_metrics.keys(), expected_metrics.keys())])
-        assert all([isclose(x, y) for x, y in zip(actual_metrics.values(), expected_metrics.values())])
+        TestHelper.assert_hyper_params_match(hp, fitter.model, mapping={'degree': 'base_estimator__degree',
+                                                                        'coef0': 'base_estimator__coef0',
+                                                                        'penalty_c': 'base_estimator__C'})
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_SvmPolynomial_classification_class_weights_string.txt')  # noqa
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_SvmPolynomial_classification_class_weights_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_SvmPolynomial_classification_class_weights_holdout_evaluator.txt')  # noqa
 
     def test_SvmLinearRegressor(self):
         data = TestHelper.get_cement_data()
@@ -2293,7 +2118,8 @@ class ModelWrapperTests(TimerTestCase):
                               model_transformations=transformations,
                               splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
                               evaluator=RegressionEvaluator())
-        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=SvmLinearRegressorHP())
+        hp = SvmLinearRegressorHP()
+        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=hp)
 
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
@@ -2302,12 +2128,13 @@ class ModelWrapperTests(TimerTestCase):
 
         assert fitter.model.hyper_params.params_dict == {'epsilon': 0.1, 'penalty_c': 1.0}
 
-        keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 35.78470873786408, 'Mean Squared Error (MSE)': 1561.6856036407662, 'Root Mean Squared Error (RMSE)': 39.518168019795226, 'RMSE to Standard Deviation of Target': 2.3568682719281746, 'R Squared': -4.554828051221705, 'Total Observations': 824}  # noqa
-        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
-
-        expected_values = {'Mean Absolute Error (MAE)': 35.950970873786396, 'Mean Squared Error (MSE)': 1561.9436019417367, 'Root Mean Squared Error (RMSE)': 39.5214321848505, 'RMSE to Standard Deviation of Target': 2.4075561204348044, 'R Squared': -4.796326473043095, 'Total Observations': 206}  # noqa
-        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model, mapping={'penalty_c': 'C'})
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_SvmLinearRegressor_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_SvmLinearRegressor_training_evaluator.txt')
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_SvmLinearRegressor_holdout_evaluator.txt')
 
     def test_SvmPolynomialRegressor(self):
         data = TestHelper.get_cement_data()
@@ -2319,9 +2146,10 @@ class ModelWrapperTests(TimerTestCase):
                               model_transformations=transformations,
                               splitter=RegressionStratifiedDataSplitter(holdout_ratio=0.2),
                               evaluator=RegressionEvaluator())
+        hp = SvmPolynomialRegressorHP()
         fitter.train_predict_eval(data=data,
                                   target_variable='strength',
-                                  hyper_params=SvmPolynomialRegressorHP())
+                                  hyper_params=hp)
 
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
@@ -2330,12 +2158,13 @@ class ModelWrapperTests(TimerTestCase):
 
         assert fitter.model.hyper_params.params_dict == {'degree': 3, 'epsilon': 0.1, 'penalty_c': 1.0}
 
-        keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 8.884181650910488, 'Mean Squared Error (MSE)': 132.52397635503377, 'Root Mean Squared Error (RMSE)': 11.511905852422256, 'RMSE to Standard Deviation of Target': 0.6865714432766075, 'R Squared': 0.5286196532770762, 'Total Observations': 824}  # noqa
-        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
-
-        expected_values = {'Mean Absolute Error (MAE)': 9.013573723533986, 'Mean Squared Error (MSE)': 130.1151697621433, 'Root Mean Squared Error (RMSE)': 11.406803661067517, 'RMSE to Standard Deviation of Target': 0.6948766390942753, 'R Squared': 0.5171464564410442, 'Total Observations': 206}  # noqa
-        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model, mapping={'penalty_c': 'C'})
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_SvmPolynomialRegressor_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_SvmPolynomialRegressor_training_evaluator.txt')
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_SvmPolynomialRegressor_holdout_evaluator.txt')
 
     def test_CartDecisionTreeRegressor(self):
         data = TestHelper.get_cement_data()
@@ -2348,9 +2177,10 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # test default hyper-parameters
         ######################################################################################################
+        hp = CartDecisionTreeHP(criterion='mae')
         fitter.train_predict_eval(data=data,
                                   target_variable='strength',
-                                  hyper_params=CartDecisionTreeHP(criterion='mae'))
+                                  hyper_params=hp)
 
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
@@ -2365,13 +2195,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'min_weight_fraction_leaf': 0,
                                                          'max_leaf_nodes': None,
                                                          'max_features': None}
-
-        keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 0.0887135922330097, 'Mean Squared Error (MSE)': 1.608594963592233, 'Root Mean Squared Error (RMSE)': 1.2683039712908861, 'RMSE to Standard Deviation of Target': 0.07564180069275088, 'R Squared': 0.9942783179879582, 'Total Observations': 824}  # noqa
-        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
-
-        expected_values = {'Mean Absolute Error (MAE)': 4.878082524271845, 'Mean Squared Error (MSE)': 65.98628021844661, 'Root Mean Squared Error (RMSE)': 8.123193966565529, 'RMSE to Standard Deviation of Target': 0.4948465748966606, 'R Squared': 0.7551268673130436, 'Total Observations': 206}  # noqa
-        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_CartDecisionTreeRegressor_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_CartDecisionTreeRegressor_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_CartDecisionTreeRegressor_holdout_evaluator.txt')  # noqa
 
     def test_CartDecisionTreeClassifier(self):
         data = TestHelper.get_titanic_data()
@@ -2385,9 +2215,10 @@ class ModelWrapperTests(TimerTestCase):
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5,
                                                                       positive_class=1)))
+        hp = CartDecisionTreeHP(criterion='gini')
         fitter.train_predict_eval(data=data,
                                   target_variable='Survived',
-                                  hyper_params=CartDecisionTreeHP(criterion='gini'))
+                                  hyper_params=hp)
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
         assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
@@ -2400,8 +2231,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'max_leaf_nodes': None,
                                                          'max_features': None}
 
-        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9992991063606098, 'AUC Precision/Recall': 0.9984018681159533, 'Kappa': 0.9641059680549836, 'F1 Score': 0.9776119402985075, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.9597069597069597, 'True Negative Rate': 0.9977220956719818, 'False Positive Rate': 0.002277904328018223, 'False Negative Rate': 0.040293040293040296, 'Positive Predictive Value': 0.9961977186311787, 'Negative Predictive Value': 0.9755011135857461, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.7711462450592885, 'AUC Precision/Recall': 0.6435502175777592, 'Kappa': 0.5601381417281001, 'F1 Score': 0.725925925925926, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.7101449275362319, 'True Negative Rate': 0.8454545454545455, 'False Positive Rate': 0.15454545454545454, 'False Negative Rate': 0.2898550724637681, 'Positive Predictive Value': 0.7424242424242424, 'Negative Predictive Value': 0.8230088495575221, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_CartDecisionTreeClassifier_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_CartDecisionTreeClassifier_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_CartDecisionTreeClassifier_holdout_evaluator.txt')  # noqa
 
     def test_CartDecisionTreeClassifier_multiclass(self):
         data = TestHelper.get_iris_data()
@@ -2410,7 +2246,8 @@ class ModelWrapperTests(TimerTestCase):
                               model_transformations=None,
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                               evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
-        fitter.train_predict_eval(data=data, target_variable=target_variable, hyper_params=CartDecisionTreeHP(criterion='gini'))  # noqa
+        hp = CartDecisionTreeHP(criterion='gini')
+        fitter.train_predict_eval(data=data, target_variable=target_variable, hyper_params=hp)
 
         assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
         assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
@@ -2425,16 +2262,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'max_leaf_nodes': None,
                                                          'max_features': None}
 
-        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.841995841995842, 'Accuracy': 0.8947368421052632, 'Error Rate': 0.10526315789473684, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa
-
-        con_matrix = fitter.holdout_evaluator.matrix
-        assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
-        assert con_matrix['versicolor'].values.tolist() == [0, 12, 3, 15]
-        assert con_matrix['virginica'].values.tolist() == [0, 1, 10, 11]
-        assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
-        assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
-        assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_CartDecisionTreeClassifier_multiclass_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_CartDecisionTreeClassifier_multiclass_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_CartDecisionTreeClassifier_multiclass_holdout_evaluator.txt')  # noqa
 
     def test_AdaBoostRegressor(self):
         data = TestHelper.get_cement_data()
@@ -2446,7 +2280,8 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # test default hyper-parameters
         ######################################################################################################
-        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=AdaBoostRegressorHP())
+        hp = AdaBoostRegressorHP()
+        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=hp)
 
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
@@ -2466,33 +2301,12 @@ class ModelWrapperTests(TimerTestCase):
                                                          'max_leaf_nodes': None,
                                                          'min_impurity_decrease': 0.0,
                                                          'presort': False}
-
-        # all parameters except 'base_estimator', which gives an object
-        expected_params = {'base_estimator__criterion': 'mse',
-                           'base_estimator__max_depth': None,
-                           'base_estimator__max_features': None,
-                           'base_estimator__max_leaf_nodes': None,
-                           'base_estimator__min_impurity_decrease': 0.0,
-                           'base_estimator__min_impurity_split': None,
-                           'base_estimator__min_samples_leaf': 1,
-                           'base_estimator__min_samples_split': 2,
-                           'base_estimator__min_weight_fraction_leaf': 0.0,
-                           'base_estimator__presort': False,
-                           'base_estimator__random_state': 42,
-                           'base_estimator__splitter': 'best',
-                           'learning_rate': 1.0,
-                           'loss': 'linear',
-                           'n_estimators': 50,
-                           'random_state': 42}
-        actual_params = fitter.model.model_object.get_params()
-        assert all([actual_params[key] == value for key, value in expected_params.items()])
-
-        keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 1.470113735229838, 'Mean Squared Error (MSE)': 7.272645570944197, 'Root Mean Squared Error (RMSE)': 2.696784301894424, 'RMSE to Standard Deviation of Target': 0.1608365386316781, 'R Squared': 0.9741316078409807, 'Total Observations': 824}  # noqa
-        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
-
-        expected_values = {'Mean Absolute Error (MAE)': 3.923252677047532, 'Mean Squared Error (MSE)': 30.442525862923627, 'Root Mean Squared Error (RMSE)': 5.517474591053739, 'RMSE to Standard Deviation of Target': 0.33611205330071214, 'R Squared': 0.8870286876259792, 'Total Observations': 206}  # noqa
-        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_AdaBoostRegressor_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_AdaBoostRegressor_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_AdaBoostRegressor_holdout_evaluator.txt')  # noqa
 
     def test_AdaBoostClassifier(self):
         data = TestHelper.get_titanic_data()
@@ -2506,7 +2320,8 @@ class ModelWrapperTests(TimerTestCase):
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5,
                                                                       positive_class=1)))
-        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=AdaBoostClassifierHP())
+        hp = AdaBoostClassifierHP()
+        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=hp)
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
         assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
@@ -2524,36 +2339,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'min_impurity_decrease': 0.0,
                                                          'class_weight': None,
                                                          'presort': False}
-        # all parameters except 'base_estimator', which gives an object
-        expected_params = {'algorithm': 'SAMME.R',
-                           'base_estimator__class_weight': None,
-                           'base_estimator__criterion': 'gini',
-                           'base_estimator__max_depth': None,
-                           'base_estimator__max_features': None,
-                           'base_estimator__max_leaf_nodes': None,
-                           'base_estimator__min_impurity_decrease': 0.0,
-                           'base_estimator__min_impurity_split': None,
-                           'base_estimator__min_samples_leaf': 1,
-                           'base_estimator__min_samples_split': 2,
-                           'base_estimator__min_weight_fraction_leaf': 0.0,
-                           'base_estimator__presort': False,
-                           'base_estimator__random_state': 42,
-                           'base_estimator__splitter': 'best',
-                           'learning_rate': 1.0,
-                           'n_estimators': 50,
-                           'random_state': 42}
-        actual_params = fitter.model.model_object.get_params()
-        assert all([actual_params[key] == value for key, value in expected_params.items()])
 
-        expected_values = {'AUC ROC': 0.9992991063606097, 'AUC Precision/Recall': 0.9984018681159533, 'Kappa': 0.9641059680549836, 'F1 Score': 0.9776119402985075, 'Two-Class Accuracy': 0.9831460674157303, 'Error Rate': 0.016853932584269662, 'True Positive Rate': 0.9597069597069597, 'True Negative Rate': 0.9977220956719818, 'False Positive Rate': 0.002277904328018223, 'False Negative Rate': 0.040293040293040296, 'Positive Predictive Value': 0.9961977186311787, 'Negative Predictive Value': 0.9755011135857461, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        actual_values = fitter.training_evaluator.all_quality_metrics
-        assert all([x == y for x, y in zip(expected_values.keys(), actual_values.keys())])
-        assert all([isclose(x, y) for x, y in zip(expected_values.values(), actual_values.values())])
-
-        expected_values = {'AUC ROC': 0.8030961791831357, 'AUC Precision/Recall': 0.7446072340377528, 'Kappa': 0.5179100457850795, 'F1 Score': 0.6923076923076924, 'Two-Class Accuracy': 0.776536312849162, 'Error Rate': 0.22346368715083798, 'True Positive Rate': 0.6521739130434783, 'True Negative Rate': 0.8545454545454545, 'False Positive Rate': 0.14545454545454545, 'False Negative Rate': 0.34782608695652173, 'Positive Predictive Value': 0.7377049180327869, 'Negative Predictive Value': 0.7966101694915254, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
-        actual_values = fitter.holdout_evaluator.all_quality_metrics
-        assert all([x == y for x, y in zip(expected_values.keys(), actual_values.keys())])
-        assert all([isclose(x, y) for x, y in zip(expected_values.values(), actual_values.values())])
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_AdaBoostClassifier_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_AdaBoostClassifier_training_evaluator.txt')
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_AdaBoostClassifier_holdout_evaluator.txt')
 
     def test_AdaBoostClassifier_multiclass(self):
         data = TestHelper.get_iris_data()
@@ -2585,16 +2377,12 @@ class ModelWrapperTests(TimerTestCase):
                                                          'class_weight': None,
                                                          'presort': False}
 
-        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.841995841995842, 'Accuracy': 0.8947368421052632, 'Error Rate': 0.10526315789473684, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa
-
-        con_matrix = fitter.holdout_evaluator.matrix
-        assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
-        assert con_matrix['versicolor'].values.tolist() == [0, 12, 3, 15]
-        assert con_matrix['virginica'].values.tolist() == [0, 1, 10, 11]
-        assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
-        assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
-        assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_AdaBoostClassifier_multiclass_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_AdaBoostClassifier_multiclass_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_AdaBoostClassifier_multiclass_holdout_evaluator.txt')  # noqa
 
     def test_GradientBoostingRegressor(self):
         data = TestHelper.get_cement_data()
@@ -2607,9 +2395,10 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # test default hyper-parameters
         ######################################################################################################
+        hp = GradientBoostingRegressorHP()
         fitter.train_predict_eval(data=data,
                                   target_variable='strength',
-                                  hyper_params=GradientBoostingRegressorHP())
+                                  hyper_params=hp)
 
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
@@ -2624,12 +2413,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'max_features': None,
                                                          'subsample': 1.0}
 
-        keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 2.921039389435212, 'Mean Squared Error (MSE)': 14.909877151863128, 'Root Mean Squared Error (RMSE)': 3.861331007808464, 'RMSE to Standard Deviation of Target': 0.23029024359523864, 'R Squared': 0.9469664037048456, 'Total Observations': 824}  # noqa
-        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
-
-        expected_values = {'Mean Absolute Error (MAE)': 4.004637648118118, 'Mean Squared Error (MSE)': 26.996454670801214, 'Root Mean Squared Error (RMSE)': 5.195811262045727, 'RMSE to Standard Deviation of Target': 0.3165170519644618, 'R Squared': 0.8998169558157262, 'Total Observations': 206}  # noqa
-        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_GradientBoostingRegressor_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_GradientBoostingRegressor_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_GradientBoostingRegressor_holdout_evaluator.txt')  # noqa
 
     def test_GradientBoostingClassifier(self):
         data = TestHelper.get_titanic_data()
@@ -2643,9 +2433,10 @@ class ModelWrapperTests(TimerTestCase):
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5,
                                                                       positive_class=1)))
+        hp = GradientBoostingClassifierHP()
         fitter.train_predict_eval(data=data,
                                   target_variable='Survived',
-                                  hyper_params=GradientBoostingClassifierHP())
+                                  hyper_params=hp)
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
         assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
@@ -2658,8 +2449,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'max_features': None,
                                                          'subsample': 1.0}
 
-        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9551594950228207, 'AUC Precision/Recall': 0.9422935585546288, 'Kappa': 0.7902449021416128, 'F1 Score': 0.8654970760233918, 'Two-Class Accuracy': 0.9030898876404494, 'Error Rate': 0.09691011235955056, 'True Positive Rate': 0.8131868131868132, 'True Negative Rate': 0.958997722095672, 'False Positive Rate': 0.04100227790432802, 'False Negative Rate': 0.18681318681318682, 'Positive Predictive Value': 0.925, 'Negative Predictive Value': 0.8919491525423728, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8112648221343873, 'AUC Precision/Recall': 0.7673499978743319, 'Kappa': 0.5503428610224728, 'F1 Score': 0.7086614173228347, 'Two-Class Accuracy': 0.7932960893854749, 'Error Rate': 0.20670391061452514, 'True Positive Rate': 0.6521739130434783, 'True Negative Rate': 0.8818181818181818, 'False Positive Rate': 0.11818181818181818, 'False Negative Rate': 0.34782608695652173, 'Positive Predictive Value': 0.7758620689655172, 'Negative Predictive Value': 0.8016528925619835, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_GradientBoostingClassifier_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_GradientBoostingClassifier_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_GradientBoostingClassifier_holdout_evaluator.txt')  # noqa
 
     def test_GradientBoostingClassifier_multiclass(self):
         data = TestHelper.get_iris_data()
@@ -2683,16 +2479,13 @@ class ModelWrapperTests(TimerTestCase):
                                                          'max_features': None,
                                                          'subsample': 1.0}
 
-        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.9604989604989606, 'Accuracy': 0.9736842105263158, 'Error Rate': 0.02631578947368418, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa
-
-        con_matrix = fitter.holdout_evaluator.matrix
-        assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
-        assert con_matrix['versicolor'].values.tolist() == [0, 12, 0, 12]
-        assert con_matrix['virginica'].values.tolist() == [0, 1, 13, 14]
-        assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
-        assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
-        assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_GradientBoostingClassifier_multiclass_string.txt')  # noqa
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_GradientBoostingClassifier_multiclass_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_GradientBoostingClassifier_multiclass_holdout_evaluator.txt')  # noqa
 
     def test_LGBClassifier(self):
         data = TestHelper.get_titanic_data()
@@ -2707,9 +2500,10 @@ class ModelWrapperTests(TimerTestCase):
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5,
                                                                       positive_class=1)))
+        hp = LightGBMHP()
         fitter.train_predict_eval(data=data,
                                   target_variable='Survived',
-                                  hyper_params=LightGBMHP())
+                                  hyper_params=hp)
 
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
@@ -2738,8 +2532,21 @@ class ModelWrapperTests(TimerTestCase):
                                                           'scale_pos_weight': 1.0,
                                                           'max_bin': 255}  # noqa
 
-        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.991764499737165, 'AUC Precision/Recall': 0.9876674558147052, 'Kappa': 0.8955276440896819, 'F1 Score': 0.935064935064935, 'Two-Class Accuracy': 0.9508426966292135, 'Error Rate': 0.04915730337078652, 'True Positive Rate': 0.9230769230769231, 'True Negative Rate': 0.9681093394077449, 'False Positive Rate': 0.03189066059225513, 'False Negative Rate': 0.07692307692307693, 'Positive Predictive Value': 0.9473684210526315, 'Negative Predictive Value': 0.952914798206278, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.800197628458498, 'AUC Precision/Recall': 0.793043403765747, 'Kappa': 0.5685014061872238, 'F1 Score': 0.7272727272727272, 'Two-Class Accuracy': 0.7988826815642458, 'Error Rate': 0.2011173184357542, 'True Positive Rate': 0.6956521739130435, 'True Negative Rate': 0.8636363636363636, 'False Positive Rate': 0.13636363636363635, 'False Negative Rate': 0.30434782608695654, 'Positive Predictive Value': 0.7619047619047619, 'Negative Predictive Value': 0.8189655172413793, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        TestHelper.assert_hyper_params_match(hyper_params=hp, model=fitter.model,
+                                             mapping={'min_gain_to_split': 'min_split_gain',
+                                                      'min_sum_hessian_in_leaf': 'min_child_weight',
+                                                      'min_data_in_leaf': 'min_child_samples',
+                                                      'bagging_fraction': 'subsample',
+                                                      'bagging_freq': 'subsample_freq',
+                                                      'feature_fraction': 'colsample_bytree',
+                                                      'lambda_l1': 'reg_alpha',
+                                                      'lambda_l2': 'reg_lambda'})
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_LGBClassifier_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_LGBClassifier_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_LGBClassifier_holdout_evaluator.txt')  # noqa
 
         TestHelper.check_plot('data/test_ModelWrappers/test_LightGBMClassifier_plot_feature_importance.png',
                               lambda: fitter.model.plot_feature_importance())
@@ -2797,24 +2604,24 @@ class ModelWrapperTests(TimerTestCase):
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5,
                                                                       positive_class=1)))
+        hp = LightGBMHP(num_leaves=33,
+                           min_data_in_leaf=22,
+                           max_depth=55,
+                           bagging_fraction=0.5,
+                           bagging_freq=1,
+                           feature_fraction=0.7,
+                           lambda_l1=1,
+                           lambda_l2=2,
+                           learning_rate=0.9,
+                           max_bin=265,
+                           min_gain_to_split=0.1,
+                           min_sum_hessian_in_leaf=0.11,
+                           n_estimators=111,
+                           # is_unbalanced=False,
+                           scale_pos_weight=1.1)
         fitter.train_predict_eval(data=data,
                                   target_variable='Survived',
-                                  hyper_params=LightGBMHP(num_leaves=33,
-                                                          min_data_in_leaf=22,
-                                                          max_depth=55,
-                                                          bagging_fraction=0.5,
-                                                          bagging_freq=1,
-                                                          feature_fraction=0.7,
-                                                          lambda_l1=1,
-                                                          lambda_l2=2,
-                                                          learning_rate=0.9,
-                                                          max_bin=265,
-                                                          min_gain_to_split=0.1,
-                                                          min_sum_hessian_in_leaf=0.11,
-                                                          n_estimators=111,
-                                                          # is_unbalanced=False,
-                                                          scale_pos_weight=1.1,
-                                                          save_binary=False))
+                                  hyper_params=hp)
 
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
@@ -2843,8 +2650,21 @@ class ModelWrapperTests(TimerTestCase):
                                                           'scale_pos_weight': 1.1,
                                                           'max_bin': 265}
 
-        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.8687826979398734, 'AUC Precision/Recall': 0.8398940085782158, 'Kappa': 0.548173657001193, 'F1 Score': 0.714828897338403, 'Two-Class Accuracy': 0.7893258426966292, 'Error Rate': 0.21067415730337077, 'True Positive Rate': 0.6886446886446886, 'True Negative Rate': 0.8519362186788155, 'False Positive Rate': 0.1480637813211845, 'False Negative Rate': 0.31135531135531136, 'Positive Predictive Value': 0.7430830039525692, 'Negative Predictive Value': 0.8148148148148148, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8215415019762845, 'AUC Precision/Recall': 0.7818863085786913, 'Kappa': 0.5179100457850795, 'F1 Score': 0.6923076923076924, 'Two-Class Accuracy': 0.776536312849162, 'Error Rate': 0.22346368715083798, 'True Positive Rate': 0.6521739130434783, 'True Negative Rate': 0.8545454545454545, 'False Positive Rate': 0.14545454545454545, 'False Negative Rate': 0.34782608695652173, 'Positive Predictive Value': 0.7377049180327869, 'Negative Predictive Value': 0.7966101694915254, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model,
+                                             mapping={'min_gain_to_split': 'min_split_gain',
+                                                      'min_sum_hessian_in_leaf': 'min_child_weight',
+                                                      'min_data_in_leaf': 'min_child_samples',
+                                                      'bagging_fraction': 'subsample',
+                                                      'bagging_freq': 'subsample_freq',
+                                                      'feature_fraction': 'colsample_bytree',
+                                                      'lambda_l1': 'reg_alpha',
+                                                      'lambda_l2': 'reg_lambda'})
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_LGBClassifier_non_defaults_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_LGBClassifier_non_defaults_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_LGBClassifier_non_defaults_holdout_evaluator.txt')  # noqa
 
         TestHelper.check_plot('data/test_ModelWrappers/test_LightGBMClassifier_non_default_plot_feature_importance.png',  # noqa
                               lambda: fitter.model.plot_feature_importance())
@@ -2860,7 +2680,8 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # test default hyper-parameters
         ######################################################################################################
-        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=LightGBMHP())
+        hp = LightGBMHP()
+        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=hp)
 
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
@@ -2890,12 +2711,22 @@ class ModelWrapperTests(TimerTestCase):
                                                           # 'scale_pos_weight': 1.0,
                                                           'max_bin': 255}
 
-        keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 1.4608506060939466, 'Mean Squared Error (MSE)': 5.283694519005636, 'Root Mean Squared Error (RMSE)': 2.298628834545855, 'RMSE to Standard Deviation of Target': 0.1370904988907033, 'R Squared': 0.9812061951138981, 'Total Observations': 824}  # noqa
-        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
-
-        expected_values = {'Mean Absolute Error (MAE)': 2.7728460063980496, 'Mean Squared Error (MSE)': 15.822359410543571, 'Root Mean Squared Error (RMSE)': 3.977732948620806, 'RMSE to Standard Deviation of Target': 0.24231448043469808, 'R Squared': 0.9412836925716623, 'Total Observations': 206}  # noqa
-        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+        TestHelper.assert_hyper_params_match(hyper_params=hp, model=fitter.model,
+                                             mapping={'min_gain_to_split': 'min_split_gain',
+                                                      'min_sum_hessian_in_leaf': 'min_child_weight',
+                                                      'min_data_in_leaf': 'min_child_samples',
+                                                      'bagging_fraction': 'subsample',
+                                                      'bagging_freq': 'subsample_freq',
+                                                      'feature_fraction': 'colsample_bytree',
+                                                      'lambda_l1': 'reg_alpha',
+                                                      'lambda_l2': 'reg_lambda'},
+                                             remove_keys=['scale_pos_weight'])
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_LightGBMRegressor_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_LightGBMRegressor_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_LightGBMRegressor_holdout_evaluator.txt')  # noqa
 
         ######################################################################################################
         # Compare against actual model
@@ -2941,22 +2772,12 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # test default hyper-parameters
         ######################################################################################################
+        hp = LightGBMHP(num_leaves=33, min_data_in_leaf=22, max_depth=55, bagging_fraction=0.5,
+                           bagging_freq=1, feature_fraction=0.7, lambda_l1=1, lambda_l2=2, learning_rate=0.9,
+                           max_bin=265, min_gain_to_split=0.1, min_sum_hessian_in_leaf=0.11, n_estimators=111)
         fitter.train_predict_eval(data=data,
                                   target_variable='strength',
-                                  hyper_params=LightGBMHP(num_leaves=33,
-                                                          min_data_in_leaf=22,
-                                                          max_depth=55,
-                                                          bagging_fraction=0.5,
-                                                          bagging_freq=1,
-                                                          feature_fraction=0.7,
-                                                          lambda_l1=1,
-                                                          lambda_l2=2,
-                                                          learning_rate=0.9,
-                                                          max_bin=265,
-                                                          min_gain_to_split=0.1,
-                                                          min_sum_hessian_in_leaf=0.11,
-                                                          n_estimators=111,
-                                                          save_binary=False))
+                                  hyper_params=hp)
 
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
@@ -2986,12 +2807,22 @@ class ModelWrapperTests(TimerTestCase):
                                                           # 'scale_pos_weight': 1.1,
                                                           'max_bin': 265}
 
-        keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 7.583666166063456, 'Mean Squared Error (MSE)': 94.60137787996703, 'Root Mean Squared Error (RMSE)': 9.726323965402706, 'RMSE to Standard Deviation of Target': 0.5800791257598144, 'R Squared': 0.6635082078577296, 'Total Observations': 824}  # noqa
-        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
-
-        expected_values = {'Mean Absolute Error (MAE)': 7.569454380888242, 'Mean Squared Error (MSE)': 104.87360596423564, 'Root Mean Squared Error (RMSE)': 10.240781511400174, 'RMSE to Standard Deviation of Target': 0.6238452111373135, 'R Squared': 0.6108171525410406, 'Total Observations': 206}  # noqa
-        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model,
+                                             mapping={'min_gain_to_split': 'min_split_gain',
+                                                      'min_sum_hessian_in_leaf': 'min_child_weight',
+                                                      'min_data_in_leaf': 'min_child_samples',
+                                                      'bagging_fraction': 'subsample',
+                                                      'bagging_freq': 'subsample_freq',
+                                                      'feature_fraction': 'colsample_bytree',
+                                                      'lambda_l1': 'reg_alpha',
+                                                      'lambda_l2': 'reg_lambda'},
+                                             remove_keys=['scale_pos_weight'])
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_LightGBMRegressor_non_defualt_params_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_LightGBMRegressor_non_defualt_params_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_LightGBMRegressor_non_defualt_params_holdout_evaluator.txt')  # noqa
 
     def test_XGBoostClassifier(self):
         data = TestHelper.get_titanic_data()
@@ -3005,26 +2836,24 @@ class ModelWrapperTests(TimerTestCase):
                               evaluator=TwoClassProbabilityEvaluator(
                                  converter=TwoClassThresholdConverter(threshold=0.5,
                                                                       positive_class=1)))
-        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC))  # noqa
+        hp = XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC)
+        fitter.train_predict_eval(data=data, target_variable='Survived', hyper_params=hp)  # noqa
         assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
         assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
         assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
         assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
 
-        assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9417006683521489, 'AUC Precision/Recall': 0.9272598185475496, 'Kappa': 0.7441018663517572, 'F1 Score': 0.8352941176470589, 'Two-Class Accuracy': 0.8820224719101124, 'Error Rate': 0.11797752808988764, 'True Positive Rate': 0.7802197802197802, 'True Negative Rate': 0.9453302961275627, 'False Positive Rate': 0.05466970387243736, 'False Negative Rate': 0.21978021978021978, 'Positive Predictive Value': 0.8987341772151899, 'Negative Predictive Value': 0.8736842105263158, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8077075098814229, 'AUC Precision/Recall': 0.7851617329684761, 'Kappa': 0.5343009722032042, 'F1 Score': 0.6935483870967741, 'Two-Class Accuracy': 0.7877094972067039, 'Error Rate': 0.2122905027932961, 'True Positive Rate': 0.6231884057971014, 'True Negative Rate': 0.8909090909090909, 'False Positive Rate': 0.10909090909090909, 'False Negative Rate': 0.37681159420289856, 'Positive Predictive Value': 0.7818181818181819, 'Negative Predictive Value': 0.7903225806451613, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_XGBoostClassifier_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_XGBoostClassifier_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_XGBoostClassifier_holdout_evaluator.txt')  # noqa
 
-        assert fitter.model.model_object._Booster.feature_names == fitter.model.feature_names
-
-        expected_importance_values = [28.41479449,  8.81389999,  5.06509492,  3.12064767,  2.27274866,
-                                      2.21137349,  1.71674184,  1.18263725,  1.14725413,  1.07897507,
-                                      1.05185976,  1.04757025,  0.88589248,  0.82609797,  0.62749062,
-                                      0.07834244]
         expected_importance_feature_order = ['Sex_female', 'Pclass_3', 'Pclass_1', 'Embarked_S', 'Age', 'Fare',  # noqa
                                              'Embarked_C', 'Parch_2', 'SibSp_3', 'SibSp_4', 'Parch_0',
                                              'Pclass_2', 'Parch_1', 'SibSp_0', 'SibSp_1', 'Embarked_Q']
-        assert all([isclose(round(x, 8), round(y, 8)) for x, y in zip(fitter.model.feature_importance.gain_values.values,  # noqa
-                                                                      expected_importance_values)])
         assert all(fitter.model.feature_importance.index.values == expected_importance_feature_order)
 
         TestHelper.check_plot('data/test_ModelWrappers/test_XGBoostClassifier_plot_feature_importance.png',
@@ -3049,17 +2878,22 @@ class ModelWrapperTests(TimerTestCase):
                                   evaluator=TwoClassProbabilityEvaluator(
                                      converter=TwoClassThresholdConverter(threshold=0.5,
                                                                           positive_class=1)))
+            hp = XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC, n_estimators=100)
             fitter.train_predict_eval(data=data,
                                       target_variable='Survived',
-                                      hyper_params=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC,
-                                                                 n_estimators=100))
+                                      hyper_params=hp)
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
             assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
             assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
 
-            assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9417006683521489, 'AUC Precision/Recall': 0.9272598185475496, 'Kappa': 0.7441018663517572, 'F1 Score': 0.8352941176470589, 'Two-Class Accuracy': 0.8820224719101124, 'Error Rate': 0.11797752808988764, 'True Positive Rate': 0.7802197802197802, 'True Negative Rate': 0.9453302961275627, 'False Positive Rate': 0.05466970387243736, 'False Negative Rate': 0.21978021978021978, 'Positive Predictive Value': 0.8987341772151899, 'Negative Predictive Value': 0.8736842105263158, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-            assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8077075098814229, 'AUC Precision/Recall': 0.7851617329684761, 'Kappa': 0.5343009722032042, 'F1 Score': 0.6935483870967741, 'Two-Class Accuracy': 0.7877094972067039, 'Error Rate': 0.2122905027932961, 'True Positive Rate': 0.6231884057971014, 'True Negative Rate': 0.8909090909090909, 'False Positive Rate': 0.10909090909090909, 'False Negative Rate': 0.37681159420289856, 'Positive Predictive Value': 0.7818181818181819, 'Negative Predictive Value': 0.7903225806451613, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+            TestHelper.assert_hyper_params_match(hp, fitter.model)
+            TestHelper.save_string(fitter,
+                                   'data/test_ModelWrappers/test_XGBoostClassifier_early_stopping_string.txt')
+            TestHelper.save_string(fitter.training_evaluator,
+                                   'data/test_ModelWrappers/test_XGBoostClassifier_early_stopping_training_evaluator.txt')  # noqa
+            TestHelper.save_string(fitter.holdout_evaluator,
+                                   'data/test_ModelWrappers/test_XGBoostClassifier_early_stopping_holdout_evaluator.txt')  # noqa
             ##################################################################################################
             # early stopping with 1000 estimators, using training set
             ##################################################################################################
@@ -3074,17 +2908,21 @@ class ModelWrapperTests(TimerTestCase):
                                   evaluator=TwoClassProbabilityEvaluator(
                                      converter=TwoClassThresholdConverter(threshold=0.5,
                                                                           positive_class=1)))
+            hp = XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC, n_estimators=1000)
             fitter.train_predict_eval(data=data,
                                       target_variable='Survived',
-                                      hyper_params=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC,
-                                                                 n_estimators=1000))
+                                      hyper_params=hp)
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
             assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
             assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 1000, 'silent': True, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
-
-            assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.9923402337980927, 'AUC Precision/Recall': 0.9889446459040765, 'Kappa': 0.8981581980799489, 'F1 Score': 0.9363295880149812, 'Two-Class Accuracy': 0.952247191011236, 'Error Rate': 0.047752808988764044, 'True Positive Rate': 0.9157509157509157, 'True Negative Rate': 0.9749430523917996, 'False Positive Rate': 0.025056947608200455, 'False Negative Rate': 0.08424908424908426, 'Positive Predictive Value': 0.9578544061302682, 'Negative Predictive Value': 0.9490022172949002, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-            assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.7802371541501977, 'AUC Precision/Recall': 0.7586304191934954, 'Kappa': 0.5685014061872238, 'F1 Score': 0.7272727272727272, 'Two-Class Accuracy': 0.7988826815642458, 'Error Rate': 0.2011173184357542, 'True Positive Rate': 0.6956521739130435, 'True Negative Rate': 0.8636363636363636, 'False Positive Rate': 0.13636363636363635, 'False Negative Rate': 0.30434782608695654, 'Positive Predictive Value': 0.7619047619047619, 'Negative Predictive Value': 0.8189655172413793, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+            TestHelper.assert_hyper_params_match(hp, fitter.model)
+            TestHelper.save_string(fitter,
+                                   'data/test_ModelWrappers/test_XGBoostClassifier_early_stopping2_string.txt')  # noqa
+            TestHelper.save_string(fitter.training_evaluator,
+                                   'data/test_ModelWrappers/test_XGBoostClassifier_early_stopping2_training_evaluator.txt')  # noqa
+            TestHelper.save_string(fitter.holdout_evaluator,
+                                   'data/test_ModelWrappers/test_XGBoostClassifier_early_stopping2_holdout_evaluator.txt')  # noqa
 
             ##################################################################################################
             # early stopping with 1000 estimators, using holdout set
@@ -3107,17 +2945,21 @@ class ModelWrapperTests(TimerTestCase):
                                   evaluator=TwoClassProbabilityEvaluator(
                                      converter=TwoClassThresholdConverter(threshold=0.5,
                                                                           positive_class=1)))
+            hp = XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC, n_estimators=1000)
             fitter.train_predict_eval(data=data,
                                       target_variable='Survived',
-                                      hyper_params=XGBoostTreeHP(objective=XGBObjective.BINARY_LOGISTIC,
-                                                                 n_estimators=1000))
+                                      hyper_params=hp)
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
             assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
             assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 1000, 'silent': True, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
-
-            assert fitter.training_evaluator.all_quality_metrics == {'AUC ROC': 0.8775104925446611, 'AUC Precision/Recall': 0.8441753422329901, 'Kappa': 0.6332300170253634, 'F1 Score': 0.7551867219917012, 'Two-Class Accuracy': 0.8342696629213483, 'Error Rate': 0.16573033707865167, 'True Positive Rate': 0.6666666666666666, 'True Negative Rate': 0.9384965831435079, 'False Positive Rate': 0.06150341685649203, 'False Negative Rate': 0.3333333333333333, 'Positive Predictive Value': 0.8708133971291866, 'Negative Predictive Value': 0.8190854870775348, 'Prevalence': 0.38342696629213485, 'No Information Rate': 0.6165730337078652, 'Total Observations': 712}  # noqa
-            assert fitter.holdout_evaluator.all_quality_metrics == {'AUC ROC': 0.8289196310935442, 'AUC Precision/Recall': 0.7717105992551279, 'Kappa': 0.5124659543264193, 'F1 Score': 0.6666666666666667, 'Two-Class Accuracy': 0.7821229050279329, 'Error Rate': 0.21787709497206703, 'True Positive Rate': 0.5652173913043478, 'True Negative Rate': 0.9181818181818182, 'False Positive Rate': 0.08181818181818182, 'False Negative Rate': 0.43478260869565216, 'Positive Predictive Value': 0.8125, 'Negative Predictive Value': 0.7709923664122137, 'Prevalence': 0.3854748603351955, 'No Information Rate': 0.6145251396648045, 'Total Observations': 179}  # noqa
+            TestHelper.assert_hyper_params_match(hp, fitter.model)
+            TestHelper.save_string(fitter,
+                                   'data/test_ModelWrappers/test_XGBoostClassifier_early_stopping3_string.txt')  # noqa
+            TestHelper.save_string(fitter.training_evaluator,
+                                   'data/test_ModelWrappers/test_XGBoostClassifier_early_stopping3_training_evaluator.txt')  # noqa
+            TestHelper.save_string(fitter.holdout_evaluator,
+                                   'data/test_ModelWrappers/test_XGBoostClassifier_early_stopping3_holdout_evaluator.txt')  # noqa
 
     def test_XGBoostClassifier_multiclass(self):
         data = TestHelper.get_iris_data()
@@ -3126,27 +2968,22 @@ class ModelWrapperTests(TimerTestCase):
                               model_transformations=None,
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                               evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
+        hp = XGBoostTreeHP(objective=XGBObjective.MULTI_SOFTPROB)
         fitter.train_predict_eval(data=data,
                                   target_variable=target_variable,
-                                  hyper_params=XGBoostTreeHP(objective=XGBObjective.MULTI_SOFTMAX))
+                                  hyper_params=hp)
         assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
         assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
         assert fitter.model.feature_names == ['sepal_length', 'sepal_width', 'petal_length', 'petal_width']
-        assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'multi:softmax', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
+        assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'multi:softprob', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
 
-        assert fitter.training_evaluator.all_quality_metrics == {'Kappa': 1.0, 'Accuracy': 1.0, 'Error Rate': 0.0, 'No Information Rate': 0.3392857142857143, 'Total Observations': 112}  # noqa
-        assert fitter.holdout_evaluator.all_quality_metrics == {'Kappa': 0.8814968814968815, 'Accuracy': 0.9210526315789473, 'Error Rate': 0.07894736842105265, 'No Information Rate': 0.34210526315789475, 'Total Observations': 38}  # noqa
-
-        con_matrix = fitter.holdout_evaluator.matrix
-        assert con_matrix['setosa'].values.tolist() == [12, 0, 0, 12]
-        assert con_matrix['versicolor'].values.tolist() == [0, 12, 2, 14]
-        assert con_matrix['virginica'].values.tolist() == [0, 1, 11, 12]
-        assert con_matrix['Total'].values.tolist() == [12, 13, 13, 38]
-        assert con_matrix.index.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
-        assert con_matrix.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']
-
-        assert all(fitter.model.feature_importance.index.values == ['petal_length', 'petal_width', 'sepal_length', 'sepal_width'])  # noqa
-        assert all([isclose(round(x, 5), round(y, 5)) for x, y in zip(fitter.model.feature_importance.gain_values.values, [4.24182328, 0.41608115, 0.13519465, 0.10141765])])  # noqa
+        TestHelper.assert_hyper_params_match(hyper_params=hp, model=fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_XGBoostClassifier_multiclass_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_XGBoostClassifier_multiclass_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_XGBoostClassifier_multiclass_holdout_evaluator.txt')  # noqa
 
         TestHelper.check_plot('data/test_ModelWrappers/test_XGBoostClassifier_plot_feature_importance_multi.png',  # noqa
                               lambda: fitter.model.plot_feature_importance())
@@ -3162,19 +2999,22 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # test default hyper-parameters
         ######################################################################################################
-        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=XGBoostLinearHP(objective=XGBObjective.REG_LINEAR))  # noqa
+        hp = XGBoostLinearHP(objective=XGBObjective.REG_LINEAR)
+        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=hp)
 
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
 
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
         assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'reg:linear', 'booster': 'gblinear', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 0, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
-        keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 9.15756252779544, 'Mean Squared Error (MSE)': 131.63721402456707, 'Root Mean Squared Error (RMSE)': 11.47332619707847, 'RMSE to Standard Deviation of Target': 0.6842705480130379, 'R Squared': 0.5317738171219369, 'Total Observations': 824}  # noqa
-        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
 
-        expected_values = {'Mean Absolute Error (MAE)': 8.915862154543978, 'Mean Squared Error (MSE)': 123.05050668005934, 'Root Mean Squared Error (RMSE)': 11.092813289696142, 'RMSE to Standard Deviation of Target': 0.6757490569556269, 'R Squared': 0.5433632120235808, 'Total Observations': 206}  # noqa
-        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_XGBoostRegressor_linear_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_XGBoostRegressor_linear_training_evaluator.txt')
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_XGBoostRegressor_linear_holdout_evaluator.txt')
 
     def test_XGBoostRegressor_tree(self):
         data = TestHelper.get_cement_data()
@@ -3187,19 +3027,21 @@ class ModelWrapperTests(TimerTestCase):
         ######################################################################################################
         # test default hyper-parameters
         ######################################################################################################
-        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=XGBoostTreeHP(objective=XGBObjective.REG_LINEAR))  # noqa
+        hp = XGBoostTreeHP(objective=XGBObjective.REG_LINEAR)
+        fitter.train_predict_eval(data=data, target_variable='strength', hyper_params=hp)
         assert isinstance(fitter.training_evaluator, RegressionEvaluator)
         assert isinstance(fitter.holdout_evaluator, RegressionEvaluator)
 
         assert fitter.model.feature_names == ['cement', 'slag', 'ash', 'water', 'superplastic', 'coarseagg', 'fineagg', 'age']  # noqa
         assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'reg:linear', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': None, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
 
-        keys = fitter.training_evaluator.all_quality_metrics.keys()
-        expected_values = {'Mean Absolute Error (MAE)': 2.8658370747265303, 'Mean Squared Error (MSE)': 14.912708706965894, 'Root Mean Squared Error (RMSE)': 3.861697645720842, 'RMSE to Standard Deviation of Target': 0.2303121099242278, 'R Squared': 0.9469563320222504, 'Total Observations': 824}  # noqa
-        assert all([isclose(fitter.training_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
-
-        expected_values = {'Mean Absolute Error (MAE)': 3.8831358670725407, 'Mean Squared Error (MSE)': 26.19099478429751, 'Root Mean Squared Error (RMSE)': 5.117713823993826, 'RMSE to Standard Deviation of Target': 0.31175953295318953, 'R Squared': 0.9028059936128091, 'Total Observations': 206}  # noqa
-        assert all([isclose(fitter.holdout_evaluator.all_quality_metrics[x], expected_values[x]) for x in keys])  # noqa
+        TestHelper.assert_hyper_params_match(hp, fitter.model)
+        TestHelper.save_string(fitter,
+                               'data/test_ModelWrappers/test_XGBoostRegressor_tree_string.txt')
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_XGBoostRegressor_tree_training_evaluator.txt')
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_XGBoostRegressor_tree_holdout_evaluator.txt')
 
     def test_ModelAggregator(self):
         data = TestHelper.get_titanic_data()
@@ -3244,6 +3086,9 @@ class ModelWrapperTests(TimerTestCase):
         # process that automatically calls `train_predict_eval()
         model_aggregator.train(data_x=train_x, data_y=train_y)
 
+        TestHelper.save_string(model_aggregator,
+                               'data/test_ModelWrappers/test_ModelAggregator_string.txt')
+
         assert isinstance(model_aggregator._base_models[0].model, RandomForestClassifier)
         assert isinstance(model_aggregator._base_models[1].model, CartDecisionTreeClassifier)
         assert isinstance(model_aggregator._base_models[2].model, AdaBoostClassifier)
@@ -3259,13 +3104,7 @@ class ModelWrapperTests(TimerTestCase):
         assert all(voting_predictions.index.values == holdout_x.index.values)
         assert all(voting_predictions.columns.values == predictions_random_forest.columns.values)
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_soft.pkl'))  # noqa
-        # with open(file, 'wb') as output:
-        #     pickle.dump(voting_predictions, output, pickle.HIGHEST_PROTOCOL)
-        with open(file, 'rb') as saved_object:
-            expected_predictions = pickle.load(saved_object)
-            assert TestHelper.ensure_all_values_equal(data_frame1=expected_predictions,
-                                                      data_frame2=voting_predictions)
+        TestHelper.save_df(voting_predictions, "data/test_ModelWrappers/test_ModelAggregator_soft.txt")
 
         # make sure we are getting the correct averages back
         assert all([isclose(x, y) for x, y in zip(voting_predictions[0], died_averages)])
@@ -3290,16 +3129,9 @@ class ModelWrapperTests(TimerTestCase):
         assert all(voting_predictions.index.values == holdout_x.index.values)
         assert all(voting_predictions.columns.values == predictions_random_forest.columns.values)
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_hard.pkl'))  # noqa
+        TestHelper.save_df(voting_predictions, "data/test_ModelWrappers/test_ModelAggregator_hard.txt")
         # with open(file, 'wb') as output:
         #     pickle.dump(voting_predictions, output, pickle.HIGHEST_PROTOCOL)
-        with open(file, 'rb') as saved_object:
-            expected_predictions = pickle.load(saved_object)
-            assert TestHelper.ensure_all_values_equal(data_frame1=expected_predictions,
-                                                      data_frame2=voting_predictions)
-
-        # predictions should all sum to 1
-        assert all([sum(voting_predictions.loc[x]) == 1.0 for x in voting_predictions.index.values])
 
         # [1 if x > 0.5 else 0 for x in predictions_random_forest[1]]
         # [1 if x > 0.5 else 0 for x in model_aggregator.predict(data_x=holdout_x)[1]]
@@ -3350,7 +3182,8 @@ class ModelWrapperTests(TimerTestCase):
         # `train_predict_eval()` does nothing, but make sure it doesn't explode in case it is used in a
         # process that automatically calls `train_predict_eval()
         model_aggregator.train(data_x=train_x, data_y=train_y)
-
+        TestHelper.save_string(model_aggregator,
+                               'data/test_ModelWrappers/test_ModelAggregator_soft_median_string.txt')
         assert isinstance(model_aggregator._base_models[0].model, RandomForestClassifier)
         assert isinstance(model_aggregator._base_models[1].model, CartDecisionTreeClassifier)
         assert isinstance(model_aggregator._base_models[2].model, AdaBoostClassifier)
@@ -3418,6 +3251,8 @@ class ModelWrapperTests(TimerTestCase):
         # `train_predict_eval()` does nothing, but make sure it doesn't explode in case it is used in a
         # process that automatically calls `train_predict_eval()
         model_aggregator.train(data_x=train_x, data_y=train_y)
+        TestHelper.save_string(model_aggregator,
+                               'data/test_ModelWrappers/test_ModelAggregator_multi_class_string.txt')
         voting_predictions = model_aggregator.predict(data_x=holdout_x)
 
         assert all(voting_predictions.index.values == holdout_x.index.values)
@@ -3428,16 +3263,11 @@ class ModelWrapperTests(TimerTestCase):
         assert all([isclose(x, y) for x, y in zip(voting_predictions['versicolor'], versicolor_averages)])
         assert all([isclose(x, y) for x, y in zip(voting_predictions['virginica'], virginica_averages)])
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_multi_class_soft.pkl'))  # noqa
-        # with open(file, 'wb') as output:
-        #     pickle.dump(voting_predictions, output, pickle.HIGHEST_PROTOCOL)
-        with open(file, 'rb') as saved_object:
-            expected_predictions = pickle.load(saved_object)
-            assert TestHelper.ensure_all_values_equal(data_frame1=expected_predictions,
-                                                      data_frame2=voting_predictions)
+        TestHelper.save_df(voting_predictions, "data/test_ModelWrappers/test_ModelAggregator_multi_class_soft_predictions.txt")  # noqa
 
         evaluator.evaluate(actual_values=holdout_y, predicted_values=voting_predictions)
-        assert evaluator.all_quality_metrics == {'Kappa': 0.9, 'Accuracy': 0.9333333333333333, 'Error Rate': 0.06666666666666665, 'No Information Rate': 0.3333333333333333, 'Total Observations': 30}  # noqa
+        TestHelper.save_string(evaluator,
+                               "data/test_ModelWrappers/test_ModelAggregator_multi_class_soft_evaluator.txt")  # noqa
 
         ######################################################################################################
         # VotingStrategy.HARD
@@ -3452,6 +3282,8 @@ class ModelWrapperTests(TimerTestCase):
         # `train_predict_eval()` does nothing, but make sure it doesn't explode in case it is used in a
         # process that automatically calls `train_predict_eval()
         model_aggregator.train(data_x=train_x, data_y=train_y)
+        TestHelper.save_string(model_aggregator,
+                               'data/test_ModelWrappers/test_ModelAggregator_multi_class_hard_string.txt')
         voting_predictions = model_aggregator.predict(data_x=holdout_x)
 
         assert all(voting_predictions.index.values == holdout_x.index.values)
@@ -3460,20 +3292,12 @@ class ModelWrapperTests(TimerTestCase):
         # predictions should all sum to 1
         assert all([sum(voting_predictions.loc[x]) == 1.0 for x in voting_predictions.index.values])
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_multi_class_hard.pkl'))  # noqa
-        # with open(file, 'wb') as output:
-        #     pickle.dump(voting_predictions, output, pickle.HIGHEST_PROTOCOL)
-        with open(file, 'rb') as saved_object:
-            expected_predictions = pickle.load(saved_object)
-            assert TestHelper.ensure_all_values_equal(data_frame1=expected_predictions,
-                                                      data_frame2=voting_predictions)
-
-        # [1 if x > 0.5 else 0 for x in predictions_random_forest[1]]
-        # [1 if x > 0.5 else 0 for x in model_aggregator.predict(data_x=holdout_x)[1]]
-        # list(holdout_y)
+        TestHelper.save_df(voting_predictions,
+                           "data/test_ModelWrappers/test_ModelAggregator_multi_class_hard_predictions.txt")  # noqa
 
         evaluator.evaluate(actual_values=holdout_y, predicted_values=voting_predictions)
-        assert evaluator.all_quality_metrics == {'Kappa': 0.9, 'Accuracy': 0.9333333333333333, 'Error Rate': 0.06666666666666665, 'No Information Rate': 0.3333333333333333, 'Total Observations': 30}  # noqa
+        TestHelper.save_string(evaluator,
+                               "data/test_ModelWrappers/test_ModelAggregator_multi_class_hard_evaluator.txt")  # noqa
 
     def test_ModelAggregator_regression(self):
         data = TestHelper.get_cement_data()
@@ -3500,6 +3324,9 @@ class ModelWrapperTests(TimerTestCase):
         model_aggregator = ModelAggregator(base_models=model_infos,
                                            aggregation_strategy=MeanAggregationStrategy())
         model_aggregator.train(data_x=train_x, data_y=train_y)
+        TestHelper.save_string(model_aggregator,
+                               'data/test_ModelWrappers/test_ModelAggregator_regression_string.txt')
+
         predictions_aggregation = model_aggregator.predict(data_x=holdout_x)
 
         assert all([isclose(x, y) for x, y in zip(expected_aggregation, predictions_aggregation)])

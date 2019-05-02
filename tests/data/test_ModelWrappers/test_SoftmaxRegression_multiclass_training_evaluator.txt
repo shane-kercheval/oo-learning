@@ -1,0 +1,15 @@
+{'Kappa': 0.959818225304951
+ 'Accuracy': 0.9732142857142857
+ 'Error Rate': 0.0267857142857143
+ 'No Information Rate': 0.3392857142857143
+ 'Total Observations': 112}
+
+Confusion Matrix
+================
+
+predicted   setosa  versicolor  virginica  Total
+actual                                          
+setosa          38           0          0     38
+versicolor       0          35          2     37
+virginica        0           1         36     37
+Total           38          36         38    112

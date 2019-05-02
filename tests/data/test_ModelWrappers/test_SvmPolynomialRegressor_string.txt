@@ -1,0 +1,28 @@
+SvmPolynomialRegressor
+
+Hyper-Parameters
+================
+
+{'C': 1.0
+ 'cache_size': 200
+ 'coef0': 0.0
+ 'degree': 3
+ 'epsilon': 0.1
+ 'gamma': 'auto_deprecated'
+ 'kernel': 'poly'
+ 'max_iter': -1
+ 'shrinking': True
+ 'tol': 0.001
+ 'verbose': False}
+
+Features Trained
+================
+
+['cement'
+ 'slag'
+ 'ash'
+ 'water'
+ 'superplastic'
+ 'coarseagg'
+ 'fineagg'
+ 'age']

@@ -1,0 +1,43 @@
+AdaBoostClassifier
+
+Hyper-Parameters
+================
+
+{'algorithm': 'SAMME.R'
+ 'base_estimator__class_weight': None
+ 'base_estimator__criterion': 'gini'
+ 'base_estimator__max_depth': None
+ 'base_estimator__max_features': None
+ 'base_estimator__max_leaf_nodes': None
+ 'base_estimator__min_impurity_decrease': 0.0
+ 'base_estimator__min_impurity_split': None
+ 'base_estimator__min_samples_leaf': 1
+ 'base_estimator__min_samples_split': 2
+ 'base_estimator__min_weight_fraction_leaf': 0.0
+ 'base_estimator__presort': False
+ 'base_estimator__random_state': 42
+ 'base_estimator__splitter': 'best'
+ 'base_estimator': DecisionTreeClassifier(class_weight=None
+ criterion='gini'
+ max_depth=None,
+            max_features=None
+ max_leaf_nodes=None,
+            min_impurity_decrease=0.0
+ min_impurity_split=None,
+            min_samples_leaf=1
+ min_samples_split=2,
+            min_weight_fraction_leaf=0.0
+ presort=False
+ random_state=42,
+            splitter='best')
+ 'learning_rate': 1.0
+ 'n_estimators': 50
+ 'random_state': 42}
+
+Features Trained
+================
+
+['sepal_length'
+ 'sepal_width'
+ 'petal_length'
+ 'petal_width']

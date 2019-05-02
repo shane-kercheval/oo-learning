@@ -1,0 +1,38 @@
+LightGBMRegressor
+
+Hyper-Parameters
+================
+
+{'boosting_type': 'random_forest'
+ 'class_weight': None
+ 'colsample_bytree': 0.7
+ 'importance_type': 'split'
+ 'learning_rate': 0.9
+ 'max_depth': 55
+ 'min_child_samples': 22
+ 'min_child_weight': 0.11
+ 'min_split_gain': 0.1
+ 'n_estimators': 111
+ 'n_jobs': -1
+ 'num_leaves': 33
+ 'objective': 'regression'
+ 'random_state': 666
+ 'reg_alpha': 1
+ 'reg_lambda': 2
+ 'silent': True
+ 'subsample': 0.5
+ 'subsample_for_bin': 200000
+ 'subsample_freq': 1
+ 'max_bin': 265}
+
+Features Trained
+================
+
+['cement'
+ 'slag'
+ 'ash'
+ 'water'
+ 'superplastic'
+ 'coarseagg'
+ 'fineagg'
+ 'age']

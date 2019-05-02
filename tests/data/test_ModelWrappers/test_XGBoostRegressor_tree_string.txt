@@ -1,0 +1,39 @@
+XGBoostRegressor
+
+Hyper-Parameters
+================
+
+{'base_score': 0.5
+ 'booster': 'gbtree'
+ 'colsample_bylevel': 1.0
+ 'colsample_bytree': 1.0
+ 'gamma': 0.0
+ 'importance_type': 'gain'
+ 'learning_rate': 0.1
+ 'max_delta_step': 0
+ 'max_depth': 3
+ 'min_child_weight': 1
+ 'missing': None
+ 'n_estimators': 100
+ 'n_jobs': 1
+ 'nthread': None
+ 'objective': 'reg:linear'
+ 'random_state': 42
+ 'reg_alpha': 0.0
+ 'reg_lambda': 1.0
+ 'scale_pos_weight': 1.0
+ 'seed': None
+ 'silent': True
+ 'subsample': 1.0}
+
+Features Trained
+================
+
+['cement'
+ 'slag'
+ 'ash'
+ 'water'
+ 'superplastic'
+ 'coarseagg'
+ 'fineagg'
+ 'age']

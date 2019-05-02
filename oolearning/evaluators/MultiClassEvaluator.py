@@ -36,6 +36,12 @@ class MultiClassEvaluator(EvaluatorBase):
             self.set_instance_values_from_values(actual_classes=actual_classes,
                                                  predicted_classes=predicted_classes)
 
+    def __str__(self):
+        val = super().__str__()
+        val += "\n\nConfusion Matrix\n================\n\n" + self.matrix.to_string()
+
+        return val
+
     def evaluate(self, actual_values: np.ndarray, predicted_values: object):
 
         # noinspection PyTypeChecker

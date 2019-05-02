@@ -1,0 +1,12 @@
+LinearRegressor
+
+Features Trained
+================
+
+['cement'
+ 'slag'
+ 'ash'
+ 'water'
+ 'superplastic'
+ 'coarseagg'
+ 'age']

@@ -122,7 +122,7 @@ class LightGBMHP(HyperParamsBase):
                  n_estimators: int = 100,
                  # is_unbalanced: bool = False,
                  scale_pos_weight: float = 1.0,
-                 save_binary: bool = False,
+                 # save_binary: bool = False,
                  match_type=False):
 
         """
@@ -153,7 +153,6 @@ class LightGBMHP(HyperParamsBase):
             used only in binary application
             weight of labels with positive class
             Note: this parameter cannot be used at the same time with is_unbalance, choose only one of them
-        :param save_binary:
         """
 
         assert num_leaves > 1
@@ -170,7 +169,7 @@ class LightGBMHP(HyperParamsBase):
         assert n_estimators >= 0
         # assert isinstance(is_unbalanced, bool)
         assert scale_pos_weight > 0.0
-        assert isinstance(save_binary, bool)
+        #assert isinstance(save_binary, bool)
 
 
         # TODO REMOVE
@@ -198,8 +197,7 @@ class LightGBMHP(HyperParamsBase):
                                  min_sum_hessian_in_leaf=min_sum_hessian_in_leaf,
                                  n_estimators=n_estimators,
                                  # is_unbalanced=is_unbalanced,
-                                 scale_pos_weight=scale_pos_weight,
-                                 save_binary=save_binary)
+                                 scale_pos_weight=scale_pos_weight)
 
 
 # noinspection PyAbstractClass

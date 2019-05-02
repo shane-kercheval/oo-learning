@@ -1,0 +1,46 @@
+CartDecisionTreeClassifier
+
+Hyper-Parameters
+================
+
+{'class_weight': None
+ 'criterion': 'gini'
+ 'max_depth': None
+ 'max_features': None
+ 'max_leaf_nodes': None
+ 'min_impurity_decrease': 0.0
+ 'min_impurity_split': None
+ 'min_samples_leaf': 1
+ 'min_samples_split': 2
+ 'min_weight_fraction_leaf': 0.0
+ 'presort': False
+ 'random_state': 42
+ 'splitter': 'best'}
+
+Features Trained
+================
+
+['Age'
+ 'Fare'
+ 'Pclass_1'
+ 'Pclass_2'
+ 'Pclass_3'
+ 'Sex_female'
+ 'Sex_male'
+ 'SibSp_0'
+ 'SibSp_1'
+ 'SibSp_2'
+ 'SibSp_3'
+ 'SibSp_4'
+ 'SibSp_5'
+ 'SibSp_8'
+ 'Parch_0'
+ 'Parch_1'
+ 'Parch_2'
+ 'Parch_3'
+ 'Parch_4'
+ 'Parch_5'
+ 'Parch_6'
+ 'Embarked_C'
+ 'Embarked_Q'
+ 'Embarked_S']

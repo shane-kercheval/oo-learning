@@ -1,0 +1,35 @@
+XGBoostClassifier
+
+Hyper-Parameters
+================
+
+{'base_score': 0.5
+ 'booster': 'gbtree'
+ 'colsample_bylevel': 1.0
+ 'colsample_bytree': 1.0
+ 'gamma': 0.0
+ 'learning_rate': 0.1
+ 'max_delta_step': 0
+ 'max_depth': 3
+ 'min_child_weight': 1
+ 'missing': None
+ 'n_estimators': 100
+ 'n_jobs': 1
+ 'nthread': None
+ 'objective': 'multi:softprob'
+ 'random_state': 42
+ 'reg_alpha': 0.0
+ 'reg_lambda': 1.0
+ 'scale_pos_weight': 1.0
+ 'seed': None
+ 'silent': True
+ 'subsample': 1.0}
+
+Feature Importance
+==================
+
+              gain_values
+petal_length     4.241823
+petal_width      0.416081
+sepal_length     0.135195
+sepal_width      0.101418

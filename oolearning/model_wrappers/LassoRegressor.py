@@ -32,7 +32,7 @@ class LassoRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
 
     @property
     def feature_importance(self):
-        raise NotImplementedError()
+        return None
 
     def _train(self,
                data_x: pd.DataFrame,

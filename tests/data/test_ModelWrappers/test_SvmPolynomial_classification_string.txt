@@ -1,0 +1,63 @@
+SvmPolynomialClassifier
+
+Hyper-Parameters
+================
+
+{'base_estimator__C': 1.0
+ 'base_estimator__cache_size': 200
+ 'base_estimator__class_weight': None
+ 'base_estimator__coef0': 0.0
+ 'base_estimator__decision_function_shape': 'ovr'
+ 'base_estimator__degree': 3
+ 'base_estimator__gamma': 'auto_deprecated'
+ 'base_estimator__kernel': 'poly'
+ 'base_estimator__max_iter': -1
+ 'base_estimator__probability': False
+ 'base_estimator__random_state': 42
+ 'base_estimator__shrinking': True
+ 'base_estimator__tol': 0.001
+ 'base_estimator__verbose': False
+ 'base_estimator': SVC(C=1.0
+ cache_size=200
+ class_weight=None
+ coef0=0.0,
+  decision_function_shape='ovr'
+ degree=3
+ gamma='auto_deprecated',
+  kernel='poly'
+ max_iter=-1
+ probability=False
+ random_state=42,
+  shrinking=True
+ tol=0.001
+ verbose=False)
+ 'cv': 'warn'
+ 'method': 'sigmoid'}
+
+Features Trained
+================
+
+['Age'
+ 'Fare'
+ 'Pclass_1'
+ 'Pclass_2'
+ 'Pclass_3'
+ 'Sex_female'
+ 'Sex_male'
+ 'SibSp_0'
+ 'SibSp_1'
+ 'SibSp_2'
+ 'SibSp_3'
+ 'SibSp_4'
+ 'SibSp_5'
+ 'SibSp_8'
+ 'Parch_0'
+ 'Parch_1'
+ 'Parch_2'
+ 'Parch_3'
+ 'Parch_4'
+ 'Parch_5'
+ 'Parch_6'
+ 'Embarked_C'
+ 'Embarked_Q'
+ 'Embarked_S']

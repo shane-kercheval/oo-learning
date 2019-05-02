@@ -1,0 +1,42 @@
+LogisticClassifier
+
+Hyper-Parameters
+================
+
+{'C': 1.0
+ 'class_weight': None
+ 'dual': False
+ 'fit_intercept': True
+ 'intercept_scaling': 1
+ 'max_iter': 100
+ 'multi_class': 'warn'
+ 'n_jobs': None
+ 'penalty': 'l2'
+ 'random_state': 42
+ 'solver': 'liblinear'
+ 'tol': 0.0001
+ 'verbose': 0
+ 'warm_start': False}
+
+Features Trained
+================
+
+['Age'
+ 'Fare'
+ 'Pclass_2'
+ 'Pclass_3'
+ 'Sex_male'
+ 'SibSp_1'
+ 'SibSp_2'
+ 'SibSp_3'
+ 'SibSp_4'
+ 'SibSp_5'
+ 'SibSp_8'
+ 'Parch_1'
+ 'Parch_2'
+ 'Parch_3'
+ 'Parch_4'
+ 'Parch_5'
+ 'Parch_6'
+ 'Embarked_Q'
+ 'Embarked_S']

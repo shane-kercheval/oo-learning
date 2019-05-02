@@ -31,11 +31,11 @@ class ModelTrainer:
 
     def __init__(self,
                  model: ModelWrapperBase,
-                 model_transformations: Union[List[TransformerBase], None]=None,
-                 splitter: DataSplitterBase=None,
-                 evaluator: EvaluatorBase=None,
-                 scores: List[ScoreBase]=None,
-                 persistence_manager: PersistenceManagerBase=None,
+                 model_transformations: Union[List[TransformerBase], None] = None,
+                 splitter: DataSplitterBase = None,
+                 evaluator: EvaluatorBase = None,
+                 scores: List[ScoreBase] = None,
+                 persistence_manager: PersistenceManagerBase = None,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None):
         """
@@ -73,6 +73,21 @@ class ModelTrainer:
 
         self._model_transformations = model_transformations
         self._pipeline = None
+
+    def __str__(self):
+        val = str(self.model)
+
+        if self.training_scores is not None:
+            val += "\n\nTraining Scores\n===============\n"
+            for score in self.training_scores:
+                val += "\n" + str(score)
+
+        if self.holdout_scores is not None:
+            val += "\n\nHoldout Scores\n==============="
+            for score in self.holdout_scores:
+                val += "\n" + str(score)
+
+        return val
 
     @property
     def model(self) -> ModelWrapperBase:

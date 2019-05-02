@@ -1,0 +1,27 @@
+SvmLinearRegressor
+
+Hyper-Parameters
+================
+
+{'C': 1.0
+ 'dual': True
+ 'epsilon': 0.1
+ 'fit_intercept': False
+ 'intercept_scaling': 1.0
+ 'loss': 'epsilon_insensitive'
+ 'max_iter': 1000
+ 'random_state': 42
+ 'tol': 0.0001
+ 'verbose': 0}
+
+Features Trained
+================
+
+['cement'
+ 'slag'
+ 'ash'
+ 'water'
+ 'superplastic'
+ 'coarseagg'
+ 'fineagg'
+ 'age']

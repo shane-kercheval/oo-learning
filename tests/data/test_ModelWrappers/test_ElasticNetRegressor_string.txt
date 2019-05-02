@@ -1,0 +1,28 @@
+ElasticNetRegressor
+
+Hyper-Parameters
+================
+
+{'alpha': 0
+ 'copy_X': True
+ 'fit_intercept': True
+ 'l1_ratio': 0.5
+ 'max_iter': 1000
+ 'normalize': False
+ 'positive': False
+ 'precompute': False
+ 'random_state': 42
+ 'selection': 'cyclic'
+ 'tol': 0.0001
+ 'warm_start': False}
+
+Features Trained
+================
+
+['cement'
+ 'slag'
+ 'ash'
+ 'water'
+ 'superplastic'
+ 'coarseagg'
+ 'age']

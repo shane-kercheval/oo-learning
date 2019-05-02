@@ -1,0 +1,33 @@
+RandomForestRegressor
+
+Hyper-Parameters
+================
+
+{'bootstrap': True
+ 'criterion': 'mae'
+ 'max_depth': None
+ 'max_features': None
+ 'max_leaf_nodes': None
+ 'min_impurity_decrease': 0.0
+ 'min_impurity_split': None
+ 'min_samples_leaf': 1
+ 'min_samples_split': 2
+ 'min_weight_fraction_leaf': 0.0
+ 'n_estimators': 10
+ 'n_jobs': -1
+ 'oob_score': False
+ 'random_state': 42
+ 'verbose': 0
+ 'warm_start': False}
+
+Features Trained
+================
+
+['cement'
+ 'slag'
+ 'ash'
+ 'water'
+ 'superplastic'
+ 'coarseagg'
+ 'fineagg'
+ 'age']

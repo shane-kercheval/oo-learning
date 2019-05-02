@@ -1,0 +1,6 @@
+{'Mean Absolute Error (MAE)': 9.013573723533986
+ 'Mean Squared Error (MSE)': 130.1151697621433
+ 'Root Mean Squared Error (RMSE)': 11.406803661067517
+ 'RMSE to Standard Deviation of Target': 0.6948766390942753
+ 'R Squared': 0.5171464564410442
+ 'Total Observations': 206}
