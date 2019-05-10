@@ -178,6 +178,9 @@ class BayesianOptimizationTests(TimerTestCase):
                                                      )
         model_tuner.tune(data_x=training_x, data_y=training_y)
 
+        TestHelper.save_string(model_tuner.results,
+                               'data/test_Tuners/test_BayesianOptimization_tuner_results.csv')
+
         assert model_tuner.results.number_of_cycles == init_points + n_iter
 
         best_indexes = model_tuner.results.resampled_stats.sort_values(by='AUC_ROC_mean',
