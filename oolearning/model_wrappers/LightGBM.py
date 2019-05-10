@@ -145,10 +145,6 @@ class LightGBMHP(HyperParamsBase):
         :param min_sum_hessian_in_leaf:
         :param n_estimators:
             alias for num_iterations
-        :param is_unbalanced:
-            used only in binary application
-            set this to true if training data are unbalanced
-            Note: this parameter cannot be used at the same time with scale_pos_weight, choose only one of them
         :param scale_pos_weight:
             used only in binary application
             weight of labels with positive class
@@ -169,8 +165,7 @@ class LightGBMHP(HyperParamsBase):
         assert n_estimators >= 0
         # assert isinstance(is_unbalanced, bool)
         assert scale_pos_weight > 0.0
-        #assert isinstance(save_binary, bool)
-
+        # assert isinstance(save_binary, bool)
 
         # TODO REMOVE
         # REQUIRED FOR BAYESIAN OPTIMIZATION

@@ -119,7 +119,7 @@ class GridSearchTunerResults(TunerResultsBase):
         plt.tight_layout()
         return plt
 
-    def plot_resampled_stats(self, font_size: int=8):
+    def plot_resampled_stats(self, font_size: int = 8):
         """
         NOTE: only shows the "tuned" hyper-params i.e. hyper-params that were tuned over >1 values.
         :return:
@@ -223,8 +223,8 @@ class GridSearchTunerResults(TunerResultsBase):
                                   x_axis,
                                   line=None,
                                   grid=None,
-                                  metric: Metric=None,
-                                  score_name: str=None):
+                                  metric: Metric = None,
+                                  score_name: str = None):
         """
         :param x_axis: the hyper-parameter to place on the x-axis
         :param line: the hyper-parameter to show as lines on the graph

@@ -124,8 +124,8 @@ class ModelTrainer:
 
     def train_predict_eval(self,
                            data: pd.DataFrame,
-                           target_variable: Union[str, None]=None,
-                           hyper_params: HyperParamsBase=None) -> np.ndarray:
+                           target_variable: Union[str, None] = None,
+                           hyper_params: HyperParamsBase = None) -> np.ndarray:
         """
         The data is split into a training/holdout set if a Splitter is provided. If not provided, no split
             occurs and the model is trained on all the `data`). Before training, the data is transformed

@@ -27,7 +27,7 @@ class OOLearningHelpers:
         return isinstance(variable.values[0], bool) or isinstance(variable.values[0], np.bool_)
 
     @staticmethod
-    def get_columns_by_type(data_dtypes: pd.Series, target_variable: str=None):
+    def get_columns_by_type(data_dtypes: pd.Series, target_variable: str = None):
         """returns numeric columns in first return, and string columns in second"""
         assert isinstance(data_dtypes, pd.Series)
         types_dictionary = dict(data_dtypes)
@@ -44,11 +44,11 @@ class OOLearningHelpers:
 
     @staticmethod
     def plot_correlations(correlations: pd.DataFrame,
-                          title: str=None,
-                          mask_duplicates: bool=True,
-                          figure_size: tuple=(8, 8),
-                          round_by: int=2,
-                          features_to_highlight: Union[list, None]=None):
+                          title: str = None,
+                          mask_duplicates: bool = True,
+                          figure_size: tuple = (8, 8),
+                          round_by: int = 2,
+                          features_to_highlight: Union[list, None] = None):
 
         if title is None:
             title = ''

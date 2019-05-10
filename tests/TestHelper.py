@@ -113,7 +113,7 @@ class TestHelper:
     @staticmethod
     def ensure_all_values_equal(data_frame1: pd.DataFrame,
                                 data_frame2: pd.DataFrame,
-                                check_column_types: bool=True):
+                                check_column_types: bool = True):
         def is_number(s):
             try:
                 float(s)
@@ -143,7 +143,7 @@ class TestHelper:
         return True
 
     @staticmethod
-    def ensure_all_values_equal_from_file(file, expected_dataframe, check_column_types: bool=True):
+    def ensure_all_values_equal_from_file(file, expected_dataframe, check_column_types: bool = True):
         # with open(file, 'wb') as output:
         #     pickle.dump(expected_dataframe, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
@@ -168,7 +168,7 @@ class TestHelper:
         assert all([isclose(dictionary_1[x], dictionary_2[x]) for x in dictionary_1.keys()])  # noqa
 
     @staticmethod
-    def check_plot(file_name: str, get_plot_function: Callable, set_size_w_h: Union[tuple, None]=(11, 7)):
+    def check_plot(file_name: str, get_plot_function: Callable, set_size_w_h: Union[tuple, None] = (11, 7)):
         def clear():
             plt.gcf().clear()
             plt.cla()
@@ -197,6 +197,7 @@ class TestHelper:
         :param model:
         :param mapping: when the hyper-parameter names don't between the HyperParamsBase object and the model,
             provide a dictionary with the HyperParamsBase name as the key, and the model's name as the value
+        :param remove_keys: the keys to remove before checking
         :return:
         """
         subset = hyper_params.params_dict
@@ -209,7 +210,6 @@ class TestHelper:
         if mapping is not None:
             subset = dict((mapping[key], value) if key in mapping else (key, value)
                           for (key, value) in subset.items())
-        #[item for item in subset.items() if item not in superset.items() ]
 
         assert all(item in superset.items() for item in subset.items())
 
@@ -219,6 +219,6 @@ class TestHelper:
             print(value, file=text_file)
 
     @staticmethod
-    def save_df(df: pd.DataFrame, file:str):
+    def save_df(df: pd.DataFrame, file: str):
         with open(TestHelper.ensure_test_directory(file), "w") as text_file:
             print(df.to_string(), file=text_file)

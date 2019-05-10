@@ -87,8 +87,6 @@ class TunerTests(TimerTestCase):
                                      model_persistence_manager=LocalCacheManager(cache_directory=cache_directory),  # noqa
                                      parallelization_cores=0)
 
-
-
         # import time
         # t0 = time.time()
         tuner.tune(data_x=train_data, data_y=train_data_y)
@@ -307,12 +305,12 @@ class TunerTests(TimerTestCase):
 
         model_cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/cached_test_models/test_ModelTuner_GradientBoostingClassifier')  # noqa
         resampler_cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/temp_cache/')
-        tuner = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=GradientBoostingClassifier(),
-                                                                                transformations=transformations,
+        tuner = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=GradientBoostingClassifier(),  # noqa
+                                                                                transformations=transformations,  # noqa
                                                                                 scores=evaluator_list),
                                      hyper_param_object=GradientBoostingClassifierHP(),
                                      params_grid=grid,
-                                     model_persistence_manager=LocalCacheManager(cache_directory=model_cache_directory),
+                                     model_persistence_manager=LocalCacheManager(cache_directory=model_cache_directory),  # noqa
                                      resampler_persistence_manager=LocalCacheManager(cache_directory=resampler_cache_directory,  # noqa
                                                                            sub_directory='tune_test'),
                                      parallelization_cores=-1)
@@ -487,7 +485,7 @@ class TunerTests(TimerTestCase):
         grid = HyperParamsGrid(params_dict=params_dict)
 
         tuner = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=XGBoostClassifier(),
-                                                                                transformations=transformations,
+                                                                                transformations=transformations,  # noqa
                                                                                 scores=evaluator_list,
                                                                                 folds=5,
                                                                                 repeats=2),
