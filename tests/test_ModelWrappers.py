@@ -2264,7 +2264,7 @@ class ModelWrapperTests(TimerTestCase):
 
         TestHelper.assert_hyper_params_match(hp, fitter.model)
         TestHelper.save_string(fitter,
-                               'data/test_ModelWrappers/test_CartDecisionTreeClassifier_multiclass_string.txt')
+                               'data/test_ModelWrappers/test_CartDecisionTreeClassifier_multiclass_string.txt')  # noqa
         TestHelper.save_string(fitter.training_evaluator,
                                'data/test_ModelWrappers/test_CartDecisionTreeClassifier_multiclass_training_evaluator.txt')  # noqa
         TestHelper.save_string(fitter.holdout_evaluator,
@@ -2464,7 +2464,8 @@ class ModelWrapperTests(TimerTestCase):
                               model_transformations=None,
                               splitter=ClassificationStratifiedDataSplitter(holdout_ratio=0.25),
                               evaluator=MultiClassEvaluator(converter=HighestValueConverter()))
-        fitter.train_predict_eval(data=data, target_variable=target_variable, hyper_params=GradientBoostingClassifierHP())  # noqa
+        hp = GradientBoostingClassifierHP()
+        fitter.train_predict_eval(data=data, target_variable=target_variable, hyper_params=hp)
 
         assert isinstance(fitter.training_evaluator, MultiClassEvaluator)
         assert isinstance(fitter.holdout_evaluator, MultiClassEvaluator)
@@ -2743,7 +2744,6 @@ class ModelWrapperTests(TimerTestCase):
         holdout_x = data.iloc[holdout_indexes].drop(columns=target_variable)
 
         model = LightGBMRegressor()
-        hyper_params = LightGBMHP()
         model.train(data_x=training_x, data_y=training_y, hyper_params=LightGBMHP())
         training_predictions = model.predict(data_x=training_x)
         holdout_predictions = model.predict(data_x=holdout_x)
@@ -3331,12 +3331,8 @@ class ModelWrapperTests(TimerTestCase):
 
         assert all([isclose(x, y) for x, y in zip(expected_aggregation, predictions_aggregation)])
 
-        file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_regression.pkl'))  # noqa
-        # with open(file, 'wb') as output:
-        #     pickle.dump(expected_aggregation, output, pickle.HIGHEST_PROTOCOL)
-        with open(file, 'rb') as saved_object:
-            expected_predictions = pickle.load(saved_object)
-            assert all([isclose(x, y) for x, y in zip(expected_predictions, predictions_aggregation)])
+        TestHelper.save_df(pd.Series(predictions_aggregation),
+                           'data/test_ModelWrappers/test_ModelAggregator_regression_predictions.csv')
 
     def test_ModelAggregator_regression_transformations(self):
         """
@@ -3375,22 +3371,20 @@ class ModelWrapperTests(TimerTestCase):
         assert isinstance(model_aggregator._base_transformation_pipeline[2].transformations[0], DummyEncodeTransformer)  # noqa
 
         # check polynomial fields
-        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_LinearRegressor.pkl'),  # noqa
-                                                     expected_dataframe=model_aggregator._base_models[0].model.data_x_trained_head)  # noqa
+        TestHelper.save_df(model_aggregator._base_models[0].model.data_x_trained_head,
+                           'data/test_ModelWrappers/test_ModelAggregator_LinearRegressor.csv')
 
-        # check center/scale values
-        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_CartDecisionTreeRegressor.pkl'),  # noqa
-                                                     expected_dataframe=model_aggregator._base_models[1].model.data_x_trained_head)  # noqa
+        TestHelper.save_df(model_aggregator._base_models[1].model.data_x_trained_head,
+                           'data/test_ModelWrappers/test_ModelAggregator_CartDecisionTreeRegressor.csv')
 
-        # ensure transformations other than Dummy Encoding
-        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_AdaBoostRegressor.pkl'),  # noqa
-                                                     expected_dataframe=model_aggregator._base_models[2].model.data_x_trained_head)  # noqa
+        TestHelper.save_df(model_aggregator._base_models[2].model.data_x_trained_head,
+                           'data/test_ModelWrappers/test_ModelAggregator_AdaBoostRegressor.csv')
 
         predictions_aggregation = model_aggregator.predict(data_x=holdout_x)
         evaluator = RegressionEvaluator()
         evaluator.evaluate(actual_values=holdout_y, predicted_values=predictions_aggregation)
-        TestHelper.ensure_values_numeric_dictionary(dictionary_1=evaluator.all_quality_metrics,
-                                                    dictionary_2={'Mean Absolute Error (MAE)': 2906.87214063858, 'Mean Squared Error (MSE)': 26282683.26145224, 'Root Mean Squared Error (RMSE)': 5126.66395050936, 'RMSE to Standard Deviation of Target': 0.4139580875220496, 'R Squared': 0.8286387017750871, 'Total Observations': 268})  # noqa
+        TestHelper.save_string(evaluator,
+                               'data/test_ModelWrappers/test_ModelAggregator_regression_transformations_evaluator.csv')  # noqa
 
     def test_ModelAggregator_regression_median_transformations(self):
         """
@@ -3414,20 +3408,20 @@ class ModelWrapperTests(TimerTestCase):
                                            aggregation_strategy=MedianAggregationStrategy())
         model_aggregator.train(data_x=train_x, data_y=train_y)
 
-        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_LinearRegressor.pkl'),  # noqa
-                                                     expected_dataframe=model_aggregator._base_models[0].model.data_x_trained_head)  # noqa
+        TestHelper.save_df(model_aggregator._base_models[0].model.data_x_trained_head,
+                           'data/test_ModelWrappers/test_ModelAggregator_regression_median_transformations_LinearRegressor.csv')  # noqa
 
-        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_CartDecisionTreeRegressor.pkl'),  # noqa
-                                                     expected_dataframe=model_aggregator._base_models[1].model.data_x_trained_head)  # noqa
+        TestHelper.save_df(model_aggregator._base_models[1].model.data_x_trained_head,
+                           'data/test_ModelWrappers/test_ModelAggregator_regression_median_transformations_CartDecisionTreeRegressor.csv')  # noqa
 
-        TestHelper.ensure_all_values_equal_from_file(file=TestHelper.ensure_test_directory('data/test_ModelWrappers/test_ModelAggregator_AdaBoostRegressor.pkl'),  # noqa
-                                                     expected_dataframe=model_aggregator._base_models[2].model.data_x_trained_head)  # noqa
+        TestHelper.save_df(model_aggregator._base_models[2].model.data_x_trained_head,
+                           'data/test_ModelWrappers/test_ModelAggregator_regression_median_transformations_AdaBoostRegressor.csv')  # noqa
 
         predictions_aggregation = model_aggregator.predict(data_x=holdout_x)
         evaluator = RegressionEvaluator()
         evaluator.evaluate(actual_values=holdout_y, predicted_values=predictions_aggregation)
-        TestHelper.ensure_values_numeric_dictionary(dictionary_1=evaluator.all_quality_metrics,
-                                                    dictionary_2={'Mean Absolute Error (MAE)': 2183.5873525787456, 'Mean Squared Error (MSE)': 24546015.35190813, 'Root Mean Squared Error (RMSE)': 4954.393540273938, 'RMSE to Standard Deviation of Target': 0.40004792484196816, 'R Squared': 0.839961657829635, 'Total Observations': 268})  # noqa
+        TestHelper.save_string(evaluator,
+                               'data/test_ModelWrappers/test_ModelAggregator_regression_median_transformations_evaluator.csv')  # noqa
 
     def helper_test_ModelStacker_Classification(self, data, positive_class, cache_directory=None):
         """

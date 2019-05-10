@@ -25,14 +25,15 @@ Hyper-Parameters
  'subsample_freq': 1
  'max_bin': 265}
 
-Features Trained
-================
+Feature Importance
+==================
 
-['cement'
- 'slag'
- 'ash'
- 'water'
- 'superplastic'
- 'coarseagg'
- 'fineagg'
- 'age']
+               gain_values
+age           2.380151e+06
+cement        1.115005e+06
+water         9.578827e+05
+superplastic  2.681987e+05
+fineagg       8.947638e+04
+ash           6.989307e+04
+slag          4.461097e+04
+coarseagg     2.877575e+04

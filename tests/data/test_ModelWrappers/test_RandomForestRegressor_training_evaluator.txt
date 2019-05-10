@@ -1,4 +1,4 @@
-{'Mean Absolute Error (MAE)': 1.6196875
+{'Mean Absolute Error (MAE)': 1.6196875000000002
  'Mean Squared Error (MSE)': 6.604963058555826
  'Root Mean Squared Error (RMSE)': 2.5700122681722406
  'RMSE to Standard Deviation of Target': 0.15327583936297826

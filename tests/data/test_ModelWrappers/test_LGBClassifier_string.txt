@@ -26,30 +26,31 @@ Hyper-Parameters
  'scale_pos_weight': 1.0
  'max_bin': 255}
 
-Features Trained
-================
+Feature Importance
+==================
 
-['Age'
- 'Fare'
- 'Pclass_1'
- 'Pclass_2'
- 'Pclass_3'
- 'Sex_female'
- 'Sex_male'
- 'SibSp_0'
- 'SibSp_1'
- 'SibSp_2'
- 'SibSp_3'
- 'SibSp_4'
- 'SibSp_5'
- 'SibSp_8'
- 'Parch_0'
- 'Parch_1'
- 'Parch_2'
- 'Parch_3'
- 'Parch_4'
- 'Parch_5'
- 'Parch_6'
- 'Embarked_C'
- 'Embarked_Q'
- 'Embarked_S']
+            gain_values
+Sex_female  1252.771390
+Fare        1020.690738
+Age          788.566951
+Pclass_3     351.632238
+Pclass_1      93.452655
+Embarked_S    89.632712
+Parch_0       63.705675
+SibSp_1       40.293967
+SibSp_0       39.281282
+Embarked_C    32.359929
+Pclass_2      19.714239
+Sex_male      11.434462
+Parch_1        7.867083
+Embarked_Q     5.160174
+SibSp_2        3.327035
+Parch_2        2.993422
+SibSp_8        0.000000
+SibSp_4        0.000000
+SibSp_3        0.000000
+Parch_3        0.000000
+Parch_4        0.000000
+Parch_5        0.000000
+Parch_6        0.000000
+SibSp_5        0.000000

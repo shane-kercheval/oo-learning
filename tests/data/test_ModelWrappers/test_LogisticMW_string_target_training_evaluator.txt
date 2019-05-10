@@ -14,7 +14,8 @@
  'No Information Rate': 0.6165730337078652
  'Total Observations': 712}
 
-Confusion Matrix================
+Confusion Matrix
+================
 
 predicted  died  lived  Total
 actual                       

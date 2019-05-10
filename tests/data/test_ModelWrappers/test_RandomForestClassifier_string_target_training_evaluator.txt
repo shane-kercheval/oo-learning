@@ -1,4 +1,4 @@
-{'AUC ROC': 0.9977638155314692
+{'AUC ROC': 0.9977638155314693
  'AUC Precision/Recall': 0.9963857279946995
  'Kappa': 0.9642058165548097
  'F1 Score': 0.9777777777777779
@@ -14,7 +14,8 @@
  'No Information Rate': 0.6165730337078652
  'Total Observations': 712}
 
-Confusion Matrix================
+Confusion Matrix
+================
 
 predicted  died  lived  Total
 actual                       
