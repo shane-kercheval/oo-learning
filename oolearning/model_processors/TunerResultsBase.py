@@ -34,7 +34,7 @@ class TunerResultsBase(metaclass=ABCMeta):
         val += str(self.best_hyper_params).replace(", ", "\n ")
         val += "\n\nTuner Results\n=============\n\n"
 
-        temp = self.resampled_stats.copy()
+        temp = self.resampled_stats.copy().round(8)
         temp['rank'] = self._tune_results_objects.resampler_object.rank()
 
         return val + temp[['rank'] + list(self.resampled_stats.columns.values)].to_string()

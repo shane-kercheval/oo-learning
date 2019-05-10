@@ -1,7 +1,7 @@
-{'Kappa': 0.959818225304951
- 'Accuracy': 0.9732142857142857
- 'Error Rate': 0.0267857142857143
- 'No Information Rate': 0.3392857142857143
+{'Kappa': 0.95981823
+ 'Accuracy': 0.97321429
+ 'Error Rate': 0.02678571
+ 'No Information Rate': 0.33928571
  'Total Observations': 112}
 
 Confusion Matrix

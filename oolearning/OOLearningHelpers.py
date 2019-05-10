@@ -132,6 +132,10 @@ class OOLearningHelpers:
 
         return transformed_training_x, training_y, transformed_holdout_x, holdout_y, pipeline
 
+    @staticmethod
+    def round_dict(dictionary: dict, round_by: int = 8):
+        return {k: round(v, round_by) for k, v in dictionary.items()}
+
 
 class Singleton(type):
     """

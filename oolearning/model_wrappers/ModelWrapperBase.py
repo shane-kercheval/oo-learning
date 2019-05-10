@@ -31,12 +31,12 @@ class ModelWrapperBase(metaclass=ABCMeta):
         if self.model_object is not None:
             invert_op = getattr(self.model_object, "get_params", None)
             if callable(invert_op):
-                val += "\n\nHyper-Parameters\n================\n\n" + str(self.model_object.get_params()).replace(", ", "\n ")
+                val += "\n\nHyper-Parameters\n================\n\n" + str(self.model_object.get_params()).replace(", ", "\n ")  # noqa
 
             if self.feature_importance is not None and isinstance(self.feature_importance, pd.DataFrame):
-                val += "\n\nFeature Importance\n==================\n\n" + self.feature_importance.to_string()
+                val += "\n\nFeature Importance\n==================\n\n" + self.feature_importance.round(8).to_string()  # noqa
             else:
-                val += "\n\nFeatures Trained\n================\n\n" + str(self._feature_names).replace(", ", "\n ")
+                val += "\n\nFeatures Trained\n================\n\n" + str(self._feature_names).replace(", ", "\n ")  # noqa
 
         return val
 

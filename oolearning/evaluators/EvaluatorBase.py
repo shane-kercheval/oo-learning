@@ -2,6 +2,8 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
+from oolearning.OOLearningHelpers import OOLearningHelpers
+
 
 class EvaluatorBase(metaclass=ABCMeta):
     """
@@ -27,4 +29,4 @@ class EvaluatorBase(metaclass=ABCMeta):
         """
 
     def __str__(self):
-        return str(self.all_quality_metrics).replace(", ", "\n ")
+        return str(OOLearningHelpers.round_dict(self.all_quality_metrics)).replace(", ", "\n ")

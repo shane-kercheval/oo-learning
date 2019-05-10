@@ -1,17 +1,17 @@
-{'AUC ROC': 0.8198945981554676
- 'AUC Precision/Recall': 0.7693830218733662
- 'Kappa': 0.581636060100167
- 'F1 Score': 0.736842105263158
- 'Two-Class Accuracy': 0.8044692737430168
- 'Error Rate': 0.19553072625698323
- 'True Positive Rate': 0.7101449275362319
- 'True Negative Rate': 0.8636363636363636
- 'False Positive Rate': 0.13636363636363635
- 'False Negative Rate': 0.2898550724637681
+{'AUC ROC': 0.8198946
+ 'AUC Precision/Recall': 0.76938302
+ 'Kappa': 0.58163606
+ 'F1 Score': 0.73684211
+ 'Two-Class Accuracy': 0.80446927
+ 'Error Rate': 0.19553073
+ 'True Positive Rate': 0.71014493
+ 'True Negative Rate': 0.86363636
+ 'False Positive Rate': 0.13636364
+ 'False Negative Rate': 0.28985507
  'Positive Predictive Value': 0.765625
- 'Negative Predictive Value': 0.8260869565217391
- 'Prevalence': 0.3854748603351955
- 'No Information Rate': 0.6145251396648045
+ 'Negative Predictive Value': 0.82608696
+ 'Prevalence': 0.38547486
+ 'No Information Rate': 0.61452514
  'Total Observations': 179}
 
 Confusion Matrix

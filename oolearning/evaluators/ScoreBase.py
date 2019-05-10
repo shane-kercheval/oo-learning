@@ -15,7 +15,7 @@ class ScoreBase(metaclass=ABCMeta):
         self._value = None
 
     def __str__(self):
-        return self.name + ": " + str(self.value)
+        return self.name + ": " + str(round(self.value, 8))
 
     def clone(self):
         """

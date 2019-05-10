@@ -52,14 +52,14 @@ Features Trained
 Training Scores
 ===============
 
-kappa: 0.9642058165548099
-sensitivity: 0.967032967032967
-specificity: 0.9931662870159453
-error_rate: 0.016853932584269662
+kappa: 0.96420582
+sensitivity: 0.96703297
+specificity: 0.99316629
+error_rate: 0.01685393
 
 Holdout Scores
 ===============
-kappa: 0.5816360601001669
-sensitivity: 0.7101449275362319
-specificity: 0.8636363636363636
-error_rate: 0.19553072625698323
+kappa: 0.58163606
+sensitivity: 0.71014493
+specificity: 0.86363636
+error_rate: 0.19553073
