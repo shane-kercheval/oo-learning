@@ -1,0 +1,22 @@
+{'Kappa': -0.06090373
+ 'F1 Score': 0.48076923
+ 'Two-Class Accuracy': 0.46
+ 'Error Rate': 0.54
+ 'True Positive Rate': 0.55555556
+ 'True Negative Rate': 0.38181818
+ 'False Positive Rate': 0.61818182
+ 'False Negative Rate': 0.44444444
+ 'Positive Predictive Value': 0.42372881
+ 'Negative Predictive Value': 0.51219512
+ 'Prevalence': 0.45
+ 'No Information Rate': 0.55
+ 'Total Observations': 100}
+
+Confusion Matrix
+================
+
+predicted   1   0  Total
+actual                  
+1          21  34     55
+0          20  25     45
+Total      41  59    100

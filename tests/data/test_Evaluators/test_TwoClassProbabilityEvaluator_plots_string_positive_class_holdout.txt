@@ -1,0 +1,24 @@
+{'AUC ROC': 0.82667984
+ 'AUC Precision/Recall': 0.77741004
+ 'Kappa': 0.60981571
+ 'F1 Score': 0.75912409
+ 'Two-Class Accuracy': 0.81564246
+ 'Error Rate': 0.18435754
+ 'True Positive Rate': 0.75362319
+ 'True Negative Rate': 0.85454545
+ 'False Positive Rate': 0.14545455
+ 'False Negative Rate': 0.24637681
+ 'Positive Predictive Value': 0.76470588
+ 'Negative Predictive Value': 0.84684685
+ 'Prevalence': 0.38547486
+ 'No Information Rate': 0.61452514
+ 'Total Observations': 179}
+
+Confusion Matrix
+================
+
+predicted  died  lived  Total
+actual                       
+died         94     16    110
+lived        17     52     69
+Total       111     68    179

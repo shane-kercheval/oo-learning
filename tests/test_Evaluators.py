@@ -13,7 +13,7 @@ from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 
 
-# noinspection PyMethodMayBeStatic
+# noinspection PyMethodMayBeStatic,PyTypeChecker
 class EvaluatorTests(TimerTestCase):
 
     @classmethod
@@ -48,6 +48,9 @@ class EvaluatorTests(TimerTestCase):
                                                    predicted_classes=predicted_values,
                                                    positive_class=positive_category)
 
+        TestHelper.save_string(evaluator,
+                               'data/test_Evaluators/test_TwoClassEvaluator_ConfusionMatrix_positive.txt')
+
         assert evaluator.matrix.loc[:, 0].values.tolist() == expected_predicted_negatives
         assert evaluator.matrix.loc[:, 1].values.tolist() == expected_predicted_positives
         assert evaluator.matrix.loc[:, 'Total'].values.tolist() == expected_totals
@@ -63,6 +66,9 @@ class EvaluatorTests(TimerTestCase):
         evaluator = TwoClassEvaluator.from_classes(actual_classes=actual_values,
                                                    predicted_classes=predicted_values,
                                                    positive_class=negative_category)
+
+        TestHelper.save_string(evaluator,
+                               'data/test_Evaluators/test_TwoClassEvaluator_ConfusionMatrix_negative.txt')
 
         assert evaluator.matrix.loc[:, 1].values.tolist() == expected_predicted_negatives_r
         assert evaluator.matrix.loc[:, 0].values.tolist() == expected_predicted_positives_r
@@ -216,6 +222,12 @@ class EvaluatorTests(TimerTestCase):
                                evaluator=evaluator)
         trainer.train_predict_eval(data=explore.dataset, target_variable='Survived', hyper_params=RandomForestHP())
 
+        TestHelper.save_string(trainer.training_evaluator,
+                               '/data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_training.txt')  # noqa
+
+        TestHelper.save_string(trainer.holdout_evaluator,
+                               '/data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_holdout.txt')  # noqa
+
         TestHelper.check_plot('data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_train_calibration.png',  # noqa
                               lambda: trainer.training_evaluator.plot_calibration())
 
@@ -251,6 +263,9 @@ class EvaluatorTests(TimerTestCase):
         evaluator = TwoClassEvaluator.from_classes(actual_classes=mock_data.actual, predicted_classes=mock_data.predictions, positive_class=1)  # noqa
         self.check_confusion_matrix(con_matrix=evaluator._confusion_matrix, mock_data=mock_data)
 
+        TestHelper.save_string(evaluator,
+                               'data/test_Evaluators/test_TwoClassEvaluator_from_classes.txt')
+
         TestHelper.check_plot('data/test_Evaluators/test_evaluator_matrix_plot_metrics.png',
                               lambda: evaluator.plot_all_quality_metrics())
 
@@ -262,6 +277,9 @@ class EvaluatorTests(TimerTestCase):
 
         evaluator = TwoClassProbabilityEvaluator(converter=TwoClassThresholdConverter(positive_class=1, threshold=0.5))  # noqa
         evaluator.evaluate(actual_values=mock_data.actual, predicted_values=predictions_mock)
+
+        TestHelper.save_string(evaluator,
+                               'data/test_Evaluators/test_TwoClassEvaluator_probabilities_custom_threshold.txt')  # noqa
 
         assert isclose(evaluator.auc_precision_recall, average_precision_score(y_true=mock_data.actual, y_score=predictions_mock[1]))  # noqa
         assert isclose(evaluator.auc_roc, roc_auc_score(y_true=mock_data.actual, y_score=predictions_mock[1]))
@@ -316,6 +334,9 @@ class EvaluatorTests(TimerTestCase):
     def test_ConfusionMatrix_MultiClass(self):
         mock_data = pd.read_csv(os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_Evaluators/test_ConfusionMatrix_MultiClass_predictions.csv')))  # noqa
         evaluator = MultiClassEvaluator.from_classes(actual_classes=mock_data.actual, predicted_classes=mock_data.predicted_classes)  # noqa
+
+        TestHelper.save_string(evaluator,
+                               'data/test_Evaluators/test_ConfusionMatrix_MultiClass.txt')
 
         assert evaluator.confusion_matrix.total_observations == 38
         assert evaluator.total_observations == 38
@@ -410,6 +431,12 @@ class EvaluatorTests(TimerTestCase):
         assert isclose(fitter.training_evaluator.root_mean_squared_error, np.sqrt(fitter.training_evaluator.mean_squared_error))  # noqa
         assert isclose(fitter.training_evaluator.rmse_to_st_dev, 0.6246072972091289)
         assert isclose(fitter.training_evaluator.r_squared, 0.6098657242731069)
+
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_Evaluators/test_RegressionEvaluator_training.txt')
+
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_Evaluators/test_RegressionEvaluator_holdout.txt')
 
         expected_dictionary = {'Mean Absolute Error (MAE)': 8.360259532214116,
                                'Mean Squared Error (MSE)': 109.68243774089586,
