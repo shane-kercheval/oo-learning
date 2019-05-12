@@ -1,0 +1,25 @@
+Numeric Summary
+===============
+                      count  nulls  perc_nulls  num_zeros  perc_zeros      mean    st_dev  coef of var  skewness  kurtosis  min    10%     25%     50%      75%     90%    max
+months_loan_duration   1000      0         0.0          0         0.0    20.903    12.059        0.577     1.094     0.920    4    9.0    12.0    18.0    24.00    36.0     72
+amount                 1000      0         0.0          0         0.0  3271.258  2822.737        0.863     1.950     4.293  250  932.0  1365.5  2319.5  3972.25  7179.4  18424
+percent_of_income      1000      0         0.0          0         0.0     2.973     1.119        0.376    -0.531    -1.210    1    1.0     2.0     3.0     4.00     4.0      4
+years_at_residence     1000      0         0.0          0         0.0     2.845     1.104        0.388    -0.273    -1.381    1    1.0     2.0     3.0     4.00     4.0      4
+age                    1000      0         0.0          0         0.0    35.546    11.375        0.320     1.021     0.596   19   23.0    27.0    33.0    42.00    52.0     75
+existing_loans_count   1000      0         0.0          0         0.0     1.407     0.578        0.411     1.273     1.604    1    1.0     1.0     1.0     2.00     2.0      4
+dependents             1000      0         0.0          0         0.0     1.155     0.362        0.313     1.909     1.649    1    1.0     1.0     1.0     1.00     2.0      2
+
+
+Categoric Summary
+=================
+                     count  nulls  perc_nulls                   top  unique  perc_unique
+checking_balance      1000      0         0.0               unknown       4        0.004
+credit_history        1000      0         0.0                  good       5        0.005
+purpose               1000      0         0.0  furniture/appliances       6        0.006
+savings_balance       1000      0         0.0              < 100 DM       5        0.005
+employment_duration   1000      0         0.0           1 - 4 years       5        0.005
+other_credit          1000      0         0.0                  none       3        0.003
+housing               1000      0         0.0                   own       3        0.003
+job                   1000      0         0.0               skilled       4        0.004
+phone                 1000      0         0.0                    no       2        0.002
+default               1000      0         0.0                    no       2        0.002

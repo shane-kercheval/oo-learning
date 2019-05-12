@@ -26,6 +26,19 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         self._dataset = dataset.copy()
         self._target_variable = target_variable
 
+    def __str__(self):
+
+        string = "" if self.target_variable is None \
+            else "Target Variable: " + self.target_variable + "\n================\n\n"
+
+        string += "Numeric Summary\n===============\n"
+        string += self.numeric_summary().to_string()
+
+        string += "\n\n\nCategoric Summary\n=================\n"
+        string += self.categoric_summary().to_string()
+
+        return string
+
     class NoFeaturesMatchThresholdException(Exception):
         pass
 

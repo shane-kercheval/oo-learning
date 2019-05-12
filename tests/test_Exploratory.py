@@ -501,6 +501,9 @@ class ExploratoryTests(TimerTestCase):
         assert explore_from_csv.numeric_features == ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'age', 'existing_loans_count', 'dependents']  # noqa
         assert explore_from_csv.categoric_features == ['checking_balance', 'credit_history', 'purpose', 'savings_balance', 'employment_duration', 'other_credit', 'housing', 'job', 'phone', 'default']  # noqa
 
+        TestHelper.save_string(str(explore_from_csv),
+                               'data/test_Exploratory/test_ExploreDatasetBase_without_target_string.txt')
+
         explore = ExploreDataset(dataset=pd.read_csv(credit_csv))
         assert explore is not None
         assert isinstance(explore.dataset, pd.DataFrame)
@@ -818,6 +821,9 @@ class ExploratoryTests(TimerTestCase):
 
         explore = ExploreClassificationDataset.from_csv(csv_file_path=credit_csv, target_variable=target_variable)  # noqa
 
+        TestHelper.save_string(str(explore),
+                               'data/test_Exploratory/test_ExploreClassificationDataset_string.txt')
+
         assert isinstance(explore, ExploreClassificationDataset)
         assert explore.target_variable == target_variable
         assert explore.numeric_features == ['months_loan_duration', 'amount', 'percent_of_income', 'years_at_residence', 'age', 'existing_loans_count', 'dependents']  # noqa
@@ -874,6 +880,8 @@ class ExploratoryTests(TimerTestCase):
         target_variable = 'median_house_value'
 
         explore = ExploreRegressionDataset.from_csv(csv_file_path=housing_csv, target_variable=target_variable)  # noqa
+        TestHelper.save_string(str(explore),
+                               'data/test_Exploratory/test_ExploreRegressionDataset_string.txt')
 
         assert isinstance(explore, ExploreRegressionDataset)
         assert explore.target_variable == target_variable
