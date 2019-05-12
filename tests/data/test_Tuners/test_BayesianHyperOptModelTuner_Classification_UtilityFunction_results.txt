@@ -1,0 +1,15 @@
+Best Hyper-Parameters
+=====================
+
+{'max_depth': 7
+ 'num_leaves': 13}
+
+Tuner Results
+=============
+
+   rank  max_depth  num_leaves  AUC_ROC_mean  AUC_ROC_st_dev  AUC_ROC_cv
+0   4.0          8          59      0.870202        0.022300        0.03
+1   2.0          5          88      0.871742        0.018837        0.02
+2   3.0          5          29      0.871742        0.018837        0.02
+3   5.0          6          25      0.868883        0.021289        0.02
+4   1.0          7          13      0.872242        0.018877        0.02

@@ -11,7 +11,6 @@ class BayesianOptimizationTests(TimerTestCase):
         pass
 
     def test_BayesianOptimization_Classification_UtilityFunction(self):
-
         data = TestHelper.get_titanic_data()
         target_variable = 'Survived'
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
@@ -114,9 +113,6 @@ class BayesianOptimizationTests(TimerTestCase):
         training_y = data.iloc[training_indexes][target_variable]
         training_x = data.iloc[training_indexes].drop(columns=target_variable)
 
-        holdout_y = data.iloc[holdout_indexes][target_variable]
-        holdout_x = data.iloc[holdout_indexes].drop(columns=target_variable)
-
         score_list = [RmseScore()]
 
         # define & configure the Resampler object
@@ -176,19 +172,193 @@ class BayesianOptimizationTests(TimerTestCase):
                    model_tuner.results._tune_results_objects.iloc[
                        index].resampler_object.hyper_params.params_dict['l1_ratio']  # noqa
 
-    def test_BayesianHyperOptModelTuner(self):
-        import numpy as np
-        from hyperopt import hp, tpe, fmin
+    # noinspection PyUnresolvedReferences
+    def test_BayesianHyperOptModelTuner_Classification_UtilityFunction(self):
+        data = TestHelper.get_titanic_data()
+        target_variable = 'Survived'
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
-        # Single line bayesian optimization of polynomial function
-        best = fmin(fn=lambda x: np.poly1d([1, -2, -28, 28, 12, -26, 100])(x),
-                    space=hp.normal('x', 4.9, 0.5), algo=tpe.suggest,
-                    max_evals=2000)
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
+        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
 
-        temp = lambda x: np.poly1d([1, -2, -28, 28, 12, -26, 100])(x)
-        x = list(range(1, 10))
-        y = temp(x)
+        training_y = data.iloc[training_indexes][target_variable]
+        training_x = data.iloc[training_indexes].drop(columns='Survived')
 
-        import pandas as pd
-        pd.DataFrame({'x':x, 'y':y}).plot()
+        holdout_y = data.iloc[holdout_indexes][target_variable]
+        holdout_x = data.iloc[holdout_indexes].drop(columns='Survived')
 
+        score_list = [AucRocScore(positive_class=1)]
+
+        # define & configure the Resampler object
+        resampler = RepeatedCrossValidationResampler(
+            model=LightGBMClassifier(),  # we'll use a Random Forest model
+            transformations=transformations,
+            scores=score_list,
+            folds=5,  # 5 folds with 5 repeats
+            repeats=3,
+            parallelization_cores=0)  # adds parallelization (per repeat)
+
+        # space_lgb = {
+        #     'max_depth': (-1, 10),
+        #     'num_leaves': (10, 100)
+        # }
+        from hyperopt import hp
+        space_lgb = {
+            'max_depth': hp.choice('max_depth', range(-1, 10)),
+            'num_leaves': hp.choice('num_leaves', range(10, 100)),
+        }
+
+        max_evaluations = 5
+
+        model_tuner = BayesianHyperOptModelTuner(resampler=resampler,
+                                                 hyper_param_object=LightGBMHP(),
+                                                 space=space_lgb,
+                                                 max_evaluations=max_evaluations,
+                                                 seed=6)
+        model_tuner.tune(data_x=training_x, data_y=training_y)
+
+        TestHelper.save_string(model_tuner.results,
+                               'data/test_Tuners/test_BayesianHyperOptModelTuner_Classification_UtilityFunction_results.txt')  # noqa
+
+        assert model_tuner.results._parameter_names == list(space_lgb.keys())
+        assert model_tuner.results.resampled_stats.shape[0] == max_evaluations
+
+        df = model_tuner.results.resampled_stats
+        assert model_tuner.results.best_hyper_params == \
+               df.loc[df['AUC_ROC_mean'].idxmax(), model_tuner.results._parameter_names].to_dict()
+
+        # Resample with best_params and see if we get the same loss value i.e. AUC_ROC_mean
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        score_list = [AucRocScore(positive_class=1)]
+
+        # define & configure the Resampler object
+        resampler = RepeatedCrossValidationResampler(
+            model=LightGBMClassifier(),  # we'll use a Random Forest model
+            transformations=transformations,
+            scores=score_list,
+            folds=5,  # 5 folds with 5 repeats
+            repeats=3,
+            parallelization_cores=0)  # adds parallelization (per repeat)
+
+        hp = LightGBMHP()
+        hp.update_dict(model_tuner.results.best_hyper_params)
+        resampler.resample(training_x, training_y, hyper_params=hp)
+
+        assert OOLearningHelpers.dict_is_subset(subset=model_tuner.results.best_hyper_params,
+                                                superset=resampler.results.hyper_params.params_dict)
+        assert resampler.results.score_means['AUC_ROC'] == \
+               model_tuner.results.resampled_stats.iloc[model_tuner.results.best_index]['AUC_ROC_mean']
+
+        # Params found by Bayesian Optimization
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+        pipeline = TransformerPipeline(transformations=transformations)
+        transformed_training_data = pipeline.fit_transform(training_x)
+        transformed_holdout_data = pipeline.transform(holdout_x)
+
+        model = LightGBMClassifier()
+        hyper_params = LightGBMHP()
+        hyper_params.update_dict(model_tuner.results.best_hyper_params)
+        model.train(data_x=transformed_training_data, data_y=training_y,
+                    hyper_params=hyper_params)
+        holdout_predictions = model.predict(data_x=transformed_holdout_data)
+        score_value = AucRocScore(positive_class=1).calculate(actual_values=holdout_y,
+                                                              predicted_values=holdout_predictions)
+        assert score_value == 0.7928853754940711
+
+    # noinspection PyUnresolvedReferences
+    def test_BayesianHyperOptModelTuner_Regression_CostFunction(self):
+        data = TestHelper.get_cement_data()
+        target_variable = 'strength'
+        transformations = [RemoveColumnsTransformer(columns=['fineagg'])]
+
+        splitter = RegressionStratifiedDataSplitter(holdout_ratio=0.2)
+        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
+
+        training_y = data.iloc[training_indexes][target_variable]
+        training_x = data.iloc[training_indexes].drop(columns=target_variable)
+
+        holdout_y = data.iloc[holdout_indexes][target_variable]
+        holdout_x = data.iloc[holdout_indexes].drop(columns=target_variable)
+
+        score_list = [RmseScore()]
+
+        # define & configure the Resampler object
+        resampler = RepeatedCrossValidationResampler(
+            model=ElasticNetRegressor(),  # we'll use a Random Forest model
+            transformations=transformations,
+            scores=score_list,
+            folds=5,  # 5 folds with 5 repeats
+            repeats=3,
+            parallelization_cores=0)  # adds parallelization (per repeat)
+
+        from hyperopt import hp
+        space_lgb = {
+            'alpha': hp.uniform('alpha', 0.001, 2),
+            'l1_ratio': hp.uniform('l1_ratio', 0, 1),
+        }
+
+        max_evaluations = 5
+
+        model_tuner = BayesianHyperOptModelTuner(resampler=resampler,
+                                                 hyper_param_object=ElasticNetRegressorHP(),
+                                                 space=space_lgb,
+                                                 max_evaluations=max_evaluations,
+                                                 seed=6)
+        model_tuner.tune(data_x=training_x, data_y=training_y)
+
+        TestHelper.save_string(model_tuner.results,
+                               'data/test_Tuners/test_BayesianHyperOptModelTuner_Regression_CostFunction_results.txt')  # noqa
+
+        assert model_tuner.results._parameter_names == list(space_lgb.keys())
+        assert model_tuner.results.resampled_stats.shape[0] == max_evaluations
+
+        df = model_tuner.results.resampled_stats
+        assert model_tuner.results.best_hyper_params == \
+               df.loc[df['RMSE_mean'].idxmin(), model_tuner.results._parameter_names].to_dict()
+
+        # Resample with best_params and see if we get the same loss value i.e. RMSE_mean
+        transformations = [RemoveColumnsTransformer(columns=['fineagg'])]
+        score_list = [RmseScore()]
+
+        # define & configure the Resampler object
+        resampler = RepeatedCrossValidationResampler(
+            model=ElasticNetRegressor(),  # we'll use a Random Forest model
+            transformations=transformations,
+            scores=score_list,
+            folds=5,  # 5 folds with 5 repeats
+            repeats=3,
+            parallelization_cores=0)  # adds parallelization (per repeat)
+
+        hp = ElasticNetRegressorHP()
+        hp.update_dict(model_tuner.results.best_hyper_params)
+        resampler.resample(training_x, training_y, hyper_params=hp)
+
+        assert OOLearningHelpers.dict_is_subset(subset=model_tuner.results.best_hyper_params,
+                                                superset=resampler.results.hyper_params.params_dict)
+        assert resampler.results.score_means['RMSE'] == \
+               model_tuner.results.resampled_stats.iloc[model_tuner.results.best_index]['RMSE_mean']
+
+        # Params found by Bayesian Optimization
+        transformations = [RemoveColumnsTransformer(columns=['fineagg'])]
+        pipeline = TransformerPipeline(transformations=transformations)
+        transformed_training_data = pipeline.fit_transform(training_x)
+        transformed_holdout_data = pipeline.transform(holdout_x)
+
+        model = ElasticNetRegressor()
+        hyper_params = ElasticNetRegressorHP()
+        hyper_params.update_dict(model_tuner.results.best_hyper_params)
+        model.train(data_x=transformed_training_data, data_y=training_y,
+                    hyper_params=hyper_params)
+        holdout_predictions = model.predict(data_x=transformed_holdout_data)
+        score_value = RmseScore().calculate(actual_values=holdout_y, predicted_values=holdout_predictions)
+        assert score_value == 10.001116248623699

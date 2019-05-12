@@ -1,27 +1,109 @@
 import time
-from multiprocessing import Pool as ThreadPool
-from multiprocessing import cpu_count
-from typing import List, Callable, Union
-
-from bayes_opt import BayesianOptimization
 
 import numpy as np
 import pandas as pd
+from bayes_opt import BayesianOptimization
+from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 
 from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
 from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
-from oolearning.evaluators.ScoreBase import ScoreBase
-from oolearning.model_processors.TunerResultsBase import TunerResultsBase
-from oolearning.model_processors.BayesianOptimizationTunerResults import BayesianOptimizationTunerResults
-from oolearning.model_processors.DecoratorBase import DecoratorBase
+from oolearning.model_processors.BayesianOptimizationTunerResults import BayesianOptimizationTunerResults,\
+    BayesianHyperOptTunerResults
 from oolearning.model_processors.ModelTunerBase import ModelTunerBase
-from oolearning.model_processors.ProcessingExceptions import CallbackUsedWithParallelizationError
 from oolearning.model_processors.ResamplerBase import ResamplerBase
-from oolearning.model_processors.GridSearchTunerResults import GridSearchTunerResults
+from oolearning.model_processors.TunerResultsBase import TunerResultsBase
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
-from oolearning.model_wrappers.HyperParamsGrid import HyperParamsGrid
-from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
-from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
+
+
+class BayesianHyperOptModelTuner(ModelTunerBase):
+    """
+    Wrapper for HyperOpt
+        https://hyperopt.github.io/hyperopt/
+        https://github.com/hyperopt/hyperopt
+        https://github.com/hyperopt/hyperopt/wiki/FMin
+
+    A good article on hyperopt can be found here
+        https://towardsdatascience.com/an-introductory-example-of-bayesian-optimization-in-python-with-hyperopt-aae40fff4ff0
+
+    Uses a Resampler for tuning a single model across various hyper-parameters.
+    In other words, it runs a specified Resampler repeatedly over a combination of hyper-parameters, finding
+    the "best" potential model as well as related information.
+    """
+    def __init__(self,
+                 resampler: ResamplerBase,
+                 hyper_param_object: HyperParamsBase,
+                 space: object,
+                 max_evaluations: int,
+                 seed: int = 42):
+
+        super().__init__()
+
+        self._resampler = resampler
+        self._hyper_param_object = hyper_param_object
+        self._space = space
+        self._max_evaluations = max_evaluations
+        self._seed = seed
+
+    def _tune(self, data_x: pd.DataFrame, data_y: np.ndarray) -> TunerResultsBase:
+
+        def objective(params):
+            local_hyper_params = self._hyper_param_object.clone()
+            local_hyper_params.update_dict(params)
+
+            local_resampler = self._resampler.clone()
+
+            resample_start_time = time.time()
+            local_resampler.resample(data_x=data_x, data_y=data_y, hyper_params=local_hyper_params)
+            resample_time = time.time() - resample_start_time
+
+            first_score_object = local_resampler.results.scores[0][0]
+
+            assert isinstance(first_score_object, CostFunctionMixin) or \
+                   isinstance(first_score_object, UtilityFunctionMixin)
+
+            resample_mean = local_resampler.results.score_means[first_score_object.name]
+
+            # the hyperopt framework minimizes the "loss" function by default
+            # so, if the first score object passed in to the resampler is a Utility Function, we want to
+            # **Maximize** the score, so we need to multiply it by negative 1 since the optimizer minimizes
+            if isinstance(local_resampler.results.scores[0][0], UtilityFunctionMixin):
+                resample_mean = resample_mean * -1
+
+            return {'loss': resample_mean,
+                    'status': STATUS_OK,
+                    'params': params,
+                    'resampler_object': local_resampler.results,
+                    'resampler_time_seconds': resample_time}
+
+        trials = Trials()
+        # I do not use the results of `fmin`, because for hp.choice results, fmin returns the index of the
+        # best parameter, not the actual value, which is not ideal (although I assume it is required
+        # since you could pass in an object and would need to know the index number of the object
+        fmin(fn=objective,
+             space=self._space,
+             algo=tpe.suggest,
+             max_evals=self._max_evaluations,
+             trials=trials,
+             rstate=np.random.RandomState(seed=self._seed))
+
+        # check that the Resampler scores have the same mean values as the loss values in trials
+        # if the score object is a Utility, must multiply by -1 since we had to multiple by -1
+        # above to so that we can optimize for the largest value (e.g. AUC)
+        multiplier = -1 if isinstance(trials.results[0]['resampler_object'].scores[0][0], UtilityFunctionMixin) else 1  # noqa
+        optimizer_values = [dictionary['loss'] * multiplier for dictionary in trials.results]
+        resampler_means = [dictionary['resampler_object'].score_means[dictionary['resampler_object'].scores[0][0].name] for dictionary in trials.results]
+        assert optimizer_values == resampler_means
+
+        tune_results = pd.DataFrame([dictionary['params'] for dictionary in trials.results])
+        tune_results['resampler_object'] = [dictionary['resampler_object'] for dictionary in trials.results]
+
+        time_results = pd.DataFrame([dictionary['params'] for dictionary in trials.results])
+        time_results['resample_time_seconds'] = [dictionary['resampler_time_seconds'] for dictionary in trials.results]  # noqa
+
+        return BayesianHyperOptTunerResults(tune_results=tune_results,
+                                            time_results=time_results,
+                                            parameter_names=list(self._space.keys()),
+                                            trials_object=trials)
 
 
 class BayesianOptimizationModelTuner(ModelTunerBase):
@@ -42,10 +124,8 @@ class BayesianOptimizationModelTuner(ModelTunerBase):
                  seed: int = 42
                  ):
         """
-
         :param resampler:
         :param hyper_param_object:
-        :param objective_function:
         """
         super().__init__()
 
@@ -123,8 +203,12 @@ class BayesianOptimizationModelTuner(ModelTunerBase):
         assert len(temp_resampler_results) == self._n_iter + self._init_points
 
         # ensure the target values email the mean resampled score
-        # TODO will not work for CostFunctionMixin, must multiply by negative 1
-        assert [ob['target'] for ob in optimizer.res] == [result.score_means[temp_resampler_results[0].scores[0][0].name] for result in temp_resampler_results]
+        # if the score object is a CostFunctionMixin, must multiply by -1 since we had to multiple by -1
+        # above to so that we can optimize for the smallest value (e.g. RMSE)
+        multiplier = -1 if isinstance(temp_resampler_results[0].scores[0][0], CostFunctionMixin) else 1
+        assert [multiplier * ob['target'] for ob in optimizer.res] ==\
+               [result.score_means[temp_resampler_results[0].scores[0][0].name]
+                for result in temp_resampler_results]
 
         # the hyper-params of each resampler
         all_params_every_resampler = [params_object.params_dict for params_object in temp_hyper_params]

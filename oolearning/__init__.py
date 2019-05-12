@@ -63,8 +63,10 @@ from .model_aggregation.SoftVotingAggregationStrategy import SoftVotingAggregati
 from oolearning.model_aggregation.MeanAggregationStrategy import MeanAggregationStrategy
 from oolearning.model_aggregation.MedianAggregationStrategy import MedianAggregationStrategy
 
-from .model_processors.BayesianOptimizationModelTuner import BayesianOptimizationModelTuner
-from .model_processors.BayesianOptimizationTunerResults import BayesianOptimizationTunerResults
+from .model_processors.BayesianOptimizationModelTuner import BayesianOptimizationModelTuner, \
+    BayesianHyperOptModelTuner
+from .model_processors.BayesianOptimizationTunerResults import BayesianOptimizationTunerResults, \
+    BayesianHyperOptTunerResults
 from .model_processors.DecoratorBase import DecoratorBase
 from .model_processors.TwoClassThresholdDecorator import TwoClassThresholdDecorator
 from .model_processors.ModelFitter import ModelFitterRemoving

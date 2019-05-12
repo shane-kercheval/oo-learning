@@ -136,6 +136,9 @@ class OOLearningHelpers:
     def round_dict(dictionary: dict, round_by: int = 8):
         return {k: round(v, round_by) for k, v in dictionary.items()}
 
+    @staticmethod
+    def dict_is_subset(subset, superset):
+        return all(item in superset.items() for item in subset.items())
 
 class Singleton(type):
     """
