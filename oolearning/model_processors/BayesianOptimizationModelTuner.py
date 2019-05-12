@@ -3,11 +3,11 @@ import time
 import numpy as np
 import pandas as pd
 from bayes_opt import BayesianOptimization
-from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
+from hyperopt import fmin, tpe, STATUS_OK, Trials
 
 from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
 from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
-from oolearning.model_processors.BayesianOptimizationTunerResults import BayesianOptimizationTunerResults,\
+from oolearning.model_processors.BayesianOptimizationTunerResults import BayesianOptimizationTunerResults, \
     BayesianHyperOptTunerResults
 from oolearning.model_processors.ModelTunerBase import ModelTunerBase
 from oolearning.model_processors.ResamplerBase import ResamplerBase
@@ -91,7 +91,8 @@ class BayesianHyperOptModelTuner(ModelTunerBase):
         # above to so that we can optimize for the largest value (e.g. AUC)
         multiplier = -1 if isinstance(trials.results[0]['resampler_object'].scores[0][0], UtilityFunctionMixin) else 1  # noqa
         optimizer_values = [dictionary['loss'] * multiplier for dictionary in trials.results]
-        resampler_means = [dictionary['resampler_object'].score_means[dictionary['resampler_object'].scores[0][0].name] for dictionary in trials.results]
+        resampler_means = [dictionary['resampler_object'].score_means[dictionary['resampler_object'].scores[0][0].name]  # noqa
+                           for dictionary in trials.results]
         assert optimizer_values == resampler_means
 
         tune_results = pd.DataFrame([dictionary['params'] for dictionary in trials.results])
@@ -100,6 +101,7 @@ class BayesianHyperOptModelTuner(ModelTunerBase):
         time_results = pd.DataFrame([dictionary['params'] for dictionary in trials.results])
         time_results['resample_time_seconds'] = [dictionary['resampler_time_seconds'] for dictionary in trials.results]  # noqa
 
+        # noinspection PyUnresolvedReferences
         return BayesianHyperOptTunerResults(tune_results=tune_results,
                                             time_results=time_results,
                                             parameter_names=list(self._space.keys()),
@@ -151,7 +153,10 @@ class BayesianOptimizationModelTuner(ModelTunerBase):
         temp_hyper_params = list()
 
         # need global functions otherwise I get "function not defined" in `optimizer.maximize()`
+        # noinspection PyGlobalUndefined
         global temp_objective_function
+
+        # noinspection PyUnusedLocal,PyRedeclaration
         def temp_objective_function(locals_dictionary: dict):
             # this will be passed in a diction from `locals()` call in the dynamic objective function which
             # will contain a dictionary of parameters with the corresponding values, which is exactly what
