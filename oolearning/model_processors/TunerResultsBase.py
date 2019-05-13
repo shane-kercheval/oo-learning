@@ -105,3 +105,9 @@ class TunerResultsBase(metaclass=ABCMeta):
     @abstractmethod
     def best_hyper_params(self) -> Union[dict, None]:
         pass
+
+    def plot_iteration_mean_scores(self):
+        score_names = [score.name + "_mean" for score in self.best_model_resampler_object.scores[0]]
+        stats = self.resampled_stats[score_names].copy()
+        stats['Iteration'] = range(1, len(stats) + 1)
+        stats.plot(x='Iteration')

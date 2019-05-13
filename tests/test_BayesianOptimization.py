@@ -73,6 +73,9 @@ class BayesianOptimizationTests(TimerTestCase):
         assert all(model_tuner.results.optimizer_results['AUC_ROC'].values ==
                    model_tuner.results.resampled_stats['AUC_ROC_mean'].values)
 
+        TestHelper.check_plot('data/test_Tuners/test_BayesianOptimization_Classification_UtilityFunction__optimizerplot_iteration_mean_scores.png',  # noqa
+                              lambda: model_tuner.results.plot_iteration_mean_scores())
+
         # noinspection PyUnresolvedReferences
         TestHelper.save_df(model_tuner.results.optimizer_results.round(8),
                            'data/test_Tuners/test_BayesianOptimization_tuner_optimizer_results.txt')
@@ -144,6 +147,9 @@ class BayesianOptimizationTests(TimerTestCase):
 
         TestHelper.save_string(model_tuner.results,
                                'data/test_Tuners/test_BayesianOptimization_Regression_CostFunction_results.txt')  # noqa
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianOptimization_Regression_CostFunction__optimizerplot_iteration_mean_scores.png',  # noqa
+                              lambda: model_tuner.results.plot_iteration_mean_scores())
 
         assert model_tuner.results.number_of_cycles == init_points + n_iter
 
@@ -222,6 +228,9 @@ class BayesianOptimizationTests(TimerTestCase):
 
         TestHelper.save_string(model_tuner.results,
                                'data/test_Tuners/test_BayesianHyperOptModelTuner_Classification_UtilityFunction_results.txt')  # noqa
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Classification_UtilityFunction__optimizerplot_iteration_mean_scores.png',  # noqa
+                               lambda: model_tuner.results.plot_iteration_mean_scores())
 
         assert model_tuner.results._parameter_names == list(space_lgb.keys())
         assert model_tuner.results.resampled_stats.shape[0] == max_evaluations
@@ -318,6 +327,9 @@ class BayesianOptimizationTests(TimerTestCase):
 
         TestHelper.save_string(model_tuner.results,
                                'data/test_Tuners/test_BayesianHyperOptModelTuner_Regression_CostFunction_results.txt')  # noqa
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Regression_CostFunction__plot_iteration_mean_scores.png',  # noqa
+                               lambda: model_tuner.results.plot_iteration_mean_scores())
 
         assert model_tuner.results._parameter_names == list(space_lgb.keys())
         assert model_tuner.results.resampled_stats.shape[0] == max_evaluations
