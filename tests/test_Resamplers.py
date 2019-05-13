@@ -721,12 +721,12 @@ class ResamplerTests(TimerTestCase):
         expected_precision_recall_thresholds = [0.43, 0.53, 0.64, 0.59, 0.6]
         assert decorator.roc_ideal_thresholds == expected_roc_thresholds
         assert decorator.precision_recall_ideal_thresholds == expected_precision_recall_thresholds
-        assert isclose(decorator.roc_ideal_thresholds_mean, np.mean(expected_roc_thresholds))
-        assert isclose(decorator.resampled_precision_recall_mean, np.mean(expected_precision_recall_thresholds))  # noqa
-        assert isclose(decorator.roc_ideal_thresholds_st_dev, np.std(expected_roc_thresholds))
-        assert isclose(decorator.resampled_precision_recall_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
-        assert isclose(decorator.roc_ideal_thresholds_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
-        assert isclose(decorator.resampled_precision_recall_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa
+        assert isclose(decorator.roc_threshold_mean, np.mean(expected_roc_thresholds))
+        assert isclose(decorator.precision_recall_threshold_mean, np.mean(expected_precision_recall_thresholds))  # noqa
+        assert isclose(decorator.roc_threshold_st_dev, np.std(expected_roc_thresholds))
+        assert isclose(decorator.precision_recall_threshold_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
+        assert isclose(decorator.roc_threshold_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
+        assert isclose(decorator.precision_recall_threshold_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa
 
         # the object should be stored in the results as the first and only decorator element
         assert len(resampler.results.decorators) == 1
@@ -832,12 +832,12 @@ class ResamplerTests(TimerTestCase):
 
         assert decorator.roc_ideal_thresholds == expected_roc_thresholds
         assert decorator.precision_recall_ideal_thresholds == expected_precision_recall_thresholds
-        assert isclose(decorator.roc_ideal_thresholds_mean, np.mean(expected_roc_thresholds))
-        assert isclose(decorator.resampled_precision_recall_mean, np.mean(expected_precision_recall_thresholds))  # noqa
-        assert isclose(decorator.roc_ideal_thresholds_st_dev, np.std(expected_roc_thresholds))
-        assert isclose(decorator.resampled_precision_recall_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
-        assert isclose(decorator.roc_ideal_thresholds_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
-        assert isclose(decorator.resampled_precision_recall_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa
+        assert isclose(decorator.roc_threshold_mean, np.mean(expected_roc_thresholds))
+        assert isclose(decorator.precision_recall_threshold_mean, np.mean(expected_precision_recall_thresholds))  # noqa
+        assert isclose(decorator.roc_threshold_st_dev, np.std(expected_roc_thresholds))
+        assert isclose(decorator.precision_recall_threshold_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
+        assert isclose(decorator.roc_threshold_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
+        assert isclose(decorator.precision_recall_threshold_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa
 
         # the object should be stored in the results as the first and only decorator element
         assert len(resampler.results.decorators) == 1

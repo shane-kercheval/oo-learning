@@ -29,10 +29,21 @@ class TwoClassThresholdDecorator(DecoratorBase):
         self._parallelization_cores = parallelization_cores
 
     def __str__(self):
-        string = "Ideal ROC Thresholds: " + str(self.roc_ideal_thresholds) + "\n"
-        string += "Ideal Precision/Recall Thresholds: " + str(self.precision_recall_ideal_thresholds)
+        if len(self._roc_ideal_thresholds) > 0:
+            string = "ROC Ideal Threshold\n-------------------\n" + \
+                     str(round(self.roc_threshold_mean, 4)) + " (mean); " + \
+                     str(round(self.roc_threshold_st_dev, 4)) + " (standard dev.); " + \
+                     str(round(self.roc_threshold_cv, 2)) + " (standard dev.)\n\n"
 
-        return string
+            string += "Precision/Recall Ideal Threshold\n-------------------\n" + \
+                      str(round(self.precision_recall_threshold_mean, 4)) + " (mean); " + \
+                      str(round(self.precision_recall_threshold_st_dev, 4)) + " (standard dev.); " + \
+                      str(round(self.precision_recall_threshold_cv, 2)) + " (standard dev.)\n"
+
+            return string
+
+        else:
+            return ""
 
     # noinspection PyProtectedMember
     def decorate(self, **kwargs):
@@ -91,43 +102,43 @@ class TwoClassThresholdDecorator(DecoratorBase):
         return self._precision_recall_ideal_thresholds
 
     @property
-    def roc_ideal_thresholds_mean(self) -> float:
+    def roc_threshold_mean(self) -> float:
         """
         :return: the mean of the "ideal" thresholds
         """
         return float(np.mean(self._roc_ideal_thresholds))
 
     @property
-    def resampled_precision_recall_mean(self) -> float:
+    def precision_recall_threshold_mean(self) -> float:
         """
         :return: the mean of the "ideal" thresholds
         """
         return float(np.mean(self.precision_recall_ideal_thresholds))
 
     @property
-    def roc_ideal_thresholds_st_dev(self) -> float:
+    def roc_threshold_st_dev(self) -> float:
         """
         :return: the standard deviation of the "ideal" thresholds
         """
         return float(np.std(self._roc_ideal_thresholds))
 
     @property
-    def resampled_precision_recall_st_dev(self) -> float:
+    def precision_recall_threshold_st_dev(self) -> float:
         """
         :return: the standard deviation of the "ideal" thresholds
         """
         return float(np.std(self.precision_recall_ideal_thresholds))
 
     @property
-    def roc_ideal_thresholds_cv(self):
+    def roc_threshold_cv(self):
         """
         :return: the coefficient of variation of the "ideal" thresholds
         """
-        return round((self.roc_ideal_thresholds_st_dev / self.roc_ideal_thresholds_mean), 2)
+        return round((self.roc_threshold_st_dev / self.roc_threshold_mean), 2)
 
     @property
-    def resampled_precision_recall_cv(self) -> float:
+    def precision_recall_threshold_cv(self) -> float:
         """
         :return: the coefficient of variation of the "ideal" thresholds
         """
-        return round((self.resampled_precision_recall_st_dev / self.resampled_precision_recall_mean), 2)
+        return round((self.precision_recall_threshold_st_dev / self.precision_recall_threshold_mean), 2)

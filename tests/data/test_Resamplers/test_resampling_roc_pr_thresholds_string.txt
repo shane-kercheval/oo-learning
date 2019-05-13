@@ -18,5 +18,11 @@ coefficients of variation  0.090000
 Decorator
 ==========
 
-Ideal ROC Thresholds: [0.43, 0.31, 0.47, 0.59, 0.48]
-Ideal Precision/Recall Thresholds: [0.43, 0.53, 0.64, 0.59, 0.6]
+ROC Ideal Threshold
+-------------------
+0.456 (mean); 0.0902 (standard dev.); 0.2 (standard dev.)
+
+Precision/Recall Ideal Threshold
+-------------------
+0.558 (mean); 0.073 (standard dev.); 0.13 (standard dev.)
+

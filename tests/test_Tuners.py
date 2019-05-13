@@ -656,12 +656,12 @@ class TunerTests(TimerTestCase):
         assert decorator.roc_ideal_thresholds == expected_roc_thresholds
         assert decorator.precision_recall_ideal_thresholds == expected_precision_recall_thresholds
 
-        assert isclose(decorator.roc_ideal_thresholds_mean, np.mean(expected_roc_thresholds))
-        assert isclose(decorator.resampled_precision_recall_mean, np.mean(expected_precision_recall_thresholds))  # noqa
-        assert isclose(decorator.roc_ideal_thresholds_st_dev, np.std(expected_roc_thresholds))
-        assert isclose(decorator.resampled_precision_recall_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
-        assert isclose(decorator.roc_ideal_thresholds_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
-        assert isclose(decorator.resampled_precision_recall_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa
+        assert isclose(decorator.roc_threshold_mean, np.mean(expected_roc_thresholds))
+        assert isclose(decorator.precision_recall_threshold_mean, np.mean(expected_precision_recall_thresholds))  # noqa
+        assert isclose(decorator.roc_threshold_st_dev, np.std(expected_roc_thresholds))
+        assert isclose(decorator.precision_recall_threshold_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
+        assert isclose(decorator.roc_threshold_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
+        assert isclose(decorator.precision_recall_threshold_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa
 
     def test_GridSearchModelTuner_regression(self):
         # Test sorting & getting best model parameters works for models that are minimizing the score
