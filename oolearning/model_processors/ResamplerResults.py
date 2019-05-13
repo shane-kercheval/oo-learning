@@ -39,6 +39,16 @@ class ResamplerResults:
 
             self._resampled_scores.append(results_dict)
 
+    def __str__(self):
+        string = "" if self.hyper_params is None else str(self.hyper_params.params_dict).replace(", ", "\n ") + "\n\n"
+        string += self.score_stats.to_string()
+
+        if self.decorators is not None:
+            for decorator in self.decorators:
+                string += "\n\nDecorator\n==========\n\n" + str(decorator)
+
+        return string
+
     @property
     def hyper_params(self):
         return self._hyper_params

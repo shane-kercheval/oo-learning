@@ -1,0 +1,16 @@
+{'n_estimators': 500
+ 'criterion': 'gini'
+ 'max_features': None
+ 'max_depth': None
+ 'min_samples_split': 2
+ 'min_samples_leaf': 1
+ 'min_weight_fraction_leaf': 0.0
+ 'max_leaf_nodes': None
+ 'min_impurity_decrease': 0.0
+ 'bootstrap': True
+ 'oob_score': False}
+
+                              kappa  sensitivity  specificity  error_rate
+means                      0.586495     0.721899     0.861744    0.192053
+standard deviations        0.068335     0.067068     0.036648    0.031189
+coefficients of variation  0.120000     0.090000     0.040000    0.160000

@@ -28,6 +28,12 @@ class TwoClassThresholdDecorator(DecoratorBase):
         self._precision_recall_ideal_thresholds = list()
         self._parallelization_cores = parallelization_cores
 
+    def __str__(self):
+        string = "Ideal ROC Thresholds: " + str(self.roc_ideal_thresholds) + "\n"
+        string += "Ideal Precision/Recall Thresholds: " + str(self.precision_recall_ideal_thresholds)
+
+        return string
+
     # noinspection PyProtectedMember
     def decorate(self, **kwargs):
         # Specific to 2-class classification; need to use the right objects, or this will explode.

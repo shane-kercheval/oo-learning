@@ -31,7 +31,7 @@ class TempDecorator(DecoratorBase):
             kwargs['holdout_predicted_values'])  # noqa
 
 
-# noinspection SpellCheckingInspection,PyMethodMayBeStatic
+# noinspection SpellCheckingInspection,PyMethodMayBeStatic,PyTypeChecker
 class ResamplerTests(TimerTestCase):
 
     @classmethod
@@ -64,6 +64,10 @@ class ResamplerTests(TimerTestCase):
         self.assertRaises(ModelNotFittedError, lambda: resampler.results)
 
         resampler.resample(data_x=train_data, data_y=train_data_y)
+
+        TestHelper.save_string(resampler.results,
+                               'data/test_Resamplers/test_resamplers_Rmse_Mae_string.txt')
+
         assert len(resampler.results._scores) == 25
         assert all([len(x) == 2 and
                     isinstance(x[0], RmseScore) and
@@ -623,7 +627,12 @@ class ResamplerTests(TimerTestCase):
         time_start = time.time()
         resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
         time_stop = time.time()
-        # assert (time_stop - time_start) < 15   # goes from ~30 sec to < 10 with parallelization
+
+        if not TestHelper.is_debugging():
+            assert (time_stop - time_start) < 15   # goes from ~30 sec to < 10 with parallelization
+
+        TestHelper.save_string(resampler.results,
+                               'data/test_Resamplers/test_resamplers_RandomForest_classification_parallization_string.txt')  # noqa
 
         assert len(resampler.results._scores) == 25
         assert all([len(x) == 4 and
@@ -703,7 +712,10 @@ class ResamplerTests(TimerTestCase):
         start_time = time.time()
         resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
         resample_time = time.time() - start_time
-        # assert resample_time < 15  # Non-Parallelization: ~31 seconds; Parallelization: ~12 seconds
+        # assert resample_time < 20  # Non-Parallelization: ~31 seconds; Parallelization: ~12 seconds
+
+        TestHelper.save_string(resampler.results,
+                               'data/test_Resamplers/test_resampling_roc_pr_thresholds_string.txt')
 
         expected_roc_thresholds = [0.43, 0.31, 0.47, 0.59, 0.48]
         expected_precision_recall_thresholds = [0.43, 0.53, 0.64, 0.59, 0.6]

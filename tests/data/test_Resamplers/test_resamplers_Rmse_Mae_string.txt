@@ -1,0 +1,4 @@
+                                RMSE       MAE
+means                      10.459344  8.285554
+standard deviations         0.571668  0.467144
+coefficients of variation   0.050000  0.060000
