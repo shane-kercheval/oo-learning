@@ -69,7 +69,6 @@ from .model_processors.BayesianOptimizationTunerResults import BayesianOptimizat
     BayesianHyperOptTunerResults
 from .model_processors.DecoratorBase import DecoratorBase
 from .model_processors.TwoClassThresholdDecorator import TwoClassThresholdDecorator
-from .model_processors.ModelFitter import ModelFitterRemoving
 from .model_processors.ModelTrainer import ModelTrainer
 from .model_processors.ModelInfo import ModelInfo
 from .model_processors.ModelSearcher import ModelSearcher
