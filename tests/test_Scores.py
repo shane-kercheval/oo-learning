@@ -8,6 +8,7 @@ from sklearn.metrics import accuracy_score, recall_score, f1_score, fbeta_score,
     mean_squared_error, mean_absolute_error, roc_auc_score, average_precision_score
 
 from oolearning import *
+from oolearning.model_wrappers.ModelExceptions import AlreadyExecutedError
 from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 
@@ -90,7 +91,7 @@ class ScoreTests(TimerTestCase):
         assert isclose(accuracy, 2.9154759474226504)
         assert isclose(rmse_eval.value, 2.9154759474226504)
         # should not be able to call calculate twice on same object (could indicate some sort of reuse error)
-        self.assertRaises(AssertionError,
+        self.assertRaises(AlreadyExecutedError,
                           lambda: rmse_eval.calculate(actual_values=actual, predicted_values=predicted))
 
         assert isinstance(rmse_eval, CostFunctionMixin)
