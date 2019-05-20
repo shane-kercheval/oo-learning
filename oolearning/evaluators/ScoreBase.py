@@ -1,4 +1,3 @@
-import copy
 from abc import ABCMeta, abstractmethod
 
 from oolearning.model_processors.SingleUseObject import SingleUseObjectMixin

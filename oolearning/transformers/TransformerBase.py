@@ -1,6 +1,5 @@
 from abc import ABCMeta, abstractmethod
 
-import copy
 import pandas as pd
 
 from oolearning.model_processors.SingleUseObject import SingleUseObjectMixin
