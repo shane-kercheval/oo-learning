@@ -1,8 +1,9 @@
 from abc import ABCMeta
-import copy
+
+from oolearning.model_processors.SingleUseObject import Cloneable
 
 
-class HyperParamsBase(metaclass=ABCMeta):
+class HyperParamsBase(Cloneable, metaclass=ABCMeta):
     """
     Each inheriting object is responsible for validating the hyper-parameters' values and ensuring all
     available hyper-parameters are used.
@@ -20,13 +21,6 @@ class HyperParamsBase(metaclass=ABCMeta):
         """
         self._params_dict = None
         self._match_type = match_type
-
-    def clone(self):
-        """
-        when, for example, tuning, an Resampler will have to be cloned several times (before using)
-        :return: a clone of the current object
-        """
-        return copy.deepcopy(self)
 
     @property
     def params_dict(self) -> dict:

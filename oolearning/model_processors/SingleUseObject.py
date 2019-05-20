@@ -5,7 +5,12 @@ from typing import Union, List
 from oolearning.model_wrappers.ModelExceptions import AlreadyExecutedError, NotExecutedError
 
 
-class SingleUseObjectMixin(metaclass=ABCMeta):
+class Cloneable(metaclass=ABCMeta):
+    def clone(self):
+        return copy.deepcopy(self)
+
+
+class SingleUseObjectMixin(Cloneable):
 
     def __init__(self,
                  already_executed_exception_class=None,
@@ -73,4 +78,22 @@ class SUOFactory(metaclass=ABCMeta):
 
     @abstractmethod
     def generate_object(self):
+        pass
+
+
+class CloneableFactory(metaclass=ABCMeta):
+    def __init__(self, cloneable: Union[Cloneable, List[Cloneable]]):
+
+        if isinstance(cloneable, list):
+            for suo in cloneable:
+                assert isinstance(suo, SingleUseObjectMixin)
+        else:
+            assert isinstance(cloneable, SingleUseObjectMixin)
+
+        self._cloneable = cloneable
+
+    def get_new_object(self):
+        pass
+
+    def get_new_objects(self, num_objects):
         pass

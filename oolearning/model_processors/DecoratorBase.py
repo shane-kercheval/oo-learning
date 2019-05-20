@@ -1,9 +1,9 @@
-import copy
-
 from abc import ABCMeta, abstractmethod
 
+from oolearning.model_processors.SingleUseObject import Cloneable
 
-class DecoratorBase(metaclass=ABCMeta):
+
+class DecoratorBase(Cloneable, metaclass=ABCMeta):
     """
     In object-oriented programming, the `decorator` is pattern is described as a way to "attach additional
         responsibilities to an object dynamically. Decorators provide a flexible alternative to subclassing
@@ -15,6 +15,3 @@ class DecoratorBase(metaclass=ABCMeta):
     @abstractmethod
     def decorate(self, **kwargs):
         pass
-
-    def clone(self):
-        return copy.deepcopy(self)

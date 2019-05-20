@@ -1,4 +1,3 @@
-import copy
 from abc import ABCMeta, abstractmethod
 from typing import List, Callable, Union
 
@@ -6,16 +5,17 @@ import numpy as np
 import pandas as pd
 
 from oolearning.evaluators.ScoreBase import ScoreBase
-from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.model_processors.ResamplerResults import ResamplerResults
+from oolearning.model_processors.SingleUseObject import SingleUseObjectMixin
+from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError
 from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 from oolearning.transformers.TransformerBase import TransformerBase
 
 
-class ResamplerBase(metaclass=ABCMeta):
+class ResamplerBase(SingleUseObjectMixin, metaclass=ABCMeta):
     """
     A Resampler is an object that defines how to 'resample' a data set, for example 'repeated
         cross-validation', and provides information about the performance of the model fit on the resampled
@@ -53,6 +53,8 @@ class ResamplerBase(metaclass=ABCMeta):
             being transformed as expected, but it is imaginable to think that users will also benefit
             from this capability to also peak at the data that is being trained.
         """
+        super().__init__()
+
         assert isinstance(model, ModelWrapperBase)
         if transformations is not None:
             assert isinstance(transformations, list)
@@ -66,14 +68,6 @@ class ResamplerBase(metaclass=ABCMeta):
         self._results_persistence_manager = results_persistence_manager
         self._train_callback = train_callback
         self._decorators = None
-
-    def clone(self):
-        """
-        when, for example, tuning, an Resampler will have to be cloned several times (before using)
-        :return: a clone of the current object
-        """
-        assert self._results is None  # only intended on being called before evaluating
-        return copy.deepcopy(self)
 
     def set_decorators(self, decorators: List[DecoratorBase]):
         self._decorators = decorators
@@ -97,6 +91,8 @@ class ResamplerBase(metaclass=ABCMeta):
 
     def resample(self, data_x: pd.DataFrame, data_y: np.ndarray, hyper_params: HyperParamsBase = None):
         """
+        `resample()` is friendly name for SingleUseObjectMixin.execute() but both should do the same thing
+
         `resample` handles the logic of applying the pre-process transformations, as well as fitting the data
             based on teh resampling method and storing the resampled accuracies
         :param data_x: DataFrame to train the model on
@@ -106,6 +102,10 @@ class ResamplerBase(metaclass=ABCMeta):
         """
         # if we have a persistence manager, grab the cached resampling results if they exist (and skip
         # the resampling)
+        self.execute(data_x=data_x, data_y=data_y, hyper_params=hyper_params)
+
+    def _execute(self, data_x: pd.DataFrame, data_y: np.ndarray, hyper_params: HyperParamsBase = None):
+
         if self._results_persistence_manager:
             self._results = self._results_persistence_manager. \
                 get_object(fetch_function=lambda: self._resample(data_x=data_x,
@@ -116,11 +116,14 @@ class ResamplerBase(metaclass=ABCMeta):
 
         assert self._results is not None
 
+    def additional_cloning_checks(self):
+        pass
+
     @abstractmethod
     def _resample(self,
                   data_x: pd.DataFrame,
                   data_y: np.ndarray,
-                  hyper_params: HyperParamsBase=None) -> ResamplerResults:
+                  hyper_params: HyperParamsBase = None) -> ResamplerResults:
         """
         contains the logic of resampling the data, to be implemented by the sub-class
         :param data_x: is already transformed from the `model_transformations` passed into the constructor

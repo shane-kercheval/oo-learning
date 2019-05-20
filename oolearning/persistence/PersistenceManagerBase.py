@@ -1,16 +1,13 @@
-import copy
-
 from abc import ABCMeta, abstractmethod
 from typing import Callable
 
+from oolearning.model_processors.SingleUseObject import Cloneable
 
-class PersistenceManagerBase(metaclass=ABCMeta):
+
+class PersistenceManagerBase(Cloneable, metaclass=ABCMeta):
     """
     # TODO Document
     """
-    def clone(self):
-        return copy.deepcopy(self)
-
     @abstractmethod
     def get_object(self, fetch_function: Callable[[], object], key: str=None) -> object:
         pass
