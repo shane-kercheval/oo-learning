@@ -1,5 +1,4 @@
 from oolearning import *
-from oolearning.model_wrappers.ModelExceptions import AlreadyExecutedError, NotExecutedError
 from tests.TimerTestCase import TimerTestCase
 
 
@@ -32,6 +31,10 @@ class MockSingleUseObject(SingleUseObjectMixin):
 
     def _execute(self):
         self._temp_object.execute()
+
+
+class MockCloneable(Cloneable):
+    pass
 
 
 # noinspection PyMethodMayBeStatic,SpellCheckingInspection,PyTypeChecker
@@ -131,3 +134,72 @@ class SingleUseObjectTests(TimerTestCase):
         # ensure we cannot clone or execute again
         self.assertRaises(ModelNotFittedError,
                           lambda: suo.ensure_has_executed())
+
+    def test_CloneableFactory_MockCloneable(self):
+        ##########################
+        # test single object MockCloneable
+        ##########################
+        original = MockCloneable()
+        factory = CloneableFactory(cloneable=original)
+        new1 = factory.get()
+        new2 = factory.get()
+
+        assert isinstance(original, MockCloneable)
+        assert isinstance(new1, MockCloneable)
+        assert isinstance(new2, MockCloneable)
+        assert original is original
+        assert original is not new1
+        assert original is not new2
+        assert new1 is not new2
+
+        ##########################
+        # test single object MockSingleUseObject
+        ##########################
+        original = MockSingleUseObject(TempObject(value=1))
+        factory = CloneableFactory(cloneable=original)
+        new1 = factory.get()
+        new2 = factory.get()
+
+        assert isinstance(original, MockSingleUseObject)
+        assert isinstance(new1, MockSingleUseObject)
+        assert isinstance(new2, MockSingleUseObject)
+        assert original is original
+        assert original is not new1
+        assert original is not new2
+        assert new1 is not new2
+
+        # test MockSingleUseObject works as expected after generating
+        new1.execute()
+
+        assert new1.has_executed
+        assert new1.temp_object.value == 2  # check that _execute() is called
+        new1.ensure_has_executed()
+
+        # ensure original object did not change
+        assert not original.has_executed
+        assert original.temp_object.value == 1
+        assert original.clone() is not None  # we should still be able to clone because object hasn't executed
+        original.ensure_has_not_executed()
+        self.assertRaises(NotExecutedError,
+                          lambda: original.ensure_has_executed())
+
+        ##########################
+        # test list of objects (MockCloneable & MockSingleUseObject)
+        ##########################
+        original1 = MockCloneable()
+        original2 = MockSingleUseObject(TempObject(value=1))
+
+        factory = CloneableFactory(cloneable=[original1, original2])
+        new1 = factory.get()
+        new2 = factory.get()
+
+        assert len(new1) == 2
+        assert len(new2) == 2
+
+        assert isinstance(new1[0], MockCloneable)
+        assert isinstance(new1[1], MockSingleUseObject)
+        assert isinstance(new2[0], MockCloneable)
+        assert isinstance(new2[1], MockSingleUseObject)
+
+        assert all([x is not original1 and x is not original2 for x in new1])
+        assert all([x is not original1 and x is not original2 for x in new2])

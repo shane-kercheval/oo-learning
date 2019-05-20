@@ -82,7 +82,7 @@ from .model_processors.StratifiedMonteCarloResampler import StratifiedMonteCarlo
 from .model_processors.ProcessingExceptions import CallbackUsedWithParallelizationError
 from .model_processors.TunerResultsBase import TunerResultsBase
 
-from .model_processors.SingleUseObject import SingleUseObjectMixin, SUOFactory
+from .model_processors.SingleUseObject import SingleUseObjectMixin, Cloneable, CloneableFactory
 
 from .model_wrappers.AdaBoost import AdaBoostClassifier
 from .model_wrappers.AdaBoost import AdaBoostClassifierHP
@@ -111,11 +111,9 @@ from .model_wrappers.LinearRegressorSK import LinearRegressorSK
 from .model_wrappers.LogisticClassifier import LogisticClassifier
 from .model_wrappers.LogisticClassifier import LogisticClassifierHP
 from .model_wrappers.ModelDefaults import ModelDefaults
-from .model_wrappers.ModelExceptions import ModelNotFittedError
-from .model_wrappers.ModelExceptions import ModelAlreadyFittedError
-from .model_wrappers.ModelExceptions import ModelCachedAlreadyConfigured
-from .model_wrappers.ModelExceptions import MissingValueError
-from .model_wrappers.ModelExceptions import NegativeValuesFoundError
+from .model_wrappers.ModelExceptions import ModelNotFittedError, ModelAlreadyFittedError,\
+    AlreadyExecutedError, NotExecutedError, ModelCachedAlreadyConfigured, MissingValueError,\
+    NegativeValuesFoundError
 from .model_wrappers.ModelWrapperBase import ModelWrapperBase
 from .model_wrappers.RandomForest import RandomForestRegressor
 from .model_wrappers.RandomForest import RandomForestClassifier

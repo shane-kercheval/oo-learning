@@ -64,36 +64,24 @@ class SingleUseObjectMixin(Cloneable):
             raise self._already_executed_exception_class()
 
 
-class SUOFactory(metaclass=ABCMeta):
-
-    def __init__(self, single_use_object: Union[SingleUseObjectMixin, List[SingleUseObjectMixin]]):
-
-        if isinstance(single_use_object, list):
-            for suo in single_use_object:
-                assert isinstance(suo, SingleUseObjectMixin)
-        else:
-            assert isinstance(single_use_object, SingleUseObjectMixin)
-
-        self._suo = single_use_object
-
-    @abstractmethod
-    def generate_object(self):
-        pass
-
-
 class CloneableFactory(metaclass=ABCMeta):
     def __init__(self, cloneable: Union[Cloneable, List[Cloneable]]):
 
         if isinstance(cloneable, list):
             for suo in cloneable:
-                assert isinstance(suo, SingleUseObjectMixin)
+                assert isinstance(suo, Cloneable)
         else:
-            assert isinstance(cloneable, SingleUseObjectMixin)
+            assert isinstance(cloneable, Cloneable)
 
         self._cloneable = cloneable
 
-    def get_new_object(self):
-        pass
+    def get(self):
+        if isinstance(self._cloneable, list):
+            new_object = [x.clone() for x in self._cloneable]
+        else:
+            new_object = self._cloneable.clone()
 
-    def get_new_objects(self, num_objects):
-        pass
+        return new_object
+
+    # def get_new_objects(self, num_objects):
+    #     pass
