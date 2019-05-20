@@ -88,9 +88,9 @@ class ModelWrapperBase(SingleUseObjectMixin, metaclass=ABCMeta):
         return self._model_object
 
     def train(self,
-                 data_x: pd.DataFrame,
-                 data_y: Union[np.ndarray, None] = None,
-                 hyper_params: HyperParamsBase = None):
+              data_x: pd.DataFrame,
+              data_y: Union[np.ndarray, None] = None,
+              hyper_params: HyperParamsBase = None):
         """
         `train()` is friendly name for SingleUseObjectMixin.execute() but both should do the same thing
 

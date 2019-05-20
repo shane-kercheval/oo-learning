@@ -1,8 +1,10 @@
 import copy
 from abc import ABCMeta, abstractmethod
 
+from oolearning.model_processors.SingleUseObject import SingleUseObjectMixin
 
-class ScoreBase(metaclass=ABCMeta):
+
+class ScoreBase(SingleUseObjectMixin, metaclass=ABCMeta):
     """
     A `Score` object is responsible for a single calculation representing the performance of a model. This
         type of object is used in Resamplers, Tuners, Searchers, etc., in order to track and compare the
@@ -12,18 +14,11 @@ class ScoreBase(metaclass=ABCMeta):
         or a `cost`-function (lower scores are better).
     """
     def __init__(self):
+        super().__init__()
         self._value = None
 
     def __str__(self):
         return self.name + ": " + str(round(self.value, 8))
-
-    def clone(self):
-        """
-        when, for example, resampling, an Evaluator will have to be cloned several times (before using)
-        :return: a clone of the current object
-        """
-        assert self._value is None  # only intended on being called before evaluating
-        return copy.deepcopy(self)
 
     @property
     def value(self) -> float:
@@ -32,16 +27,24 @@ class ScoreBase(metaclass=ABCMeta):
         """
         return self._value
 
+    def additional_cloning_checks(self):
+        pass
+
+    def _execute(self, *args) -> float:
+        self._value = self._calculate(args)
+        assert isinstance(self._value, float) or isinstance(self._value, int)
+        return self._value
+
     def calculate(self, *args) -> float:
         """
+        `calculate()` is friendly name for SingleUseObjectMixin.execute() but both should do the same thing
+
         given the actual and predicted values, this function calculates the corresponding value/score
         :param args: information necessary to calculate the score
         :return: calculated score
         """
-        assert self._value is None  # we don't want to be able to reuse test_evaluators
-        self._value = self._calculate(args)
-        assert isinstance(self._value, float) or isinstance(self._value, int)
-        return self._value
+        # noinspection PyTypeChecker,PyArgumentList
+        return self.execute(*args)
 
     def better_than(self, other: 'ScoreBase') -> bool:
         """

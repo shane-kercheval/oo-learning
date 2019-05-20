@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from oolearning import *
+from oolearning.model_wrappers.ModelExceptions import AlreadyExecutedError, NotExecutedError
 from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 
@@ -66,7 +67,7 @@ class TransformerTests(TimerTestCase):
         data = TestHelper.get_insurance_data()
         failing_transformer = MockFailedTransformer()
 
-        self.assertRaises(AssertionError,
+        self.assertRaises(NotExecutedError,
                           lambda: failing_transformer.transform(data_x=data))  # have not fitted data
         self.assertRaises(AssertionError,
                           lambda: failing_transformer.fit(data_x=data))  # fit does not set _state
@@ -74,14 +75,14 @@ class TransformerTests(TimerTestCase):
         succeeding_transformer = MockSuccessTransformer()
         assert succeeding_transformer.state is None
         # have not fitted data
-        self.assertRaises(AssertionError, lambda: succeeding_transformer.transform(data_x=data))
+        self.assertRaises(NotExecutedError, lambda: succeeding_transformer.transform(data_x=data))
         succeeding_transformer.fit(data_x=data)  # test class sets _state
         assert len(succeeding_transformer.state) == 1
         assert succeeding_transformer.state['junk_key'] == 'junk_value'
         new_data = succeeding_transformer.transform(data_x=data)  # should work now
         assert new_data is not None
         # can't call fit() twice
-        self.assertRaises(AssertionError, lambda: succeeding_transformer.fit(data_x=data))
+        self.assertRaises(AlreadyExecutedError, lambda: succeeding_transformer.fit(data_x=data))
 
     # noinspection PyTypeChecker
     def test_transformations_ImputationTransformer(self):
@@ -96,7 +97,7 @@ class TransformerTests(TimerTestCase):
 
         imputation_transformer = ImputationTransformer(categoric_imputation_function=None)
         # ensure that we are forced to call `fit` first
-        self.assertRaises(AssertionError, lambda: imputation_transformer.transform(data_x=data))
+        self.assertRaises(NotExecutedError, lambda: imputation_transformer.transform(data_x=data))
         training_set_copy = training_set.copy()  # copy so that we don't change original training_set
         # remove a few values from a categorical column to make sure imputation doesn't include it
 
@@ -116,7 +117,7 @@ class TransformerTests(TimerTestCase):
         assert all(transformed_training_data.index.values == training_set_copy.index.values)
 
         # ensure that if we try to call fit_transform again we get an assertion error
-        self.assertRaises(AssertionError,
+        self.assertRaises(AlreadyExecutedError,
                           lambda: imputation_transformer.fit_transform(data_x=training_set_copy))
         # ensure training_set_copy wasn't affected
         assert training_set_copy.isnull().values.sum() == expected_number_nulls + 4
@@ -1376,7 +1377,7 @@ class TransformerTests(TimerTestCase):
         transformer = CenterScaleTransformer()
 
         # ensure that we are forced to call `fit` first
-        self.assertRaises(AssertionError, lambda: transformer.transform(data_x=data))
+        self.assertRaises(NotExecutedError, lambda: transformer.transform(data_x=data))
 
         transformed_training = transformer.fit_transform(data_x=training_set.copy())
 
@@ -1471,7 +1472,7 @@ class TransformerTests(TimerTestCase):
         transformer = CenterScaleTransformer()
 
         # ensure that we are forced to call `fit` first
-        self.assertRaises(AssertionError, lambda: transformer.transform(data_x=data))
+        self.assertRaises(NotExecutedError, lambda: transformer.transform(data_x=data))
 
         transformed_training = transformer.fit_transform(data_x=training_set.copy())
 
@@ -1496,7 +1497,7 @@ class TransformerTests(TimerTestCase):
         transformer = NormalizationTransformer()
 
         # ensure that we are forced to call `fit` first
-        self.assertRaises(AssertionError, lambda: transformer.transform(data_x=data))
+        self.assertRaises(NotExecutedError, lambda: transformer.transform(data_x=data))
 
         transformed_training = transformer.fit_transform(data_x=training_set.copy())
         assert transformer.state == {'minimums': {'longitude': -124.35, 'latitude': 32.54, 'housing_median_age': 1.0, 'total_rooms': 2.0, 'total_bedrooms': 1.0, 'population': 3.0, 'households': 1.0, 'median_income': 0.4999}, 'maximums': {'longitude': -114.31, 'latitude': 41.95, 'housing_median_age': 52.0, 'total_rooms': 37937.0, 'total_bedrooms': 5471.0, 'population': 16122.0, 'households': 5189.0, 'median_income': 15.0001}}  # noqa
@@ -1618,7 +1619,7 @@ class TransformerTests(TimerTestCase):
 
         remove_nzv_transformer = RemoveNZVTransformer()
         # ensure that we are forced to call `fit` first
-        self.assertRaises(AssertionError, lambda: remove_nzv_transformer.transform(data_x=training_set))
+        self.assertRaises(NotExecutedError, lambda: remove_nzv_transformer.transform(data_x=training_set))
         remove_nzv_transformer.fit(data_x=training_set)
         assert remove_nzv_transformer.state == {'columns_to_remove': ['longitude']}
 
@@ -1630,7 +1631,7 @@ class TransformerTests(TimerTestCase):
         assert all(transformed_data.columns.values == ['latitude', 'housing_median_age', 'total_rooms', 'total_bedrooms', 'population', 'households', 'median_income', 'ocean_proximity', 'temp_categorical'])  # noqa
         assert all(transformed_data.index.values == training_set.index.values)
 
-        self.assertRaises(AssertionError, lambda: remove_nzv_transformer.fit(data_x=training_set))
+        self.assertRaises(AlreadyExecutedError, lambda: remove_nzv_transformer.fit(data_x=training_set))
 
         # test on test set
         # verify original data
@@ -1663,7 +1664,7 @@ class TransformerTests(TimerTestCase):
 
         pca_transformer = PCATransformer()
         # ensure that we are forced to call `fit` first
-        self.assertRaises(AssertionError, lambda: pca_transformer.transform(data_x=training_set))
+        self.assertRaises(NotExecutedError, lambda: pca_transformer.transform(data_x=training_set))
 
         assert pca_transformer.cumulative_explained_variance is None
         assert pca_transformer.number_of_components is None

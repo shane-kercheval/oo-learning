@@ -3,8 +3,10 @@ from abc import ABCMeta, abstractmethod
 import copy
 import pandas as pd
 
+from oolearning.model_processors.SingleUseObject import SingleUseObjectMixin
 
-class TransformerBase(metaclass=ABCMeta):
+
+class TransformerBase(SingleUseObjectMixin, metaclass=ABCMeta):
     """
     A transformer is an object that transforms data-sets by first `fitting` an initial data-set, and saving
     the values necessary to consistently transform future data-sets based on the fitted data-set.
@@ -15,15 +17,9 @@ class TransformerBase(metaclass=ABCMeta):
         :param check_dataframe_indexes_maintained: Flag to check that the indexes of the transformed DataFrame
             match the indexes of the DataFrame passed into `transform`/`fit_transform`
         """
+        super().__init__()
         self._state = None
         self._check_dataframe_indexes_maintained = check_dataframe_indexes_maintained
-
-    def clone(self):
-        """
-        :return: a clone of the current object
-        """
-        assert self._state is None  # only intended on being called before transforming
-        return copy.deepcopy(self)
 
     @property
     def state(self) -> dict:
@@ -79,19 +75,26 @@ class TransformerBase(metaclass=ABCMeta):
         """
         pass
 
-    def fit(self, data_x: pd.DataFrame):
-        """
-        saves the necessary information into _state to transform future data-sets
+    def additional_cloning_checks(self):
+        pass
 
-        :param data_x: data to fit
-        :return: None
-        """
-        assert self._state is None  # ensure that we have not fitted the data previously
+    def _execute(self, data_x: pd.DataFrame):
         assert isinstance(data_x, pd.DataFrame)
         data_x = data_x.copy()
         # noinspection PyTypeChecker
         self._state = self._fit_definition(data_x=data_x)
         assert self._state is not None  # ensure after we have fitted the transformation, we have cached state
+
+    def fit(self, data_x: pd.DataFrame):
+        """
+        `fit()` is friendly name for SingleUseObjectMixin.execute() but both should do the same thing
+
+        saves the necessary information into _state to transform future data-sets
+
+        :param data_x: data to fit
+        :return: None
+        """
+        self.execute(data_x=data_x)
 
     def transform(self, data_x: pd.DataFrame) -> pd.DataFrame:
         """
@@ -100,6 +103,7 @@ class TransformerBase(metaclass=ABCMeta):
         :param data_x:
         :return: transformed DataFrame
         """
+        self.ensure_has_executed()
         assert self._state is not None  # make sure we have fitted the data and saved the state before we go
         data_x = data_x.copy()
         assert isinstance(data_x, pd.DataFrame)
