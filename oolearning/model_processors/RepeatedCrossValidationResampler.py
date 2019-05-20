@@ -150,13 +150,13 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                  model: ModelWrapperBase,
                  transformations: Union[List[TransformerBase], None],
                  scores: List[ScoreActualPredictedBase],
-                 model_persistence_manager: PersistenceManagerBase = None,
-                 results_persistence_manager: PersistenceManagerBase = None,
+                 folds: int = 5,
+                 repeats: int = 5,
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None,
-                 folds: int=5,
-                 repeats: int=5,
-                 fold_decorators: List[DecoratorBase]=None,
+                 fold_decorators: List[DecoratorBase] = None,
+                 model_persistence_manager: PersistenceManagerBase = None,
+                 results_persistence_manager: PersistenceManagerBase = None,
                  parallelization_cores: int = 0):
         """
         :param model: The model to fit at each fold. A clone/copy of the model is created at each fold.

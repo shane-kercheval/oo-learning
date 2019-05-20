@@ -1,17 +1,17 @@
-import copy
 from abc import ABCMeta, abstractmethod
 from typing import Union
 
 import numpy as np
 import pandas as pd
 
+from oolearning.model_processors.SingleUseObject import SingleUseObjectMixin
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
-from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError, ModelAlreadyFittedError, \
-    ModelCachedAlreadyConfigured
+from oolearning.model_wrappers.ModelExceptions import ModelAlreadyFittedError, \
+    ModelCachedAlreadyConfigured, ModelNotFittedError
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 
 
-class ModelWrapperBase(metaclass=ABCMeta):
+class ModelWrapperBase(SingleUseObjectMixin, metaclass=ABCMeta):
     """
     Intent of ModelWrappers is to abstract away the differences between various types of models and return
     values between models; to give a consistent interface; and rather than passing magic strings and
@@ -19,6 +19,9 @@ class ModelWrapperBase(metaclass=ABCMeta):
     """
 
     def __init__(self):
+
+        super().__init__(already_executed_exception_class=ModelAlreadyFittedError,
+                         not_executed_exception_class=ModelNotFittedError)
         self._model_object = None
         self._feature_names = None
         self._hyper_params = None
@@ -40,26 +43,15 @@ class ModelWrapperBase(metaclass=ABCMeta):
 
         return val
 
-    def clone(self):
-        """
-        when, for example, resampling, a model will have to be cloned several times (before fitting)
-        :return: a clone of the current object
-        """
-        if self._model_object is not None:  # only intended on being called before fitting
-            raise ModelAlreadyFittedError()
-
+    def additional_cloning_checks(self):
         if self._persistence_manager is not None:
             raise ModelCachedAlreadyConfigured('Should not clone after we configure the cache (cloning is intended to reuse empty model objects.).')  # noqa
-
-        return copy.deepcopy(self)
 
     def set_persistence_manager(self, persistence_manager: PersistenceManagerBase):
         """
         :param persistence_manager: object that defines show to cache (store/retrieve) the underlying model
         """
-        if self._model_object is not None:  # doesn't make sense to configure the cache after we `train()`
-            raise ModelAlreadyFittedError()
-
+        self.ensure_has_not_executed()
         self._persistence_manager = persistence_manager
 
     @property
@@ -68,16 +60,12 @@ class ModelWrapperBase(metaclass=ABCMeta):
 
     @property
     def hyper_params(self) -> HyperParamsBase:
-        if self._model_object is None:
-            raise ModelNotFittedError()
-
+        self.ensure_has_executed()
         return self._hyper_params
 
     @property
     def feature_names(self) -> list:
-        if self._model_object is None:
-            raise ModelNotFittedError()
-
+        self.ensure_has_executed()
         return self._feature_names
 
     @property
@@ -85,9 +73,7 @@ class ModelWrapperBase(metaclass=ABCMeta):
         """
         :return: the first X rows of the dataset that was trained
         """
-        if self._model_object is None:
-            raise ModelNotFittedError()
-
+        self.ensure_has_executed()
         return self._data_x_trained_head
 
     @property
@@ -97,15 +83,31 @@ class ModelWrapperBase(metaclass=ABCMeta):
 
     @property
     def model_object(self):
-        if self._model_object is None:
-            raise ModelNotFittedError()
+        self.ensure_has_executed()
 
         return self._model_object
 
     def train(self,
-              data_x: pd.DataFrame,
-              data_y: Union[np.ndarray, None] = None,
-              hyper_params: HyperParamsBase = None):
+                 data_x: pd.DataFrame,
+                 data_y: Union[np.ndarray, None] = None,
+                 hyper_params: HyperParamsBase = None):
+        """
+        `train()` is friendly name for SingleUseObjectMixin.execute() but both should do the same thing
+
+        trains the model on the training_set; assumes the parent class has transformed/etc. the
+        data appropriately
+
+        :param data_x: a 'transformed' DataFrame
+        :param data_y: target values
+        :param hyper_params: object containing hyper-parameters
+        :return: None
+        """
+        self.execute(data_x=data_x, data_y=data_y, hyper_params=hyper_params)
+
+    def _execute(self,
+                 data_x: pd.DataFrame,
+                 data_y: Union[np.ndarray, None] = None,
+                 hyper_params: HyperParamsBase = None):
         """
         trains the model on the training_set; assumes the parent class has transformed/etc. the
         data appropriately
@@ -115,10 +117,6 @@ class ModelWrapperBase(metaclass=ABCMeta):
         :param hyper_params: object containing hyper-parameters
         :return: None
         """
-
-        # if _model_object is not None, then we have already trained/fitted
-        if self._model_object is not None:
-            raise ModelAlreadyFittedError()
 
         self._hyper_params = hyper_params
         self._feature_names = data_x.columns.values.tolist()
@@ -134,14 +132,15 @@ class ModelWrapperBase(metaclass=ABCMeta):
 
         assert self._model_object is not None
 
+        return None
+
     def predict(self, data_x: pd.DataFrame) -> Union[np.ndarray, pd.DataFrame]:
         """
         :type data_x: DataFrame containing the features the model was trained on (without the target column)
         :return: predicted values, actual predictions for Regression models and predicted probabilities for
             Classification problems.
         """
-        if self._model_object is None:
-            raise ModelNotFittedError()
+        self.ensure_has_executed()
 
         # check that the columns passed in via data_x match the columns/features that the model was trained on
         assert len(set(self._feature_names).symmetric_difference(set(data_x.columns.values))) == 0

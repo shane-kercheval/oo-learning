@@ -82,6 +82,7 @@ from .model_processors.StratifiedMonteCarloResampler import StratifiedMonteCarlo
 from .model_processors.ProcessingExceptions import CallbackUsedWithParallelizationError
 from .model_processors.TunerResultsBase import TunerResultsBase
 
+from .model_processors.SingleUseObject import SingleUseObjectMixin, SUOFactory
 
 from .model_wrappers.AdaBoost import AdaBoostClassifier
 from .model_wrappers.AdaBoost import AdaBoostClassifierHP

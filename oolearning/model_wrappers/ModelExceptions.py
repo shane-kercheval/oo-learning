@@ -16,3 +16,11 @@ class MissingValueError(Exception):
 
 class NegativeValuesFoundError(Exception):
     pass
+
+
+class AlreadyExecutedError(Exception):
+    pass
+
+
+class NotExecutedError(Exception):
+    pass
