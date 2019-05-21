@@ -2,10 +2,9 @@ from typing import List, Callable, Union
 
 import pandas as pd
 
-from oolearning.model_processors.DecoratorBase import DecoratorBase
-from oolearning.model_processors.ModelTrainer import ModelTrainer
-from oolearning.model_processors.ModelInfo import ModelInfo
 from oolearning.model_processors.GridSearchModelTuner import GridSearchModelTuner
+from oolearning.model_processors.ModelInfo import ModelInfo
+from oolearning.model_processors.ModelTrainer import ModelTrainer
 from oolearning.model_processors.ResamplerBase import ResamplerBase
 from oolearning.model_processors.SearcherResults import SearcherResults
 from oolearning.model_wrappers.ModelExceptions import ModelNotFittedError
@@ -15,6 +14,7 @@ from oolearning.splitters.DataSplitterBase import DataSplitterBase
 from oolearning.transformers.TransformerBase import TransformerBase
 
 
+# noinspection SpellCheckingInspection
 class ModelSearcher:
     def __init__(self,
                  # applied to all data (document fit_transform() on training and transform() on test
@@ -22,10 +22,9 @@ class ModelSearcher:
                  splitter: DataSplitterBase,
                  resampler_function: Callable[[ModelWrapperBase, List[TransformerBase]], ResamplerBase],
                  global_transformations: Union[List[TransformerBase], None] = None,
-                 resampler_decorators: List[DecoratorBase] = None,
                  model_persistence_manager: PersistenceManagerBase = None,
                  resampler_persistence_manager: PersistenceManagerBase = None,
-                 parallelization_cores: int=-1):
+                 parallelization_cores: int = -1):
         """
         A "Searcher" searches across different models and hyper-parameters (or the same models and
             hyper-parameters with different transformations, for example) with the goal of finding the "best"
@@ -51,8 +50,8 @@ class ModelSearcher:
         :param splitter: defines how to split the data. The training set will be used for selecting the
             "best" hyper parameters via resampling and then the model will be retrained with selected
             hyper parameters over holdout set.
-        :param resampler_function: For each model, the Searcher will use a GridSearchModelTuner for selecting the "best"
-            hyper parameters, using the resampler_function to define the Resampler. 
+        :param resampler_function: For each model, the Searcher will use a GridSearchModelTuner for selecting
+            the "best" hyper parameters, using the resampler_function to define the Resampler.
 
             The reason we use a function rather than passing in the object itself is that not everything that
             is passed into the Resampler (at the time we are creating the Searcher) is defined at that point.
@@ -62,11 +61,9 @@ class ModelSearcher:
             resampler_function.
         :param global_transformations: transformations to apply to all the data, regardless of the type of
             model. For example, regardless of the model, we might want to remove the PassengerId and Name
-            fields from the Titanic dataset. 
-        :param resampler_decorators: list of decorators, the decorates are cloned for each model i.e. each
-            model uses the same list of decorators.
-        :param model_persistence_manager: a PersistenceManager defining how the underlying models should be cached,
-            optional. It is closed for each model, 
+            fields from the Titanic dataset.
+        :param model_persistence_manager: a PersistenceManager defining how the underlying models should be
+            cached, optional. It is closed for each model,
 
             When tuning, the substructure is set to "tune_[model description]" and when fitting on the entire
             dataset, the prefix is set to "final_[model description]"
@@ -94,7 +91,6 @@ class ModelSearcher:
         self._splitter = splitter
         self._resampler_function = resampler_function
         self._results = None
-        self._resampler_decorators = resampler_decorators
         self._model_persistence_manager = model_persistence_manager
         self._resampler_persistence_manager = resampler_persistence_manager
         self._parallelization_cores = parallelization_cores
@@ -159,13 +155,13 @@ class ModelSearcher:
                                                                              local_model_description)
 
             # clone all the objects to be reused with the ModelTrainer after tuning
-            tuner = GridSearchModelTuner(resampler=self._resampler_function(local_model.clone(),
-                                                                            None if local_model_trans is None else
-                                                                  [x.clone() for x in local_model_trans]),
+            local_resampler_function = self._resampler_function(local_model.clone(),
+                                                                None if local_model_trans is None else
+                                                                [x.clone() for x in local_model_trans])
+            tuner = GridSearchModelTuner(resampler=local_resampler_function,
                                          hyper_param_object=None if local_model_params_object is None
                                                        else local_model_params_object.clone(),
                                          params_grid=local_model_params_grid,
-                                         resampler_decorators=self._resampler_decorators,
                                          model_persistence_manager=local_model_pers_manager,
                                          resampler_persistence_manager=local_resampler_pers_manager,
                                          parallelization_cores=self._parallelization_cores)
@@ -216,6 +212,7 @@ class ModelSearcher:
             # get the best model
             holdout_scores.append(fitter.holdout_scores)
 
+        # noinspection PyTypeChecker
         self._results = SearcherResults(model_descriptions=self._model_descriptions,
                                         model_names=[type(x).__name__ for x in self._models],
                                         tuner_results=tuner_results,

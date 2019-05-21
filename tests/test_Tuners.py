@@ -687,12 +687,13 @@ class TunerTests(TimerTestCase):
                            num_leaves=[10, 50])
         grid = HyperParamsGrid(params_dict=params_dict)
 
+        decorator = ModelDecorator()
         tuner = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=LightGBMRegressor(),
                                                                                 transformations=None,
+                                                                                fold_decorators=[decorator],
                                                                                 scores=evaluator_list),
                                      hyper_param_object=LightGBMHP(),
                                      params_grid=grid,
-                                     resampler_decorators=[ModelDecorator()],
                                      parallelization_cores=-1)
 
         tuner.tune(data_x=train_data, data_y=train_data_y)
@@ -720,9 +721,10 @@ class TunerTests(TimerTestCase):
             for index in range(len(trained_params)):
                 assert trained_params[index] == trained_params[0]
 
-            trained_params = trained_params[0]
+            # check that the hyper params that are passed in match the hyper params that the underlying
+            # model actually trains with
+            trained_params = trained_params[0]  # already verified that all the list items are the same
             hyper_params = tuner.results._tune_results_objects.resampler_object.values[decorator_index].hyper_params.params_dict  # noqa
-
             TestHelper.assert_hyper_params_match_2(subset=hyper_params, superset=trained_params,
                                                    mapping={'min_gain_to_split': 'min_split_gain',
                                                             'min_sum_hessian_in_leaf': 'min_child_weight',

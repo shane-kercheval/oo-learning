@@ -41,14 +41,10 @@ def single_tune(args):
     hyper_param_object = args['hyper_param_object']
     # we are going to reuse the resampler and hyper_params for each combination, so clone first
     resampler_copy = args['resampler_copy']
-    decorators = args['decorators']
     model_persistence_manager = args['model_persistence_manager']
     resampler_persistence_manager = args['resampler_persistence_manager']
     data_x = args['data_x']
     data_y = args['data_y']
-
-    if decorators:
-        resampler_copy.set_decorators(decorators=decorators)
 
     if has_params and hyper_param_object is not None:
         # if we are tuning over hyper-params, update the params object with the current params
@@ -82,7 +78,6 @@ class GridSearchModelTuner(ModelTunerBase):
                  resampler: ResamplerBase,
                  hyper_param_object: HyperParamsBase,
                  params_grid: HyperParamsGrid,
-                 resampler_decorators: List[DecoratorBase] = None,
                  model_persistence_manager: PersistenceManagerBase = None,
                  resampler_persistence_manager: PersistenceManagerBase = None,
                  parallelization_cores: int = -1):
@@ -100,8 +95,6 @@ class GridSearchModelTuner(ModelTunerBase):
         :param params_grid: object containing the sequences of hyper-parameters to tune. Each hyper-parameter
             will over-write the associated hyper-parameter passed into the constructor's
             `hyper_param_defaults` parameter.
-        :param resampler_decorators: a list of decorators that will be passed into the resampler object.
-            They will be cloned for each resampler object.
         :param model_persistence_manager: a PersistenceManager defining how the underlying models should be
             cached, optional.
             NOTE: for each resampling (i.e. each set of hyper-params being resampled) the
@@ -124,7 +117,6 @@ class GridSearchModelTuner(ModelTunerBase):
         self._params_grid = params_grid
         self._model_persistence_manager_factory = CloneableFactory(model_persistence_manager)
         self._resampler_persistence_manager_factory = CloneableFactory(resampler_persistence_manager)
-        self._resampler_decorator_factory = CloneableFactory(resampler_decorators)
         self._parallelization_cores = parallelization_cores
         self._resampler_decorators = None
         self._number_of_resamples = None
@@ -146,12 +138,12 @@ class GridSearchModelTuner(ModelTunerBase):
 
     @property
     def number_of_resamples(self) -> set:
-        '''
+        """
         :return: a set containing the number of resamples for each Resampler
             e.g. a 5-fold 5-repeat resampler should have 25 resamples
             the number should be the same for each Resampler object so the set returned should only have
             1 item (25
-        '''
+        """
         return self._number_of_resamples
 
     def _tune(self, data_x: pd.DataFrame, data_y: np.ndarray) -> GridSearchTunerResults:
@@ -177,11 +169,10 @@ class GridSearchModelTuner(ModelTunerBase):
                                  has_params=self._params_grid is not None,
                                  hyper_param_object=self._hyper_param_factory.get(),  # noqa
                                  resampler_copy=self._resampler_factory.get(),  # resampler
-                                 decorators=self._resampler_decorator_factory.get(),  # noqa
                                  model_persistence_manager=self._model_persistence_manager_factory.get(),
                                  resampler_persistence_manager=self._resampler_persistence_manager_factory.get(),  # noqa
                                  data_x=data_x,
-                                 data_y=data_y)  # decorators
+                                 data_y=data_y)
                             for x in range(len(params_combinations))]
 
         if self._parallelization_cores == 0 or self._parallelization_cores == 1:
@@ -195,31 +186,6 @@ class GridSearchModelTuner(ModelTunerBase):
         time_duration_list = [x[1] for x in results]
         self._resampler_decorators = [x[2] for x in results]
         self._number_of_resamples = set([x[3] for x in results])
-
-        # for index in range(len(params_combinations)):
-        #     # we are going to reuse the resampler and hyper_params for each combination, so clone first
-        #     resampler_copy = self._resampler.clone()
-        #
-        #     if self._resampler_decorators:
-        #         resampler_copy.set_decorators(decorators=[x.clone() for x in self._resampler_decorators])
-        #
-        #     if self._model_persistence_manager is not None:
-        #         resampler_copy.set_model_persistence_manager(persistence_manager=self._model_persistence_manager.clone())
-        #     hyper_params_copy = None if self._hyper_param_object is None else self._hyper_param_object.clone()
-        #
-        #     if params_grid is not None and self._hyper_param_object is not None:
-        #         # if we are tuning over hyper-params, update the params object with the current params
-        #         params_dict = params_combinations.iloc[index, :].to_dict()  # dict of the current combination
-        #         # print(params_dict)
-        #         hyper_params_copy.update_dict(params_dict)  # default params, updated based on combo
-        #
-        #     start_time = time.time()
-        #     resampler_copy.resample(data_x=data_x, data_y=data_y, hyper_params=hyper_params_copy)
-        #     execution_time = "{0} seconds".format(round(time.time() - start_time))
-        #     # print(execution_time)
-        #     time_duration_list.append(execution_time)
-        #
-        #     results_list.append(resampler_copy.results)
 
         # as a check, we want to make sure the tune_results and time_results dataframe doesn't contain any
         # NAs; however, if we set a particular hyper-parameter to None, this will cause a false positive
