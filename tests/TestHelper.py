@@ -189,7 +189,7 @@ class TestHelper:
 
     @staticmethod
     def assert_hyper_params_match(hyper_params: HyperParamsBase,
-                                  model: ModelWrapperBase = None,
+                                  model: ModelWrapperBase,
                                   mapping: dict = None,
                                   remove_keys: list = None):
         """
@@ -202,6 +202,27 @@ class TestHelper:
         """
         subset = hyper_params.params_dict
         superset = model.model_object.get_params()
+
+        TestHelper.assert_hyper_params_match_2(subset=subset,
+                                               superset=superset,
+                                               mapping=mapping,
+                                               remove_keys=remove_keys)
+
+    @staticmethod
+    def assert_hyper_params_match_2(subset: dict,
+                                    superset: dict,
+                                    mapping: dict = None,
+                                    remove_keys: list = None):
+        """
+        :param subset:
+        :param superset:
+        :param mapping: when the hyper-parameter names don't between the HyperParamsBase object and the model,
+            provide a dictionary with the HyperParamsBase name as the key, and the model's name as the value
+        :param remove_keys: the keys to remove before checking
+        :return:
+        """
+        subset = subset.copy()
+        superset = superset.copy()
 
         if remove_keys is not None:
             for key in remove_keys:

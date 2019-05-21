@@ -136,8 +136,9 @@ def resample_repeat(args):
                                    scores=score_factory.get(),
                                    holdout_actual_values=holdout_y,
                                    holdout_predicted_values=predicted_values,
-                                   holdout_indexes=holdout_x_transformed.index.values)
-    return result_scores, decorators
+                                   holdout_indexes=holdout_x_transformed.index.values,
+                                   model=model)
+    return result_scores
 
 
 class RepeatedCrossValidationResampler(ResamplerBase):
@@ -201,6 +202,9 @@ class RepeatedCrossValidationResampler(ResamplerBase):
         assert isinstance(folds, int)
         assert isinstance(repeats, int)
 
+        # cannot use parallelization and resampler_decorators at the same time
+        assert parallelization_cores == 0 or fold_decorators is None
+
         self._folds = folds
         self._repeats = repeats
         self._decorators = fold_decorators
@@ -211,10 +215,6 @@ class RepeatedCrossValidationResampler(ResamplerBase):
             raise CallbackUsedWithParallelizationError()
 
         self._parallelization_cores = parallelization_cores
-
-    @property
-    def fold_decorators(self):
-        return self._decorators
 
     def _resample(self,
                   data_x: pd.DataFrame,
@@ -258,16 +258,15 @@ class RepeatedCrossValidationResampler(ResamplerBase):
             with ThreadPool(cores) as pool:
                 results = list(pool.map(resample_repeat, resample_args))
 
-        result_scores = [x[0] for x in results]
+       # result_scores = [x[0] for x in results]
         # flatten out so there are folds*repeats number of list items
-        flattened_scores = [result_scores[x][y] for x in range(self._repeats) for y in range(self._folds)]
-
-        if self._decorators:
-            decorators = [x[1] for x in results]
-            # flatten out so there are folds*repeats number of list items
-            flattened_decorators = [decorators[x][y] if decorators[x] else None for x in range(self._repeats)
-                                    for y in range(len(self._decorators))]
-            self._decorators = flattened_decorators
+        flattened_scores = [results[x][y] for x in range(self._repeats) for y in range(self._folds)]
+        # if self._decorators:
+        #     decorators = [x[1] for x in results]
+        #     # flatten out so there are folds*repeats number of list items
+        #     flattened_decorators = [decorators[x][y] if decorators[x] else None for x in range(self._repeats)
+        #                             for y in range(len(self._decorators))]
+        #     self._decorators = flattened_decorators
 
         # result_scores is a list of list of holdout scores.
         # Each outer list represents a resampling result

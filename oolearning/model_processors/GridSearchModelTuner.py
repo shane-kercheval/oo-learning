@@ -69,7 +69,7 @@ def single_tune(args):
     resampler_copy.resample(data_x=data_x, data_y=data_y, hyper_params=hyper_param_object)
     execution_time_individual = "{0} seconds".format(round(time.time() - start_time_individual))
     # print(execution_time)
-    return resampler_copy.results, execution_time_individual
+    return resampler_copy.results, execution_time_individual, resampler_copy.decorators, resampler_copy.results.num_resamples  # noqa
 
 
 class GridSearchModelTuner(ModelTunerBase):
@@ -126,12 +126,33 @@ class GridSearchModelTuner(ModelTunerBase):
         self._resampler_persistence_manager_factory = CloneableFactory(resampler_persistence_manager)
         self._resampler_decorator_factory = CloneableFactory(resampler_decorators)
         self._parallelization_cores = parallelization_cores
-
+        self._resampler_decorators = None
+        self._number_of_resamples = None
         # noinspection PyProtectedMember
         # if there is a callback and we are using parallelization, raise error
         if resampler._train_callback is not None and (parallelization_cores != 0 and
                                                       parallelization_cores != 1):
             raise CallbackUsedWithParallelizationError()
+
+    @property
+    def resampler_decorators(self) -> List[List[DecoratorBase]]:
+        """
+        :return: a nested list of Decorators
+            The length of the entire/outer list will equal the number of cycles (i.e. number of different
+            hyper-param combos tested)
+            The length of each inner list will equal the number of Decorator objects passed in
+        """
+        return self._resampler_decorators
+
+    @property
+    def number_of_resamples(self) -> set:
+        '''
+        :return: a set containing the number of resamples for each Resampler
+            e.g. a 5-fold 5-repeat resampler should have 25 resamples
+            the number should be the same for each Resampler object so the set returned should only have
+            1 item (25
+        '''
+        return self._number_of_resamples
 
     def _tune(self, data_x: pd.DataFrame, data_y: np.ndarray) -> GridSearchTunerResults:
         """
@@ -172,6 +193,8 @@ class GridSearchModelTuner(ModelTunerBase):
 
         results_list = [x[0] for x in results]
         time_duration_list = [x[1] for x in results]
+        self._resampler_decorators = [x[2] for x in results]
+        self._number_of_resamples = set([x[3] for x in results])
 
         # for index in range(len(params_combinations)):
         #     # we are going to reuse the resampler and hyper_params for each combination, so clone first

@@ -80,6 +80,10 @@ class ResamplerBase(SingleUseObjectMixin, metaclass=ABCMeta):
         self._decorators = decorators
 
     @property
+    def decorators(self):
+        return self._decorators
+
+    @property
     def results(self) -> ResamplerResults:
         if self._results is None:
             raise ModelNotFittedError()

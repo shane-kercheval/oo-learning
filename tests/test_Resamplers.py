@@ -31,6 +31,14 @@ class TempDecorator(DecoratorBase):
             kwargs['holdout_predicted_values'])  # noqa
 
 
+class ModelDecorator(DecoratorBase):
+    def __init__(self):
+        self._model_list = list()
+
+    def decorate(self, **kwargs):
+        self._model_list.append(kwargs['model'])
+
+
 # noinspection SpellCheckingInspection,PyMethodMayBeStatic,PyTypeChecker
 class ResamplerTests(TimerTestCase):
 
@@ -391,47 +399,34 @@ class ResamplerTests(TimerTestCase):
             folds=5,
             repeats=2,
             fold_decorators=[decorator],
-            parallelization_cores=-1)
+            parallelization_cores=0)
         resampler.resample(data_x=train_data, data_y=train_data_y)
 
         # decorator object is not used directly when using parallization, it is copied
-        assert len(decorator._repeat_index) == 0
-        assert len(decorator._fold_index) == 0
+        assert len(decorator._repeat_index) == 5*2
+        assert len(decorator._fold_index) == 5*2
 
-        assert len(resampler.fold_decorators) == 2  # 2 because we have 2 repeats
-        assert resampler.fold_decorators[0]._repeat_index == [0, 0, 0, 0, 0]
-        assert resampler.fold_decorators[0]._fold_index == [0, 1, 2, 3, 4]
-        assert resampler.fold_decorators[1]._repeat_index == [1, 1, 1, 1, 1]
-        assert resampler.fold_decorators[1]._fold_index == [0, 1, 2, 3, 4]
-        # The _holdout_indexes should have twice the number of indexes as training_indexes because of
+        assert len(resampler.decorators) == 1  # 2 because we have 2 repeats
+        assert resampler.decorators[0]._repeat_index == [0, 0, 0, 0, 0, 1, 1, 1, 1, 1]
+        assert resampler.decorators[0]._fold_index == [0, 1, 2, 3, 4, 0, 1, 2, 3, 4]
+        # The fold holdout indexes should have twice the number of indexes as training_indexes because of
         # `repeats=2`
-        num_holdout_indexes = len(resampler.fold_decorators[0]._holdout_indexes) + len(resampler.fold_decorators[1]._holdout_indexes)  # noqa
+        num_fold_holdout_indexes = len(resampler.decorators[0]._holdout_indexes)
         num_training_indexes = len(training_indexes)
-        assert num_training_indexes * 2 == num_holdout_indexes
+        assert num_training_indexes * 2 == num_fold_holdout_indexes
         assert len(set(training_indexes)) == num_training_indexes
 
         # get the holdout indexes from the first repeat. This should contain exactly 1 to 1 indexes with the
         # original training indexes, although not in the same order
 
-        repeat_0_holdout_indexes = resampler.fold_decorators[0]._holdout_indexes
-        assert len(repeat_0_holdout_indexes) == num_training_indexes
-        # check that the training indexes and holdout indexes from the first repeat contain the same values
-        assert set(training_indexes) == set(repeat_0_holdout_indexes)
-
-        repeat_1_holdout_indexes = resampler.fold_decorators[1]._holdout_indexes
-        assert len(repeat_1_holdout_indexes) == num_training_indexes
-        # check that the training indexes and holdout indexes from the second repeat contain the same values
-        assert set(training_indexes) == set(repeat_1_holdout_indexes)
+        holdout_indexes = resampler.decorators[0]._holdout_indexes
+        assert set(training_indexes) == set(holdout_indexes)
 
         # at this point we know that both repeats contain the indexes from the original training set
         # this should correspond to the indexes of the predicted values DataFrame
         # first, lets merge the indexes from repeats, and assign into a different list, also used below
-        repeat_0_holdout_indexes.extend(repeat_1_holdout_indexes)
-        holdout_indexes = repeat_0_holdout_indexes
 
-        holdout_df = pd.concat([resampler.fold_decorators[0]._holdout_predicted_values,
-                                resampler.fold_decorators[1]._holdout_predicted_values],
-                               axis=0)
+        holdout_df = resampler.decorators[0]._holdout_predicted_values
 
         assert len(holdout_df.values) == len(holdout_indexes)
         # noinspection PyTypeChecker
@@ -684,21 +679,15 @@ class ResamplerTests(TimerTestCase):
 
         score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
 
-        # this should fail because both the Resampler and the TwoClassThresholdDecorator use parallelization
-        # i.e. AssertionError: daemonic processes are not allowed to have children
-        resampler = RepeatedCrossValidationResampler(
-            model=RandomForestClassifier(),
-            transformations=transformations,
-            scores=score_list,
-            folds=5,
-            repeats=1,
-            fold_decorators=[decorator],
-            parallelization_cores=-1)  # should fail with AssertionError
-
         self.assertRaises(AssertionError,
-                          lambda: resampler.resample(data_x=train_data,
-                                                     data_y=train_data_y,
-                                                     hyper_params=RandomForestHP()))
+                          lambda:  RepeatedCrossValidationResampler(
+                              model=RandomForestClassifier(),
+                              transformations=transformations,
+                              scores=score_list,
+                              folds=5,
+                              repeats=1,
+                              fold_decorators=[decorator],
+                              parallelization_cores=-1))
 
         # redefine resampler without parallelization
         resampler = RepeatedCrossValidationResampler(
@@ -783,7 +772,7 @@ class ResamplerTests(TimerTestCase):
         assert resampler.results.decorators[0] is decorator  # should be the same objects
 
     # noinspection PyTypeChecker
-    def test_resampling_roc_pr_thresholds_resampler_parallelization(self):
+    def test_resampling_roc_pr_thresholds_resampler(self):
         ######################################################################################################
         # turn off parallelization for TwoClassThresholdDecorator and on for RepeatedCrossValidationResampler
         ######################################################################################################
@@ -810,7 +799,7 @@ class ResamplerTests(TimerTestCase):
             folds=5,
             repeats=1,
             fold_decorators=[decorator],
-            parallelization_cores=-1)  # turn on parallelization, even though it won't help because 1 repeat
+            parallelization_cores=0)  # turn on parallelization, even though it won't help because 1 repeat
 
         # start_time = time.time()
         resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
@@ -828,7 +817,7 @@ class ResamplerTests(TimerTestCase):
         # multiple fold_decorator items that we would have to concatenate (or flatten) to get the equivalent
         # of the non-parallelization scenario
         ######################################################################################################
-        decorator = resampler.fold_decorators[0]
+        decorator = resampler.decorators[0]
 
         assert decorator.roc_ideal_thresholds == expected_roc_thresholds
         assert decorator.precision_recall_ideal_thresholds == expected_precision_recall_thresholds
@@ -1111,3 +1100,69 @@ class ResamplerTests(TimerTestCase):
         assert isclose(resampler_cached.results.score_coefficients_of_variation['error_rate'], round(0.031189357324296424 / 0.192053148900336, 2))  # noqa
 
         shutil.rmtree(resampler_cache_directory)
+
+    def test_resampler_hyper_params(self):
+        data = TestHelper.get_cement_data()
+        data_y = data.strength
+        data = data.drop(columns='strength')
+        data_copy = data.copy()
+
+        resampler = RepeatedCrossValidationResampler(
+            model=ElasticNetRegressor(),
+            transformations=[ImputationTransformer(),
+                             DummyEncodeTransformer(CategoricalEncoding.DUMMY)],
+            scores=[RmseScore(),
+                    MaeScore()],
+            folds=5,
+            repeats=5,
+            fold_decorators=[ModelDecorator()],
+            parallelization_cores=0)
+
+        hp = ElasticNetRegressorHP(alpha=1, l1_ratio=1)
+        resampler.resample(data_x=data, data_y=data_y, hyper_params=hp)
+
+        # only passed in 1 decorator (so it is at index [0])
+        assert len(resampler.decorators) == 1
+        model_list = resampler.decorators[0]._model_list
+        assert len(model_list) == 5*5
+
+        # make sure all of the trained params are the same
+        trained_params = [x.model_object.get_params() for x in model_list]
+        for index in range(len(trained_params)):
+            assert trained_params[index] == trained_params[0]
+
+        # make sure the param dict is set to what we think it should, and that it is a subset
+        # of all the trained params
+        assert hp.params_dict == {'alpha': 1, 'l1_ratio': 1}
+        assert OOLearningHelpers.dict_is_subset(subset=hp.params_dict, superset=trained_params[0])
+
+        assert TestHelper.ensure_all_values_equal(data, data_copy)
+
+        resampler = RepeatedCrossValidationResampler(
+            model=ElasticNetRegressor(),
+            transformations=[ImputationTransformer(),
+                             DummyEncodeTransformer(CategoricalEncoding.DUMMY)],
+            scores=[RmseScore(),
+                    MaeScore()],
+            folds=5,
+            repeats=5,
+            fold_decorators=[ModelDecorator()],
+            parallelization_cores=0)
+
+        hp = ElasticNetRegressorHP()
+        resampler.resample(data_x=data, data_y=data_y, hyper_params=hp)
+
+        # only passed in 1 decorator (so it is at index [0])
+        assert len(resampler.decorators) == 1
+        model_list = resampler.decorators[0]._model_list
+        assert len(model_list) == 5 * 5
+
+        # make sure all of the trained params are the same
+        trained_params = [x.model_object.get_params() for x in model_list]
+        for index in range(len(trained_params)):
+            assert trained_params[index] == trained_params[0]
+
+        # make sure the param dict is set to what we think it should, and that it is a subset
+        # of all the trained params
+        assert hp.params_dict == {'alpha': 0.5, 'l1_ratio': 0.5}
+        assert OOLearningHelpers.dict_is_subset(subset=hp.params_dict, superset=trained_params[0])

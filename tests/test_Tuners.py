@@ -15,6 +15,14 @@ from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 
 
+class ModelDecorator(DecoratorBase):
+    def __init__(self):
+        self._model_list = list()
+
+    def decorate(self, **kwargs):
+        self._model_list.append(kwargs['model'])
+
+
 # noinspection PyMethodMayBeStatic,SpellCheckingInspection,PyTypeChecker
 class TunerTests(TimerTestCase):
 
@@ -684,6 +692,7 @@ class TunerTests(TimerTestCase):
                                                                                 scores=evaluator_list),
                                      hyper_param_object=LightGBMHP(),
                                      params_grid=grid,
+                                     resampler_decorators=[ModelDecorator()],
                                      parallelization_cores=-1)
 
         tuner.tune(data_x=train_data, data_y=train_data_y)
@@ -692,6 +701,35 @@ class TunerTests(TimerTestCase):
         assert tuner.results.best_hyper_params == {'max_depth': -1, 'num_leaves': 50}
         assert all(tuner.results.sorted_best_indexes == [1, 3, 0, 2])
 
-    ##########################################################################################################
-    # Test Bayesian Optimization Model Tuner
-    ##########################################################################################################
+        # use the ModelDecorators to check the hyper_params
+        assert len(tuner.resampler_decorators) == tuner.results.number_of_cycles
+        assert tuner.number_of_resamples == {5*5}
+
+        # lets check that the "trained_params" (i.e. from the underlying model object's get_params())
+        # matches what we passed into the resampler
+        for decorator_index in range(len(tuner.resampler_decorators)):
+            # decorator_index = 0
+            decorator_list = tuner.resampler_decorators[decorator_index]
+            # only passed in 1 decorator (so it is at index [0])
+            assert len(decorator_list) == 1
+            decorator = decorator_list[0]
+            # noinspection PyUnresolvedReferences
+            model_list = decorator._model_list
+            assert len(model_list) == 5*5
+            trained_params = [x.model_object.get_params() for x in model_list]
+            for index in range(len(trained_params)):
+                assert trained_params[index] == trained_params[0]
+
+            trained_params = trained_params[0]
+            hyper_params = tuner.results._tune_results_objects.resampler_object.values[decorator_index].hyper_params.params_dict  # noqa
+
+            TestHelper.assert_hyper_params_match_2(subset=hyper_params, superset=trained_params,
+                                                   mapping={'min_gain_to_split': 'min_split_gain',
+                                                            'min_sum_hessian_in_leaf': 'min_child_weight',
+                                                            'min_data_in_leaf': 'min_child_samples',
+                                                            'bagging_fraction': 'subsample',
+                                                            'bagging_freq': 'subsample_freq',
+                                                            'feature_fraction': 'colsample_bytree',
+                                                            'lambda_l1': 'reg_alpha',
+                                                            'lambda_l2': 'reg_lambda'},
+                                                   remove_keys=['scale_pos_weight'])
