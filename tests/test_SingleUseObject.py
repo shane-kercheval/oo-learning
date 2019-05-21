@@ -1,4 +1,5 @@
 from oolearning import *
+from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
 
 
@@ -203,3 +204,112 @@ class SingleUseObjectTests(TimerTestCase):
 
         assert all([x is not original1 and x is not original2 for x in new1])
         assert all([x is not original1 and x is not original2 for x in new2])
+
+    def test_ModelFactory(self):
+        model = RidgeRegressor()
+        hp = RidgeRegressorHP()
+        factory = ModelFactory(model=model, hyper_params=hp)
+
+        new = factory.get()
+        assert isinstance(new[0], RidgeRegressor)
+        assert new[0] is not model
+        assert isinstance(new[1], RidgeRegressorHP)
+        assert new[1] is not hp
+
+        new_model = factory.get_model()
+        assert isinstance(new_model, RidgeRegressor)
+        assert new_model is not model
+        assert new_model is not new[0]
+
+        new_hyper_params = factory.get_hyper_params()
+        assert isinstance(new_hyper_params, RidgeRegressorHP)
+        assert new_hyper_params is not hp
+        assert new_model is not new[1]
+
+        model = RidgeRegressor()
+        factory = ModelFactory(model=model, hyper_params=None)
+
+        new = factory.get()
+        assert isinstance(new[0], RidgeRegressor)
+        assert new[0] is not model
+        assert new[1] is None
+
+        new_model = factory.get_model()
+        assert isinstance(new_model, RidgeRegressor)
+        assert new_model is not model
+        assert new_model is not new[0]
+
+        new_hyper_params = factory.get_hyper_params()
+        assert new_hyper_params is None
+
+    def test_TransformerFactory(self):
+        data = TestHelper.get_cement_data()
+        pipeline = TransformerPipeline(transformations=[RemoveColumnsTransformer(['coarseagg', 'fineagg']),
+                                                        ImputationTransformer(),
+                                                        DummyEncodeTransformer()])
+        expected_data = pipeline.fit_transform(data_x=data)
+
+        # now create Pipeline from factory; the original objects should not have been used
+
+        original_objects = [RemoveColumnsTransformer(['coarseagg', 'fineagg']),
+                            ImputationTransformer(),
+                            DummyEncodeTransformer()]
+        factory = TransformerFactory(original_objects)
+        assert factory.has_transformations()
+        factory_pipeline = TransformerPipeline(transformations=factory.get())
+        new_data = factory_pipeline.fit_transform(data_x=data)
+        assert TestHelper.ensure_all_values_equal(expected_data, new_data)
+
+        assert pipeline.transformations[0].has_executed
+        assert pipeline.transformations[1].has_executed
+        assert pipeline.transformations[2].has_executed
+
+        # ensure the assumption that we cannot refit the transformations within the pipeline
+        self.assertRaises(AlreadyExecutedError,
+                          lambda: pipeline.transformations[0].fit(data_x=data))
+
+        # but we should be able to run multiple times from the factory
+        new_data = TransformerPipeline(transformations=factory.get()).fit_transform(data_x=data)
+        assert TestHelper.ensure_all_values_equal(expected_data, new_data)
+
+        # check that the original Transformer objects have not been used
+        assert original_objects[0].has_executed is False
+        assert original_objects[1].has_executed is False
+        assert original_objects[2].has_executed is False
+
+        # test empty [] and None
+        factory = TransformerFactory([])
+        assert len(factory.get()) == 0
+        assert isinstance(factory.get(), list)
+
+        factory = TransformerFactory(None)
+        assert factory.has_transformations() is False
+        assert factory.get() is None
+        assert factory.has_transformations() is False
+
+        # test append_transformations
+        factory = TransformerFactory([original_objects[0]])
+        assert factory.has_transformations()
+        factory.append_transformations(transformations=[original_objects[1], original_objects[2]])
+        factory_pipeline = TransformerPipeline(transformations=factory.get())
+        new_data = factory_pipeline.fit_transform(data_x=data)
+        assert TestHelper.ensure_all_values_equal(expected_data, new_data)
+
+        assert pipeline.transformations[0].has_executed
+        assert pipeline.transformations[1].has_executed
+        assert pipeline.transformations[2].has_executed
+
+        # ensure the assumption that we cannot refit the transformations within the pipeline
+        self.assertRaises(AlreadyExecutedError,
+                          lambda: pipeline.transformations[0].fit(data_x=data))
+
+        self.assertRaises(AlreadyExecutedError,
+                          lambda: pipeline.transformations[1].fit(data_x=data))
+        # but we should be able to run multiple times from the factory
+        new_data = TransformerPipeline(transformations=factory.get()).fit_transform(data_x=data)
+        assert TestHelper.ensure_all_values_equal(expected_data, new_data)
+
+        # check that the original Transformer objects have not been used
+        assert original_objects[0].has_executed is False
+        assert original_objects[1].has_executed is False
+        assert original_objects[2].has_executed is False

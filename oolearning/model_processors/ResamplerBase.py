@@ -4,6 +4,7 @@ from typing import List, Callable, Union
 import numpy as np
 import pandas as pd
 
+from oolearning.model_processors.CloneableFactory import ModelFactory, TransformerFactory, ScoreFactory
 from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.model_processors.ResamplerResults import ResamplerResults
@@ -31,12 +32,17 @@ class ResamplerBase(SingleUseObjectMixin, metaclass=ABCMeta):
                  train_callback: Callable[[pd.DataFrame, np.ndarray,
                                            Union[HyperParamsBase, None]], None] = None):
         """
-        :param model:
-        :param transformations:
+        :param model: (note the model object is not used directly, it is cloned for each resample index)
+        :param transformations: (note the Transformer objects are not used directly, they are cloned for each
+            resample index)
         :param scores: a `list` of `Evaluator` objects.
             For example, if Kappa and AUC are both score_names of
             interest when resampling, use `holdout_score_objects=[KappaScore, AucRocScore]`;
             if RMSE is the only metric of interest, use `holdout_score_objects=[RMSE]`
+
+            (note the Score objects are not used directly, they are cloned for each
+            resample index)
+
         :param model_persistence_manager: a PersistenceManager defining how the model should be cached,
             optional.
             NOTE: There is currently no enforcement that subclasses of ResamplerBase implement model
@@ -60,9 +66,9 @@ class ResamplerBase(SingleUseObjectMixin, metaclass=ABCMeta):
             assert isinstance(transformations, list)
         assert isinstance(scores, list)
 
-        self._model = model
-        self._transformations = transformations
-        self._scores = scores
+        self._model_factory = ModelFactory(model)
+        self._transformer_factory = TransformerFactory(transformations)
+        self._score_factory = ScoreFactory(scores)
         self._results = None
         self._model_persistence_manager = model_persistence_manager
         self._results_persistence_manager = results_persistence_manager
@@ -71,10 +77,6 @@ class ResamplerBase(SingleUseObjectMixin, metaclass=ABCMeta):
 
     def set_decorators(self, decorators: List[DecoratorBase]):
         self._decorators = decorators
-
-    @property
-    def model(self):
-        return self._model
 
     @property
     def results(self) -> ResamplerResults:

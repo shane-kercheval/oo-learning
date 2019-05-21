@@ -59,12 +59,12 @@ def resample_repeat(args):
     repeat_index = args['repeat_index']
     data_x = args['data_x']
     data_y = args['data_y']
-    transformations = args['transformations']
+    transformer_factory = args['transformer_factory']
     train_callback = args['train_callback']
     hyper_params = args['hyper_params']
-    model = args['model']
+    model_factory = args['model_factory']
     persistence_manager = args['persistence_manager']
-    scores = args['scores']
+    score_factory = args['score_factory']
     decorators = args['decorators']
 
     # consistent folds per repeat index, but different folds for different repeats
@@ -88,8 +88,7 @@ def resample_repeat(args):
         # leakage into the local holdout/fold we are predicting on (just like we wouldn't fit
         # the transformations on the entire dataset; we fit/transform on the training and then
         # simply transform on the holdout
-        pipeline = TransformerPipeline(transformations=None if transformations is None
-                                                            else [x.clone() for x in transformations])
+        pipeline = TransformerPipeline(transformations=transformer_factory.get())
         # before we fit the data, we actually want to 'peak' at what the expected columns will be with
         # ALL the data. The reason is that if we so some sort of encoding (dummy/one-hot), but not all
         # of the categories are included in the training set (i.e. maybe only a small number of
@@ -106,7 +105,7 @@ def resample_repeat(args):
         if train_callback is not None:
             train_callback(train_x_transformed, data_y, hyper_params)
 
-        model_copy = model.clone()  # need to reuse this object type for each fold/repeat
+        model = model_factory.get_model()  # need to reuse this object type for each fold/repeat
 
         # set up persistence if applicable
         if persistence_manager is not None:  # then build the key
@@ -114,20 +113,19 @@ def resample_repeat(args):
             # let's models (e.g. ModelStacker) utilize the key_prefix, while modifying the key
             persistence_manager.set_key_prefix(prefix='repeat{}_fold{}_'.format(str(repeat_index),
                                                                                   str(fold_index)))
-            cache_key = model_build_cache_key(model=model_copy,
+            cache_key = model_build_cache_key(model=model,
                                               hyper_params=hyper_params)
             persistence_manager.set_key(key=cache_key)
-            model_copy.set_persistence_manager(persistence_manager=persistence_manager)
+            model.set_persistence_manager(persistence_manager=persistence_manager)
 
-        model_copy.train(data_x=train_x_transformed, data_y=train_y, hyper_params=hyper_params)
-        predicted_values = model_copy.predict(data_x=holdout_x_transformed)
+        model.train(data_x=train_x_transformed, data_y=train_y, hyper_params=hyper_params)
+        predicted_values = model.predict(data_x=holdout_x_transformed)
 
         fold_scores = list()
-        for score in scores:  # cycle through scores and store results of each fold
-            score_copy = score.clone()  # need to reuse this object type for each fold/repeat
-            score_copy.calculate(actual_values=holdout_y,
+        for score in score_factory.get():  # cycle through scores and store results of each fold
+            score.calculate(actual_values=holdout_y,
                                  predicted_values=predicted_values)
-            fold_scores.append(score_copy)
+            fold_scores.append(score)
         result_scores.append(fold_scores)
 
         # executed any functionality that is dynamically attached via decorators
@@ -135,7 +133,7 @@ def resample_repeat(args):
             for decorator in decorators:
                 decorator.decorate(repeat_index=repeat_index,
                                    fold_index=fold_index,
-                                   scores=scores,
+                                   scores=score_factory.get(),
                                    holdout_actual_values=holdout_y,
                                    holdout_predicted_values=predicted_values,
                                    holdout_indexes=holdout_x_transformed.index.values)
@@ -160,6 +158,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                  parallelization_cores: int = 0):
         """
         :param model: The model to fit at each fold. A clone/copy of the model is created at each fold.
+            (note the model object is not used directly, it is cloned for each resample index)
         :param transformations: The transformations that are to be applied at each fold. Specifically,
             the transformations are fit/transformed on the training folds before passed to the ModelWrapper,
             and then transformed (without being fit) on the holdout set. The objects are cloned/copied at each
@@ -167,7 +166,12 @@ class RepeatedCrossValidationResampler(ResamplerBase):
             "information leakage" i.e. the model being trained should not know anything about the holdout
             dataset, if we fit the transformations on all of the data, the training model is actually being
             influenced by data information from the holdout set.
+
+            (note the Transformer objects are not used directly, they are cloned for each
+            resample index)
         :param scores: the Scores that are evaluated at each fold/repeat.
+            (note the Score objects are not used directly, they are cloned for each
+            resample index)
         :param model_persistence_manager: an object describing how to save/cache the trained models.
         :param results_persistence_manager: an object describing how to save/cache the ResamplerResults,
             avoiding the need to resample/train the associated models.
@@ -218,31 +222,32 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                   hyper_params: HyperParamsBase = None) -> ResamplerResults:
 
         # transform/fit on training data
-        if self._transformations is not None:
+        if self._transformer_factory.has_transformations():
             # before we fit the data, we actually want to 'snoop' at what the expected columns will be with
             # ALL the data. The reason is that if we so some sort of encoding (dummy/one-hot), but not all of
             # the categories are included in the training set (i.e. maybe only a small number of observations
             # have the categoric value), then we can still ensure that we will be giving the same expected
             # columns/encodings to the `predict` method of the holdout set.
             expected_columns = TransformerPipeline.get_expected_columns(data=data_x,
-                                                                        transformations=self._transformations)  # noqa
+                                                                        transformations=self._transformer_factory.get())  # noqa
             # create a transformer that ensures the expected columns exist (e.g. dummy columns), and add it
             # as the last transformation
             temp = StatelessParallelizationHelper(expected_columns=expected_columns)
             transformer = StatelessTransformer(custom_function=temp.helper)
-            self._transformations = self._transformations + [transformer]
+            self._transformer_factory.append_transformations([transformer])
 
         # map_function rather than a for loop so we can switch between parallelization and non-parallelization
         resample_args = [dict(folds=self._folds,
                               repeat_index=x,
                               data_x=data_x,
                               data_y=data_y,
-                              transformations=self._transformations,
+                              transformer_factory=self._transformer_factory,
                               train_callback=self._train_callback,
                               hyper_params=hyper_params,
-                              model=self._model,
+                              model_factory=self._model_factory,
                               persistence_manager=self._model_persistence_manager,
-                              scores=self._scores,  # need to reuse this object type for each fold/repeat
+                              # need to reuse this object type for each fold/repeat
+                              score_factory=self._score_factory,
                               decorators=self._decorators)
                          for x in range(self._repeats)]
 

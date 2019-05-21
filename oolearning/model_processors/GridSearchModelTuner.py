@@ -7,24 +7,23 @@ import numpy as np
 import pandas as pd
 
 from oolearning.model_processors.DecoratorBase import DecoratorBase
+from oolearning.model_processors.GridSearchTunerResults import GridSearchTunerResults
 from oolearning.model_processors.ModelTunerBase import ModelTunerBase
 from oolearning.model_processors.ProcessingExceptions import CallbackUsedWithParallelizationError
 from oolearning.model_processors.ResamplerBase import ResamplerBase
-from oolearning.model_processors.GridSearchTunerResults import GridSearchTunerResults
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
 from oolearning.model_wrappers.HyperParamsGrid import HyperParamsGrid
-from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.persistence.PersistenceManagerBase import PersistenceManagerBase
 
 
-def resampler_results_build_cache_key(model: ModelWrapperBase,
+def resampler_results_build_cache_key(model_name: str,
                                       hyper_params: HyperParamsBase) -> str:
     """
     :return: returns a key that acts as, for example, the file name of the model being cached for the
         persistence manager; has the form:
             `repeat[repeat number]_fold[fold number]_[Model Class Name]`
     """
-    model_name = 'resampler_results_' + model.name
+    model_name = 'resampler_results_' + model_name
     if hyper_params is None:
         key = model_name
     else:
@@ -59,7 +58,8 @@ def single_tune(args):
         resampler_copy.set_model_persistence_manager(persistence_manager=model_persistence_manager.clone())
 
     if resampler_persistence_manager is not None:
-        cache_key = resampler_results_build_cache_key(model=resampler_copy.model,
+        # noinspection PyProtectedMember
+        cache_key = resampler_results_build_cache_key(model_name=resampler_copy._model_factory.get_model().name,  # noqa
                                                       hyper_params=hyper_param_object)
         resampler_persistence_manager.set_key(key=cache_key)
         resampler_copy.set_results_persistence_manager(persistence_manager=resampler_persistence_manager.clone())  # noqa

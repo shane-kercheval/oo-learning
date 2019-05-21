@@ -1,6 +1,5 @@
 import copy
 from abc import ABCMeta, abstractmethod
-from typing import Union, List
 
 from oolearning.model_wrappers.ModelExceptions import AlreadyExecutedError, NotExecutedError
 
@@ -64,24 +63,3 @@ class SingleUseObjectMixin(Cloneable):
             raise self._already_executed_exception_class()
 
 
-class CloneableFactory(metaclass=ABCMeta):
-    def __init__(self, cloneable: Union[Cloneable, List[Cloneable]]):
-
-        if isinstance(cloneable, list):
-            for suo in cloneable:
-                assert isinstance(suo, Cloneable)
-        else:
-            assert isinstance(cloneable, Cloneable)
-
-        self._cloneable = cloneable
-
-    def get(self):
-        if isinstance(self._cloneable, list):
-            new_object = [x.clone() for x in self._cloneable]
-        else:
-            new_object = self._cloneable.clone()
-
-        return new_object
-
-    # def get_new_objects(self, num_objects):
-    #     pass
