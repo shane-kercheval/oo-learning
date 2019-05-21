@@ -138,7 +138,7 @@ def resample_repeat(args):
                                    holdout_predicted_values=predicted_values,
                                    holdout_indexes=holdout_x_transformed.index.values,
                                    model=model)
-    return result_scores
+    return result_scores, decorators
 
 
 class RepeatedCrossValidationResampler(ResamplerBase):
@@ -203,7 +203,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
         assert isinstance(repeats, int)
 
         # cannot use parallelization and resampler_decorators at the same time
-        assert parallelization_cores == 0 or fold_decorators is None
+#        assert parallelization_cores == 0 or fold_decorators is None
 
         self._folds = folds
         self._repeats = repeats
@@ -258,15 +258,18 @@ class RepeatedCrossValidationResampler(ResamplerBase):
             with ThreadPool(cores) as pool:
                 results = list(pool.map(resample_repeat, resample_args))
 
-       # result_scores = [x[0] for x in results]
+        result_scores = [x[0] for x in results]
         # flatten out so there are folds*repeats number of list items
-        flattened_scores = [results[x][y] for x in range(self._repeats) for y in range(self._folds)]
-        # if self._decorators:
-        #     decorators = [x[1] for x in results]
-        #     # flatten out so there are folds*repeats number of list items
-        #     flattened_decorators = [decorators[x][y] if decorators[x] else None for x in range(self._repeats)
-        #                             for y in range(len(self._decorators))]
-        #     self._decorators = flattened_decorators
+        flattened_scores = [result_scores[x][y] for x in range(self._repeats) for y in range(self._folds)]
+
+        # if we have decorators and are doing parallelization, then we will have a decorator per repeat
+        # and we have to flatten it out the list, otherwise, there will only be one set (list) of decorators
+        # and it will already be set to self._decorators
+        if self._decorators is not None and self._parallelization_cores != 0:
+            decorators = [x[1] for x in results]
+            flattened_decorators = [decorators[x][y] if decorators[x] else None for x in range(self._repeats)
+                                         for y in range(len(self._decorators))]
+            self._decorators = flattened_decorators
 
         # result_scores is a list of list of holdout scores.
         # Each outer list represents a resampling result
