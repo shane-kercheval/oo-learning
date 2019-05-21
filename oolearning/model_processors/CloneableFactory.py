@@ -1,14 +1,12 @@
-from abc import ABCMeta
 from typing import Union, List
 
-from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.model_processors.SingleUseObject import Cloneable
-from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.model_wrappers.HyperParamsBase import HyperParamsBase
+from oolearning.model_wrappers.ModelWrapperBase import ModelWrapperBase
 from oolearning.transformers.TransformerBase import TransformerBase
 
 
-class CloneableFactory(metaclass=ABCMeta):
+class CloneableFactory:
     def __init__(self, cloneable: Union[Cloneable, List[Cloneable]]):
 
         if isinstance(cloneable, list):
@@ -43,14 +41,6 @@ class ModelFactory(CloneableFactory):
 
     def get_hyper_params(self):
         return self.get()[1]
-
-
-class ScoreFactory(CloneableFactory):
-    def __init__(self, scores: List[ScoreBase]):
-        super().__init__(cloneable=scores)
-
-        for score in scores:
-            assert score is None or isinstance(score, ScoreBase)
 
 
 class TransformerFactory(CloneableFactory):

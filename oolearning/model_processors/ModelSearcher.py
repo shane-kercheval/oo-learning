@@ -173,7 +173,7 @@ class ModelSearcher:
             # noinspection PyProtectedMember
             # before we tune, we need to steel (i.e. clone) the Scores from the resampler so we can use the
             # same ones on the holdout set
-            scores = tuner._resampler._score_factory.get()
+            scores = tuner._resampler_factory.get()._score_factory.get()
 
             tuner.tune(data_x=train_data_x_not_transformed,
                        data_y=train_data_y)

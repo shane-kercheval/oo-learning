@@ -5,6 +5,7 @@ import pandas as pd
 from bayes_opt import BayesianOptimization
 from hyperopt import fmin, tpe, STATUS_OK, Trials
 
+from oolearning.model_processors.CloneableFactory import CloneableFactory
 from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
 from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
 from oolearning.model_processors.BayesianOptimizationTunerResults import BayesianOptimizationTunerResults, \
@@ -38,8 +39,8 @@ class BayesianHyperOptModelTuner(ModelTunerBase):
 
         super().__init__()
 
-        self._resampler = resampler
-        self._hyper_param_object = hyper_param_object
+        self._resampler_factory = CloneableFactory(resampler)
+        self._hyper_param_factory = CloneableFactory(hyper_param_object)
         self._space = space
         self._max_evaluations = max_evaluations
         self._seed = seed
@@ -47,10 +48,10 @@ class BayesianHyperOptModelTuner(ModelTunerBase):
     def _tune(self, data_x: pd.DataFrame, data_y: np.ndarray) -> TunerResultsBase:
 
         def objective(params):
-            local_hyper_params = self._hyper_param_object.clone()
+            local_hyper_params = self._hyper_param_factory.get()
             local_hyper_params.update_dict(params)
 
-            local_resampler = self._resampler.clone()
+            local_resampler = self._resampler_factory.get()
 
             resample_start_time = time.time()
             local_resampler.resample(data_x=data_x, data_y=data_y, hyper_params=local_hyper_params)
@@ -133,8 +134,8 @@ class BayesianOptimizationModelTuner(ModelTunerBase):
 
         assert isinstance(resampler, ResamplerBase)
 
-        self._resampler = resampler
-        self._hyper_param_object = hyper_param_object
+        self._resampler_factory = CloneableFactory(resampler)
+        self._hyper_param_factory = CloneableFactory(hyper_param_object)
         self._parameter_bounds = parameter_bounds
         self._init_points = init_points
         self._n_iter = n_iter
@@ -165,11 +166,11 @@ class BayesianOptimizationModelTuner(ModelTunerBase):
             # if(locals_dictionary is None):
             #     return None
 
-            local_hyper_params = self._hyper_param_object.clone()
+            local_hyper_params = self._hyper_param_factory.get()
             local_hyper_params.update_dict(locals_dictionary)
             temp_hyper_params.append(local_hyper_params)
 
-            local_resampler = self._resampler.clone()
+            local_resampler = self._resampler_factory.get()
 
             resample_start_time = time.time()
             local_resampler.resample(data_x=data_x, data_y=data_y, hyper_params=local_hyper_params)

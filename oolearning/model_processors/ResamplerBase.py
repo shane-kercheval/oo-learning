@@ -4,7 +4,8 @@ from typing import List, Callable, Union
 import numpy as np
 import pandas as pd
 
-from oolearning.model_processors.CloneableFactory import ModelFactory, TransformerFactory, ScoreFactory
+from oolearning.model_processors.CloneableFactory import ModelFactory, TransformerFactory, \
+    CloneableFactory
 from oolearning.evaluators.ScoreBase import ScoreBase
 from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.model_processors.ResamplerResults import ResamplerResults
@@ -68,7 +69,7 @@ class ResamplerBase(SingleUseObjectMixin, metaclass=ABCMeta):
 
         self._model_factory = ModelFactory(model)
         self._transformer_factory = TransformerFactory(transformations)
-        self._score_factory = ScoreFactory(scores)
+        self._score_factory = CloneableFactory(scores)
         self._results = None
         self._model_persistence_manager = model_persistence_manager
         self._results_persistence_manager = results_persistence_manager

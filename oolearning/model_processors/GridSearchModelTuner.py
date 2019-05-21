@@ -6,6 +6,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 
+from oolearning.model_processors.CloneableFactory import CloneableFactory
 from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.model_processors.GridSearchTunerResults import GridSearchTunerResults
 from oolearning.model_processors.ModelTunerBase import ModelTunerBase
@@ -55,14 +56,14 @@ def single_tune(args):
         hyper_param_object.update_dict(params_combo_index)  # default params, updated based on combo
 
     if model_persistence_manager is not None:
-        resampler_copy.set_model_persistence_manager(persistence_manager=model_persistence_manager.clone())
+        resampler_copy.set_model_persistence_manager(persistence_manager=model_persistence_manager)
 
     if resampler_persistence_manager is not None:
         # noinspection PyProtectedMember
         cache_key = resampler_results_build_cache_key(model_name=resampler_copy._model_factory.get_model().name,  # noqa
                                                       hyper_params=hyper_param_object)
         resampler_persistence_manager.set_key(key=cache_key)
-        resampler_copy.set_results_persistence_manager(persistence_manager=resampler_persistence_manager.clone())  # noqa
+        resampler_copy.set_results_persistence_manager(persistence_manager=resampler_persistence_manager)
 
     start_time_individual = time.time()
     resampler_copy.resample(data_x=data_x, data_y=data_y, hyper_params=hyper_param_object)
@@ -118,12 +119,12 @@ class GridSearchModelTuner(ModelTunerBase):
         super().__init__()
         assert isinstance(resampler, ResamplerBase)
 
-        self._resampler = resampler
-        self._hyper_param_object = hyper_param_object
+        self._resampler_factory = CloneableFactory(resampler)
+        self._hyper_param_factory = CloneableFactory(hyper_param_object)
         self._params_grid = params_grid
-        self._model_persistence_manager = model_persistence_manager
-        self._resampler_persistence_manager = resampler_persistence_manager
-        self._resampler_decorators = resampler_decorators
+        self._model_persistence_manager_factory = CloneableFactory(model_persistence_manager)
+        self._resampler_persistence_manager_factory = CloneableFactory(resampler_persistence_manager)
+        self._resampler_decorator_factory = CloneableFactory(resampler_decorators)
         self._parallelization_cores = parallelization_cores
 
         # noinspection PyProtectedMember
@@ -153,11 +154,11 @@ class GridSearchModelTuner(ModelTunerBase):
         # build up a dictionary which retains the original param type.
         single_tune_args = [dict(params_combo_index={param: params_combinations.at[x, param] for param in params_combinations.columns.values},  # noqa
                                  has_params=self._params_grid is not None,
-                                 hyper_param_object=self._hyper_param_object.clone() if self._hyper_param_object else None,  # noqa
-                                 resampler_copy=self._resampler.clone(),  # resampler
-                                 decorators=[y.clone() for y in self._resampler_decorators] if self._resampler_decorators else None,  # noqa
-                                 model_persistence_manager=self._model_persistence_manager,
-                                 resampler_persistence_manager=self._resampler_persistence_manager,
+                                 hyper_param_object=self._hyper_param_factory.get(),  # noqa
+                                 resampler_copy=self._resampler_factory.get(),  # resampler
+                                 decorators=self._resampler_decorator_factory.get(),  # noqa
+                                 model_persistence_manager=self._model_persistence_manager_factory.get(),
+                                 resampler_persistence_manager=self._resampler_persistence_manager_factory.get(),  # noqa
                                  data_x=data_x,
                                  data_y=data_y)  # decorators
                             for x in range(len(params_combinations))]
