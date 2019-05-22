@@ -1,10 +1,12 @@
 import time
+from typing import List
 
 import numpy as np
 import pandas as pd
 from bayes_opt import BayesianOptimization
 from hyperopt import fmin, tpe, STATUS_OK, Trials
 
+from oolearning.model_processors.DecoratorBase import DecoratorBase
 from oolearning.model_processors.CloneableFactory import CloneableFactory
 from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
 from oolearning.evaluators.UtilityFunctionMixin import UtilityFunctionMixin
@@ -44,6 +46,17 @@ class BayesianHyperOptModelTuner(ModelTunerBase):
         self._space = space
         self._max_evaluations = max_evaluations
         self._seed = seed
+        self._resampler_decorators = None
+
+    @property
+    def resampler_decorators(self) -> List[List[DecoratorBase]]:
+        """
+        :return: a nested list of Decorators
+            The length of the entire/outer list will equal the number of cycles (i.e. number of different
+            hyper-param combos tested)
+            The length of each inner list will equal the number of Decorator objects passed in
+        """
+        return self._resampler_decorators
 
     def _tune(self, data_x: pd.DataFrame, data_y: np.ndarray) -> TunerResultsBase:
 
@@ -95,6 +108,8 @@ class BayesianHyperOptModelTuner(ModelTunerBase):
         resampler_means = [dictionary['resampler_object'].score_means[dictionary['resampler_object'].scores[0][0].name]  # noqa
                            for dictionary in trials.results]
         assert optimizer_values == resampler_means
+
+        self._resampler_decorators = [x['resampler_object'].decorators for x in trials.results]
 
         tune_results = pd.DataFrame([dictionary['params'] for dictionary in trials.results])
         tune_results['resampler_object'] = [dictionary['resampler_object'] for dictionary in trials.results]

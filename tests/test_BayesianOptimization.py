@@ -1,6 +1,15 @@
 from oolearning import *
 from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
+import numpy as np
+
+
+class ModelDecorator(DecoratorBase):
+    def __init__(self):
+        self._model_list = list()
+
+    def decorate(self, **kwargs):
+        self._model_list.append(kwargs['model'])
 
 
 # noinspection PyMethodMayBeStatic,SpellCheckingInspection,PyTypeChecker
@@ -36,7 +45,7 @@ class BayesianOptimizationTests(TimerTestCase):
             scores=score_list,
             folds=5,  # 5 folds with 5 repeats
             repeats=3,
-            parallelization_cores=0)  # adds parallelization (per repeat)
+            parallelization_cores=-1)  # adds parallelization (per repeat)
 
         bounds_lgb = {
             'max_depth': (-1, 10),
@@ -125,7 +134,7 @@ class BayesianOptimizationTests(TimerTestCase):
             scores=score_list,
             folds=5,  # 5 folds with 5 repeats
             repeats=3,
-            parallelization_cores=0)  # adds parallelization (per repeat)
+            parallelization_cores=-1)  # adds parallelization (per repeat)
 
         bounds_lgb = {
             'alpha': (0.001, 2),
@@ -198,6 +207,7 @@ class BayesianOptimizationTests(TimerTestCase):
 
         score_list = [AucRocScore(positive_class=1)]
 
+        decorator = ModelDecorator()
         # define & configure the Resampler object
         resampler = RepeatedCrossValidationResampler(
             model=LightGBMClassifier(),  # we'll use a Random Forest model
@@ -205,6 +215,7 @@ class BayesianOptimizationTests(TimerTestCase):
             scores=score_list,
             folds=5,  # 5 folds with 5 repeats
             repeats=3,
+            fold_decorators=[decorator],
             parallelization_cores=0)  # adds parallelization (per repeat)
 
         # space_lgb = {
@@ -226,6 +237,38 @@ class BayesianOptimizationTests(TimerTestCase):
                                                  seed=6)
         model_tuner.tune(data_x=training_x, data_y=training_y)
 
+        # should have cloned the decorator each time, so it should not have been used
+        assert len(decorator._model_list) == 0
+        # should be same number of sets/lists of decorators as there are tuning cycles
+        assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
+        assert max_evaluations == model_tuner.results.number_of_cycles
+        # only 1 decorator object passed in
+        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 1)
+
+        for index in range(len(model_tuner.resampler_decorators)):
+            # index = 0
+            model_list = model_tuner.resampler_decorators[index][0]._model_list
+            assert len(model_list) == 5 * 3  # 5 fold 3 repeat
+            trained_params = [x.model_object.get_params() for x in model_list]
+            # every underlying training params of the resample should be the same (a Resampler object only
+            # uses one combination of hyper-params)
+            for y in range(len(trained_params)):
+                assert trained_params[y] == trained_params[0]
+
+            # check that the hyper params that are passed in match the hyper params that the underlying
+            # model actually trains with
+            trained_params = trained_params[0]  # already verified that all the list items are the same
+            hyper_params = model_tuner.results._tune_results_objects.resampler_object.values[index].hyper_params.params_dict  # noqa
+            TestHelper.assert_hyper_params_match_2(subset=hyper_params, superset=trained_params,
+                                                   mapping={'min_gain_to_split': 'min_split_gain',
+                                                            'min_sum_hessian_in_leaf': 'min_child_weight',
+                                                            'min_data_in_leaf': 'min_child_samples',
+                                                            'bagging_fraction': 'subsample',
+                                                            'bagging_freq': 'subsample_freq',
+                                                            'feature_fraction': 'colsample_bytree',
+                                                            'lambda_l1': 'reg_alpha',
+                                                            'lambda_l2': 'reg_lambda'})
+
         TestHelper.save_string(model_tuner.results,
                                'data/test_Tuners/test_BayesianHyperOptModelTuner_Classification_UtilityFunction_results.txt')  # noqa
 
@@ -239,7 +282,9 @@ class BayesianOptimizationTests(TimerTestCase):
         assert model_tuner.results.best_hyper_params == \
                df.loc[df['AUC_ROC_mean'].idxmax(), model_tuner.results._parameter_names].to_dict()
 
-        # Resample with best_params and see if we get the same loss value i.e. AUC_ROC_mean
+        ######################################################################################################
+        # Resample with best_params and see if we get the same loss value i.e. RMSE_mean
+        ######################################################################################################
         transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
                            ImputationTransformer(),
@@ -300,7 +345,7 @@ class BayesianOptimizationTests(TimerTestCase):
         holdout_x = data.iloc[holdout_indexes].drop(columns=target_variable)
 
         score_list = [RmseScore()]
-
+        decorator = ModelDecorator()
         # define & configure the Resampler object
         resampler = RepeatedCrossValidationResampler(
             model=ElasticNetRegressor(),  # we'll use a Random Forest model
@@ -308,6 +353,7 @@ class BayesianOptimizationTests(TimerTestCase):
             scores=score_list,
             folds=5,  # 5 folds with 5 repeats
             repeats=3,
+            fold_decorators=[decorator],
             parallelization_cores=0)  # adds parallelization (per repeat)
 
         from hyperopt import hp
@@ -317,13 +363,36 @@ class BayesianOptimizationTests(TimerTestCase):
         }
 
         max_evaluations = 5
-
         model_tuner = BayesianHyperOptModelTuner(resampler=resampler,
                                                  hyper_param_object=ElasticNetRegressorHP(),
                                                  space=space_lgb,
                                                  max_evaluations=max_evaluations,
                                                  seed=6)
         model_tuner.tune(data_x=training_x, data_y=training_y)
+
+        # should have cloned the decorator each time, so it should not have been used
+        assert len(decorator._model_list) == 0
+        # should be same number of sets/lists of decorators as there are tuning cycles
+        assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
+        assert max_evaluations == model_tuner.results.number_of_cycles
+        # only 1 decorator object passed in
+        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 1)
+
+        for index in range(len(model_tuner.resampler_decorators)):
+            # index = 0
+            model_list = model_tuner.resampler_decorators[index][0]._model_list
+            assert len(model_list) == 5 * 3  # 5 fold 3 repeat
+            trained_params = [x.model_object.get_params() for x in model_list]
+            # every underlying training params of the resample should be the same (a Resampler object only
+            # uses one combination of hyper-params)
+            for y in range(len(trained_params)):
+                assert trained_params[y] == trained_params[0]
+
+            # check that the hyper params that are passed in match the hyper params that the underlying
+            # model actually trains with
+            trained_params = trained_params[0]  # already verified that all the list items are the same
+            hyper_params = model_tuner.results._tune_results_objects.resampler_object.values[index].hyper_params.params_dict  # noqa
+            TestHelper.assert_hyper_params_match_2(subset=hyper_params, superset=trained_params)
 
         TestHelper.save_string(model_tuner.results,
                                'data/test_Tuners/test_BayesianHyperOptModelTuner_Regression_CostFunction_results.txt')  # noqa
@@ -338,7 +407,9 @@ class BayesianOptimizationTests(TimerTestCase):
         assert model_tuner.results.best_hyper_params == \
                df.loc[df['RMSE_mean'].idxmin(), model_tuner.results._parameter_names].to_dict()
 
+        ######################################################################################################
         # Resample with best_params and see if we get the same loss value i.e. RMSE_mean
+        ######################################################################################################
         transformations = [RemoveColumnsTransformer(columns=['fineagg'])]
         score_list = [RmseScore()]
 
