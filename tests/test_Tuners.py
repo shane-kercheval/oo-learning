@@ -735,3 +735,108 @@ class TunerTests(TimerTestCase):
                                                             'lambda_l1': 'reg_alpha',
                                                             'lambda_l2': 'reg_lambda'},
                                                    remove_keys=['scale_pos_weight'])
+
+    @staticmethod
+    def get_LightGBMRegressor_GridSearchTuner_results():
+        data = TestHelper.get_cement_data()
+
+        train_data = data
+        train_data_y = train_data.strength
+        train_data = train_data.drop(columns='strength')
+
+        ######################################################################################################
+        # Build from scratch, cache models and Resampler results; then, second time, use the Resampler cache
+        ######################################################################################################
+        evaluator_list = [RmseScore(), MaeScore()]  # noqa
+        params_dict = dict(max_depth=[-1, 6],
+                           num_leaves=[10, 50])
+        grid = HyperParamsGrid(params_dict=params_dict)
+
+        decorator = ModelDecorator()
+        tuner = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=LightGBMRegressor(),
+                                                                                transformations=None,
+                                                                                fold_decorators=[decorator],
+                                                                                scores=evaluator_list),
+                                     hyper_param_object=LightGBMHP(),
+                                     params_grid=grid,
+                                     parallelization_cores=-1)
+
+        tuner.tune(data_x=train_data, data_y=train_data_y)
+        return tuner.results
+
+    @staticmethod
+    def get_ElasticRegressorHP_BayesianTuner_results():
+        data = TestHelper.get_cement_data()
+        target_variable = 'strength'
+        transformations = [RemoveColumnsTransformer(columns=['fineagg'])]
+
+        data_y = data[target_variable]
+        data_x = data.drop(columns=target_variable)
+
+        score_list = [RmseScore()]
+        # define & configure the Resampler object
+        resampler = RepeatedCrossValidationResampler(
+            model=ElasticNetRegressor(),  # we'll use a Random Forest model
+            transformations=transformations,
+            scores=score_list,
+            folds=5,  # 5 folds with 5 repeats
+            repeats=5,
+            parallelization_cores=0)  # adds parallelization (per repeat)
+
+        from hyperopt import hp
+        space_lgb = {
+            'alpha': hp.uniform('alpha', 0.001, 2),
+            'l1_ratio': hp.uniform('l1_ratio', 0, 1),
+        }
+
+        max_evaluations = 5
+        model_tuner = BayesianHyperOptModelTuner(resampler=resampler,
+                                                 hyper_param_object=ElasticNetRegressorHP(),
+                                                 space=space_lgb,
+                                                 max_evaluations=max_evaluations,
+                                                 seed=6)
+        model_tuner.tune(data_x=data_x, data_y=data_y)
+        return model_tuner.results
+
+    @staticmethod
+    def get_ElasticRegressorHP_GridSearch_results():
+        data = TestHelper.get_cement_data()
+        target_variable = 'strength'
+        transformations = [RemoveColumnsTransformer(columns=['fineagg'])]
+
+        data_y = data[target_variable]
+        data_x = data.drop(columns=target_variable)
+
+        score_list = [RmseScore(), MaeScore()]
+
+        params_dict = dict(alpha=[0.001, 0.5, 1],
+                           l1_ratio=[0.001, 0.5, 1])
+        grid = HyperParamsGrid(params_dict=params_dict)
+
+        # define & configure the Resampler object
+        resampler = RepeatedCrossValidationResampler(
+            model=ElasticNetRegressor(),  # we'll use a Random Forest model
+            transformations=transformations,
+            scores=score_list,
+            folds=5,  # 5 folds with 5 repeats
+            repeats=5,
+            parallelization_cores=0)  # adds parallelization (per repeat)
+
+        model_tuner = GridSearchModelTuner(resampler=resampler,
+                                           hyper_param_object=ElasticNetRegressorHP(),
+                                           params_grid=grid)
+        model_tuner.tune(data_x=data_x, data_y=data_y)
+        return model_tuner.results
+
+    def test_TunerResultsComparison(self):
+        light_gbm_results = TunerTests.get_LightGBMRegressor_GridSearchTuner_results()
+        elastic_bayesian_results = TunerTests.get_ElasticRegressorHP_BayesianTuner_results()
+        elastic_grid_results = TunerTests.get_ElasticRegressorHP_GridSearch_results()
+
+        results_dict = {"Light GBM": light_gbm_results,
+                        "Elastic (Bayesian)": elastic_bayesian_results,
+                        "Elastic (Grid)": elastic_grid_results}
+
+        comparison = TunerResultsComparison(results_dict)
+        TestHelper.check_plot('data/test_Tuners/test_TunerResultsComparison_boxplot.png',
+                              lambda: comparison.boxplot())

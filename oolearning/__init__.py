@@ -44,6 +44,7 @@ from .evaluators.ScoreMediator import ScoreMediator
 from .evaluators.SensitivityScore import SensitivityScore
 from .evaluators.SilhouetteScore import SilhouetteScore
 from .evaluators.SpecificityScore import SpecificityScore
+from .evaluators.TunerResultsComparison import TunerResultsComparison
 from .evaluators.TwoClassConfusionMatrix import TwoClassConfusionMatrix
 from .evaluators.TwoClassEvaluator import TwoClassEvaluator
 from .evaluators.TwoClassScoreBase import TwoClassScoreBase
