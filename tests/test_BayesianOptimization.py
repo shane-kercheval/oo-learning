@@ -445,3 +445,6 @@ class BayesianOptimizationTests(TimerTestCase):
         holdout_predictions = model.predict(data_x=transformed_holdout_data)
         score_value = RmseScore().calculate(actual_values=holdout_y, predicted_values=holdout_predictions)
         assert score_value == 10.001116248623699
+
+    def test_BayesianHyperOptModelTuner_Transformations(self):
+        pass

@@ -38,7 +38,6 @@ from .evaluators.RegressionEvaluator import RegressionEvaluator
 from .evaluators.RmseScore import RmseScore
 from .evaluators.RmsleScore import RmsleScore
 from .evaluators.ScoreActualPredictedBase import ScoreActualPredictedBase
-
 from .evaluators.ScoreClusteringBase import ScoreClusteringBase
 from .evaluators.ScoreMediator import ScoreMediator
 from .evaluators.SensitivityScore import SensitivityScore
@@ -61,13 +60,13 @@ from .model_aggregation.HardVotingAggregationStrategy import HardVotingAggregati
 from .model_aggregation.ModelAggregator import ModelAggregator
 from .model_aggregation.ModelStacker import ModelStacker
 from .model_aggregation.SoftVotingAggregationStrategy import SoftVotingAggregationStrategy
-from oolearning.model_aggregation.MeanAggregationStrategy import MeanAggregationStrategy
-from oolearning.model_aggregation.MedianAggregationStrategy import MedianAggregationStrategy
+from .model_aggregation.MeanAggregationStrategy import MeanAggregationStrategy
+from .model_aggregation.MedianAggregationStrategy import MedianAggregationStrategy
 
-from .model_processors.BayesianOptimizationModelTuner import BayesianOptimizationModelTuner, \
-    BayesianHyperOptModelTuner
-from .model_processors.BayesianOptimizationTunerResults import BayesianOptimizationTunerResults, \
-    BayesianHyperOptTunerResults
+from .model_processors.BayesianOptimizationModelTuner import BayesianOptimizationModelTuner
+from .model_processors.BayesianOptimizationTunerResults import BayesianOptimizationTunerResults
+from .model_processors.BayesianHyperOptModelTuner import BayesianHyperOptModelTuner
+from .model_processors.BayesianHyperOptTunerResults import BayesianHyperOptTunerResults
 from .model_processors.DecoratorBase import DecoratorBase
 from .model_processors.TwoClassThresholdDecorator import TwoClassThresholdDecorator
 from .model_processors.ModelTrainer import ModelTrainer
@@ -103,10 +102,8 @@ from .model_wrappers.HyperParamsBase import HyperParamsBase
 from .model_wrappers.HyperParamsGrid import HyperParamsGrid
 from .model_wrappers.LassoRegressor import LassoRegressor
 from .model_wrappers.LassoRegressor import LassoRegressorHP
-
 from .model_wrappers.LightGBM import LightGBMClassifier, LightGBMRegressor, LightGBMBoostingType, \
     LightGBMObjective, LightGBMHP
-
 from .model_wrappers.LinearRegressor import LinearRegressor
 from .model_wrappers.LinearRegressorSK import LinearRegressorSK
 from .model_wrappers.LogisticClassifier import LogisticClassifier
@@ -135,7 +132,7 @@ from .model_wrappers.SupportVectorMachines import SvmLinearRegressor
 from .model_wrappers.SupportVectorMachines import SvmLinearRegressorHP
 from .model_wrappers.XGBoost import XGBObjective, XGBEvalMetric, XGBoostLinearHP, XGBoostTreeHP, \
     XGBoostClassifier, XGBoostRegressor
-from oolearning.model_aggregation.ModelAggregator import ModelAggregator
+from .model_aggregation.ModelAggregator import ModelAggregator
 
 from .persistence.AlwaysFetchManager import AlwaysFetchManager
 from .persistence.LocalCacheManager import LocalCacheManager
