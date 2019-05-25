@@ -1,0 +1,56 @@
+LightGBMClassifier
+
+Hyper-Parameters
+================
+
+{'boosting_type': 'gbdt'
+ 'class_weight': None
+ 'colsample_bytree': 1.0
+ 'importance_type': 'split'
+ 'learning_rate': 0.1
+ 'max_depth': 5
+ 'min_child_samples': 20
+ 'min_child_weight': 0.001
+ 'min_split_gain': 0.0
+ 'n_estimators': 100
+ 'n_jobs': -1
+ 'num_leaves': 88
+ 'objective': 'binary'
+ 'random_state': 42
+ 'reg_alpha': 0.0
+ 'reg_lambda': 0.0
+ 'silent': True
+ 'subsample': 1.0
+ 'subsample_for_bin': 200000
+ 'subsample_freq': 0
+ 'scale_pos_weight': 1.0
+ 'max_bin': 255}
+
+Feature Importance
+==================
+
+            gain_values
+Sex_female  1229.828214
+Fare         778.512020
+Age          530.907945
+Pclass_3     339.854099
+Embarked_S    84.965127
+Pclass_1      70.019561
+SibSp_1       30.431529
+Parch_0       30.173181
+Pclass_2      26.334092
+Embarked_C    22.130650
+SibSp_0       19.718654
+Sex_male      10.428376
+Parch_2        4.747721
+SibSp_2        2.225772
+Parch_1        1.448367
+SibSp_3        0.000000
+SibSp_4        0.000000
+SibSp_8        0.000000
+Parch_3        0.000000
+Parch_4        0.000000
+Parch_5        0.000000
+Parch_6        0.000000
+Embarked_Q     0.000000
+SibSp_5        0.000000

@@ -1182,3 +1182,55 @@ class ResamplerTests(TimerTestCase):
         # of all the trained params
         assert hp.params_dict == {'alpha': 0.5, 'l1_ratio': 0.5}
         assert OOLearningHelpers.dict_is_subset(subset=hp.params_dict, superset=trained_params[0])
+
+    def test_resampler_append_transformations(self):
+        data = TestHelper.get_cement_data()
+        resampler = RepeatedCrossValidationResampler(model=MockRegressionModelWrapper(data_y=data.strength),
+                                                     transformations=[ImputationTransformer(),
+                                                                      DummyEncodeTransformer(CategoricalEncoding.DUMMY)],  # noqa
+                                                     scores=[RmseScore(),
+                                                             MaeScore()])
+        transformations = resampler._transformer_factory.get()
+        assert len(transformations) == 2
+        assert isinstance(transformations[0], ImputationTransformer)
+        assert isinstance(transformations[1], DummyEncodeTransformer)
+
+        resampler.append_transformations([BoxCoxTransformer(features=['temp'])])
+        transformations = resampler._transformer_factory.get()
+        assert len(transformations) == 3
+        assert isinstance(transformations[0], ImputationTransformer)
+        assert isinstance(transformations[1], DummyEncodeTransformer)
+        assert isinstance(transformations[2], BoxCoxTransformer)
+
+        ######################################################################################################
+        # None, [None], and [] should not change the number of transformations
+        ######################################################################################################
+        resampler.append_transformations(None)
+        transformations = resampler._transformer_factory.get()
+        assert len(transformations) == 3
+        assert isinstance(transformations[0], ImputationTransformer)
+        assert isinstance(transformations[1], DummyEncodeTransformer)
+        assert isinstance(transformations[2], BoxCoxTransformer)
+
+        resampler.append_transformations([None])
+        transformations = resampler._transformer_factory.get()
+        assert len(transformations) == 3
+        assert isinstance(transformations[0], ImputationTransformer)
+        assert isinstance(transformations[1], DummyEncodeTransformer)
+        assert isinstance(transformations[2], BoxCoxTransformer)
+
+        resampler.append_transformations([])
+        transformations = resampler._transformer_factory.get()
+        assert len(transformations) == 3
+        assert isinstance(transformations[0], ImputationTransformer)
+        assert isinstance(transformations[1], DummyEncodeTransformer)
+        assert isinstance(transformations[2], BoxCoxTransformer)
+
+        resampler.append_transformations([BooleanToIntegerTransformer(), CenterScaleTransformer()])
+        transformations = resampler._transformer_factory.get()
+        assert len(transformations) == 5
+        assert isinstance(transformations[0], ImputationTransformer)
+        assert isinstance(transformations[1], DummyEncodeTransformer)
+        assert isinstance(transformations[2], BoxCoxTransformer)
+        assert isinstance(transformations[3], BooleanToIntegerTransformer)
+        assert isinstance(transformations[4], CenterScaleTransformer)

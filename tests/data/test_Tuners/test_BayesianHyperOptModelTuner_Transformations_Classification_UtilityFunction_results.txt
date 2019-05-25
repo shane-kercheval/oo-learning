@@ -1,0 +1,17 @@
+Best Hyper-Parameters
+=====================
+
+{'CenterScale vs Normalize': 'CenterScaleTransformer'
+ 'PCA': 'EmptyTransformer'
+ 'max_depth': 5
+ 'num_leaves': 88}
+
+Tuner Results
+=============
+
+   rank CenterScale vs Normalize               PCA  max_depth  num_leaves  AUC_ROC_mean  AUC_ROC_st_dev  AUC_ROC_cv
+0   2.0         EmptyTransformer  EmptyTransformer          8          59      0.870202        0.022300        0.03
+1   1.0   CenterScaleTransformer  EmptyTransformer          5          88      0.871412        0.019719        0.02
+2   4.0   CenterScaleTransformer    PCATransformer          5          29      0.828554        0.027849        0.03
+3   3.0   CenterScaleTransformer  EmptyTransformer          6          25      0.868790        0.021282        0.02
+4   5.0   CenterScaleTransformer    PCATransformer          7          13      0.826352        0.025376        0.03

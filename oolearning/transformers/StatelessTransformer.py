@@ -30,3 +30,14 @@ class StatelessTransformer(TransformerBase):
         transformed_data = self._custom_function(data_x.copy())
         assert isinstance(transformed_data, pd.DataFrame)
         return transformed_data
+
+
+class EmptyTransformer(TransformerBase):
+    def _fit_definition(self, data_x: pd.DataFrame) -> dict:
+        return {}
+
+    def _transform_definition(self, data_x: pd.DataFrame, state: dict) -> pd.DataFrame:
+        return data_x
+
+    def peak(self, data_x: pd.DataFrame):
+        pass

@@ -50,11 +50,11 @@ class BayesianOptimizationModelTuner(ModelTunerBase):
 
     def _tune(self, data_x: pd.DataFrame, data_y: np.ndarray) -> TunerResultsBase:
 
-        global temp_resampler_results
-        temp_resampler_results = list()
+        global resampler_results
+        resampler_results = list()
 
-        global temp_resampler_times
-        temp_resampler_times = list()
+        global resampler_times
+        resampler_times = list()
 
         global temp_hyper_params
         temp_hyper_params = list()
@@ -80,8 +80,8 @@ class BayesianOptimizationModelTuner(ModelTunerBase):
 
             resample_start_time = time.time()
             local_resampler.resample(data_x=data_x, data_y=data_y, hyper_params=local_hyper_params)
-            temp_resampler_times.append(time.time() - resample_start_time)
-            temp_resampler_results.append(local_resampler.results)
+            resampler_times.append(time.time() - resample_start_time)
+            resampler_results.append(local_resampler.results)
 
             first_score_object = local_resampler.results.scores[0][0]
 
@@ -112,15 +112,15 @@ class BayesianOptimizationModelTuner(ModelTunerBase):
                                          random_state=self._seed)
         optimizer.maximize(init_points=self._init_points, n_iter=self._n_iter)
 
-        assert len(temp_resampler_results) == self._n_iter + self._init_points
+        assert len(resampler_results) == self._n_iter + self._init_points
 
         # ensure the target values email the mean resampled score
         # if the score object is a CostFunctionMixin, must multiply by -1 since we had to multiple by -1
         # above to so that we can optimize for the smallest value (e.g. RMSE)
-        multiplier = -1 if isinstance(temp_resampler_results[0].scores[0][0], CostFunctionMixin) else 1
+        multiplier = -1 if isinstance(resampler_results[0].scores[0][0], CostFunctionMixin) else 1
         assert [multiplier * ob['target'] for ob in optimizer.res] ==\
-               [result.score_means[temp_resampler_results[0].scores[0][0].name]
-                for result in temp_resampler_results]
+               [result.score_means[resampler_results[0].scores[0][0].name]
+                for result in resampler_results]
 
         # the hyper-params of each resampler
         all_params_every_resampler = [params_object.params_dict for params_object in temp_hyper_params]
@@ -128,13 +128,7 @@ class BayesianOptimizationModelTuner(ModelTunerBase):
         optimizer_params_dict = [{x: the_dict[x] for x in parameter_names
                                   if x in the_dict} for the_dict in all_params_every_resampler]
 
-        tune_results = pd.DataFrame({x: [y[x] for y in optimizer_params_dict] for x in parameter_names})
-        tune_results['resampler_object'] = temp_resampler_results
-
-        time_results = pd.DataFrame({x: [y[x] for y in optimizer_params_dict] for x in parameter_names})
-        time_results['resample_time_seconds'] = temp_resampler_times
-
-        return BayesianOptimizationTunerResults(tune_results=tune_results,
-                                                time_results=time_results,
-                                                parameter_names=parameter_names,
+        return BayesianOptimizationTunerResults(resampler_results=resampler_results,
+                                                hyper_params_combos=optimizer_params_dict,
+                                                resampler_times=[str(round(x, 1)) + " Seconds" for x in resampler_times],  # noqa
                                                 optimizer=optimizer)

@@ -277,14 +277,28 @@ class SingleUseObjectTests(TimerTestCase):
         assert original_objects[1].has_executed is False
         assert original_objects[2].has_executed is False
 
+        assert len(factory.get()) == 3
+        factory.append_transformations(None)
+        assert len(factory.get()) == 3  # no change
+        factory.append_transformations([])
+        assert len(factory.get()) == 3  # no change
+        factory.append_transformations([None])
+        assert len(factory.get()) == 3  # no change
+
         # test empty [] and None
         factory = TransformerFactory([])
         assert len(factory.get()) == 0
         assert isinstance(factory.get(), list)
+        assert factory.has_transformations() is False
+
+        factory = TransformerFactory([None])
+        assert len(factory.get()) == 0
+        assert isinstance(factory.get(), list)
+        assert factory.has_transformations() is False
 
         factory = TransformerFactory(None)
-        assert factory.has_transformations() is False
-        assert factory.get() is None
+        assert len(factory.get()) == 0
+        assert isinstance(factory.get(), list)
         assert factory.has_transformations() is False
 
         # test append_transformations

@@ -1,33 +1,66 @@
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
-from typing import Union
+from typing import Union, List
 
 import numpy as np
 import pandas as pd
+
+from oolearning.model_processors.ResamplerResults import ResamplerResults
 
 
 class TunerResultsBase(metaclass=ABCMeta):
 
     def __init__(self,
-                 tune_results: pd.DataFrame,
-                 time_results: pd.DataFrame):
-        self._tune_results_objects = tune_results
+                 resampler_results: List[ResamplerResults],
+                 hyper_params_combos: List[dict],
+                 resampler_times: List[str]):
 
-        results_list = list()
+        self._resampler_results = resampler_results
+        self._hyper_params_combos = hyper_params_combos
+        self._resampler_times = resampler_times
+
+        results_values = list()
         # for each score, add the mean and standard deviation as a diction to the resampled_stats list
-        for resampler_result in tune_results.resampler_object.tolist():
+        for resampler_result in resampler_results:
             score_dictionary = OrderedDict()
             for score in resampler_result.score_names:
                 score_dictionary.update(
                     {score + '_mean': resampler_result.score_means[score],
                      score + '_st_dev': resampler_result.score_standard_deviations[score],
                      score + '_cv': resampler_result.score_coefficients_of_variation[score]})
-            results_list.append(score_dictionary)
+            results_values.append(score_dictionary)
+
+        params_combinations = pd.DataFrame({'hyper_params': ['None']}) \
+            if hyper_params_combos is None or len(hyper_params_combos) == 0 \
+            else pd.DataFrame(hyper_params_combos, columns=self.hyper_param_names)
+
+        # # as a check, we want to make sure the tune_results and time_results dataframe doesn't contain any
+        # # NAs; however, if we set a particular hyper-parameter to None, this will cause a false positive
+        # # so, let's ignore any columns where the hyper-param is specifically set to None
+        # if hyper_params_combos is not None and len(hyper_params_combos) > 0:
+        #     # noinspection PyProtectedMember
+        #     params_containing_none = [key for key, value in hyper_params_combos.items()
+        #                               if value is None or (isinstance(value, list) and None in value)]
+        # else:
+        #     # might not have hyper-params (e.g. automating a process and encountering a model (e.g.
+        #     # Regression) that doesn't have hyper-params
+        #     params_containing_none = []
+
+        self._tune_results_objects = pd.concat([params_combinations.copy(),
+                                  pd.DataFrame(resampler_results, columns=['resampler_object'])], axis=1)
+        #assert tune_results.drop(columns=params_containing_none).isnull().sum().sum() == 0
+        assert self._tune_results_objects.isnull().sum().sum() == 0
+
+        self._time_results = pd.concat([params_combinations.copy(),
+                                  pd.DataFrame(resampler_times, columns=['execution_time'])],
+                                    axis=1)
+        #assert self._time_results.drop(columns=params_containing_none).isnull().sum().sum() == 0
+        assert self._time_results.isnull().sum().sum() == 0
+
 
         # noinspection PyUnresolvedReferences
-        self._tune_results_values = pd.concat([tune_results.copy().drop(columns='resampler_object'),
-                                               pd.DataFrame(results_list)], axis=1)
-        self._time_results = time_results
+        self._tune_results_values = pd.concat([self._tune_results_objects.copy().drop(columns='resampler_object'),
+                                               pd.DataFrame(results_values)], axis=1)
 
     def __str__(self):
         val = "Best Hyper-Parameters\n=====================\n\n"
@@ -42,6 +75,17 @@ class TunerResultsBase(metaclass=ABCMeta):
     @property
     def number_of_cycles(self) -> int:
         return self._tune_results_objects.shape[0]
+
+    @property
+    def hyper_param_names(self):
+        if self._hyper_params_combos:
+
+            keys = [list(params.keys()) for params in self._hyper_params_combos]
+            assert all([k == keys[0] for k in keys])  # all the keys should match
+        else:
+            keys = None
+
+        return keys[0]
 
     @property
     def resampled_stats(self) -> pd.DataFrame:

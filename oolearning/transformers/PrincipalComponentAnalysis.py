@@ -17,7 +17,7 @@ class PCATransformer(TransformerBase):
     Performs Principal Component Analysis.
     """
     def __init__(self,
-                 percent_variance_explained: Union[float, None]=0.95,
+                 percent_variance_explained: Union[float, None] = 0.95,
                  exclude_categorical_columns=False):
         """
         :param percent_variance_explained: "select the number of components such that the amount of variance
@@ -26,7 +26,8 @@ class PCATransformer(TransformerBase):
             http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html
 
             Alternatively, the user can pass in `None`, which will give all components, and then use
-                `plot_cumulative_variance()` to determine ideal number of components baed off of the bend in the graph.
+                `plot_cumulative_variance()` to determine ideal number of components baed off of the bend in
+                the graph.
 
         :param exclude_categorical_columns: if set to True, the categoric features are not retained in the
             transformed dataset returned.
@@ -53,8 +54,8 @@ class PCATransformer(TransformerBase):
         return self._cumulative_explained_variance
 
     def loadings(self,
-                 top_n_components: Union[int, None]=None,
-                 top_n_features: Union[int, None]=None) -> pd.DataFrame:
+                 top_n_components: Union[int, None] = None,
+                 top_n_features: Union[int, None] = None) -> pd.DataFrame:
         """
         returns the loading vectors for each compontent (columns are components, rows are features)
         :param top_n_components: only include the top n components. If `None`, use all components.
@@ -78,8 +79,8 @@ class PCATransformer(TransformerBase):
     def plot_loadings(self,
                       top_n_components: Union[int, None] = None,
                       top_n_features: Union[int, None] = None,
-                      annotate: bool=True,
-                      font_size: int=7):
+                      annotate: bool = True,
+                      font_size: int = 7):
         """
         :param top_n_components: only include the top n components. If `None`, use all components.
         :param top_n_features: only include the top n features for each component. If `None`, use all
@@ -92,7 +93,7 @@ class PCATransformer(TransformerBase):
                     annot=annotate, annot_kws={"size": font_size}, cmap='RdBu_r', vmin=-1, vmax=1)
         plt.gcf().tight_layout()
 
-    def component_feature_ranking(self, ith_component: int, top_n: Union[int, None]=None) -> pd.Series:
+    def component_feature_ranking(self, ith_component: int, top_n: Union[int, None] = None) -> pd.Series:
         """
 
         :param ith_component: the index of the component (indexing starts at `1`)

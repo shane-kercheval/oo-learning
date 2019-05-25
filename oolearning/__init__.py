@@ -161,7 +161,7 @@ from .transformers.RemoveCorrelationsTransformer import RemoveCorrelationsTransf
 from .transformers.RemoveNZVTransformer import RemoveNZVTransformer
 from .transformers.PrincipalComponentAnalysis import PCATransformer
 from .transformers.StatelessColumnTransformer import StatelessColumnTransformer
-from .transformers.StatelessTransformer import StatelessTransformer
+from .transformers.StatelessTransformer import StatelessTransformer, EmptyTransformer
 from .transformers.TransformerBase import TransformerBase
 from .transformers.TransformerPipeline import TransformerPipeline
 
@@ -173,3 +173,9 @@ from .unsupervised.ClusteringKmeans import ClusteringKMeans, ClusteringKMeansHP
 from .unsupervised.Clustering import Clustering, ClusteringHeatmapValues, ClusteringHeatmapAggStrategy, \
     ClusteringHeatmapTransStrategy
 from .unsupervised.ClusteringSearcher import ClusteringSearcher
+
+
+import pandas as pd
+pd.set_option('display.max_columns', 15)
+desired_width = 200
+pd.set_option('display.width', desired_width)

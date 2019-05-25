@@ -16,12 +16,12 @@ class ImputationTransformer(TransformerBase):
     Imputes the value for numerical columns based on the median value of that column.
     """
     def __init__(self,
-                 numeric_imputation_function: Callable[[pd.Series], pd.Series]=np.nanmedian,
-                 categoric_imputation_function: Callable[[pd.Series], pd.Series]=value_counts,
-                 group_by_column: str=None,
-                 treat_zeros_as_na: bool=False,
-                 columns_explicit: List[str]=None,
-                 columns_to_ignore: List[str]=None):  # noqa
+                 numeric_imputation_function: Callable[[pd.Series], pd.Series] = np.nanmedian,
+                 categoric_imputation_function: Callable[[pd.Series], pd.Series] = value_counts,
+                 group_by_column: str = None,
+                 treat_zeros_as_na: bool = False,
+                 columns_explicit: List[str] = None,
+                 columns_to_ignore: List[str] = None):  # noqa
         """
         :param numeric_imputation_function: A function that will be used to compute the value used to impute
             for numeric features. The default is a function that returns the median; setting this

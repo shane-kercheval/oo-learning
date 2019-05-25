@@ -8,14 +8,21 @@ import pandas as pd
 from oolearning.enums.Metric import Metric
 
 from oolearning.evaluators.CostFunctionMixin import CostFunctionMixin
+from oolearning.model_processors.ResamplerResults import ResamplerResults
 from oolearning.model_processors.TunerResultsBase import TunerResultsBase
-from oolearning.model_wrappers import HyperParamsGrid
+from oolearning.model_wrappers.HyperParamsGrid import HyperParamsGrid
 
 
 class GridSearchTunerResults(TunerResultsBase):
-    def __init__(self, tune_results: pd.DataFrame, time_results: pd.DataFrame, params_grid: HyperParamsGrid):
+    def __init__(self,
+                 resampler_results: List[ResamplerResults],
+                 params_grid: HyperParamsGrid,
+                 resampler_times: List[str],
+                 ):
 
-        super().__init__(tune_results, time_results)
+        super().__init__(resampler_results=resampler_results,
+                         hyper_params_combos=params_grid.params_grid.to_dict('records') if params_grid else None,  # noqa
+                         resampler_times=resampler_times)
 
         self._params_grid = params_grid
 

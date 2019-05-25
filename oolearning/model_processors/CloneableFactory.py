@@ -45,6 +45,7 @@ class ModelFactory(CloneableFactory):
 
 class TransformerFactory(CloneableFactory):
     def __init__(self, transformations: List[TransformerBase]):
+        transformations = [x for x in transformations if x is not None] if transformations is not None else []
         super().__init__(cloneable=transformations)
 
         if transformations is not None:
@@ -55,4 +56,6 @@ class TransformerFactory(CloneableFactory):
         return self._cloneable is not None and len(self._cloneable) > 0
 
     def append_transformations(self, transformations: List[TransformerBase]):
-        self._cloneable = self._cloneable + transformations
+        if transformations is not None:
+            transformations = [x for x in transformations if x is not None]
+            self._cloneable = self._cloneable + transformations

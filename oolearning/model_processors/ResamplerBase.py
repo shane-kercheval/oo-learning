@@ -90,6 +90,9 @@ class ResamplerBase(SingleUseObjectMixin, metaclass=ABCMeta):
 
         return self._results
 
+    def append_transformations(self, transformations: List[TransformerBase]):
+        self._transformer_factory.append_transformations(transformations=transformations)
+
     def set_model_persistence_manager(self, persistence_manager: PersistenceManagerBase):
         self._model_persistence_manager = persistence_manager
 
