@@ -1,0 +1,11 @@
+Best Hyper-Parameters
+=====================
+
+{'criterion': 'gini'
+ 'max_features': 5}
+
+Tuner Results
+=============
+
+   rank criterion  max_features  AUC_ROC_mean  AUC_ROC_st_dev  AUC_ROC_cv
+0   1.0      gini             5      0.852691         0.01836        0.02

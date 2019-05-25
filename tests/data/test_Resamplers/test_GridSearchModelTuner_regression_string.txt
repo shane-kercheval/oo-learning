@@ -1,0 +1,14 @@
+Best Hyper-Parameters
+=====================
+
+{'max_depth': -1
+ 'num_leaves': 50}
+
+Tuner Results
+=============
+
+   rank  max_depth  num_leaves  RMSE_mean  RMSE_st_dev  RMSE_cv
+0   3.0         -1          10   4.748451     0.410170     0.09
+1   1.0         -1          50   4.436211     0.438909     0.10
+2   4.0          6          10   4.766931     0.421347     0.09
+3   2.0          6          50   4.623514     0.441237     0.10
