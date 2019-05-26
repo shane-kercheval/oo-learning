@@ -15,7 +15,7 @@ class HyperParamsGrid:
         return grid_df
 
     @property
-    def hyper_params(self) -> list:
+    def param_names(self) -> list:
         return [key for key in self._params_dict]
 
     @property

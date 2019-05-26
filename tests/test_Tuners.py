@@ -51,7 +51,7 @@ class TunerTests(TimerTestCase):
         assert all(grid.params_grid.n_estimators.unique() == params_dict['n_estimators'])
         assert all(grid.params_grid.min_samples_leaf.unique() == params_dict['min_samples_leaf'])
 
-        assert grid.hyper_params == ['criterion', 'max_features', 'n_estimators', 'min_samples_leaf']
+        assert grid.param_names == ['criterion', 'max_features', 'n_estimators', 'min_samples_leaf']
         assert grid.tuned_hyper_params == ['max_features', 'n_estimators', 'min_samples_leaf']
 
     @unittest.skip("test takes several minutes")

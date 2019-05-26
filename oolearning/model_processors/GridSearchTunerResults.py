@@ -33,7 +33,7 @@ class GridSearchTunerResults(TunerResultsBase):
         else:
             # get the sorted best parameters, create a copy so when we change the indexes it doesn't change
             # the original dataframe
-            sorted_best_parameters = self.sorted_best_models.loc[:, self._params_grid.hyper_params].\
+            sorted_best_parameters = self.sorted_best_models.loc[:, self._params_grid.param_names].\
                 copy(deep=True)
             # reindex, so that the top row has index 0; we can't simply use .iloc because if there are a mix
             # of float/int parameters iloc changes everything to a float, which fucks up the model if this
@@ -139,7 +139,7 @@ class GridSearchTunerResults(TunerResultsBase):
 
         # .tuned_hyper_params ensures only hyper-params with >1 values
         self.columnwise_conditional_format(df=self.resampled_stats,
-                                           hyper_params=self._params_grid.hyper_params,
+                                           hyper_params=self._params_grid.param_names,
                                            tuned_hyper_params=self._params_grid.tuned_hyper_params,
                                            minimizers=minimizers,
                                            font_size=font_size)
