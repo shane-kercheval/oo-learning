@@ -99,7 +99,7 @@ class TunerTests(TimerTestCase):
         # t0 = time.time()
         tuner.tune(data_x=train_data, data_y=train_data_y)
         TestHelper.save_string(tuner.results,
-                               'data/test_Resamplers/test_GridSearchModelTuner_RandomForest_classification_string.txt')  # noqa
+                               'data/test_Tuners/test_GridSearchModelTuner_RandomForest_classification_string.txt')  # noqa
 
         assert os.path.isdir(cache_directory)
         assert len(tuner.results._tune_results_objects) == 27
@@ -175,7 +175,7 @@ class TunerTests(TimerTestCase):
         assert len(grid.params_grid == 27)
         tuner.tune(data_x=train_data, data_y=train_data_y)
         TestHelper.save_string(tuner.results,
-                               'data/test_Resamplers/test_GridSearchModelTuner_mock_classification_string.txt')  # noqa
+                               'data/test_Tuners/test_GridSearchModelTuner_mock_classification_string.txt')  # noqa
 
         assert len(tuner.results._tune_results_objects) == 27
         assert tuner.results.number_of_cycles == 27
@@ -329,7 +329,7 @@ class TunerTests(TimerTestCase):
 
         tuner.tune(data_x=train_data, data_y=train_data_y)
         TestHelper.save_string(tuner.results,
-                               'data/test_Resamplers/test_GridSearchModelTuner_GradientBoosting_classification_string.txt')  # noqa
+                               'data/test_Tuners/test_GridSearchModelTuner_GradientBoosting_classification_string.txt')  # noqa
 
         # assert tuner.total_tune_time < 25  # Non-Parallelization: ~26 seconds; Parallelization: ~7 seconds
 
@@ -511,7 +511,7 @@ class TunerTests(TimerTestCase):
 
         tuner.tune(data_x=train_data, data_y=train_data_y)
         TestHelper.save_string(tuner.results,
-                               'data/test_Resamplers/test_tuner_float_int_param_combos_string.txt')  # noqa
+                               'data/test_Tuners/test_tuner_float_int_param_combos_string.txt')  # noqa
 
         assert tuner.results.best_hyper_params == {'colsample_bytree': 0.7, 'subsample': 1.0, 'max_depth': 6}
         assert isinstance(tuner.results.best_hyper_params['colsample_bytree'], float)
@@ -578,7 +578,7 @@ class TunerTests(TimerTestCase):
 
         tuner.tune(data_x=train_data, data_y=train_data_y)
         TestHelper.save_string(tuner.results,
-                               'data/test_Resamplers/test_tuner_with_no_hyper_params_string.txt')  # noqa
+                               'data/test_Tuners/test_tuner_with_no_hyper_params_string.txt')  # noqa
 
         assert len(tuner.results._tune_results_objects) == 1
         assert tuner.results.number_of_cycles == 1
@@ -653,7 +653,7 @@ class TunerTests(TimerTestCase):
         # just need to test the first row
         tuner.tune(data_x=train_data, data_y=train_data_y)
         TestHelper.save_string(tuner.results,
-                               'data/test_Resamplers/test_tuner_resampler_decorators_string.txt')  # noqa
+                               'data/test_Tuners/test_tuner_resampler_decorators_string.txt')  # noqa
 
         # should have cloned the decorator each time, so it should not have been used
         assert len(decorator._roc_ideal_thresholds) == 0
@@ -711,7 +711,7 @@ class TunerTests(TimerTestCase):
 
         tuner.tune(data_x=train_data, data_y=train_data_y)
         TestHelper.save_string(tuner.results,
-                               'data/test_Resamplers/test_GridSearchModelTuner_regression_string.txt')  # noqa
+                               'data/test_Tuners/test_GridSearchModelTuner_regression_string.txt')  # noqa
         assert tuner.results.best_index == 1
         assert tuner.results.best_hyper_params == {'max_depth': -1, 'num_leaves': 50}
         assert all(tuner.results.sorted_best_indexes == [1, 3, 0, 2])
