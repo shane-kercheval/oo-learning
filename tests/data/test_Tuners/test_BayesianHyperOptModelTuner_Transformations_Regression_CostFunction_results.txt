@@ -1,0 +1,17 @@
+Best Hyper-Parameters
+=====================
+
+{'CenterScale vs Normalize': 'EmptyTransformer'
+ 'PCA': 'EmptyTransformer'
+ 'alpha': 1.6544370627160525
+ 'l1_ratio': 0.5364332695946842}
+
+Tuner Results
+=============
+
+   rank  CenterScale vs Normalize               PCA     alpha  l1_ratio  RMSE_mean  RMSE_st_dev  RMSE_cv
+0   2.0          EmptyTransformer    PCATransformer  1.031174  0.380709  11.474306     0.462425     0.04
+1   1.0          EmptyTransformer  EmptyTransformer  1.654437  0.536433  10.601688     0.593722     0.06
+2   3.0    CenterScaleTransformer    PCATransformer  0.386975  0.585881  11.599333     0.560683     0.05
+3   4.0    CenterScaleTransformer    PCATransformer  0.780228  0.638500  11.973595     0.551097     0.05
+4   5.0  NormalizationTransformer    PCATransformer  1.393553  0.668462  16.436749     0.717759     0.04
