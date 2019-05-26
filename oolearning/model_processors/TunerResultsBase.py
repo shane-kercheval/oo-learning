@@ -336,7 +336,7 @@ class TunerResultsBase(metaclass=ABCMeta):
 
         resamples.boxplot(vert=False, figsize=(10, 10))
         resample_medians = [resamples[column].median() for column in resamples.columns.values]
-        plt.axvline(x=max(resample_medians), color='red', linewidth=1)
+        plt.axvline(x=best(resample_medians), color='red', linewidth=1)
 
         if show_one_ste_rule:
             # using means rather than medians because we are calculating standard error (from the mean)
