@@ -85,6 +85,12 @@ class BayesianOptimizationTests(TimerTestCase):
         TestHelper.check_plot('data/test_Tuners/test_BayesianOptimization_Classification_UtilityFunction__optimizerplot_iteration_mean_scores.png',  # noqa
                               lambda: model_tuner.results.plot_iteration_mean_scores())
 
+        TestHelper.check_plot('data/test_Tuners/test_BayesianOptimization_Classification_UtilityFunction__plot_resampled_stats.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_stats())
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianOptimization_Classification_UtilityFunction__plot_resampled_scores.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_scores(metric=Metric.AUC_ROC))
+
         # noinspection PyUnresolvedReferences
         TestHelper.save_df(model_tuner.results.optimizer_results.round(8),
                            'data/test_Tuners/test_BayesianOptimization_tuner_optimizer_results.txt')
@@ -159,6 +165,12 @@ class BayesianOptimizationTests(TimerTestCase):
 
         TestHelper.check_plot('data/test_Tuners/test_BayesianOptimization_Regression_CostFunction__optimizerplot_iteration_mean_scores.png',  # noqa
                               lambda: model_tuner.results.plot_iteration_mean_scores())
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianOptimization_Regression_CostFunction__plot_resampled_stats.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_stats())
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianOptimization_Regression_CostFunction__plot_resampled_scores.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_scores(metric=Metric.ROOT_MEAN_SQUARE_ERROR))  # noqa
 
         assert model_tuner.results.number_of_cycles == init_points + n_iter
 
@@ -285,6 +297,12 @@ class BayesianOptimizationTests(TimerTestCase):
 
         TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Classification_UtilityFunction__optimizerplot_iteration_mean_scores.png',  # noqa
                                lambda: model_tuner.results.plot_iteration_mean_scores())
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Classification_UtilityFunction__plot_resampled_stats.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_stats())
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Classification_UtilityFunction__plot_resampled_scores.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_scores(metric=Metric.AUC_ROC))
 
         assert model_tuner.results.hyper_param_names == list(space_lgb.keys())
         assert model_tuner.results.resampled_stats.shape[0] == max_evaluations
@@ -420,6 +438,12 @@ class BayesianOptimizationTests(TimerTestCase):
 
         TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Regression_CostFunction__plot_iteration_mean_scores.png',  # noqa
                                lambda: model_tuner.results.plot_iteration_mean_scores())
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Regression_CostFunction__plot_resampled_stats.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_stats())
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Regression_CostFunction__plot_resampled_scores.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_scores(metric=Metric.ROOT_MEAN_SQUARE_ERROR))  # noqa
 
         assert model_tuner.results.hyper_param_names == list(space_lgb.keys())
         assert model_tuner.results.resampled_stats.shape[0] == max_evaluations
@@ -576,6 +600,12 @@ class BayesianOptimizationTests(TimerTestCase):
         TestHelper.check_plot(
             'data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_Classification_UtilityFunction__optimizerplot_iteration_mean_scores.png',  # noqa
             lambda: model_tuner.results.plot_iteration_mean_scores())
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_Classification_UtilityFunction__plot_resampled_stats.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_stats())
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_Classification_UtilityFunction__plot_resampled_scores.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_scores(metric=Metric.AUC_ROC))
 
         assert model_tuner.results.hyper_param_names == list(space_lgb.keys())
         assert model_tuner.results.resampled_stats.shape[0] == max_evaluations
@@ -736,6 +766,12 @@ class BayesianOptimizationTests(TimerTestCase):
         TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_Regression_CostFunction__plot_iteration_mean_scores.png',  # noqa
                                lambda: model_tuner.results.plot_iteration_mean_scores())
 
+        TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_Regression_CostFunction__plot_resampled_stats.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_stats())
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_Regression_CostFunction__plot_resampled_scores.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_scores(metric=Metric.ROOT_MEAN_SQUARE_ERROR))  # noqa
+
         assert model_tuner.results.hyper_param_names == list(space_lgb.keys())
         assert model_tuner.results.resampled_stats.shape[0] == max_evaluations
 
@@ -890,6 +926,12 @@ class BayesianOptimizationTests(TimerTestCase):
             'data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_only_Classification_UtilityFunction__optimizerplot_iteration_mean_scores.png',  # noqa
             lambda: model_tuner.results.plot_iteration_mean_scores())
 
+        TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_only_Classification_UtilityFunction__plot_resampled_stats.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_stats())
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_only_Classification_UtilityFunction__plot_resampled_scores.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_scores(metric=Metric.AUC_ROC))
+
         assert model_tuner.results.hyper_param_names == list(space_lgb.keys())
         assert model_tuner.results.resampled_stats.shape[0] == max_evaluations
 
@@ -1014,6 +1056,12 @@ class BayesianOptimizationTests(TimerTestCase):
 
         TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_only_Regression_CostFunction__plot_iteration_mean_scores.png',  # noqa
                                lambda: model_tuner.results.plot_iteration_mean_scores())
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_only_Regression_CostFunction__plot_resampled_stats.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_stats())
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_only_Regression_CostFunction__plot_resampled_scores.png',  # noqa
+                              lambda: model_tuner.results.plot_resampled_scores(metric=Metric.ROOT_MEAN_SQUARE_ERROR))  # noqa
 
         assert model_tuner.results.hyper_param_names == list(space_lgb.keys())
         assert model_tuner.results.resampled_stats.shape[0] == max_evaluations
