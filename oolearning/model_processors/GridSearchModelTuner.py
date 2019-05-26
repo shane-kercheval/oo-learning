@@ -187,25 +187,7 @@ class GridSearchModelTuner(ModelTunerBase):
         self._resampler_decorators = [x[2] for x in results]
         self._number_of_resamples = set([x[3] for x in results])
 
-        # # as a check, we want to make sure the tune_results and time_results dataframe doesn't contain any
-        # # NAs; however, if we set a particular hyper-parameter to None, this will cause a false positive
-        # # so, let's ignore any columns where the hyper-param is specifically set to None
-        # if self._params_grid:
-        #     # noinspection PyProtectedMember
-        #     params_containing_none = [key for key, value in self._params_grid._params_dict.items()
-        #                               if value is None or (isinstance(value, list) and None in value)]
-        # else:
-        #     params_containing_none = []
-        #
-        # tune_results = pd.concat([params_combinations.copy(),
-        #                           pd.DataFrame(results_list, columns=['resampler_object'])], axis=1)
-        # assert tune_results.drop(columns=params_containing_none).isnull().sum().sum() == 0
-        #
-        # time_results = pd.concat([params_combinations.copy(),
-        #                           pd.DataFrame(time_duration_list, columns=['execution_time'])],
-        #                          axis=1)
-        # assert time_results.drop(columns=params_containing_none).isnull().sum().sum() == 0
-
+        # noinspection PyTypeChecker
         return GridSearchTunerResults(resampler_results=results_list,
                                       params_grid=self._params_grid,
                                       resampler_times=time_duration_list)
