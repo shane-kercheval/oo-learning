@@ -560,6 +560,8 @@ class BayesianOptimizationTests(TimerTestCase):
         assert len(model_tuner.results.best_transformations) == 2
         assert isinstance(model_tuner.results.best_transformations[0], CenterScaleTransformer)
         assert isinstance(model_tuner.results.best_transformations[1], EmptyTransformer)
+        assert not model_tuner.results.best_transformations[0].has_executed
+        assert not model_tuner.results.best_transformations[1].has_executed
 
         # should have cloned the decorator each time, so it should not have been used
         assert len(decorator._model_list) == 0
@@ -735,6 +737,8 @@ class BayesianOptimizationTests(TimerTestCase):
         assert len(model_tuner.results.best_transformations) == 2
         assert isinstance(model_tuner.results.best_transformations[0], EmptyTransformer)
         assert isinstance(model_tuner.results.best_transformations[1], EmptyTransformer)
+        assert not model_tuner.results.best_transformations[0].has_executed
+        assert not model_tuner.results.best_transformations[1].has_executed
 
         # should have cloned the decorator each time, so it should not have been used
         assert len(decorator._model_list) == 0
@@ -885,6 +889,8 @@ class BayesianOptimizationTests(TimerTestCase):
         assert len(model_tuner.results.best_transformations) == 2
         assert isinstance(model_tuner.results.best_transformations[0], EmptyTransformer)
         assert isinstance(model_tuner.results.best_transformations[1], EmptyTransformer)
+        assert not model_tuner.results.best_transformations[0].has_executed
+        assert not model_tuner.results.best_transformations[1].has_executed
 
         # should have cloned the decorator each time, so it should not have been used
         assert len(decorator._model_list) == 0
@@ -1026,6 +1032,8 @@ class BayesianOptimizationTests(TimerTestCase):
         assert len(model_tuner.results.best_transformations) == 2
         assert isinstance(model_tuner.results.best_transformations[0], EmptyTransformer)
         assert isinstance(model_tuner.results.best_transformations[1], EmptyTransformer)
+        assert not model_tuner.results.best_transformations[0].has_executed
+        assert not model_tuner.results.best_transformations[1].has_executed
 
         # should have cloned the decorator each time, so it should not have been used
         assert len(decorator._model_list) == 0

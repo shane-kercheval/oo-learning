@@ -854,3 +854,291 @@ class TunerTests(TimerTestCase):
         comparison = TunerResultsComparison(results_dict)
         TestHelper.check_plot('data/test_Tuners/test_TunerResultsComparison_boxplot.png',
                               lambda: comparison.boxplot())
+
+    def test_TransformationTuner(self):
+        data = TestHelper.get_titanic_data()
+        target_variable = 'Survived'
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
+        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
+
+        training_y = data.iloc[training_indexes][target_variable]
+        training_x = data.iloc[training_indexes].drop(columns='Survived')
+
+        score_list = [AucRocScore(positive_class=1)]
+
+        decorator = ModelDecorator()
+        # define & configure the Resampler object
+        resampler = RepeatedCrossValidationResampler(
+            model=LightGBMClassifier(),  # we'll use a Random Forest model
+            transformations=transformations,
+            scores=score_list,
+            folds=5,  # 5 folds with 5 repeats
+            repeats=3,
+            fold_decorators=[decorator],
+            parallelization_cores=0)  # adds parallelization (per repeat)
+
+        transformations_space = {
+            # passing None will get removed, but work around is to pass a Transformer that doesn't do anything
+            # i.e. EmptyTransformer
+            'CenterScale vs Normalize': [EmptyTransformer(),
+                                         CenterScaleTransformer(),
+                                         NormalizationTransformer()],
+            'PCA': [EmptyTransformer(),
+                    PCATransformer()],
+        }
+
+        model_tuner = GridSearchTransformationTuner(resampler=resampler,
+                                                    transformations_space=transformations_space,
+                                                    hyper_param_object=LightGBMHP(),
+                                                    parallelization_cores=0)
+        model_tuner.tune(data_x=training_x, data_y=training_y)
+
+        assert model_tuner.results.best_hyper_params == {'CenterScale vs Normalize': 'CenterScaleTransformer',
+                                                         'PCA': 'EmptyTransformer'}
+        assert model_tuner.results.best_index == 2
+        assert all(model_tuner.results.sorted_best_indexes == [2, 0, 4, 3, 5, 1])
+        expected_cycles = 3 * 2
+        assert model_tuner.results.number_of_cycles == expected_cycles
+        assert model_tuner.results.hyper_param_names == ['CenterScale vs Normalize', 'PCA']
+        assert model_tuner.results.transformation_names == ['CenterScale vs Normalize', 'PCA']
+
+        assert len(model_tuner.results.best_transformations) == 2
+        assert isinstance(model_tuner.results.best_transformations[0], CenterScaleTransformer)
+        assert isinstance(model_tuner.results.best_transformations[1], EmptyTransformer)
+
+        assert not model_tuner.results.best_transformations[0].has_executed
+        assert not model_tuner.results.best_transformations[1].has_executed
+
+        # should have cloned the decorator each time, so it should not have been used
+        assert len(decorator._model_list) == 0
+        # should be same number of sets/lists of decorators as there are tuning cycles
+        assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
+        assert expected_cycles == model_tuner.results.number_of_cycles
+
+        # only 1 decorator object passed in
+        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 1)
+
+        for index in range(len(model_tuner.resampler_decorators)):
+            # index = 0
+            model_list = model_tuner.resampler_decorators[index][0]._model_list
+            assert len(model_list) == 5 * 3  # 5 fold 3 repeat
+            trained_params = [x.model_object.get_params() for x in model_list]
+            # every underlying training params of the resample should be the same (a Resampler object only
+            # uses one combination of hyper-params)
+            for y in range(len(trained_params)):
+                assert trained_params[y] == trained_params[0]
+
+            # check that the hyper params that are passed in match the hyper params that the underlying
+            # model actually trains with
+            trained_params = trained_params[0]  # already verified that all the list items are the same
+            hyper_params = model_tuner.results._tune_results_objects.resampler_object.values[
+                index].hyper_params.params_dict  # noqa
+            TestHelper.assert_hyper_params_match_2(subset=hyper_params, superset=trained_params,
+                                                   mapping={'min_gain_to_split': 'min_split_gain',
+                                                            'min_sum_hessian_in_leaf': 'min_child_weight',
+                                                            'min_data_in_leaf': 'min_child_samples',
+                                                            'bagging_fraction': 'subsample',
+                                                            'bagging_freq': 'subsample_freq',
+                                                            'feature_fraction': 'colsample_bytree',
+                                                            'lambda_l1': 'reg_alpha',
+                                                            'lambda_l2': 'reg_lambda'})
+
+        TestHelper.save_string(model_tuner.results,
+                               'data/test_Tuners/test_TransformationTune_results.txt')  # noqa
+
+        TestHelper.check_plot(
+            'data/test_Tuners/test_TransformationTuner__plot_iteration_mean_scores.png',
+            # noqa
+            lambda: model_tuner.results.plot_iteration_mean_scores())
+
+        TestHelper.check_plot(
+            'data/test_Tuners/test_TransformationTuner__plot_resampled_stats.png',
+            # noqa
+            lambda: model_tuner.results.plot_resampled_stats())
+
+        TestHelper.check_plot(
+            'data/test_Tuners/test_TransformationTuner__plot_resampled_scores.png',
+            # noqa
+            lambda: model_tuner.results.plot_resampled_scores(metric=Metric.AUC_ROC))
+
+        assert model_tuner.results.hyper_param_names == list(transformations_space.keys())
+        assert model_tuner.results.resampled_stats.shape[0] == expected_cycles
+
+        df = model_tuner.results.resampled_stats
+        assert model_tuner.results.best_hyper_params == \
+               df.loc[df['AUC_ROC_mean'].idxmax(), model_tuner.results.hyper_param_names].to_dict()
+
+        ######################################################################################################
+        # Resample with best_params and see if we get the same loss value i.e. RMSE_mean
+        ######################################################################################################
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        score_list = [AucRocScore(positive_class=1)]
+
+        # define & configure the Resampler object
+        resampler = RepeatedCrossValidationResampler(
+            model=LightGBMClassifier(),  # we'll use a Random Forest model
+            transformations=transformations,
+            scores=score_list,
+            folds=5,  # 5 folds with 5 repeats
+            repeats=3,
+            parallelization_cores=0)  # adds parallelization (per repeat)
+
+        hp = LightGBMHP()
+        resampler.append_transformations(model_tuner.results.best_transformations)
+        resampler.resample(training_x, training_y, hyper_params=hp)
+
+        assert resampler.results.score_means['AUC_ROC'] == \
+               model_tuner.results.resampled_stats.iloc[model_tuner.results.best_index]['AUC_ROC_mean']
+
+    def test_TransformationTuner_parallelization(self):
+        data = TestHelper.get_titanic_data()
+        target_variable = 'Survived'
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
+        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
+
+        training_y = data.iloc[training_indexes][target_variable]
+        training_x = data.iloc[training_indexes].drop(columns='Survived')
+
+        score_list = [AucRocScore(positive_class=1)]
+
+        decorator = ModelDecorator()
+        # define & configure the Resampler object
+        resampler = RepeatedCrossValidationResampler(
+            model=LightGBMClassifier(),  # we'll use a Random Forest model
+            transformations=transformations,
+            scores=score_list,
+            folds=5,  # 5 folds with 5 repeats
+            repeats=3,
+            fold_decorators=[decorator],
+            parallelization_cores=0)  # adds parallelization (per repeat)
+
+        transformations_space = {
+            # passing None will get removed, but work around is to pass a Transformer that doesn't do anything
+            # i.e. EmptyTransformer
+            'CenterScale vs Normalize': [EmptyTransformer(),
+                                         CenterScaleTransformer(),
+                                         NormalizationTransformer()],
+            'PCA': [EmptyTransformer(),
+                    PCATransformer()],
+        }
+
+        model_tuner = GridSearchTransformationTuner(resampler=resampler,
+                                                    transformations_space=transformations_space,
+                                                    hyper_param_object=LightGBMHP(),
+                                                    parallelization_cores=-1)
+        model_tuner.tune(data_x=training_x, data_y=training_y)
+
+        assert model_tuner.results.best_hyper_params == {'CenterScale vs Normalize': 'CenterScaleTransformer',
+                                                         'PCA': 'EmptyTransformer'}
+        assert model_tuner.results.best_index == 2
+        assert all(model_tuner.results.sorted_best_indexes == [2, 0, 4, 3, 5, 1])
+        expected_cycles = 3 * 2
+        assert model_tuner.results.number_of_cycles == expected_cycles
+        assert model_tuner.results.hyper_param_names == ['CenterScale vs Normalize', 'PCA']
+        assert model_tuner.results.transformation_names == ['CenterScale vs Normalize', 'PCA']
+
+        assert len(model_tuner.results.best_transformations) == 2
+        assert isinstance(model_tuner.results.best_transformations[0], CenterScaleTransformer)
+        assert isinstance(model_tuner.results.best_transformations[1], EmptyTransformer)
+
+        assert not model_tuner.results.best_transformations[0].has_executed
+        assert not model_tuner.results.best_transformations[1].has_executed
+
+        # should have cloned the decorator each time, so it should not have been used
+        assert len(decorator._model_list) == 0
+        # should be same number of sets/lists of decorators as there are tuning cycles
+        assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
+        assert expected_cycles == model_tuner.results.number_of_cycles
+
+        # only 1 decorator object passed in
+        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 1)
+
+        for index in range(len(model_tuner.resampler_decorators)):
+            # index = 0
+            model_list = model_tuner.resampler_decorators[index][0]._model_list
+            assert len(model_list) == 5 * 3  # 5 fold 3 repeat
+            trained_params = [x.model_object.get_params() for x in model_list]
+            # every underlying training params of the resample should be the same (a Resampler object only
+            # uses one combination of hyper-params)
+            for y in range(len(trained_params)):
+                assert trained_params[y] == trained_params[0]
+
+            # check that the hyper params that are passed in match the hyper params that the underlying
+            # model actually trains with
+            trained_params = trained_params[0]  # already verified that all the list items are the same
+            hyper_params = model_tuner.results._tune_results_objects.resampler_object.values[
+                index].hyper_params.params_dict  # noqa
+            TestHelper.assert_hyper_params_match_2(subset=hyper_params, superset=trained_params,
+                                                   mapping={'min_gain_to_split': 'min_split_gain',
+                                                            'min_sum_hessian_in_leaf': 'min_child_weight',
+                                                            'min_data_in_leaf': 'min_child_samples',
+                                                            'bagging_fraction': 'subsample',
+                                                            'bagging_freq': 'subsample_freq',
+                                                            'feature_fraction': 'colsample_bytree',
+                                                            'lambda_l1': 'reg_alpha',
+                                                            'lambda_l2': 'reg_lambda'})
+
+        TestHelper.save_string(model_tuner.results,
+                               'data/test_Tuners/test_TransformationTuner_parallelization_results.txt')  # noqa
+
+        TestHelper.check_plot(
+            'data/test_Tuners/test_TransformationTuner_parallelizationr__plot_iteration_mean_scores.png',
+            # noqa
+            lambda: model_tuner.results.plot_iteration_mean_scores())
+
+        TestHelper.check_plot(
+            'data/test_Tuners/test_TransformationTuner_parallelizationr__plot_resampled_stats.png',
+            # noqa
+            lambda: model_tuner.results.plot_resampled_stats())
+
+        TestHelper.check_plot(
+            'data/test_Tuners/test_TransformationTuner_parallelizationr__plot_resampled_scores.png',
+            # noqa
+            lambda: model_tuner.results.plot_resampled_scores(metric=Metric.AUC_ROC))
+
+        assert model_tuner.results.hyper_param_names == list(transformations_space.keys())
+        assert model_tuner.results.resampled_stats.shape[0] == expected_cycles
+
+        df = model_tuner.results.resampled_stats
+        assert model_tuner.results.best_hyper_params == \
+               df.loc[df['AUC_ROC_mean'].idxmax(), model_tuner.results.hyper_param_names].to_dict()
+
+        ######################################################################################################
+        # Resample with best_params and see if we get the same loss value i.e. RMSE_mean
+        ######################################################################################################
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        score_list = [AucRocScore(positive_class=1)]
+
+        # define & configure the Resampler object
+        resampler = RepeatedCrossValidationResampler(
+            model=LightGBMClassifier(),  # we'll use a Random Forest model
+            transformations=transformations,
+            scores=score_list,
+            folds=5,  # 5 folds with 5 repeats
+            repeats=3,
+            parallelization_cores=0)  # adds parallelization (per repeat)
+
+        hp = LightGBMHP()
+        resampler.append_transformations(model_tuner.results.best_transformations)
+        resampler.resample(training_x, training_y, hyper_params=hp)
+
+        assert resampler.results.score_means['AUC_ROC'] == \
+               model_tuner.results.resampled_stats.iloc[model_tuner.results.best_index]['AUC_ROC_mean']

@@ -73,7 +73,9 @@ from .model_processors.ModelTrainer import ModelTrainer
 from .model_processors.ModelInfo import ModelInfo
 from .model_processors.ModelSearcher import ModelSearcher
 from .model_processors.GridSearchModelTuner import GridSearchModelTuner
+from .model_processors.GridSearchTransformationTuner import GridSearchTransformationTuner
 from .model_processors.GridSearchTunerResults import GridSearchTunerResults
+from .model_processors.GridSearchTransTunerResults import GridSearchTransTunerResults
 from .model_processors.RepeatedCrossValidationResampler import RepeatedCrossValidationResampler
 from .model_processors.ResamplerBase import ResamplerBase
 from .model_processors.ResamplerResults import ResamplerResults
