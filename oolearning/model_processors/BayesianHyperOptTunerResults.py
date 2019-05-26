@@ -1,7 +1,5 @@
 from typing import List, Union
 
-import pandas as pd
-
 from oolearning.model_processors.ResamplerResults import ResamplerResults
 from oolearning.model_processors.TunerResultsBase import TunerResultsBase
 

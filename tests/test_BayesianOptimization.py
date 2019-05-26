@@ -12,7 +12,7 @@ class ModelDecorator(DecoratorBase):
         self._model_list.append(kwargs['model'])
 
 
-# noinspection PyMethodMayBeStatic,SpellCheckingInspection,PyTypeChecker
+# noinspection PyMethodMayBeStatic,SpellCheckingInspection,PyTypeChecker,PyUnresolvedReferences
 class BayesianOptimizationTests(TimerTestCase):
 
     @classmethod
@@ -521,11 +521,14 @@ class BayesianOptimizationTests(TimerTestCase):
                                                  seed=6)
         model_tuner.tune(data_x=training_x, data_y=training_y)
 
-        assert model_tuner.results.best_hyper_params == {'CenterScale vs Normalize': 'CenterScaleTransformer', 'PCA': 'EmptyTransformer', 'max_depth': 5, 'num_leaves': 88}
+        assert model_tuner.results.best_hyper_params == {'CenterScale vs Normalize': 'CenterScaleTransformer',
+                                                         'PCA': 'EmptyTransformer', 'max_depth': 5,
+                                                         'num_leaves': 88}
         assert model_tuner.results.best_index == 1
         assert all(model_tuner.results.sorted_best_indexes == [1, 0, 3, 2, 4])
         assert model_tuner.results.number_of_cycles == max_evaluations
-        assert model_tuner.results.hyper_param_names == ['CenterScale vs Normalize', 'PCA', 'max_depth', 'num_leaves']
+        assert model_tuner.results.hyper_param_names == ['CenterScale vs Normalize', 'PCA', 'max_depth',
+                                                         'num_leaves']
         assert model_tuner.results.transformation_names == ['CenterScale vs Normalize', 'PCA']
         assert model_tuner.results.model_hyper_param_names == ['max_depth', 'num_leaves']
         assert model_tuner.results.best_model_hyper_params == {'max_depth': 5, 'num_leaves': 88}
@@ -571,8 +574,7 @@ class BayesianOptimizationTests(TimerTestCase):
                                'data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_Classification_UtilityFunction_results.txt')  # noqa
 
         TestHelper.check_plot(
-            'data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_Classification_UtilityFunction__optimizerplot_iteration_mean_scores.png',
-            # noqa
+            'data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_Classification_UtilityFunction__optimizerplot_iteration_mean_scores.png',  # noqa
             lambda: model_tuner.results.plot_iteration_mean_scores())
 
         assert model_tuner.results.hyper_param_names == list(space_lgb.keys())
@@ -616,7 +618,8 @@ class BayesianOptimizationTests(TimerTestCase):
                            CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
                            ImputationTransformer(),
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
-        pipeline = TransformerPipeline(transformations=transformations+model_tuner.results.best_transformations)
+        pipeline = TransformerPipeline(transformations=transformations +
+                                                       model_tuner.results.best_transformations)
         transformed_training_data = pipeline.fit_transform(training_x)
         transformed_holdout_data = pipeline.transform(holdout_x)
 
@@ -783,3 +786,263 @@ class BayesianOptimizationTests(TimerTestCase):
 
         score_value = RmseScore().calculate(actual_values=holdout_y, predicted_values=holdout_predictions)
         assert score_value == 10.000002422021112
+
+    def test_BayesianHyperOptModelTuner_Transformations_only_Classification_UtilityFunction(self):
+        data = TestHelper.get_titanic_data()
+        target_variable = 'Survived'
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
+        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
+
+        training_y = data.iloc[training_indexes][target_variable]
+        training_x = data.iloc[training_indexes].drop(columns='Survived')
+
+        score_list = [AucRocScore(positive_class=1)]
+
+        decorator = ModelDecorator()
+        # define & configure the Resampler object
+        resampler = RepeatedCrossValidationResampler(
+            model=LightGBMClassifier(),  # we'll use a Random Forest model
+            transformations=transformations,
+            scores=score_list,
+            folds=5,  # 5 folds with 5 repeats
+            repeats=3,
+            fold_decorators=[decorator],
+            parallelization_cores=0)  # adds parallelization (per repeat)
+
+        from hyperopt import hp
+        space_lgb = {
+            # passing None will get removed, but work around is to pass a Transformer that doesn't do anything
+            # i.e. EmptyTransformer
+            'CenterScale vs Normalize': hp.choice('CenterScale vs Normalize vs None',
+                                                  [EmptyTransformer(),
+                                                   CenterScaleTransformer(),
+                                                   NormalizationTransformer()]),
+            'PCA': hp.choice('PCA',
+                                                  [EmptyTransformer(),
+                                                   PCATransformer()]),
+        }
+
+        max_evaluations = 5
+
+        model_tuner = BayesianHyperOptModelTuner(resampler=resampler,
+                                                 hyper_param_object=LightGBMHP(),
+                                                 space=space_lgb,
+                                                 max_evaluations=max_evaluations,
+                                                 seed=6)
+        model_tuner.tune(data_x=training_x, data_y=training_y)
+
+        assert model_tuner.results.best_hyper_params == {'CenterScale vs Normalize': 'EmptyTransformer',
+                                                         'PCA': 'EmptyTransformer'}
+        assert model_tuner.results.best_index == 1
+        assert all(model_tuner.results.sorted_best_indexes == [1, 0, 2, 3, 4])
+        assert model_tuner.results.number_of_cycles == max_evaluations
+        assert model_tuner.results.hyper_param_names == ['CenterScale vs Normalize', 'PCA']
+        assert model_tuner.results.transformation_names == ['CenterScale vs Normalize', 'PCA']
+        assert model_tuner.results.model_hyper_param_names == []
+        assert model_tuner.results.best_model_hyper_params == {}
+
+        assert len(model_tuner.results.best_transformations) == 2
+        assert isinstance(model_tuner.results.best_transformations[0], EmptyTransformer)
+        assert isinstance(model_tuner.results.best_transformations[1], EmptyTransformer)
+
+        # should have cloned the decorator each time, so it should not have been used
+        assert len(decorator._model_list) == 0
+        # should be same number of sets/lists of decorators as there are tuning cycles
+        assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
+        assert max_evaluations == model_tuner.results.number_of_cycles
+        # only 1 decorator object passed in
+        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 1)
+
+        for index in range(len(model_tuner.resampler_decorators)):
+            # index = 0
+            model_list = model_tuner.resampler_decorators[index][0]._model_list
+            assert len(model_list) == 5 * 3  # 5 fold 3 repeat
+            trained_params = [x.model_object.get_params() for x in model_list]
+            # every underlying training params of the resample should be the same (a Resampler object only
+            # uses one combination of hyper-params)
+            for y in range(len(trained_params)):
+                assert trained_params[y] == trained_params[0]
+
+            # check that the hyper params that are passed in match the hyper params that the underlying
+            # model actually trains with
+            trained_params = trained_params[0]  # already verified that all the list items are the same
+            hyper_params = model_tuner.results._tune_results_objects.resampler_object.values[
+                index].hyper_params.params_dict  # noqa
+            TestHelper.assert_hyper_params_match_2(subset=hyper_params, superset=trained_params,
+                                                   mapping={'min_gain_to_split': 'min_split_gain',
+                                                            'min_sum_hessian_in_leaf': 'min_child_weight',
+                                                            'min_data_in_leaf': 'min_child_samples',
+                                                            'bagging_fraction': 'subsample',
+                                                            'bagging_freq': 'subsample_freq',
+                                                            'feature_fraction': 'colsample_bytree',
+                                                            'lambda_l1': 'reg_alpha',
+                                                            'lambda_l2': 'reg_lambda'})
+
+        TestHelper.save_string(model_tuner.results,
+                               'data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_only_Classification_UtilityFunction_results.txt')  # noqa
+
+        TestHelper.check_plot(
+            'data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_only_Classification_UtilityFunction__optimizerplot_iteration_mean_scores.png',  # noqa
+            lambda: model_tuner.results.plot_iteration_mean_scores())
+
+        assert model_tuner.results.hyper_param_names == list(space_lgb.keys())
+        assert model_tuner.results.resampled_stats.shape[0] == max_evaluations
+
+        df = model_tuner.results.resampled_stats
+        assert model_tuner.results.best_hyper_params == \
+               df.loc[df['AUC_ROC_mean'].idxmax(), model_tuner.results.hyper_param_names].to_dict()
+
+        ######################################################################################################
+        # Resample with best_params and see if we get the same loss value i.e. RMSE_mean
+        ######################################################################################################
+        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+                           ImputationTransformer(),
+                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+
+        score_list = [AucRocScore(positive_class=1)]
+
+        # define & configure the Resampler object
+        resampler = RepeatedCrossValidationResampler(
+            model=LightGBMClassifier(),  # we'll use a Random Forest model
+            transformations=transformations,
+            scores=score_list,
+            folds=5,  # 5 folds with 5 repeats
+            repeats=3,
+            parallelization_cores=0)  # adds parallelization (per repeat)
+
+        hp = LightGBMHP()
+        hp.update_dict(model_tuner.results.best_model_hyper_params)
+        resampler.append_transformations(model_tuner.results.best_transformations)
+        resampler.resample(training_x, training_y, hyper_params=hp)
+
+        assert OOLearningHelpers.dict_is_subset(subset=model_tuner.results.best_model_hyper_params,
+                                                superset=resampler.results.hyper_params.params_dict)
+        assert resampler.results.score_means['AUC_ROC'] == \
+               model_tuner.results.resampled_stats.iloc[model_tuner.results.best_index]['AUC_ROC_mean']
+
+    def test_BayesianHyperOptModelTuner_Transformations_only_Regression_CostFunction(self):
+        data = TestHelper.get_cement_data()
+        target_variable = 'strength'
+        transformations = [RemoveColumnsTransformer(columns=['fineagg'])]
+
+        splitter = RegressionStratifiedDataSplitter(holdout_ratio=0.2)
+        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
+
+        training_y = data.iloc[training_indexes][target_variable]
+        training_x = data.iloc[training_indexes].drop(columns=target_variable)
+
+        score_list = [RmseScore()]
+        decorator = ModelDecorator()
+        # define & configure the Resampler object
+        resampler = RepeatedCrossValidationResampler(
+            model=ElasticNetRegressor(),  # we'll use a Random Forest model
+            transformations=transformations,
+            scores=score_list,
+            folds=5,  # 5 folds with 5 repeats
+            repeats=3,
+            fold_decorators=[decorator],
+            parallelization_cores=0)  # adds parallelization (per repeat)
+
+        from hyperopt import hp
+        space_lgb = {
+            # passing None will get removed, but work around is to pass a Transformer that doesn't do anything
+            # i.e. EmptyTransformer
+            'CenterScale vs Normalize': hp.choice('CenterScale vs Normalize vs None',
+                                                  [EmptyTransformer(),
+                                                   CenterScaleTransformer(),
+                                                   NormalizationTransformer()]),
+            'PCA': hp.choice('PCA',
+                             [EmptyTransformer(),
+                              PCATransformer()]),
+        }
+        max_evaluations = 5
+        model_tuner = BayesianHyperOptModelTuner(resampler=resampler,
+                                                 hyper_param_object=ElasticNetRegressorHP(),
+                                                 space=space_lgb,
+                                                 max_evaluations=max_evaluations,
+                                                 seed=6)
+        model_tuner.tune(data_x=training_x, data_y=training_y)
+
+        expected_best_transformations = {'CenterScale vs Normalize': 'EmptyTransformer',
+                                         'PCA': 'EmptyTransformer'}
+
+        assert model_tuner.results.best_hyper_params == expected_best_transformations
+        assert model_tuner.results.best_index == 1
+        assert all(model_tuner.results.sorted_best_indexes == [1, 0, 2, 3, 4])
+        assert model_tuner.results.number_of_cycles == max_evaluations
+        assert model_tuner.results.hyper_param_names == ['CenterScale vs Normalize', 'PCA']
+        assert model_tuner.results.transformation_names == ['CenterScale vs Normalize', 'PCA']
+        assert model_tuner.results.model_hyper_param_names == []
+        assert model_tuner.results.best_model_hyper_params == {}
+
+        assert len(model_tuner.results.best_transformations) == 2
+        assert isinstance(model_tuner.results.best_transformations[0], EmptyTransformer)
+        assert isinstance(model_tuner.results.best_transformations[1], EmptyTransformer)
+
+        # should have cloned the decorator each time, so it should not have been used
+        assert len(decorator._model_list) == 0
+        # should be same number of sets/lists of decorators as there are tuning cycles
+        assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
+        assert max_evaluations == model_tuner.results.number_of_cycles
+        # only 1 decorator object passed in
+        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 1)
+
+        for index in range(len(model_tuner.resampler_decorators)):
+            # index = 0
+            model_list = model_tuner.resampler_decorators[index][0]._model_list
+            assert len(model_list) == 5 * 3  # 5 fold 3 repeat
+            trained_params = [x.model_object.get_params() for x in model_list]
+            # every underlying training params of the resample should be the same (a Resampler object only
+            # uses one combination of hyper-params)
+            for y in range(len(trained_params)):
+                assert trained_params[y] == trained_params[0]
+
+            # check that the hyper params that are passed in match the hyper params that the underlying
+            # model actually trains with
+            trained_params = trained_params[0]  # already verified that all the list items are the same
+            hyper_params = model_tuner.results._tune_results_objects.resampler_object.values[index].hyper_params.params_dict  # noqa
+            TestHelper.assert_hyper_params_match_2(subset=hyper_params, superset=trained_params)
+
+        TestHelper.save_string(model_tuner.results,
+                               'data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_only_Regression_CostFunction_results.txt')  # noqa
+
+        TestHelper.check_plot('data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_only_Regression_CostFunction__plot_iteration_mean_scores.png',  # noqa
+                               lambda: model_tuner.results.plot_iteration_mean_scores())
+
+        assert model_tuner.results.hyper_param_names == list(space_lgb.keys())
+        assert model_tuner.results.resampled_stats.shape[0] == max_evaluations
+
+        df = model_tuner.results.resampled_stats
+        assert model_tuner.results.best_hyper_params == \
+               df.loc[df['RMSE_mean'].idxmin(), model_tuner.results.hyper_param_names].to_dict()
+
+        ######################################################################################################
+        # Resample with best_params and see if we get the same loss value i.e. RMSE_mean
+        ######################################################################################################
+        transformations = [RemoveColumnsTransformer(columns=['fineagg'])]
+        score_list = [RmseScore()]
+
+        # define & configure the Resampler object
+        resampler = RepeatedCrossValidationResampler(
+            model=ElasticNetRegressor(),  # we'll use a Random Forest model
+            transformations=transformations,
+            scores=score_list,
+            folds=5,  # 5 folds with 5 repeats
+            repeats=3,
+            parallelization_cores=0)  # adds parallelization (per repeat)
+
+        hp = ElasticNetRegressorHP()
+        hp.update_dict(model_tuner.results.best_model_hyper_params)
+        resampler.append_transformations(model_tuner.results.best_transformations)
+        resampler.resample(training_x, training_y, hyper_params=hp)
+
+        assert OOLearningHelpers.dict_is_subset(subset=model_tuner.results.best_model_hyper_params,
+                                                superset=resampler.results.hyper_params.params_dict)
+        assert resampler.results.score_means['RMSE'] == \
+               model_tuner.results.resampled_stats.iloc[model_tuner.results.best_index]['RMSE_mean']

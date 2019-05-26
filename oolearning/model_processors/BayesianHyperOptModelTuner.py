@@ -77,7 +77,7 @@ class BayesianHyperOptModelTuner(ModelTunerBase):
             local_hyper_params.update_dict(hyper_params_dict)
 
             local_resampler = self._resampler_factory.get()
-            local_resampler.append_transformations(transformations)  # works for empty lsit
+            local_resampler.append_transformations(transformations)  # works for empty list
 
             resample_start_time = time.time()
             local_resampler.resample(data_x=data_x, data_y=data_y, hyper_params=local_hyper_params)
@@ -117,11 +117,6 @@ class BayesianHyperOptModelTuner(ModelTunerBase):
 
         # these transformation objects will not have been used
         transformations_objects = [result['transformations'] for result in trials.results]
-
-
-        # transformations_dicts = [{key: type(value).__name__ for key, value in transformations_dict.items()}
-        #                          for transformations_dict in transformations_objects]
-        # transformations_df = pd.DataFrame(transformations_dicts)
 
         # check that the Resampler scores have the same mean values as the loss values in trials
         # if the score object is a Utility, must multiply by -1 since we had to multiple by -1

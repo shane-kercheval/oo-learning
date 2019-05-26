@@ -47,19 +47,17 @@ class TunerResultsBase(metaclass=ABCMeta):
         #     params_containing_none = []
 
         self._tune_results_objects = pd.concat([params_combinations.copy(),
-                                  pd.DataFrame(resampler_results, columns=['resampler_object'])], axis=1)
-        #assert tune_results.drop(columns=params_containing_none).isnull().sum().sum() == 0
+                                                pd.DataFrame(resampler_results,
+                                                             columns=['resampler_object'])],
+                                               axis=1)
         assert self._tune_results_objects.isnull().sum().sum() == 0
 
         self._time_results = pd.concat([params_combinations.copy(),
-                                  pd.DataFrame(resampler_times, columns=['execution_time'])],
-                                    axis=1)
-        #assert self._time_results.drop(columns=params_containing_none).isnull().sum().sum() == 0
+                                        pd.DataFrame(resampler_times, columns=['execution_time'])],
+                                       axis=1)
         assert self._time_results.isnull().sum().sum() == 0
 
-
-        # noinspection PyUnresolvedReferences
-        self._tune_results_values = pd.concat([self._tune_results_objects.copy().drop(columns='resampler_object'),
+        self._tune_results_values = pd.concat([self._tune_results_objects.copy().drop(columns='resampler_object'),  # noqa
                                                pd.DataFrame(results_values)], axis=1)
 
     def __str__(self):

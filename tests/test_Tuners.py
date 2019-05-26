@@ -23,7 +23,7 @@ class ModelDecorator(DecoratorBase):
         self._model_list.append(kwargs['model'])
 
 
-# noinspection PyMethodMayBeStatic,SpellCheckingInspection,PyTypeChecker
+# noinspection PyMethodMayBeStatic,SpellCheckingInspection,PyTypeChecker,PyUnresolvedReferences
 class TunerTests(TimerTestCase):
 
     @classmethod
@@ -419,13 +419,13 @@ class TunerTests(TimerTestCase):
         #                   ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
 
         tuner_cached = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=GradientBoostingClassifier(),  # noqa
-                                                                                       transformations=None,  # diff
-                                                                                       scores=[]),  # diff
+                                                                                       transformations=None,
+                                                                                       scores=[]),
                                             hyper_param_object=GradientBoostingClassifierHP(),
                                             params_grid=grid,
-                                            # including model_persistence_manager but it shouldn't be used (and cached models
-                                            # don't exist any longer
-                                            model_persistence_manager=LocalCacheManager(cache_directory=model_cache_directory),
+                                            # including model_persistence_manager but it shouldn't be used
+                                            # (and cached models don't exist any longer
+                                            model_persistence_manager=LocalCacheManager(cache_directory=model_cache_directory),  # noqa
                                             resampler_persistence_manager=LocalCacheManager(cache_directory=resampler_cache_directory,  # noqa
                                                                            sub_directory='tune_test'),
                                             parallelization_cores=-1)
