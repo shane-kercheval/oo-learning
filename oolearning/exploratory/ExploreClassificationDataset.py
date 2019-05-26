@@ -19,8 +19,8 @@ class ExploreClassificationDataset(ExploreDataset):
     def __init__(self,
                  dataset: pd.DataFrame,
                  target_variable: str,
-                 map_numeric_target: dict=None,
-                 ordered: bool=False):
+                 map_numeric_target: dict = None,
+                 ordered: bool = False):
         """
         :param dataset: dataset to explore
         :param target_variable: the name of the target variable/column
@@ -43,8 +43,8 @@ class ExploreClassificationDataset(ExploreDataset):
                  target_variable: str,
                  skip_initial_space: bool = True,
                  separator: str = ',',
-                 map_numeric_target: dict=None,
-                 ordered: bool=False) -> 'ExploreDataset':
+                 map_numeric_target: dict = None,
+                 ordered: bool = False) -> 'ExploreDataset':
         """
         Instantiates this class (via subclass) by first loading in a csv from `csv_file_path`.
 
@@ -90,10 +90,10 @@ class ExploreClassificationDataset(ExploreDataset):
     def plot_scatter_against_target(self,
                                     x: str,
                                     y: str,
-                                    show_regression_line: bool=False,
-                                    show_loess: bool=False,
-                                    alpha: float=0.5,
-                                    legend_location: str='lower right',
+                                    show_regression_line: bool = False,
+                                    show_loess: bool = False,
+                                    alpha: float = 0.5,
+                                    legend_location: str = 'lower right',
                                     ):
         """
         Compares two *numeric* features via scatter plot, coloring the points on the plot according to the
@@ -118,6 +118,7 @@ class ExploreClassificationDataset(ExploreDataset):
 
         # Move the legend to an empty part of the plot
         plt.legend(loc=legend_location)
+        plt.tight_layout()
 
     def plot_against_target(self, feature):
         """
@@ -134,6 +135,7 @@ class ExploreClassificationDataset(ExploreDataset):
                                   feature=feature,
                                   target_variable=self._target_variable,
                                   plot_group_percentages=True)
+        plt.tight_layout()
 
     @staticmethod
     def _dodged_barchart(dataset: pd.DataFrame, feature, target_variable, plot_group_percentages=False):

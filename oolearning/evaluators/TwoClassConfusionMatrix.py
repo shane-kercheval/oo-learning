@@ -155,7 +155,7 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
                 'No Information Rate': max(self.prevalence, 1-self.prevalence),  # i.e. largest class %
                 'Total Observations': self.total_observations}
 
-    def plot_all_quality_metrics(self, comparison_matrix: "TwoClassConfusionMatrix"=None):
+    def plot_all_quality_metrics(self, comparison_matrix: "TwoClassConfusionMatrix" = None):
         """
         Creates a plot that shows all of the quality score_names in this class.
 
@@ -202,3 +202,4 @@ class TwoClassConfusionMatrix(ConfusionMatrix):
 
         plt.title('Quality Scores')
         plt.grid()
+        plt.tight_layout()

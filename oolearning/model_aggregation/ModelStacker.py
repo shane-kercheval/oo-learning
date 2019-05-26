@@ -3,6 +3,7 @@ from multiprocessing import Lock
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from oolearning.OOLearningHelpers import OOLearningHelpers, Singleton
 from oolearning.converters.ContinuousToClassConverterBase import ContinuousToClassConverterBase
@@ -246,6 +247,7 @@ class ModelStacker(ModelWrapperBase):
 
         OOLearningHelpers.plot_correlations(correlations=self._train_meta_correlations,
                                             title='Correlations of Models (based on meta-training set)')
+        plt.tight_layout()
 
     @property
     def feature_importance(self):

@@ -173,6 +173,7 @@ class TestHelper:
             plt.gcf().clear()
             plt.cla()
             plt.clf()
+            plt.close()
 
         clear()
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory(file_name))

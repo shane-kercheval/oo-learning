@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from oolearning.exploratory.ExploreDataset import ExploreDataset
 
@@ -35,6 +36,8 @@ class ExploreRegressionDataset(ExploreDataset):
                                                                                 self._target_variable))
         else:
             self._dataset[[feature, self._target_variable]].boxplot(by=feature)
+        plt.tight_layout()
 
     def compare_target_boxplot(self, other: pd.DataFrame):
         self.compare_numeric_boxplot(column=self._target_variable, other=other)
+        plt.tight_layout()

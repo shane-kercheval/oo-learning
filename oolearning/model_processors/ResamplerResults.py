@@ -99,6 +99,7 @@ class ResamplerResults:
             plt.ylim(0.0, 1.0)
         self.resampled_scores.boxplot()
         plt.title('Resampled Scores')
+        plt.tight_layout()
 
     @property
     def score_means(self) -> dict:

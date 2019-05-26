@@ -82,6 +82,8 @@ class OOLearningHelpers:
                     plt.gca().get_xticklabels()[index_to_highlight].set_color('red')
                     plt.gca().get_yticklabels()[index_to_highlight].set_color('red')
 
+        plt.tight_layout()
+
     @staticmethod
     def get_final_datasets(data, target_variable, splitter, transformations):
 
@@ -139,6 +141,7 @@ class OOLearningHelpers:
     @staticmethod
     def dict_is_subset(subset, superset):
         return all(item in superset.items() for item in subset.items())
+
 
 class Singleton(type):
     """

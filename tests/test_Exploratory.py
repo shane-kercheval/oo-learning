@@ -3,7 +3,6 @@ import pickle
 import warnings
 
 import numpy as np
-import pandas as pd
 from mock import patch
 
 from oolearning import *
@@ -930,7 +929,6 @@ class ExploratoryTests(TimerTestCase):
 
     def test_classification_plot_scatter_against_target(self):
         iris_data = TestHelper.get_iris_data()
-
 
         target_variable = 'species'
         x = 'sepal_length'

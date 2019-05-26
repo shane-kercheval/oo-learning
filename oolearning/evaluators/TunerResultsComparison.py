@@ -46,3 +46,4 @@ class TunerResultsComparison:
         ax.set_ylabel('')
         ax.set_xlabel('')
         plt.subplots_adjust(left=0.25)
+        plt.tight_layout()

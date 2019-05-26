@@ -53,11 +53,13 @@ class ExploreDataset(ExploreDatasetBase):
         self_top_categories = self_categoric_summary.top
         other_top_categories = other_categoric_summary.top
 
-        self_unique_categores = {x:set(self.dataset[x].values) for x in self.categoric_features}
-        other_unique_categores = {x: set(other[x].values) for x in self.categoric_features}
+        self_unique_categories = {x: set(self.dataset[x].values) for x in self.categoric_features}
+        other_unique_categories = {x: set(other[x].values) for x in self.categoric_features}
 
-        self_difference_other = [self_unique_categores[x].difference(other_unique_categores[x]) for x in self.categoric_features]
-        other_difference_self = [other_unique_categores[x].difference(self_unique_categores[x]) for x in self.categoric_features]
+        self_difference_other = [self_unique_categories[x].difference(other_unique_categories[x])
+                                 for x in self.categoric_features]
+        other_difference_self = [other_unique_categories[x].difference(self_unique_categories[x])
+                                 for x in self.categoric_features]
 
         # needed because if the numeric_summary contains zero, we get NA; so we add a very small amount to
         # each value of each summary
@@ -75,22 +77,24 @@ class ExploreDataset(ExploreDatasetBase):
 
         diff['self_top_categories'] = self_top_categories
         diff['other_top_categories'] = other_top_categories
-        diff['self_diff_other'] = pd.Series([str(x) if len(x) > 0 else '' for x in self_difference_other], index=self.categoric_features)
-        diff['other_diff_self'] = pd.Series([str(x) if len(x) > 0 else '' for x in other_difference_self], index=self.categoric_features)
+        diff['self_diff_other'] = pd.Series([str(x) if len(x) > 0 else '' for x in self_difference_other],
+                                            index=self.categoric_features)
+        diff['other_diff_self'] = pd.Series([str(x) if len(x) > 0 else '' for x in other_difference_self],
+                                            index=self.categoric_features)
 
         return diff
 
     def compare_numeric_summaries_heatmap(self,
                                           other: pd.DataFrame,
-                                          annotation_font_size: int=8,
-                                          y_axis_rotation: int=0,
-                                          axis_font_size: int=10,
-                                          plot_size: tuple=(12, 8),
+                                          annotation_font_size: int = 8,
+                                          y_axis_rotation: int = 0,
+                                          axis_font_size: int = 10,
+                                          plot_size: tuple = (12, 8),
                                           ):
         summary_diff = self.compare_numeric_summaries(other=other)
         sns.heatmap(summary_diff,
-                    annot=summary_diff.apply(lambda x: x * 100).round(1).\
-                        apply(lambda x: x.apply(lambda y: str(y) + '%')),
+                    annot=summary_diff.apply(lambda x: x * 100).round(1).
+                                       apply(lambda x: x.apply(lambda y: str(y) + '%')),
                     annot_kws={"size": annotation_font_size},
                     fmt='',  # fmt="f",
                     robust=True, cmap='RdBu_r', vmin=-0.5, vmax=0.5,

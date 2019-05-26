@@ -78,12 +78,13 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
                            x_label='False Positive Rate (1 - True Negative Rate)',
                            y_label='True Positive Rate',
                            corner='Left')
+        plt.tight_layout()
 
     def plot_precision_recall_curve(self):
         """
         # TODO document
         """
-        return self.plot_ppv_tpr_curve()
+        self.plot_ppv_tpr_curve()
 
     def plot_ppv_tpr_curve(self):
         """
@@ -105,6 +106,8 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
                            x_label='True Positive Rate',
                            y_label='Positive Predictive Value',
                            corner='Right')
+
+        plt.tight_layout()
 
     def plot_calibration(self):
         """
@@ -163,6 +166,7 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         ax.set(**{'title': 'Calibration Chart',
                   'xlabel': 'Binned Probabilities',
                   'ylabel': 'Percent of Positive (Actual) Events in Bin'})
+        plt.tight_layout()
 
     def plot_predicted_probability_hist(self):
         calibration_data = pd.concat([self._predicted_probabilities[self._positive_class],
@@ -179,6 +183,7 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         ax = plt.gca()
         ax.figure.set_size_inches(10, 6)
         plt.suptitle('Histogram of Predicted Probabilities, by Actual Outcome', fontsize=12)
+        plt.tight_layout()
 
     @staticmethod
     def _create_gain_lift_data(predicted_probabilities, actual_classes, positive_class):
@@ -281,6 +286,7 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         ax.set(**{'title': 'Gain Chart',
                   'xlabel': 'Percentile (lower percentiles contain higher predicted probabilities)',
                   'ylabel': '% of Positive Events Captured'})
+        plt.tight_layout()
 
     def plot_lift_chart(self):
         """
@@ -316,6 +322,7 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         ax.set(**{'title': 'Lift Chart',
                   'xlabel': 'Percentile (lower percentiles contain higher predicted probabilities)',
                   'ylabel': 'Lift'})
+        plt.tight_layout()
 
     @staticmethod
     def _create_curve(x_coordinates, y_coordinates, threshold, ideal_threshold,
@@ -346,6 +353,7 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         ax.set(**{'title': title,
                   'xlabel': x_label,
                   'ylabel': y_label})
+
         return fig
 
     @property

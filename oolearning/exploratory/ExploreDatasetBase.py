@@ -18,7 +18,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
 
     Note: a copy of the dataset is made and stored in this class.
     """
-    def __init__(self, dataset: pd.DataFrame, target_variable: Union[str, None]=None):
+    def __init__(self, dataset: pd.DataFrame, target_variable: Union[str, None] = None):
         """
         :param dataset: dataset to explore. Note: a copy of the dataset is made and stored in this class.
         :param target_variable: the name of the target variable/column
@@ -57,8 +57,8 @@ class ExploreDatasetBase(metaclass=ABCMeta):
     def from_csv(cls,
                  csv_file_path: str,
                  target_variable: Union[str, None] = None,
-                 skip_initial_space: bool=True,
-                 separator: str=',') -> 'ExploreDatasetBase':
+                 skip_initial_space: bool = True,
+                 separator: str = ',') -> 'ExploreDatasetBase':
         """
         Instantiates this class (via subclass) by first loading in a csv from `csv_file_path`.
 
@@ -254,7 +254,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
                             index=columns,
                             columns=['count', 'nulls', 'perc_nulls', 'top', 'unique', 'perc_unique'])
 
-    def set_as_categoric(self, feature: str, mapping: dict, ordered: bool=False):
+    def set_as_categoric(self, feature: str, mapping: dict, ordered: bool = False):
         """
         some features have a numeric type but are logically categorical variables. This method allows the
             variable to be set as a categoric feature, updating the values
@@ -328,6 +328,7 @@ class ExploreDatasetBase(metaclass=ABCMeta):
             ax.annotate("{0:.0f}%".format(perc * 100), (idx, 2), xytext=(-8, 0), textcoords='offset points')
 
         ax.set_xticklabels(labels=unique_values.index.values, rotation=20, ha='right')
+        plt.tight_layout()
 
     def plot_boxplot(self, numeric_feature: str):
         """
@@ -336,10 +337,11 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         assert numeric_feature in self.numeric_columns
         self._dataset[numeric_feature].plot(kind='box')
         plt.title(numeric_feature)
+        plt.tight_layout()
 
     def plot_histogram(self,
                        numeric_feature: str,
-                       num_bins: int=10):
+                       num_bins: int = 10):
         """
         Creates a Histogram of the numeric_feature.
         """
@@ -347,8 +349,9 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         assert numeric_feature in self.numeric_columns
         self._dataset[numeric_feature].hist(bins=num_bins)
         plt.title(numeric_feature)
+        plt.tight_layout()
 
-    def plot_scatterplot_numerics(self, numeric_columns=None, figure_size: tuple=(12, 8)):
+    def plot_scatterplot_numerics(self, numeric_columns=None, figure_size: tuple = (12, 8)):
         """
         Creates a Scatter-plot among various numeric_features.
         :param numeric_columns: The numeric columns to include in the plot. If `numeric_columns` is none,
@@ -359,15 +362,17 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         if numeric_columns is None:
             numeric_columns = self.numeric_columns
         scatter_matrix(self._dataset[numeric_columns], figsize=figure_size)
+        plt.tight_layout()
 
     def plot_correlation_heatmap(self,
-                                 numeric_features: Union[list, None]=None,
-                                 threshold: Union[float, None]=None,
-                                 figure_size: tuple=(10, 8),
-                                 round_by: int=2,
-                                 features_to_highlight: Union[list, None]=None):
+                                 numeric_features: Union[list, None] = None,
+                                 threshold: Union[float, None] = None,
+                                 figure_size: tuple = (10, 8),
+                                 round_by: int = 2,
+                                 features_to_highlight: Union[list, None] = None):
         """
-        Creates a heatmap of the correlations between all of the numeric columns (feature + target if numeric).
+        Creates a heatmap of the correlations between all of the numeric columns
+            (feature + target if numeric).
 
         :param threshold: the heatmap only includes columns that have a correlation value, corresponding to at
             least one other column, where the absolute value is higher than the threshold.

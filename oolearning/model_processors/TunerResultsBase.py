@@ -246,7 +246,6 @@ class TunerResultsBase(metaclass=ABCMeta):
         plt.gca().get_yticklabels()[index_of_best_mean].set_color('red')
         ax.invert_yaxis()
         plt.tight_layout()
-        return plt
 
     def plot_resampled_stats(self, font_size: int = 8):
         """
@@ -266,6 +265,7 @@ class TunerResultsBase(metaclass=ABCMeta):
                                            hyper_param_names=self.hyper_param_names,
                                            minimizers=minimizers,
                                            font_size=font_size)
+        plt.tight_layout()
 
     def plot_resampled_scores(self,
                               metric: Metric = None,

@@ -108,12 +108,12 @@ class TwoClassEvaluator(EvaluatorBase):
     def all_quality_metrics(self) -> dict:
         return self._confusion_matrix.all_quality_metrics
 
-    def plot_all_quality_metrics(self, comparison_evaluator: "TwoClassEvaluator"=None):
+    def plot_all_quality_metrics(self, comparison_evaluator: "TwoClassEvaluator" = None):
         """
         Creates a plot that shows all of the quality score_names in this class.
 
-        :param comparison_evaluator: adds additional points to the plot for the score_names associated with the
-            `comparison_evaluator`; allows the user to compare two different evaluators (e.g. from two
+        :param comparison_evaluator: adds additional points to the plot for the score_names associated with
+            the `comparison_evaluator`; allows the user to compare two different evaluators (e.g. from two
             different models
         """
         # convert diction to dataframe, without "Total Observations" which will fuck up axis
@@ -155,3 +155,4 @@ class TwoClassEvaluator(EvaluatorBase):
 
         plt.title('Quality Scores')
         plt.grid()
+        plt.tight_layout()
