@@ -999,26 +999,23 @@ class TunerTests(TimerTestCase):
         assert resampler.results.score_means['AUC_ROC'] == \
                model_tuner.results.resampled_stats.iloc[model_tuner.results.best_index]['AUC_ROC_mean']
 
-    def test_TransformationTuner_parallelization(self):
-        data = TestHelper.get_titanic_data()
-        target_variable = 'Survived'
-        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
-                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
-                           ImputationTransformer(),
-                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+    def test_TransformationTuner_Regression(self):
+        data = TestHelper.get_cement_data()
+        target_variable = 'strength'
+        transformations = []
 
-        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
+        splitter = RegressionStratifiedDataSplitter(holdout_ratio=0.2)
         training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
 
         training_y = data.iloc[training_indexes][target_variable]
-        training_x = data.iloc[training_indexes].drop(columns='Survived')
+        training_x = data.iloc[training_indexes].drop(columns='strength')
 
-        score_list = [AucRocScore(positive_class=1)]
+        score_list = [RmseScore()]
 
         decorator = ModelDecorator()
         # define & configure the Resampler object
         resampler = RepeatedCrossValidationResampler(
-            model=LightGBMClassifier(),  # we'll use a Random Forest model
+            model=LightGBMRegressor(),  # we'll use a Random Forest model
             transformations=transformations,
             scores=score_list,
             folds=5,  # 5 folds with 5 repeats
@@ -1039,13 +1036,13 @@ class TunerTests(TimerTestCase):
         model_tuner = GridSearchTransformationTuner(resampler=resampler,
                                                     transformations_space=transformations_space,
                                                     hyper_param_object=LightGBMHP(),
-                                                    parallelization_cores=-1)
+                                                    parallelization_cores=0)
         model_tuner.tune(data_x=training_x, data_y=training_y)
 
         assert model_tuner.results.best_hyper_params == {'CenterScale vs Normalize': 'CenterScaleTransformer',
                                                          'PCA': 'EmptyTransformer'}
         assert model_tuner.results.best_index == 2
-        assert all(model_tuner.results.sorted_best_indexes == [2, 0, 4, 3, 5, 1])
+        assert all(model_tuner.results.sorted_best_indexes == [2, 0, 4, 5, 3, 1])
         expected_cycles = 3 * 2
         assert model_tuner.results.number_of_cycles == expected_cycles
         assert model_tuner.results.hyper_param_names == ['CenterScale vs Normalize', 'PCA']
@@ -1080,8 +1077,7 @@ class TunerTests(TimerTestCase):
             # check that the hyper params that are passed in match the hyper params that the underlying
             # model actually trains with
             trained_params = trained_params[0]  # already verified that all the list items are the same
-            hyper_params = model_tuner.results._tune_results_objects.resampler_object.values[
-                index].hyper_params.params_dict  # noqa
+            hyper_params = model_tuner.results._tune_results_objects.resampler_object.values[index].hyper_params.params_dict  # noqa
             TestHelper.assert_hyper_params_match_2(subset=hyper_params, superset=trained_params,
                                                    mapping={'min_gain_to_split': 'min_split_gain',
                                                             'min_sum_hessian_in_leaf': 'min_child_weight',
@@ -1090,25 +1086,23 @@ class TunerTests(TimerTestCase):
                                                             'bagging_freq': 'subsample_freq',
                                                             'feature_fraction': 'colsample_bytree',
                                                             'lambda_l1': 'reg_alpha',
-                                                            'lambda_l2': 'reg_lambda'})
+                                                            'lambda_l2': 'reg_lambda'},
+                                                   remove_keys=['scale_pos_weight'])
 
         TestHelper.save_string(model_tuner.results,
-                               'data/test_Tuners/test_TransformationTuner_parallelization_results.txt')  # noqa
+                               'data/test_Tuners/test_TransformationTuner_Regression_results.txt')
 
         TestHelper.check_plot(
-            'data/test_Tuners/test_TransformationTuner_parallelizationr__plot_iteration_mean_scores.png',
-            # noqa
+            'data/test_Tuners/test_TransformationTuner_Regressionr__plot_iteration_mean_scores.png',
             lambda: model_tuner.results.plot_iteration_mean_scores())
 
         TestHelper.check_plot(
-            'data/test_Tuners/test_TransformationTuner_parallelizationr__plot_resampled_stats.png',
-            # noqa
+            'data/test_Tuners/test_TransformationTuner_Regressionr__plot_resampled_stats.png',
             lambda: model_tuner.results.plot_resampled_stats())
 
         TestHelper.check_plot(
-            'data/test_Tuners/test_TransformationTuner_parallelizationr__plot_resampled_scores.png',
-            # noqa
-            lambda: model_tuner.results.plot_resampled_scores(metric=Metric.AUC_ROC))
+            'data/test_Tuners/test_TransformationTuner_Regressionr__plot_resampled_scores.png',
+            lambda: model_tuner.results.plot_resampled_scores(metric=Metric.ROOT_MEAN_SQUARE_ERROR))
 
         assert model_tuner.results.hyper_param_names == list(transformations_space.keys())
         assert model_tuner.results.resampled_stats.shape[0] == expected_cycles
@@ -1120,17 +1114,13 @@ class TunerTests(TimerTestCase):
         ######################################################################################################
         # Resample with best_params and see if we get the same loss value i.e. RMSE_mean
         ######################################################################################################
-        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
-                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
-                           ImputationTransformer(),
-                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
-        score_list = [AucRocScore(positive_class=1)]
+        score_list = [RmseScore()]
 
         # define & configure the Resampler object
         resampler = RepeatedCrossValidationResampler(
-            model=LightGBMClassifier(),  # we'll use a Random Forest model
-            transformations=transformations,
+            model=LightGBMRegressor(),  # we'll use a Random Forest model
+            transformations=[],
             scores=score_list,
             folds=5,  # 5 folds with 5 repeats
             repeats=3,
@@ -1140,5 +1130,5 @@ class TunerTests(TimerTestCase):
         resampler.append_transformations(model_tuner.results.best_transformations)
         resampler.resample(training_x, training_y, hyper_params=hp)
 
-        assert resampler.results.score_means['AUC_ROC'] == \
-               model_tuner.results.resampled_stats.iloc[model_tuner.results.best_index]['AUC_ROC_mean']
+        assert resampler.results.score_means['RMSE'] == \
+               model_tuner.results.resampled_stats.iloc[model_tuner.results.best_index]['RMSE_mean']
