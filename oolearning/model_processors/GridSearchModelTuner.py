@@ -80,7 +80,7 @@ class GridSearchModelTuner(ModelTunerBase):
                  params_grid: HyperParamsGrid,
                  model_persistence_manager: PersistenceManagerBase = None,
                  resampler_persistence_manager: PersistenceManagerBase = None,
-                 parallelization_cores: int = -1):
+                 parallelization_cores: int = 0):
         """
         :param resampler:
         :param hyper_param_object: an object containing the default values for the corresponding

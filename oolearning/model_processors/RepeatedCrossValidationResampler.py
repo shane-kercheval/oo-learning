@@ -137,7 +137,8 @@ def resample_repeat(args):
                                    holdout_actual_values=holdout_y,
                                    holdout_predicted_values=predicted_values,
                                    holdout_indexes=holdout_x_transformed.index.values,
-                                   model=model)
+                                   model=model,
+                                   transformer_pipeline=pipeline)
     return result_scores, decorators
 
 

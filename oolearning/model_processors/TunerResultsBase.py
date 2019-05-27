@@ -91,6 +91,10 @@ class TunerResultsBase(metaclass=ABCMeta):
         return names
 
     @property
+    def hyper_param_combos(self):
+        return self._hyper_params_combos
+
+    @property
     def resampled_stats(self) -> pd.DataFrame:
         """
         :return: dataframe that has score_names for each tuned model (rows), the means, standard deviations,

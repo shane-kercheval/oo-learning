@@ -792,6 +792,7 @@ class ModelWrapperTests(TimerTestCase):
                                      hyper_param_object=RidgeRegressorHP(),
                                      params_grid=grid)
         tuner.tune(data_x=train_data, data_y=train_data_y)
+
         assert len(tuner.results._tune_results_objects) == 3
         assert tuner.results.number_of_cycles == 3
 
@@ -837,7 +838,8 @@ class ModelWrapperTests(TimerTestCase):
                                                                                        CenterScaleTransformer()],  # noqa
                                                                                 scores=evaluators),
                                      hyper_param_object=LassoRegressorHP(),
-                                     params_grid=grid)
+                                     params_grid=grid,
+                                     parallelization_cores=-1)
         tuner.tune(data_x=train_data, data_y=train_data_y)
         assert len(tuner.results._tune_results_objects) == 3
         assert tuner.results.number_of_cycles == 3
@@ -885,8 +887,10 @@ class ModelWrapperTests(TimerTestCase):
                                                                                        CenterScaleTransformer()],  # noqa
                                                                                 scores=evaluators),
                                      hyper_param_object=ElasticNetRegressorHP(),
-                                     params_grid=grid)
+                                     params_grid=grid,
+                                     parallelization_cores=-1)
         tuner.tune(data_x=train_data, data_y=train_data_y)
+        tuner.total_tune_time
         assert len(tuner.results._tune_results_objects) == 6
         assert tuner.results.number_of_cycles == 6
 
@@ -4222,7 +4226,7 @@ class ModelWrapperTests(TimerTestCase):
                                          hyper_param_object=LogisticClassifierHP(),
                                          params_grid=grid,
                                          model_persistence_manager=LocalCacheManager(cache_directory=cache_directory),  # noqa
-                                         parallelization_cores=-1)  # Hyper-Parameter object specific to RF
+                                         parallelization_cores=-1)
             return cart_base_model, rf_base_model, model_stacker, transformations, score_list, tuner
 
         cart_base_model, rf_base_model, model_stacker, transformations, score_list, tuner = create_tuner()

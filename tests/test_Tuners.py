@@ -1,3 +1,4 @@
+import itertools
 import os
 import shutil
 import unittest
@@ -21,6 +22,14 @@ class ModelDecorator(DecoratorBase):
 
     def decorate(self, **kwargs):
         self._model_list.append(kwargs['model'])
+
+
+class TransformerDecorator(DecoratorBase):
+    def __init__(self):
+        self._pipeline_list = list()
+
+    def decorate(self, **kwargs):
+        self._pipeline_list.append(kwargs['transformer_pipeline'])
 
 
 # noinspection PyMethodMayBeStatic,SpellCheckingInspection,PyTypeChecker,PyUnresolvedReferences
@@ -317,9 +326,11 @@ class TunerTests(TimerTestCase):
 
         model_cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/cached_test_models/test_ModelTuner_GradientBoostingClassifier')  # noqa
         resampler_cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/temp_cache/')
-        tuner = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=GradientBoostingClassifier(),  # noqa
-                                                                                transformations=transformations,  # noqa
-                                                                                scores=evaluator_list),
+
+        tuner = GridSearchModelTuner(resampler=
+                                     RepeatedCrossValidationResampler(model=GradientBoostingClassifier(),
+                                                                      transformations=transformations,
+                                                                      scores=evaluator_list),
                                      hyper_param_object=GradientBoostingClassifierHP(),
                                      params_grid=grid,
                                      model_persistence_manager=LocalCacheManager(cache_directory=model_cache_directory),  # noqa
@@ -507,7 +518,7 @@ class TunerTests(TimerTestCase):
                                      params_grid=grid,
                                      # XGBoost does not work with multi-processors (even though it used to)
                                      # https: // github.com / dmlc / xgboost / issues / 4246
-                                     parallelization_cores=1)
+                                     parallelization_cores=1)  # can't parallelize with xgboost
 
         tuner.tune(data_x=train_data, data_y=train_data_y)
         TestHelper.save_string(tuner.results,
@@ -619,7 +630,8 @@ class TunerTests(TimerTestCase):
         assert tuner.results.plot_resampled_scores(metric=Metric.KAPPA) is None
 
     def test_tuner_resampler_decorators(self):
-        decorator = TwoClassThresholdDecorator()
+        two_class_decorator = TwoClassThresholdDecorator()
+        transformer_decorator = TransformerDecorator()
         # resampler gets the positive class from either the score directly, or the score._converter; test
         # using both score types (e.g. AucX & Kappa)
         data = TestHelper.get_titanic_data()
@@ -645,7 +657,8 @@ class TunerTests(TimerTestCase):
                                                      scores=score_list,
                                                      folds=2,
                                                      repeats=1,
-                                                     fold_decorators=[decorator])
+                                                     fold_decorators=[two_class_decorator,
+                                                                      transformer_decorator])
         tuner = GridSearchModelTuner(resampler=resampler,
                                      hyper_param_object=RandomForestHP(),
                                      params_grid=grid,
@@ -656,12 +669,12 @@ class TunerTests(TimerTestCase):
                                'data/test_Tuners/test_tuner_resampler_decorators_string.txt')  # noqa
 
         # should have cloned the decorator each time, so it should not have been used
-        assert len(decorator._roc_ideal_thresholds) == 0
-        assert len(decorator._precision_recall_ideal_thresholds) == 0
+        assert len(two_class_decorator._roc_ideal_thresholds) == 0
+        assert len(two_class_decorator._precision_recall_ideal_thresholds) == 0
 
         # resampler_decorators is a list (per hyper-param combo), of lists (multiple decorators)
         assert len(tuner.results.resampler_decorators) == 1
-        assert len(tuner.results.resampler_decorators[0]) == 1
+        assert len(tuner.results.resampler_decorators[0]) == 2
         assert isinstance(tuner.results.resampler_decorators[0][0], TwoClassThresholdDecorator)
 
         assert len(tuner.results.resampler_decorators_first) == 1
@@ -669,20 +682,37 @@ class TunerTests(TimerTestCase):
 
         assert tuner.results.resampler_decorators[0][0] is tuner.results.resampler_decorators_first[0]
 
-        decorator = tuner.results.resampler_decorators_first[0]
+        two_class_decorator = tuner.results.resampler_decorators_first[0]
 
         expected_roc_thresholds = [0.37, 0.37]
         expected_precision_recall_thresholds = [0.37, 0.49]
 
-        assert decorator.roc_ideal_thresholds == expected_roc_thresholds
-        assert decorator.precision_recall_ideal_thresholds == expected_precision_recall_thresholds
+        assert two_class_decorator.roc_ideal_thresholds == expected_roc_thresholds
+        assert two_class_decorator.precision_recall_ideal_thresholds == expected_precision_recall_thresholds
 
-        assert isclose(decorator.roc_threshold_mean, np.mean(expected_roc_thresholds))
-        assert isclose(decorator.precision_recall_threshold_mean, np.mean(expected_precision_recall_thresholds))  # noqa
-        assert isclose(decorator.roc_threshold_st_dev, np.std(expected_roc_thresholds))
-        assert isclose(decorator.precision_recall_threshold_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
-        assert isclose(decorator.roc_threshold_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
-        assert isclose(decorator.precision_recall_threshold_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa
+        assert isclose(two_class_decorator.roc_threshold_mean, np.mean(expected_roc_thresholds))
+        assert isclose(two_class_decorator.precision_recall_threshold_mean, np.mean(expected_precision_recall_thresholds))  # noqa
+        assert isclose(two_class_decorator.roc_threshold_st_dev, np.std(expected_roc_thresholds))
+        assert isclose(two_class_decorator.precision_recall_threshold_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
+        assert isclose(two_class_decorator.roc_threshold_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
+        assert isclose(two_class_decorator.precision_recall_threshold_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa
+
+        assert len(tuner.resampler_decorators) == tuner.results.number_of_cycles
+        assert tuner.results.number_of_cycles == 1
+
+        for index in range(tuner.results.number_of_cycles):
+            local_transformer_decorator = tuner.resampler_decorators[index][1]
+            pipeline_list = local_transformer_decorator._pipeline_list
+            assert tuner.number_of_resamples == {len(pipeline_list)}
+            for pipeline in pipeline_list:
+                transformations = pipeline.transformations
+                assert len(transformations) == 5  # 4 for the transformations and 1 StatelessTransformer
+                assert isinstance(transformations[0], RemoveColumnsTransformer)
+                assert isinstance(transformations[1], CategoricConverterTransformer)
+                assert isinstance(transformations[2], ImputationTransformer)
+                assert isinstance(transformations[3], DummyEncodeTransformer)
+                assert isinstance(transformations[4], StatelessTransformer)
+                assert all([transformation.has_executed for transformation in transformations])
 
     def test_GridSearchModelTuner_regression(self):
         # Test sorting & getting best model parameters works for models that are minimizing the score
@@ -700,18 +730,25 @@ class TunerTests(TimerTestCase):
                            num_leaves=[10, 50])
         grid = HyperParamsGrid(params_dict=params_dict)
 
-        decorator = ModelDecorator()
-        tuner = GridSearchModelTuner(resampler=RepeatedCrossValidationResampler(model=LightGBMRegressor(),
-                                                                                transformations=None,
-                                                                                fold_decorators=[decorator],
-                                                                                scores=evaluator_list),
+        model_decorator = ModelDecorator()
+        transformer_decorator = TransformerDecorator()
+
+        tuner = GridSearchModelTuner(resampler=
+                                     RepeatedCrossValidationResampler(model=LightGBMRegressor(),
+                                                                      transformations=None,
+                                                                      fold_decorators=[model_decorator,
+                                                                                       transformer_decorator],
+                                                                      scores=evaluator_list),
                                      hyper_param_object=LightGBMHP(),
                                      params_grid=grid,
-                                     parallelization_cores=-1)
+                                     # seems like tuner with LightGBM is SLOW when parallelizing
+                                     parallelization_cores=0)
 
         tuner.tune(data_x=train_data, data_y=train_data_y)
         TestHelper.save_string(tuner.results,
-                               'data/test_Tuners/test_GridSearchModelTuner_regression_string.txt')  # noqa
+                               'data/test_Tuners/test_GridSearchModelTuner_regression_string.txt')
+
+        assert tuner.total_tune_time < 10
         assert tuner.results.best_index == 1
         assert tuner.results.best_hyper_params == {'max_depth': -1, 'num_leaves': 50}
         assert all(tuner.results.sorted_best_indexes == [1, 3, 0, 2])
@@ -726,10 +763,10 @@ class TunerTests(TimerTestCase):
             # decorator_index = 0
             decorator_list = tuner.resampler_decorators[decorator_index]
             # only passed in 1 decorator (so it is at index [0])
-            assert len(decorator_list) == 1
-            decorator = decorator_list[0]
+            assert len(decorator_list) == 2
+            local_model_decorator = decorator_list[0]
             # noinspection PyUnresolvedReferences
-            model_list = decorator._model_list
+            model_list = local_model_decorator._model_list
             assert len(model_list) == 5*5
             trained_params = [x.model_object.get_params() for x in model_list]
             for index in range(len(trained_params)):
@@ -749,6 +786,11 @@ class TunerTests(TimerTestCase):
                                                             'lambda_l1': 'reg_alpha',
                                                             'lambda_l2': 'reg_lambda'},
                                                    remove_keys=['scale_pos_weight'])
+
+            pipeline_list = decorator_list[1]._pipeline_list
+            assert len(pipeline_list) == 5 * 5
+            # no transformations should all be empty lists
+            assert all([pipeline.transformations == [] for pipeline in pipeline_list])
 
     @staticmethod
     def get_LightGBMRegressor_GridSearchTuner_results():
@@ -773,7 +815,7 @@ class TunerTests(TimerTestCase):
                                                                                 scores=evaluator_list),
                                      hyper_param_object=LightGBMHP(),
                                      params_grid=grid,
-                                     parallelization_cores=-1)
+                                     parallelization_cores=0)
 
         tuner.tune(data_x=train_data, data_y=train_data_y)
         return tuner.results
@@ -834,7 +876,7 @@ class TunerTests(TimerTestCase):
             scores=score_list,
             folds=5,  # 5 folds with 5 repeats
             repeats=5,
-            parallelization_cores=0)  # adds parallelization (per repeat)
+            parallelization_cores=-1)  # adds parallelization (per repeat)
 
         model_tuner = GridSearchModelTuner(resampler=resampler,
                                            hyper_param_object=ElasticNetRegressorHP(),
@@ -871,7 +913,8 @@ class TunerTests(TimerTestCase):
 
         score_list = [AucRocScore(positive_class=1)]
 
-        decorator = ModelDecorator()
+        model_decorator = ModelDecorator()
+        transformer_decorator = TransformerDecorator()
         # define & configure the Resampler object
         resampler = RepeatedCrossValidationResampler(
             model=LightGBMClassifier(),  # we'll use a Random Forest model
@@ -879,8 +922,8 @@ class TunerTests(TimerTestCase):
             scores=score_list,
             folds=5,  # 5 folds with 5 repeats
             repeats=3,
-            fold_decorators=[decorator],
-            parallelization_cores=0)  # adds parallelization (per repeat)
+            fold_decorators=[model_decorator, transformer_decorator],
+            parallelization_cores=0)
 
         transformations_space = {
             # passing None will get removed, but work around is to pass a Transformer that doesn't do anything
@@ -915,15 +958,20 @@ class TunerTests(TimerTestCase):
         assert not model_tuner.results.best_transformations[1].has_executed
 
         # should have cloned the decorator each time, so it should not have been used
-        assert len(decorator._model_list) == 0
+        assert len(model_decorator._model_list) == 0
         # should be same number of sets/lists of decorators as there are tuning cycles
         assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
         assert expected_cycles == model_tuner.results.number_of_cycles
 
-        # only 1 decorator object passed in
-        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 1)
+        hyper_params_1 = transformations_space['CenterScale vs Normalize']
+        hyper_params_2 = transformations_space['PCA']
+        expected_transformation_combinations = list(itertools.product(hyper_params_1, hyper_params_2))
+        assert len(expected_transformation_combinations) == model_tuner.results.number_of_cycles
+        # 2 decorators object passed in
+        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 2)
 
-        for index in range(len(model_tuner.resampler_decorators)):
+        assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
+        for index in range(model_tuner.results.number_of_cycles):
             # index = 0
             model_list = model_tuner.resampler_decorators[index][0]._model_list
             assert len(model_list) == 5 * 3  # 5 fold 3 repeat
@@ -936,8 +984,7 @@ class TunerTests(TimerTestCase):
             # check that the hyper params that are passed in match the hyper params that the underlying
             # model actually trains with
             trained_params = trained_params[0]  # already verified that all the list items are the same
-            hyper_params = model_tuner.results._tune_results_objects.resampler_object.values[
-                index].hyper_params.params_dict  # noqa
+            hyper_params = model_tuner.results._tune_results_objects.resampler_object.values[index].hyper_params.params_dict  # noqa
             TestHelper.assert_hyper_params_match_2(subset=hyper_params, superset=trained_params,
                                                    mapping={'min_gain_to_split': 'min_split_gain',
                                                             'min_sum_hessian_in_leaf': 'min_child_weight',
@@ -947,6 +994,28 @@ class TunerTests(TimerTestCase):
                                                             'feature_fraction': 'colsample_bytree',
                                                             'lambda_l1': 'reg_alpha',
                                                             'lambda_l2': 'reg_lambda'})
+
+            pipeline_list = model_tuner.resampler_decorators[index][1]._pipeline_list
+            for pipeline in pipeline_list:
+                local_transformations = pipeline.transformations
+                # 4 for original transformations + 2 hyper-paramed + 1 StatelessTransformer
+                assert len(local_transformations) == 7
+                assert isinstance(local_transformations[0], RemoveColumnsTransformer)
+                assert isinstance(local_transformations[1], CategoricConverterTransformer)
+                assert isinstance(local_transformations[2], ImputationTransformer)
+                assert isinstance(local_transformations[3], DummyEncodeTransformer)
+
+                # local_transformations has the transformations that were actually used in the Resampler
+                # via the decorators
+                # index_transformation_objects contains the transformations that were tuned
+                index_transformation_objects = list(model_tuner.results._transformations_objects[index].values())  # noqa
+                assert type(index_transformation_objects[0]) is type(local_transformations[4])  # noqa
+                assert type(index_transformation_objects[1]) is type(local_transformations[5])  # noqa
+                assert type(expected_transformation_combinations[index][0]) is type(local_transformations[4])  # noqa
+                assert type(expected_transformation_combinations[index][1]) is type(local_transformations[5])  # noqa
+
+                assert isinstance(local_transformations[6], StatelessTransformer)  # added by Resampler
+                assert all([transformation.has_executed for transformation in local_transformations])
 
         TestHelper.save_string(model_tuner.results,
                                'data/test_Tuners/test_TransformationTune_results.txt')  # noqa
@@ -1012,7 +1081,9 @@ class TunerTests(TimerTestCase):
 
         score_list = [RmseScore()]
 
-        decorator = ModelDecorator()
+        model_decorator = ModelDecorator()
+        transformer_decorator = TransformerDecorator()
+
         # define & configure the Resampler object
         resampler = RepeatedCrossValidationResampler(
             model=LightGBMRegressor(),  # we'll use a Random Forest model
@@ -1020,7 +1091,7 @@ class TunerTests(TimerTestCase):
             scores=score_list,
             folds=5,  # 5 folds with 5 repeats
             repeats=3,
-            fold_decorators=[decorator],
+            fold_decorators=[model_decorator, transformer_decorator],
             parallelization_cores=0)  # adds parallelization (per repeat)
 
         transformations_space = {
@@ -1056,13 +1127,17 @@ class TunerTests(TimerTestCase):
         assert not model_tuner.results.best_transformations[1].has_executed
 
         # should have cloned the decorator each time, so it should not have been used
-        assert len(decorator._model_list) == 0
+        assert len(model_decorator._model_list) == 0
         # should be same number of sets/lists of decorators as there are tuning cycles
         assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
         assert expected_cycles == model_tuner.results.number_of_cycles
 
-        # only 1 decorator object passed in
-        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 1)
+        hyper_params_1 = transformations_space['CenterScale vs Normalize']
+        hyper_params_2 = transformations_space['PCA']
+        expected_transformation_combinations = list(itertools.product(hyper_params_1, hyper_params_2))
+        assert len(expected_transformation_combinations) == model_tuner.results.number_of_cycles
+        # 2 decorators object passed in
+        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 2)
 
         for index in range(len(model_tuner.resampler_decorators)):
             # index = 0
@@ -1088,6 +1163,23 @@ class TunerTests(TimerTestCase):
                                                             'lambda_l1': 'reg_alpha',
                                                             'lambda_l2': 'reg_lambda'},
                                                    remove_keys=['scale_pos_weight'])
+
+            pipeline_list = model_tuner.resampler_decorators[index][1]._pipeline_list
+            for pipeline in pipeline_list:
+                local_transformations = pipeline.transformations
+                # 4 for original transformations + 2 hyper-paramed + 1 StatelessTransformer
+                assert len(local_transformations) == 3
+                # local_transformations has the transformations that were actually used in the Resampler
+                # via the decorators
+                # index_transformation_objects contains the transformations that were tuned
+                index_transformation_objects = list(model_tuner.results._transformations_objects[index].values())  # noqa
+                assert type(index_transformation_objects[0]) is type(local_transformations[0])  # noqa
+                assert type(index_transformation_objects[1]) is type(local_transformations[1])  # noqa
+                assert type(expected_transformation_combinations[index][0]) is type(local_transformations[0])  # noqa
+                assert type(expected_transformation_combinations[index][1]) is type(local_transformations[1])  # noqa
+
+                assert isinstance(local_transformations[2], StatelessTransformer)  # added by Resampler
+                assert all([transformation.has_executed for transformation in local_transformations])
 
         TestHelper.save_string(model_tuner.results,
                                'data/test_Tuners/test_TransformationTuner_Regression_results.txt')
