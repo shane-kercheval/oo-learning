@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from typing import Tuple, List
+
 import numpy as np
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.preprocessing import LabelEncoder

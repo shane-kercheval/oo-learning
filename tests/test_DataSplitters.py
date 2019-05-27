@@ -47,6 +47,18 @@ class DataSplittersTests(TimerTestCase):
         TestHelper.check_plot('data/test_DataSplitters/test_splitters_RegressionStratifi_distribution_test.png',  # noqa
                               lambda: data.iloc[test_indexes][target_variable].hist(color='blue', edgecolor='black', grid=None))  # noqa
 
+        t_x, t_y, h_x, h_y = test_splitter.split_sets(data=data, target_variable=target_variable)
+        assert isinstance(t_x, pd.DataFrame)
+        assert t_x.shape[0] == len(training_indexes)
+        assert t_x.shape[1] == len(data.columns) - 1
+        assert isinstance(t_y, pd.Series)
+        assert len(t_y) == len(training_indexes)
+        assert isinstance(h_x, pd.DataFrame)
+        assert h_x.shape[0] == len(test_indexes)
+        assert h_x.shape[1] == len(data.columns) - 1
+        assert isinstance(h_y, pd.Series)
+        assert len(h_y) == len(test_indexes)
+
     def test_splitters_ClassificationStratifiedDataSplitter(self):
         holdout_ratio = 0.20
         data = TestHelper.get_titanic_data()
@@ -75,6 +87,18 @@ class DataSplittersTests(TimerTestCase):
         assert all(abs(data_target_proportions - training_target_proportions) < 0.002)
         assert all(abs(data_target_proportions - test_target_proportions) < 0.002)
 
+        t_x, t_y, h_x, h_y = test_splitter.split_sets(data=data, target_variable=target_variable)
+        assert isinstance(t_x, pd.DataFrame)
+        assert t_x.shape[0] == len(training_indexes)
+        assert t_x.shape[1] == len(data.columns) - 1
+        assert isinstance(t_y, pd.Series)
+        assert len(t_y) == len(training_indexes)
+        assert isinstance(h_x, pd.DataFrame)
+        assert h_x.shape[0] == len(test_indexes)
+        assert h_x.shape[1] == len(data.columns) - 1
+        assert isinstance(h_y, pd.Series)
+        assert len(h_y) == len(test_indexes)
+
     def test_splitters_ClassificationStratifiedDataSplitter_multiclass(self):
         holdout_ratio = 0.20
         data = TestHelper.get_iris_data()
@@ -96,6 +120,18 @@ class DataSplittersTests(TimerTestCase):
 
         assert all([isclose(training_target_proportions[key], value) for key, value in data_target_proportions.items()])  # noqa
         assert all([isclose(test_target_proportions[key], value) for key, value in data_target_proportions.items()])  # noqa
+
+        t_x, t_y, h_x, h_y = test_splitter.split_sets(data=data, target_variable=target_variable)
+        assert isinstance(t_x, pd.DataFrame)
+        assert t_x.shape[0] == len(training_indexes)
+        assert t_x.shape[1] == len(data.columns) - 1
+        assert isinstance(t_y, pd.Series)
+        assert len(t_y) == len(training_indexes)
+        assert isinstance(h_x, pd.DataFrame)
+        assert h_x.shape[0] == len(test_indexes)
+        assert h_x.shape[1] == len(data.columns) - 1
+        assert isinstance(h_y, pd.Series)
+        assert len(h_y) == len(test_indexes)
 
     def test_splitters_RegressionStratifiedDataSplitter_split_monte_carlo(self):
 
@@ -144,6 +180,17 @@ class DataSplittersTests(TimerTestCase):
 
         test_splitter = RandomShuffleDataSplitter(holdout_ratio=holdout_ratio)
         training_indexes, test_indexes = test_splitter.split(target_values=data.Survived)
+        t_x, t_y, h_x, h_y = test_splitter.split_sets(data=data, target_variable='Survived')
+        assert isinstance(t_x, pd.DataFrame)
+        assert t_x.shape[0] == len(training_indexes)
+        assert t_x.shape[1] == len(data.columns) - 1
+        assert isinstance(t_y, pd.Series)
+        assert len(t_y) == len(training_indexes)
+        assert isinstance(h_x, pd.DataFrame)
+        assert h_x.shape[0] == len(test_indexes)
+        assert h_x.shape[1] == len(data.columns) - 1
+        assert isinstance(h_y, pd.Series)
+        assert len(h_y) == len(test_indexes)
 
         assert isclose(round(len(training_indexes) / len(data), 3), 1 - holdout_ratio)
         assert isclose(round(len(test_indexes) / len(data), 3), holdout_ratio)

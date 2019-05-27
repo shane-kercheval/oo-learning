@@ -37,14 +37,8 @@ class BayesianOptimizationTests(TimerTestCase):
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
         splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
-        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
-
-        training_y = data.iloc[training_indexes][target_variable]
-        training_x = data.iloc[training_indexes].drop(columns='Survived')
-
-        holdout_y = data.iloc[holdout_indexes][target_variable]
-        holdout_x = data.iloc[holdout_indexes].drop(columns='Survived')
-
+        training_x, training_y, holdout_x, holdout_y = splitter.split_sets(data=data,
+                                                                           target_variable=target_variable)
         score_list = [AucRocScore(positive_class=1)]
 
         # define & configure the Resampler object
@@ -135,14 +129,11 @@ class BayesianOptimizationTests(TimerTestCase):
         transformations = [RemoveColumnsTransformer(columns=['fineagg'])]
 
         splitter = RegressionStratifiedDataSplitter(holdout_ratio=0.2)
-        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
-
-        training_y = data.iloc[training_indexes][target_variable]
-        training_x = data.iloc[training_indexes].drop(columns=target_variable)
+        training_x, training_y, _, _ = splitter.split_sets(data=data, target_variable=target_variable)
 
         score_list = [RmseScore()]
 
-        # define & configure the Resampler object
+        # define & coonfigure the Resampler object
         resampler = RepeatedCrossValidationResampler(
             model=ElasticNetRegressor(),
             transformations=transformations,
@@ -218,13 +209,8 @@ class BayesianOptimizationTests(TimerTestCase):
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
         splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
-        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
-
-        training_y = data.iloc[training_indexes][target_variable]
-        training_x = data.iloc[training_indexes].drop(columns='Survived')
-
-        holdout_y = data.iloc[holdout_indexes][target_variable]
-        holdout_x = data.iloc[holdout_indexes].drop(columns='Survived')
+        training_x, training_y, holdout_x, holdout_y = splitter.split_sets(data=data,
+                                                                           target_variable=target_variable)
 
         score_list = [AucRocScore(positive_class=1)]
 
@@ -388,13 +374,8 @@ class BayesianOptimizationTests(TimerTestCase):
         transformations = [RemoveColumnsTransformer(columns=['fineagg'])]
 
         splitter = RegressionStratifiedDataSplitter(holdout_ratio=0.2)
-        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
-
-        training_y = data.iloc[training_indexes][target_variable]
-        training_x = data.iloc[training_indexes].drop(columns=target_variable)
-
-        holdout_y = data.iloc[holdout_indexes][target_variable]
-        holdout_x = data.iloc[holdout_indexes].drop(columns=target_variable)
+        training_x, training_y, holdout_x, holdout_y = splitter.split_sets(data=data,
+                                                                           target_variable=target_variable)
 
         score_list = [RmseScore()]
         model_decorator = ModelDecorator()
@@ -534,13 +515,8 @@ class BayesianOptimizationTests(TimerTestCase):
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
         splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
-        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
-
-        training_y = data.iloc[training_indexes][target_variable]
-        training_x = data.iloc[training_indexes].drop(columns='Survived')
-
-        holdout_y = data.iloc[holdout_indexes][target_variable]
-        holdout_x = data.iloc[holdout_indexes].drop(columns='Survived')
+        training_x, training_y, holdout_x, holdout_y = splitter.split_sets(data=data,
+                                                                           target_variable=target_variable)
 
         score_list = [AucRocScore(positive_class=1)]
 
@@ -736,13 +712,8 @@ class BayesianOptimizationTests(TimerTestCase):
         transformations = [RemoveColumnsTransformer(columns=['fineagg'])]
 
         splitter = RegressionStratifiedDataSplitter(holdout_ratio=0.2)
-        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
-
-        training_y = data.iloc[training_indexes][target_variable]
-        training_x = data.iloc[training_indexes].drop(columns=target_variable)
-
-        holdout_y = data.iloc[holdout_indexes][target_variable]
-        holdout_x = data.iloc[holdout_indexes].drop(columns=target_variable)
+        training_x, training_y, holdout_x, holdout_y = splitter.split_sets(data=data,
+                                                                           target_variable=target_variable)
 
         score_list = [RmseScore()]
         model_decorator = ModelDecorator()
@@ -912,10 +883,7 @@ class BayesianOptimizationTests(TimerTestCase):
                            DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
 
         splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.2)
-        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
-
-        training_y = data.iloc[training_indexes][target_variable]
-        training_x = data.iloc[training_indexes].drop(columns='Survived')
+        training_x, training_y, _, _ = splitter.split_sets(data=data, target_variable=target_variable)
 
         score_list = [AucRocScore(positive_class=1)]
 
@@ -1078,10 +1046,7 @@ class BayesianOptimizationTests(TimerTestCase):
         transformations = [RemoveColumnsTransformer(columns=['fineagg'])]
 
         splitter = RegressionStratifiedDataSplitter(holdout_ratio=0.2)
-        training_indexes, holdout_indexes = splitter.split(target_values=data[target_variable])
-
-        training_y = data.iloc[training_indexes][target_variable]
-        training_x = data.iloc[training_indexes].drop(columns=target_variable)
+        training_x, training_y, _, _ = splitter.split_sets(data=data, target_variable=target_variable)
 
         score_list = [RmseScore()]
         model_decorator = ModelDecorator()
