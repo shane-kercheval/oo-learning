@@ -1109,7 +1109,7 @@ class TunerTests(TimerTestCase):
 
         df = model_tuner.results.resampled_stats
         assert model_tuner.results.best_hyper_params == \
-               df.loc[df['AUC_ROC_mean'].idxmax(), model_tuner.results.hyper_param_names].to_dict()
+               df.loc[df['RMSE_mean'].idxmin(), model_tuner.results.hyper_param_names].to_dict()
 
         ######################################################################################################
         # Resample with best_params and see if we get the same loss value i.e. RMSE_mean
