@@ -327,10 +327,10 @@ class TunerTests(TimerTestCase):
         model_cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/cached_test_models/test_ModelTuner_GradientBoostingClassifier')  # noqa
         resampler_cache_directory = TestHelper.ensure_test_directory('data/test_Tuners/temp_cache/')
 
-        tuner = GridSearchModelTuner(resampler=
-                                     RepeatedCrossValidationResampler(model=GradientBoostingClassifier(),
-                                                                      transformations=transformations,
-                                                                      scores=evaluator_list),
+        resampler = RepeatedCrossValidationResampler(model=GradientBoostingClassifier(),
+                                                     transformations=transformations,
+                                                     scores=evaluator_list)
+        tuner = GridSearchModelTuner(resampler=resampler,
                                      hyper_param_object=GradientBoostingClassifierHP(),
                                      params_grid=grid,
                                      model_persistence_manager=LocalCacheManager(cache_directory=model_cache_directory),  # noqa
@@ -732,13 +732,12 @@ class TunerTests(TimerTestCase):
 
         model_decorator = ModelDecorator()
         transformer_decorator = TransformerDecorator()
-
-        tuner = GridSearchModelTuner(resampler=
-                                     RepeatedCrossValidationResampler(model=LightGBMRegressor(),
-                                                                      transformations=None,
-                                                                      fold_decorators=[model_decorator,
-                                                                                       transformer_decorator],
-                                                                      scores=evaluator_list),
+        resampler = RepeatedCrossValidationResampler(model=LightGBMRegressor(),
+                                                     transformations=None,
+                                                     fold_decorators=[model_decorator,
+                                                                      transformer_decorator],
+                                                     scores=evaluator_list)
+        tuner = GridSearchModelTuner(resampler=resampler,
                                      hyper_param_object=LightGBMHP(),
                                      params_grid=grid,
                                      # seems like tuner with LightGBM is SLOW when parallelizing

@@ -1,7 +1,8 @@
+import numpy as np
+
 from oolearning import *
 from tests.TestHelper import TestHelper
 from tests.TimerTestCase import TimerTestCase
-import numpy as np
 
 
 class ModelDecorator(DecoratorBase):
@@ -10,6 +11,14 @@ class ModelDecorator(DecoratorBase):
 
     def decorate(self, **kwargs):
         self._model_list.append(kwargs['model'])
+
+
+class TransformerDecorator(DecoratorBase):
+    def __init__(self):
+        self._pipeline_list = list()
+
+    def decorate(self, **kwargs):
+        self._pipeline_list.append(kwargs['transformer_pipeline'])
 
 
 # noinspection PyMethodMayBeStatic,SpellCheckingInspection,PyTypeChecker,PyUnresolvedReferences
@@ -219,7 +228,8 @@ class BayesianOptimizationTests(TimerTestCase):
 
         score_list = [AucRocScore(positive_class=1)]
 
-        decorator = ModelDecorator()
+        model_decorator = ModelDecorator()
+        transformer_decorator = TransformerDecorator()
         # define & configure the Resampler object
         resampler = RepeatedCrossValidationResampler(
             model=LightGBMClassifier(),  # we'll use a Random Forest model
@@ -227,7 +237,7 @@ class BayesianOptimizationTests(TimerTestCase):
             scores=score_list,
             folds=5,  # 5 folds with 5 repeats
             repeats=3,
-            fold_decorators=[decorator],
+            fold_decorators=[model_decorator, transformer_decorator],
             parallelization_cores=0)  # adds parallelization (per repeat)
 
         # space_lgb = {
@@ -261,12 +271,13 @@ class BayesianOptimizationTests(TimerTestCase):
         assert model_tuner.results.best_transformations == []
 
         # should have cloned the decorator each time, so it should not have been used
-        assert len(decorator._model_list) == 0
+        assert len(model_decorator._model_list) == 0
         # should be same number of sets/lists of decorators as there are tuning cycles
         assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
         assert max_evaluations == model_tuner.results.number_of_cycles
-        # only 1 decorator object passed in
-        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 1)
+
+        # 2 decorators object passed in
+        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 2)
 
         for index in range(len(model_tuner.resampler_decorators)):
             # index = 0
@@ -291,6 +302,18 @@ class BayesianOptimizationTests(TimerTestCase):
                                                             'feature_fraction': 'colsample_bytree',
                                                             'lambda_l1': 'reg_alpha',
                                                             'lambda_l2': 'reg_lambda'})
+
+            pipeline_list = model_tuner.resampler_decorators[index][1]._pipeline_list
+            for pipeline in pipeline_list:
+                local_transformations = pipeline.transformations
+                # 4 for original transformations + 1 StatelessTransformer
+                assert len(local_transformations) == 5
+                assert isinstance(local_transformations[0], RemoveColumnsTransformer)
+                assert isinstance(local_transformations[1], CategoricConverterTransformer)
+                assert isinstance(local_transformations[2], ImputationTransformer)
+                assert isinstance(local_transformations[3], DummyEncodeTransformer)
+                assert isinstance(local_transformations[4], StatelessTransformer)  # added by Resampler
+                assert all([transformation.has_executed for transformation in local_transformations])
 
         TestHelper.save_string(model_tuner.results,
                                'data/test_Tuners/test_BayesianHyperOptModelTuner_Classification_UtilityFunction_results.txt')  # noqa
@@ -374,7 +397,8 @@ class BayesianOptimizationTests(TimerTestCase):
         holdout_x = data.iloc[holdout_indexes].drop(columns=target_variable)
 
         score_list = [RmseScore()]
-        decorator = ModelDecorator()
+        model_decorator = ModelDecorator()
+        transformer_decorator = TransformerDecorator()
         # define & configure the Resampler object
         resampler = RepeatedCrossValidationResampler(
             model=ElasticNetRegressor(),  # we'll use a Random Forest model
@@ -382,7 +406,7 @@ class BayesianOptimizationTests(TimerTestCase):
             scores=score_list,
             folds=5,  # 5 folds with 5 repeats
             repeats=3,
-            fold_decorators=[decorator],
+            fold_decorators=[model_decorator, transformer_decorator],
             parallelization_cores=0)  # adds parallelization (per repeat)
 
         from hyperopt import hp
@@ -410,12 +434,13 @@ class BayesianOptimizationTests(TimerTestCase):
         assert model_tuner.results.best_transformations == []
 
         # should have cloned the decorator each time, so it should not have been used
-        assert len(decorator._model_list) == 0
+        assert len(model_decorator._model_list) == 0
         # should be same number of sets/lists of decorators as there are tuning cycles
         assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
         assert max_evaluations == model_tuner.results.number_of_cycles
-        # only 1 decorator object passed in
-        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 1)
+
+        # 2 decorators object passed in
+        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 2)
 
         for index in range(len(model_tuner.resampler_decorators)):
             # index = 0
@@ -432,6 +457,15 @@ class BayesianOptimizationTests(TimerTestCase):
             trained_params = trained_params[0]  # already verified that all the list items are the same
             hyper_params = model_tuner.results._tune_results_objects.resampler_object.values[index].hyper_params.params_dict  # noqa
             TestHelper.assert_hyper_params_match_2(subset=hyper_params, superset=trained_params)
+
+            pipeline_list = model_tuner.resampler_decorators[index][1]._pipeline_list
+            for pipeline in pipeline_list:
+                local_transformations = pipeline.transformations
+                # 1 for original transformations + 1 StatelessTransformer
+                assert len(local_transformations) == 2
+                assert isinstance(local_transformations[0], RemoveColumnsTransformer)  # added by Resampler
+                assert isinstance(local_transformations[1], StatelessTransformer)  # added by Resampler
+                assert all([transformation.has_executed for transformation in local_transformations])
 
         TestHelper.save_string(model_tuner.results,
                                'data/test_Tuners/test_BayesianHyperOptModelTuner_Regression_CostFunction_results.txt')  # noqa
@@ -510,7 +544,8 @@ class BayesianOptimizationTests(TimerTestCase):
 
         score_list = [AucRocScore(positive_class=1)]
 
-        decorator = ModelDecorator()
+        model_decorator = ModelDecorator()
+        transformer_decorator = TransformerDecorator()
         # define & configure the Resampler object
         resampler = RepeatedCrossValidationResampler(
             model=LightGBMClassifier(),  # we'll use a Random Forest model
@@ -518,7 +553,7 @@ class BayesianOptimizationTests(TimerTestCase):
             scores=score_list,
             folds=5,  # 5 folds with 5 repeats
             repeats=3,
-            fold_decorators=[decorator],
+            fold_decorators=[model_decorator, transformer_decorator],
             parallelization_cores=0)  # adds parallelization (per repeat)
 
         from hyperopt import hp
@@ -564,12 +599,14 @@ class BayesianOptimizationTests(TimerTestCase):
         assert not model_tuner.results.best_transformations[1].has_executed
 
         # should have cloned the decorator each time, so it should not have been used
-        assert len(decorator._model_list) == 0
+        assert len(model_decorator._model_list) == 0
         # should be same number of sets/lists of decorators as there are tuning cycles
         assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
         assert max_evaluations == model_tuner.results.number_of_cycles
-        # only 1 decorator object passed in
-        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 1)
+
+        # 2 decorators object passed in
+        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 2)
+        assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
 
         for index in range(len(model_tuner.resampler_decorators)):
             # index = 0
@@ -595,6 +632,27 @@ class BayesianOptimizationTests(TimerTestCase):
                                                             'feature_fraction': 'colsample_bytree',
                                                             'lambda_l1': 'reg_alpha',
                                                             'lambda_l2': 'reg_lambda'})
+
+            pipeline_list = model_tuner.resampler_decorators[index][1]._pipeline_list
+            for pipeline in pipeline_list:
+                local_transformations = pipeline.transformations
+                # 4 for original transformations + 2 hyper-paramed + 1 StatelessTransformer
+                assert len(local_transformations) == 7
+                assert isinstance(local_transformations[0], RemoveColumnsTransformer)
+                assert isinstance(local_transformations[1], CategoricConverterTransformer)
+                assert isinstance(local_transformations[2], ImputationTransformer)
+                assert isinstance(local_transformations[3], DummyEncodeTransformer)
+
+                # local_transformations has the transformations that were actually used in the Resampler
+                # via the decorators
+                # index_transformation_objects contains the transformations that were tuned
+                index_transformation_objects = list(
+                    model_tuner.results._transformations_objects[index].values())  # noqa
+                assert type(index_transformation_objects[0]) is type(local_transformations[4])  # noqa
+                assert type(index_transformation_objects[1]) is type(local_transformations[5])  # noqa
+
+                assert isinstance(local_transformations[6], StatelessTransformer)  # added by Resampler
+                assert all([transformation.has_executed for transformation in local_transformations])
 
         TestHelper.save_string(model_tuner.results,
                                'data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_Classification_UtilityFunction_results.txt')  # noqa
@@ -687,7 +745,8 @@ class BayesianOptimizationTests(TimerTestCase):
         holdout_x = data.iloc[holdout_indexes].drop(columns=target_variable)
 
         score_list = [RmseScore()]
-        decorator = ModelDecorator()
+        model_decorator = ModelDecorator()
+        transformer_decorator = TransformerDecorator()
         # define & configure the Resampler object
         resampler = RepeatedCrossValidationResampler(
             model=ElasticNetRegressor(),  # we'll use a Random Forest model
@@ -695,7 +754,7 @@ class BayesianOptimizationTests(TimerTestCase):
             scores=score_list,
             folds=5,  # 5 folds with 5 repeats
             repeats=3,
-            fold_decorators=[decorator],
+            fold_decorators=[model_decorator, transformer_decorator],
             parallelization_cores=0)  # adds parallelization (per repeat)
 
         from hyperopt import hp
@@ -741,12 +800,12 @@ class BayesianOptimizationTests(TimerTestCase):
         assert not model_tuner.results.best_transformations[1].has_executed
 
         # should have cloned the decorator each time, so it should not have been used
-        assert len(decorator._model_list) == 0
+        assert len(model_decorator._model_list) == 0
         # should be same number of sets/lists of decorators as there are tuning cycles
         assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
         assert max_evaluations == model_tuner.results.number_of_cycles
-        # only 1 decorator object passed in
-        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 1)
+        # 2 decorators object passed in
+        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 2)
 
         for index in range(len(model_tuner.resampler_decorators)):
             # index = 0
@@ -763,6 +822,23 @@ class BayesianOptimizationTests(TimerTestCase):
             trained_params = trained_params[0]  # already verified that all the list items are the same
             hyper_params = model_tuner.results._tune_results_objects.resampler_object.values[index].hyper_params.params_dict  # noqa
             TestHelper.assert_hyper_params_match_2(subset=hyper_params, superset=trained_params)
+
+            pipeline_list = model_tuner.resampler_decorators[index][1]._pipeline_list
+            for pipeline in pipeline_list:
+                local_transformations = pipeline.transformations
+                # 1 for original transformations + 2 hyper-params + 1 StatelessTransformer
+                assert len(local_transformations) == 4
+                assert isinstance(local_transformations[0], RemoveColumnsTransformer)  # added by Resampler
+
+                # local_transformations has the transformations that were actually used in the Resampler
+                # via the decorators
+                # index_transformation_objects contains the transformations that were tuned
+                index_transformation_objects = list(model_tuner.results._transformations_objects[index].values())  # noqa
+                assert type(index_transformation_objects[0]) is type(local_transformations[1])  # noqa
+                assert type(index_transformation_objects[1]) is type(local_transformations[2])  # noqa
+
+                assert isinstance(local_transformations[3], StatelessTransformer)  # added by Resampler
+                assert all([transformation.has_executed for transformation in local_transformations])
 
         TestHelper.save_string(model_tuner.results,
                                'data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_Regression_CostFunction_results.txt')  # noqa
@@ -843,7 +919,8 @@ class BayesianOptimizationTests(TimerTestCase):
 
         score_list = [AucRocScore(positive_class=1)]
 
-        decorator = ModelDecorator()
+        model_decorator = ModelDecorator()
+        transformer_decorator = TransformerDecorator()
         # define & configure the Resampler object
         resampler = RepeatedCrossValidationResampler(
             model=LightGBMClassifier(),  # we'll use a Random Forest model
@@ -851,7 +928,7 @@ class BayesianOptimizationTests(TimerTestCase):
             scores=score_list,
             folds=5,  # 5 folds with 5 repeats
             repeats=3,
-            fold_decorators=[decorator],
+            fold_decorators=[model_decorator, transformer_decorator],
             parallelization_cores=0)  # adds parallelization (per repeat)
 
         from hyperopt import hp
@@ -893,12 +970,12 @@ class BayesianOptimizationTests(TimerTestCase):
         assert not model_tuner.results.best_transformations[1].has_executed
 
         # should have cloned the decorator each time, so it should not have been used
-        assert len(decorator._model_list) == 0
+        assert len(model_decorator._model_list) == 0
         # should be same number of sets/lists of decorators as there are tuning cycles
-        assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
         assert max_evaluations == model_tuner.results.number_of_cycles
-        # only 1 decorator object passed in
-        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 1)
+        # 2 decorators object passed in
+        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 2)
+        assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
 
         for index in range(len(model_tuner.resampler_decorators)):
             # index = 0
@@ -924,6 +1001,27 @@ class BayesianOptimizationTests(TimerTestCase):
                                                             'feature_fraction': 'colsample_bytree',
                                                             'lambda_l1': 'reg_alpha',
                                                             'lambda_l2': 'reg_lambda'})
+
+            pipeline_list = model_tuner.resampler_decorators[index][1]._pipeline_list
+            for pipeline in pipeline_list:
+                local_transformations = pipeline.transformations
+                # 4 for original transformations + 2 hyper-paramed + 1 StatelessTransformer
+                assert len(local_transformations) == 7
+                assert isinstance(local_transformations[0], RemoveColumnsTransformer)
+                assert isinstance(local_transformations[1], CategoricConverterTransformer)
+                assert isinstance(local_transformations[2], ImputationTransformer)
+                assert isinstance(local_transformations[3], DummyEncodeTransformer)
+
+                # local_transformations has the transformations that were actually used in the Resampler
+                # via the decorators
+                # index_transformation_objects contains the transformations that were tuned
+                index_transformation_objects = list(
+                    model_tuner.results._transformations_objects[index].values())  # noqa
+                assert type(index_transformation_objects[0]) is type(local_transformations[4])  # noqa
+                assert type(index_transformation_objects[1]) is type(local_transformations[5])  # noqa
+
+                assert isinstance(local_transformations[6], StatelessTransformer)  # added by Resampler
+                assert all([transformation.has_executed for transformation in local_transformations])
 
         TestHelper.save_string(model_tuner.results,
                                'data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_only_Classification_UtilityFunction_results.txt')  # noqa
@@ -986,7 +1084,8 @@ class BayesianOptimizationTests(TimerTestCase):
         training_x = data.iloc[training_indexes].drop(columns=target_variable)
 
         score_list = [RmseScore()]
-        decorator = ModelDecorator()
+        model_decorator = ModelDecorator()
+        transformer_decorator = TransformerDecorator()
         # define & configure the Resampler object
         resampler = RepeatedCrossValidationResampler(
             model=ElasticNetRegressor(),  # we'll use a Random Forest model
@@ -994,7 +1093,7 @@ class BayesianOptimizationTests(TimerTestCase):
             scores=score_list,
             folds=5,  # 5 folds with 5 repeats
             repeats=3,
-            fold_decorators=[decorator],
+            fold_decorators=[model_decorator, transformer_decorator],
             parallelization_cores=0)  # adds parallelization (per repeat)
 
         from hyperopt import hp
@@ -1036,13 +1135,12 @@ class BayesianOptimizationTests(TimerTestCase):
         assert not model_tuner.results.best_transformations[1].has_executed
 
         # should have cloned the decorator each time, so it should not have been used
-        assert len(decorator._model_list) == 0
+        assert len(model_decorator._model_list) == 0
         # should be same number of sets/lists of decorators as there are tuning cycles
         assert len(model_tuner.resampler_decorators) == model_tuner.results.number_of_cycles
         assert max_evaluations == model_tuner.results.number_of_cycles
-        # only 1 decorator object passed in
-        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 1)
-
+        # 2 decorators object passed in
+        assert all(np.array([len(x) for x in model_tuner.resampler_decorators]) == 2)
         for index in range(len(model_tuner.resampler_decorators)):
             # index = 0
             model_list = model_tuner.resampler_decorators[index][0]._model_list
@@ -1058,6 +1156,24 @@ class BayesianOptimizationTests(TimerTestCase):
             trained_params = trained_params[0]  # already verified that all the list items are the same
             hyper_params = model_tuner.results._tune_results_objects.resampler_object.values[index].hyper_params.params_dict  # noqa
             TestHelper.assert_hyper_params_match_2(subset=hyper_params, superset=trained_params)
+
+            pipeline_list = model_tuner.resampler_decorators[index][1]._pipeline_list
+            for pipeline in pipeline_list:
+                local_transformations = pipeline.transformations
+                # 1 for original transformations + 2 hyper-params + 1 StatelessTransformer
+                assert len(local_transformations) == 4
+                assert isinstance(local_transformations[0], RemoveColumnsTransformer)  # added by Resampler
+
+                # local_transformations has the transformations that were actually used in the Resampler
+                # via the decorators
+                # index_transformation_objects contains the transformations that were tuned
+                index_transformation_objects = list(
+                    model_tuner.results._transformations_objects[index].values())  # noqa
+                assert type(index_transformation_objects[0]) is type(local_transformations[1])  # noqa
+                assert type(index_transformation_objects[1]) is type(local_transformations[2])  # noqa
+
+                assert isinstance(local_transformations[3], StatelessTransformer)  # added by Resampler
+                assert all([transformation.has_executed for transformation in local_transformations])
 
         TestHelper.save_string(model_tuner.results,
                                'data/test_Tuners/test_BayesianHyperOptModelTuner_Transformations_only_Regression_CostFunction_results.txt')  # noqa
