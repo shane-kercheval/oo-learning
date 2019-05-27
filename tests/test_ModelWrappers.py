@@ -4,15 +4,12 @@ import os.path
 import pickle
 import shutil
 import time
-
+import warnings
 from math import isclose
 from typing import Callable
 
 import numpy as np
-import pandas as pd
 import sklearn as sk
-
-import warnings
 
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=Warning)
@@ -890,7 +887,6 @@ class ModelWrapperTests(TimerTestCase):
                                      params_grid=grid,
                                      parallelization_cores=-1)
         tuner.tune(data_x=train_data, data_y=train_data_y)
-        tuner.total_tune_time
         assert len(tuner.results._tune_results_objects) == 6
         assert tuner.results.number_of_cycles == 6
 
