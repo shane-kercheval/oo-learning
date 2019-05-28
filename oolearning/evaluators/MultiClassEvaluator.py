@@ -14,8 +14,8 @@ class MultiClassEvaluator(EvaluatorBase):
     """
     def __init__(self,
                  converter: ContinuousToClassConverterBase,
-                 actual_classes: np.ndarray=None,
-                 predicted_classes: np.ndarray=None):
+                 actual_classes: np.ndarray = None,
+                 predicted_classes: np.ndarray = None):
         """
         :param converter: A Converter that converts a predictions DataFrame to the predicted classes.
         :param actual_classes:
@@ -38,7 +38,7 @@ class MultiClassEvaluator(EvaluatorBase):
 
     def __str__(self):
         val = super().__str__()
-        val += "\n\nConfusion Matrix\n================\n\n" + self.matrix.to_string()
+        val += "\n\nConfusion Matrix\n----------------\n\n" + self.matrix.to_string()
 
         return val
 

@@ -48,3 +48,59 @@ Features Trained
  'Embarked_C'
  'Embarked_Q'
  'Embarked_S']
+
+Training Evaluator
+==================
+
+{'AUC ROC': 0.99763031
+ 'AUC Precision/Recall': 0.99614554
+ 'Kappa': 0.96420582
+ 'F1 Score': 0.97777778
+ 'Two-Class Accuracy': 0.98314607
+ 'Error Rate': 0.01685393
+ 'True Positive Rate': 0.96703297
+ 'True Negative Rate': 0.99316629
+ 'False Positive Rate': 0.00683371
+ 'False Negative Rate': 0.03296703
+ 'Positive Predictive Value': 0.98876404
+ 'Negative Predictive Value': 0.97977528
+ 'Prevalence': 0.38342697
+ 'No Information Rate': 0.61657303
+ 'Total Observations': 712}
+
+Confusion Matrix
+----------------
+
+predicted  died  lived  Total
+actual                       
+died        436      3    439
+lived         9    264    273
+Total       445    267    712
+
+Holdout Evaluator
+=================
+
+{'AUC ROC': 0.83794466
+ 'AUC Precision/Recall': 0.80535367
+ 'Kappa': 0.59247355
+ 'F1 Score': 0.74242424
+ 'Two-Class Accuracy': 0.81005587
+ 'Error Rate': 0.18994413
+ 'True Positive Rate': 0.71014493
+ 'True Negative Rate': 0.87272727
+ 'False Positive Rate': 0.12727273
+ 'False Negative Rate': 0.28985507
+ 'Positive Predictive Value': 0.77777778
+ 'Negative Predictive Value': 0.82758621
+ 'Prevalence': 0.38547486
+ 'No Information Rate': 0.61452514
+ 'Total Observations': 179}
+
+Confusion Matrix
+----------------
+
+predicted  died  lived  Total
+actual                       
+died         96     14    110
+lived        20     49     69
+Total       116     63    179

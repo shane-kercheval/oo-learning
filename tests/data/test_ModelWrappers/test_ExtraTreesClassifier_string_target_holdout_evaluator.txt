@@ -15,7 +15,7 @@
  'Total Observations': 179}
 
 Confusion Matrix
-================
+----------------
 
 predicted  died  lived  Total
 actual                       

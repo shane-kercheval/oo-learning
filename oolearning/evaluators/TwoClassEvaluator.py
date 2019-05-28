@@ -36,7 +36,7 @@ class TwoClassEvaluator(EvaluatorBase):
 
     def __str__(self):
         val = super().__str__()
-        val += "\n\nConfusion Matrix\n================\n\n" + self.matrix.to_string()
+        val += "\n\nConfusion Matrix\n----------------\n\n" + self.matrix.to_string()
 
         return val
 

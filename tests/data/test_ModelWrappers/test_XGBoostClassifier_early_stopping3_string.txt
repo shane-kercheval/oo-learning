@@ -38,3 +38,59 @@ Fare           4.107352
 Embarked_C     3.232783
 SibSp_1        0.164254
 Embarked_Q     0.078342
+
+Training Evaluator
+==================
+
+{'AUC ROC': 0.87751049
+ 'AUC Precision/Recall': 0.84417534
+ 'Kappa': 0.63323002
+ 'F1 Score': 0.75518672
+ 'Two-Class Accuracy': 0.83426966
+ 'Error Rate': 0.16573034
+ 'True Positive Rate': 0.66666667
+ 'True Negative Rate': 0.93849658
+ 'False Positive Rate': 0.06150342
+ 'False Negative Rate': 0.33333333
+ 'Positive Predictive Value': 0.8708134
+ 'Negative Predictive Value': 0.81908549
+ 'Prevalence': 0.38342697
+ 'No Information Rate': 0.61657303
+ 'Total Observations': 712}
+
+Confusion Matrix
+----------------
+
+predicted    0    1  Total
+actual                    
+0          412   27    439
+1           91  182    273
+Total      503  209    712
+
+Holdout Evaluator
+=================
+
+{'AUC ROC': 0.82891963
+ 'AUC Precision/Recall': 0.7717106
+ 'Kappa': 0.51246595
+ 'F1 Score': 0.66666667
+ 'Two-Class Accuracy': 0.78212291
+ 'Error Rate': 0.21787709
+ 'True Positive Rate': 0.56521739
+ 'True Negative Rate': 0.91818182
+ 'False Positive Rate': 0.08181818
+ 'False Negative Rate': 0.43478261
+ 'Positive Predictive Value': 0.8125
+ 'Negative Predictive Value': 0.77099237
+ 'Prevalence': 0.38547486
+ 'No Information Rate': 0.61452514
+ 'Total Observations': 179}
+
+Confusion Matrix
+----------------
+
+predicted    0   1  Total
+actual                   
+0          101   9    110
+1           30  39     69
+Total      131  48    179

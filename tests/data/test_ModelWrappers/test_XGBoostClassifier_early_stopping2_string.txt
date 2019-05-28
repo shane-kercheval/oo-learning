@@ -46,3 +46,59 @@ Embarked_C     0.270589
 SibSp_2        0.214431
 Parch_1        0.167631
 Embarked_Q     0.120827
+
+Training Evaluator
+==================
+
+{'AUC ROC': 0.99234023
+ 'AUC Precision/Recall': 0.98894465
+ 'Kappa': 0.8981582
+ 'F1 Score': 0.93632959
+ 'Two-Class Accuracy': 0.95224719
+ 'Error Rate': 0.04775281
+ 'True Positive Rate': 0.91575092
+ 'True Negative Rate': 0.97494305
+ 'False Positive Rate': 0.02505695
+ 'False Negative Rate': 0.08424908
+ 'Positive Predictive Value': 0.95785441
+ 'Negative Predictive Value': 0.94900222
+ 'Prevalence': 0.38342697
+ 'No Information Rate': 0.61657303
+ 'Total Observations': 712}
+
+Confusion Matrix
+----------------
+
+predicted    0    1  Total
+actual                    
+0          428   11    439
+1           23  250    273
+Total      451  261    712
+
+Holdout Evaluator
+=================
+
+{'AUC ROC': 0.78023715
+ 'AUC Precision/Recall': 0.75863042
+ 'Kappa': 0.56850141
+ 'F1 Score': 0.72727273
+ 'Two-Class Accuracy': 0.79888268
+ 'Error Rate': 0.20111732
+ 'True Positive Rate': 0.69565217
+ 'True Negative Rate': 0.86363636
+ 'False Positive Rate': 0.13636364
+ 'False Negative Rate': 0.30434783
+ 'Positive Predictive Value': 0.76190476
+ 'Negative Predictive Value': 0.81896552
+ 'Prevalence': 0.38547486
+ 'No Information Rate': 0.61452514
+ 'Total Observations': 179}
+
+Confusion Matrix
+----------------
+
+predicted    0   1  Total
+actual                   
+0           95  15    110
+1           21  48     69
+Total      116  63    179

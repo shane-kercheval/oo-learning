@@ -54,3 +54,59 @@ SibSp_4        0.000000
 SibSp_3        0.000000
 SibSp_2        0.000000
 SibSp_5        0.000000
+
+Training Evaluator
+==================
+
+{'AUC ROC': 0.8687827
+ 'AUC Precision/Recall': 0.83989401
+ 'Kappa': 0.54817366
+ 'F1 Score': 0.7148289
+ 'Two-Class Accuracy': 0.78932584
+ 'Error Rate': 0.21067416
+ 'True Positive Rate': 0.68864469
+ 'True Negative Rate': 0.85193622
+ 'False Positive Rate': 0.14806378
+ 'False Negative Rate': 0.31135531
+ 'Positive Predictive Value': 0.743083
+ 'Negative Predictive Value': 0.81481481
+ 'Prevalence': 0.38342697
+ 'No Information Rate': 0.61657303
+ 'Total Observations': 712}
+
+Confusion Matrix
+----------------
+
+predicted    0    1  Total
+actual                    
+0          374   65    439
+1           85  188    273
+Total      459  253    712
+
+Holdout Evaluator
+=================
+
+{'AUC ROC': 0.8215415
+ 'AUC Precision/Recall': 0.78188631
+ 'Kappa': 0.51791005
+ 'F1 Score': 0.69230769
+ 'Two-Class Accuracy': 0.77653631
+ 'Error Rate': 0.22346369
+ 'True Positive Rate': 0.65217391
+ 'True Negative Rate': 0.85454545
+ 'False Positive Rate': 0.14545455
+ 'False Negative Rate': 0.34782609
+ 'Positive Predictive Value': 0.73770492
+ 'Negative Predictive Value': 0.79661017
+ 'Prevalence': 0.38547486
+ 'No Information Rate': 0.61452514
+ 'Total Observations': 179}
+
+Confusion Matrix
+----------------
+
+predicted    0   1  Total
+actual                   
+0           94  16    110
+1           24  45     69
+Total      118  61    179

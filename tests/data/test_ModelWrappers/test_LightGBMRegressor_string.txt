@@ -37,3 +37,23 @@ superplastic   89577.003463
 fineagg        36238.009717
 coarseagg      22260.719273
 ash             8589.584640
+
+Training Evaluator
+==================
+
+{'Mean Absolute Error (MAE)': 1.46085061
+ 'Mean Squared Error (MSE)': 5.28369452
+ 'Root Mean Squared Error (RMSE)': 2.29862883
+ 'RMSE to Standard Deviation of Target': 0.1370905
+ 'R Squared': 0.9812062
+ 'Total Observations': 824}
+
+Holdout Evaluator
+=================
+
+{'Mean Absolute Error (MAE)': 2.77284601
+ 'Mean Squared Error (MSE)': 15.82235941
+ 'Root Mean Squared Error (RMSE)': 3.97773295
+ 'RMSE to Standard Deviation of Target': 0.24231448
+ 'R Squared': 0.94128369
+ 'Total Observations': 206}

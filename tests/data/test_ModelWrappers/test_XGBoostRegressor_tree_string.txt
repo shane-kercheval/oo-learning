@@ -37,3 +37,23 @@ Features Trained
  'coarseagg'
  'fineagg'
  'age']
+
+Training Evaluator
+==================
+
+{'Mean Absolute Error (MAE)': 2.86583707
+ 'Mean Squared Error (MSE)': 14.91270871
+ 'Root Mean Squared Error (RMSE)': 3.86169765
+ 'RMSE to Standard Deviation of Target': 0.23031211
+ 'R Squared': 0.94695633
+ 'Total Observations': 824}
+
+Holdout Evaluator
+=================
+
+{'Mean Absolute Error (MAE)': 3.88313587
+ 'Mean Squared Error (MSE)': 26.19099478
+ 'Root Mean Squared Error (RMSE)': 5.11771382
+ 'RMSE to Standard Deviation of Target': 0.31175953
+ 'R Squared': 0.90280599
+ 'Total Observations': 206}

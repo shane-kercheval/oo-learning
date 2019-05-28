@@ -28,3 +28,41 @@ Features Trained
  'sepal_width'
  'petal_length'
  'petal_width']
+
+Training Evaluator
+==================
+
+{'Kappa': 1.0
+ 'Accuracy': 1.0
+ 'Error Rate': 0.0
+ 'No Information Rate': 0.33928571
+ 'Total Observations': 112}
+
+Confusion Matrix
+----------------
+
+predicted   setosa  versicolor  virginica  Total
+actual                                          
+setosa          38           0          0     38
+versicolor       0          37          0     37
+virginica        0           0         37     37
+Total           38          37         37    112
+
+Holdout Evaluator
+=================
+
+{'Kappa': 0.84199584
+ 'Accuracy': 0.89473684
+ 'Error Rate': 0.10526316
+ 'No Information Rate': 0.34210526
+ 'Total Observations': 38}
+
+Confusion Matrix
+----------------
+
+predicted   setosa  versicolor  virginica  Total
+actual                                          
+setosa          12           0          0     12
+versicolor       0          12          1     13
+virginica        0           3         10     13
+Total           12          15         11     38

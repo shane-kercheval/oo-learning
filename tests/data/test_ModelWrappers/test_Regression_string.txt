@@ -10,3 +10,23 @@ Features Trained
  'superplastic'
  'coarseagg'
  'age']
+
+Training Evaluator
+==================
+
+{'Mean Absolute Error (MAE)': 8.36025953
+ 'Mean Squared Error (MSE)': 109.68243774
+ 'Root Mean Squared Error (RMSE)': 10.47293835
+ 'RMSE to Standard Deviation of Target': 0.6246073
+ 'R Squared': 0.60986572
+ 'Total Observations': 824}
+
+Holdout Evaluator
+=================
+
+{'Mean Absolute Error (MAE)': 7.99161252
+ 'Mean Squared Error (MSE)': 100.07028301
+ 'Root Mean Squared Error (RMSE)': 10.00351353
+ 'RMSE to Standard Deviation of Target': 0.60939138
+ 'R Squared': 0.62864214
+ 'Total Observations': 206}

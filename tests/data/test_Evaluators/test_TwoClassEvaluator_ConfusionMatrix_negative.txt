@@ -13,7 +13,7 @@
  'Total Observations': 100}
 
 Confusion Matrix
-================
+----------------
 
 predicted   1   0  Total
 actual                  

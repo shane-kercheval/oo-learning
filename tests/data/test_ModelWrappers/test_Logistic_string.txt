@@ -40,3 +40,59 @@ Features Trained
  'Parch_6'
  'Embarked_Q'
  'Embarked_S']
+
+Training Evaluator
+==================
+
+{'AUC ROC': 0.86038032
+ 'AUC Precision/Recall': 0.83891703
+ 'Kappa': 0.58078692
+ 'F1 Score': 0.73151751
+ 'Two-Class Accuracy': 0.80617978
+ 'Error Rate': 0.19382022
+ 'True Positive Rate': 0.68864469
+ 'True Negative Rate': 0.87927107
+ 'False Positive Rate': 0.12072893
+ 'False Negative Rate': 0.31135531
+ 'Positive Predictive Value': 0.78008299
+ 'Negative Predictive Value': 0.81953291
+ 'Prevalence': 0.38342697
+ 'No Information Rate': 0.61657303
+ 'Total Observations': 712}
+
+Confusion Matrix
+----------------
+
+predicted    0    1  Total
+actual                    
+0          386   53    439
+1           85  188    273
+Total      471  241    712
+
+Holdout Evaluator
+=================
+
+{'AUC ROC': 0.8458498
+ 'AUC Precision/Recall': 0.79264286
+ 'Kappa': 0.58794854
+ 'F1 Score': 0.734375
+ 'Two-Class Accuracy': 0.81005587
+ 'Error Rate': 0.18994413
+ 'True Positive Rate': 0.68115942
+ 'True Negative Rate': 0.89090909
+ 'False Positive Rate': 0.10909091
+ 'False Negative Rate': 0.31884058
+ 'Positive Predictive Value': 0.79661017
+ 'Negative Predictive Value': 0.81666667
+ 'Prevalence': 0.38547486
+ 'No Information Rate': 0.61452514
+ 'Total Observations': 179}
+
+Confusion Matrix
+----------------
+
+predicted    0   1  Total
+actual                   
+0           98  12    110
+1           22  47     69
+Total      120  59    179
