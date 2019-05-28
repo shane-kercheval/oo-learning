@@ -77,15 +77,25 @@ class ModelTrainer:
     def __str__(self):
         val = str(self.model)
 
-        if self.training_scores is not None:
-            val += "\n\nTraining Scores\n===============\n"
-            for score in self.training_scores:
-                val += "\n" + str(score)
+        # either show evaluator info or scores
+        if self.training_evaluator is not None:
+            val += "\n\nTraining Evaluator\n==================\n"
+            val += "\n" + str(self.training_evaluator)
 
-        if self.holdout_scores is not None:
-            val += "\n\nHoldout Scores\n==============="
-            for score in self.holdout_scores:
-                val += "\n" + str(score)
+            if self.holdout_evaluator is not None:
+                val += "\n\nHoldout Evaluator\n=================\n"
+                val += "\n" + str(self.holdout_evaluator)
+
+        else:
+            if self.training_scores is not None:
+                val += "\n\nTraining Scores\n===============\n"
+                for score in self.training_scores:
+                    val += "\n" + str(score)
+
+                if self.holdout_scores is not None:
+                    val += "\n\nHoldout Scores\n==============="
+                    for score in self.holdout_scores:
+                        val += "\n" + str(score)
 
         return val
 
