@@ -338,17 +338,27 @@ class TunerResultsBase(metaclass=ABCMeta):
         best = min if minimizer else max
         index_of_best_mean = resample_means.index(best(resample_means))
 
-        resamples.boxplot(vert=False, figsize=(10, 10))
-        resample_medians = [resamples[column].median() for column in resamples.columns.values]
-        plt.axvline(x=best(resample_medians), color='red', linewidth=1)
-
         if show_one_ste_rule:
             # using means rather than medians because we are calculating standard error (from the mean)
             resamples_of_best_mean = resamples[resamples.columns.values[index_of_best_mean]].values
             one_standard_error_of_best = resamples_of_best_mean.std() / math.sqrt(len(resamples_of_best_mean))
             # noinspection PyUnresolvedReferences
             one_standard_error_rule = resamples_of_best_mean.mean() - one_standard_error_of_best
+
+            resamples = resamples.iloc[:, resample_means > one_standard_error_rule]
+            resamples.boxplot(vert=False, figsize=(10, 10))
+            resample_medians = [resamples[column].median() for column in resamples.columns.values]
+            plt.axvline(x=best(resample_medians), color='red', linewidth=1)
             plt.axvline(x=one_standard_error_rule, color='blue', linewidth=1)
+
+            # have to recalculate resample_means and index_of_best_mean
+            resample_means = [resamples[column].mean() for column in resamples.columns.values]
+            index_of_best_mean = resample_means.index(best(resample_means))
+
+        else:
+            resamples.boxplot(vert=False, figsize=(10, 10))
+            resample_medians = [resamples[column].median() for column in resamples.columns.values]
+            plt.axvline(x=best(resample_medians), color='red', linewidth=1)
 
         # noinspection PyTypeChecker,PyUnresolvedReferences
         if (resamples <= 1).all().all():
