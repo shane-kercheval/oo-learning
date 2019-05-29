@@ -384,9 +384,18 @@ class EvaluatorTests(TimerTestCase):
         assert evaluator.confusion_matrix.matrix_proportions.columns.values.tolist() == ['setosa', 'versicolor', 'virginica', 'Total']  # noqa
 
         TestHelper.check_plot('data/test_Evaluators/test_confusion_matrix_heatmap_no_totals.png',
-                              lambda: evaluator.confusion_matrix.plot(include_totals=False))
+                              lambda: evaluator.confusion_matrix.plot(include_totals=False,
+                                                                      proportions=False))
         TestHelper.check_plot('data/test_Evaluators/test_confusion_matrix_heatmap_with_totals.png',
-                              lambda: evaluator.confusion_matrix.plot(include_totals=True))
+                              lambda: evaluator.confusion_matrix.plot(include_totals=True,
+                                                                      proportions=False))
+
+        TestHelper.check_plot('data/test_Evaluators/test_confusion_matrix_heatmap_no_totals_props.png',
+                              lambda: evaluator.confusion_matrix.plot(include_totals=False,
+                                                                      proportions=True))
+        TestHelper.check_plot('data/test_Evaluators/test_confusion_matrix_heatmap_with_totals_props.png',
+                              lambda: evaluator.confusion_matrix.plot(include_totals=True,
+                                                                      proportions=True))
 
     # noinspection SpellCheckingInspection
     def test_ConfusionMatrix_MultiClass_scores(self):

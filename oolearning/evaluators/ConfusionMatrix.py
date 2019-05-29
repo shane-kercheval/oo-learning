@@ -65,13 +65,21 @@ class ConfusionMatrix:
         """
         return self.matrix.loc['Total', 'Total']
 
-    def plot(self, include_totals: bool=False):
+    def plot(self,
+             include_totals: bool=False,
+             proportions: bool=False):
         """
         :param include_totals: if `include_totals` is True, it includes a row and column for totals
+        :param proportions: if `proportions` is True, uses the matrix_proportions
         :return: a heatmap plot of the confusion matrix
         """
         ax = plt.axes()
-        matrix = self.matrix if include_totals else self.matrix.drop(index='Total', columns='Total')
+        matrix = round(self.matrix_proportions, 3) if proportions else self.matrix
+        matrix = matrix if include_totals else matrix.drop(index='Total', columns='Total')
         sns.heatmap(ax=ax, data=matrix, annot=True, cmap="Blues")
         ax.set_title('Predicted vs Actual Classifications')
         plt.xticks(rotation=20, ha='right')
+        plt.yticks(rotation=0)
+        plt.xlabel('Predicted', labelpad=20)
+        plt.ylabel('Actual', labelpad=20)
+        plt.tight_layout()
