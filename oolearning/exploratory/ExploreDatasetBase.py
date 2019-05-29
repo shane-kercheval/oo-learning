@@ -335,8 +335,10 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         Creates a Box-plot of the numeric_feature.
         """
         assert numeric_feature in self.numeric_columns
-        self._dataset[numeric_feature].plot(kind='box')
-        plt.title(numeric_feature)
+        ax = self._dataset[numeric_feature].plot(kind='box')
+        ax.set_xlabel("")
+        ax.set_ylabel(numeric_feature)
+        plt.title("")
         plt.tight_layout()
 
     def plot_histogram(self,

@@ -129,7 +129,11 @@ class ExploreClassificationDataset(ExploreDataset):
         assert feature != self._target_variable
 
         if feature in self.numeric_features:
+            title = '{0} vs. target (`{1}`)'.format(feature, self.target_variable)
             self._dataset[[feature, self._target_variable]].boxplot(by=self._target_variable)
+            plt.ylabel(feature)
+            plt.title(title)
+            plt.suptitle("")
         else:
             self._dodged_barchart(dataset=self._dataset,
                                   feature=feature,

@@ -35,7 +35,11 @@ class ExploreRegressionDataset(ExploreDataset):
                                                                          format(feature,
                                                                                 self._target_variable))
         else:
+            title = '{0} vs. target (`{1}`)'.format(feature, self.target_variable)
             self._dataset[[feature, self._target_variable]].boxplot(by=feature)
+            plt.ylabel(self.target_variable)
+            plt.title(title)
+            plt.suptitle("")
         plt.tight_layout()
 
     def compare_target_boxplot(self, other: pd.DataFrame):

@@ -870,8 +870,6 @@ class ExploratoryTests(TimerTestCase):
         TestHelper.check_plot('data/test_Exploratory/plot_histogram_against_target_amount.png',
                               lambda: explore.plot_histogram_against_target(numeric_feature='amount'))
 
-        explore.plot_histogram_against_target(numeric_feature='amount')
-
     def test_ExploreRegressionDataset(self):
         self.assertRaises(ValueError, lambda: ExploreRegressionDataset.from_csv(csv_file_path=TestHelper.ensure_test_directory('data/credit.csv'), target_variable='default'))  # noqa
 

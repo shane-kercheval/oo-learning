@@ -9,7 +9,7 @@ class DataSplitterBase(metaclass=ABCMeta):
     Class that defines methods to split the data into training/test sets
     """
 
-    def __init__(self, holdout_ratio: float, seed: int=42):
+    def __init__(self, holdout_ratio: float, seed: int = 42):
         """
         :param holdout_ratio: percentage of the dataset to assign to the holdout set
         :param seed: seed # for random 'state' to control consistently (up to inheritors to use correctly)
