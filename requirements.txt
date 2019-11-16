@@ -10,7 +10,7 @@ defusedxml==0.6.0
 dill==0.3.1.1
 entrypoints==0.3
 future==0.17.1
-hdbscan==0.8.20
+hdbscan==0.8.23
 hyperopt==0.1.2
 importlib-metadata==0.23
 ipykernel==5.1.3
