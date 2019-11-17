@@ -261,7 +261,7 @@ class RepeatedCrossValidationResampler(ResamplerBase):
         #     # https://codewithoutrules.com/2018/09/04/python-multiprocessing/
         #     with get_context("spawn").Pool(cores) as pool:
         #         results = list(pool.map(resample_repeat, resample_args))
-        results = list(pool.map(resample_repeat, resample_args))
+        results = list(map(resample_repeat, resample_args))
 
         result_scores = [x[0] for x in results]
         # flatten out so there are folds*repeats number of list items

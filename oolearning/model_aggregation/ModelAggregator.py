@@ -94,7 +94,7 @@ class ModelAggregator(ModelWrapperBase):
         #     # https://codewithoutrules.com/2018/09/04/python-multiprocessing/
         #     with get_context("spawn").Pool(cores) as pool:
         #         results = list(pool.map(train_aggregator, aggregator_args))
-        results = list(pool.map(train_aggregator, aggregator_args))
+        results = list(map(train_aggregator, aggregator_args))
 
         self._base_models = [x[0] for x in results]
         # List of Pipelines to cache for `predict()`

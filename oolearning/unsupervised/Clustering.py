@@ -229,7 +229,7 @@ class Clustering:
         #     # https://codewithoutrules.com/2018/09/04/python-multiprocessing/
         #     with get_context("spawn").Pool(cores) as pool:
         #         results = list(pool.map(single_kmeans, single_kmeans_args))
-        results = list(pool.map(single_kmeans, single_kmeans_args))
+        results = list(map(single_kmeans, single_kmeans_args))
 
         scores = [x for x in results]
 

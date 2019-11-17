@@ -184,7 +184,7 @@ class GridSearchModelTuner(ModelTunerBase):
         #     # https://codewithoutrules.com/2018/09/04/python-multiprocessing/
         #     with get_context("spawn").Pool(cores) as pool:
         #         results = list(pool.map(single_tune, single_tune_args))
-        results = list(pool.map(single_tune, single_tune_args))
+        results = list(map(single_tune, single_tune_args))
 
         results_list = [x[0] for x in results]
         time_duration_list = [x[1] for x in results]

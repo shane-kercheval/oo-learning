@@ -117,7 +117,7 @@ class TwoClassRocOptimizerConverter(TwoClassConverterBase):
         #     # https://codewithoutrules.com/2018/09/04/python-multiprocessing/
         #     with get_context("spawn").Pool(cores) as pool:
         #         fpr_tpr_tuple = list(pool.map(get_fpr_tpr, get_fpr_tpr_args))
-        fpr_tpr_tuple = list(pool.map(get_fpr_tpr, get_fpr_tpr_args))
+        fpr_tpr_tuple = list(map(get_fpr_tpr, get_fpr_tpr_args))
 
         # fpr_tpr_tuple = [get_fpr_tpr(threshold=x) for x in potential_cutoff_values]  # list of rates
 
