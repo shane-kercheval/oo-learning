@@ -1,6 +1,7 @@
 import math
-from multiprocessing import Pool as ThreadPool
+# from multiprocessing import Pool as ThreadPool
 from multiprocessing import cpu_count
+from multiprocessing import get_context
 from typing import Tuple, Union
 
 import numpy as np
@@ -108,12 +109,15 @@ class TwoClassRocOptimizerConverter(TwoClassConverterBase):
                                  actual_classes=actual_classes)
                             for x in potential_cutoff_values]
 
-        if parallelization_cores == 0 or parallelization_cores == 1:
-            fpr_tpr_tuple = list(map(get_fpr_tpr, get_fpr_tpr_args))
-        else:
-            cores = cpu_count() if parallelization_cores == -1 else parallelization_cores
-            with ThreadPool(cores) as pool:
-                fpr_tpr_tuple = list(pool.map(get_fpr_tpr, get_fpr_tpr_args))
+        # if parallelization_cores == 0 or parallelization_cores == 1:
+        #     fpr_tpr_tuple = list(map(get_fpr_tpr, get_fpr_tpr_args))
+        # else:
+        #     cores = cpu_count() if parallelization_cores == -1 else parallelization_cores
+        #     # with ThreadPool(cores) as pool:
+        #     # https://codewithoutrules.com/2018/09/04/python-multiprocessing/
+        #     with get_context("spawn").Pool(cores) as pool:
+        #         fpr_tpr_tuple = list(pool.map(get_fpr_tpr, get_fpr_tpr_args))
+        fpr_tpr_tuple = list(pool.map(get_fpr_tpr, get_fpr_tpr_args))
 
         # fpr_tpr_tuple = [get_fpr_tpr(threshold=x) for x in potential_cutoff_values]  # list of rates
 

@@ -1,8 +1,9 @@
 from enum import Enum, unique
 from scipy.cluster import hierarchy
 from typing import List, Union
+# from multiprocessing import Pool as ThreadPool
 from multiprocessing import cpu_count
-from multiprocessing import Pool as ThreadPool
+from multiprocessing import get_context
 from sklearn.metrics import silhouette_samples, silhouette_score
 
 import matplotlib.pyplot as plt
@@ -220,12 +221,15 @@ class Clustering:
                                    num_clusters=x)
                               for x in num_clusters]
 
-        if parallelization_cores == 0 or parallelization_cores == 1:
-            results = list(map(single_kmeans, single_kmeans_args))
-        else:
-            cores = cpu_count() if parallelization_cores == -1 else parallelization_cores
-            with ThreadPool(cores) as pool:
-                results = list(pool.map(single_kmeans, single_kmeans_args))
+        # if parallelization_cores == 0 or parallelization_cores == 1:
+        #     results = list(map(single_kmeans, single_kmeans_args))
+        # else:
+        #     cores = cpu_count() if parallelization_cores == -1 else parallelization_cores
+        #     # with ThreadPool(cores) as pool:
+        #     # https://codewithoutrules.com/2018/09/04/python-multiprocessing/
+        #     with get_context("spawn").Pool(cores) as pool:
+        #         results = list(pool.map(single_kmeans, single_kmeans_args))
+        results = list(pool.map(single_kmeans, single_kmeans_args))
 
         scores = [x for x in results]
 

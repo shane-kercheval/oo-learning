@@ -1,6 +1,7 @@
 from typing import Union, List
-from multiprocessing import Pool as ThreadPool
+# from multiprocessing import Pool as ThreadPool
 from multiprocessing import cpu_count
+from multiprocessing import get_context
 
 import numpy as np
 import pandas as pd
@@ -85,12 +86,15 @@ class ModelAggregator(ModelWrapperBase):
         # map_function rather than a for loop so we can switch between parallelization and non-parallelization
         aggregator_args = [(model_info, data_x, data_y) for model_info in self._base_models]
 
-        if self._parallelization_cores == 0 or self._parallelization_cores == 1:
-            results = list(map(train_aggregator, aggregator_args))
-        else:
-            cores = cpu_count() if self._parallelization_cores == -1 else self._parallelization_cores
-            with ThreadPool(cores) as pool:
-                results = list(pool.map(train_aggregator, aggregator_args))
+        # if self._parallelization_cores == 0 or self._parallelization_cores == 1:
+        #     results = list(map(train_aggregator, aggregator_args))
+        # else:
+        #     cores = cpu_count() if self._parallelization_cores == -1 else self._parallelization_cores
+        #     # with ThreadPool(cores) as pool:
+        #     # https://codewithoutrules.com/2018/09/04/python-multiprocessing/
+        #     with get_context("spawn").Pool(cores) as pool:
+        #         results = list(pool.map(train_aggregator, aggregator_args))
+        results = list(pool.map(train_aggregator, aggregator_args))
 
         self._base_models = [x[0] for x in results]
         # List of Pipelines to cache for `predict()`

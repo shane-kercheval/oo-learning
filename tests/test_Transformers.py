@@ -1588,12 +1588,12 @@ class TransformerTests(TimerTestCase):
         assert all(training_set.ocean_proximity == transformed_data.ocean_proximity)
         assert all(training_set.columns.values == transformed_data.columns.values)
 
-        assert transformer.state == {'housing_median_age': 0.80574535816717296,
-                                     'total_rooms': 0.22722010735989001,
-                                     'total_bedrooms': 8.4721358117221772,
+        assert transformer.state == {'housing_median_age': 0.8057453700999767,
+                                     'total_rooms': 0.22722010735989,
+                                     'total_bedrooms': 8.472135811722177,
                                      'population': 0.24616608260632827,
-                                     'households': 0.24939757927863923,
-                                     'median_income': 0.083921974272447436}
+                                     'households': 0.24939759642245168,
+                                     'median_income': 0.08392197552870093}
 
         # transformed_data.housing_median_age.hist()
         # transformed_data.total_rooms.hist()

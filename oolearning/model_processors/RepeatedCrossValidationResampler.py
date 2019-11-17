@@ -1,6 +1,7 @@
 from typing import List, Callable, Union
-from multiprocessing import Pool as ThreadPool
+# from multiprocessing import Pool as ThreadPool
 from multiprocessing import cpu_count
+from multiprocessing import get_context
 
 import numpy as np
 import pandas as pd
@@ -252,12 +253,15 @@ class RepeatedCrossValidationResampler(ResamplerBase):
                               decorators=self._decorators)
                          for x in range(self._repeats)]
 
-        if self._parallelization_cores == 0 or self._parallelization_cores == 1:
-            results = list(map(resample_repeat, resample_args))
-        else:
-            cores = cpu_count() if self._parallelization_cores == -1 else self._parallelization_cores
-            with ThreadPool(cores) as pool:
-                results = list(pool.map(resample_repeat, resample_args))
+        # if self._parallelization_cores == 0 or self._parallelization_cores == 1:
+        #     results = list(map(resample_repeat, resample_args))
+        # else:
+        #     cores = cpu_count() if self._parallelization_cores == -1 else self._parallelization_cores
+        #     # with ThreadPool(cores) as pool:
+        #     # https://codewithoutrules.com/2018/09/04/python-multiprocessing/
+        #     with get_context("spawn").Pool(cores) as pool:
+        #         results = list(pool.map(resample_repeat, resample_args))
+        results = list(pool.map(resample_repeat, resample_args))
 
         result_scores = [x[0] for x in results]
         # flatten out so there are folds*repeats number of list items

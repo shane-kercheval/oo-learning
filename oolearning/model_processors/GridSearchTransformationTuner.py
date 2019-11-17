@@ -1,7 +1,9 @@
 import itertools
 import time
-from multiprocessing import Pool as ThreadPool
+# from multiprocessing import Pool as ThreadPool
 from multiprocessing import cpu_count
+from multiprocessing import get_context
+
 from typing import List
 
 import numpy as np
@@ -141,12 +143,15 @@ class GridSearchTransformationTuner(ModelTunerBase):
                                  data_y=data_y)
                             for x in range(len(grid_df))]
 
-        if self._parallelization_cores == 0 or self._parallelization_cores == 1:
-            results = list(map(single_tune, single_tune_args))
-        else:
-            cores = cpu_count() if self._parallelization_cores == -1 else self._parallelization_cores
-            with ThreadPool(cores) as pool:
-                results = list(pool.map(single_tune, single_tune_args))
+        # if self._parallelization_cores == 0 or self._parallelization_cores == 1:
+        #     results = list(map(single_tune, single_tune_args))
+        # else:
+        #     cores = cpu_count() if self._parallelization_cores == -1 else self._parallelization_cores
+        #     # with ThreadPool(cores) as pool:
+        #     # https://codewithoutrules.com/2018/09/04/python-multiprocessing/
+        #     with get_context("spawn").Pool(cores) as pool:
+        #         results = list(pool.map(single_tune, single_tune_args))
+        results = list(pool.map(single_tune, single_tune_args))
 
         results_list = [x['resampler_results_object'] for x in results]
         time_duration_list = [x['resampler_time_seconds'] for x in results]

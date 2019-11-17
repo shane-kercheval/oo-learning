@@ -403,11 +403,19 @@ class TunerTests(TimerTestCase):
         assert all(tuner.results.resampler_times.min_samples_leaf.values == [1, 100, 1, 100, 1, 100, 1, 100])
         # assert all(tuner.results.resampler_times.execution_time.values == ['7 seconds', '7 seconds', '15 seconds', '13 seconds', '7 seconds', '7 seconds', '18 seconds', '16 seconds'])  # noqa
 
+        TestHelper.save_df(tuner.results.resampled_stats,
+                           'data/test_Tuners/test_ModelTuner_GradientBoosting_results__resampled_stats.csv')  # noqa
+
+        TestHelper.save_df(tuner.results.sorted_best_models,
+                           'data/test_Tuners/test_ModelTuner_GradientBoosting_results__sorted_best_models.csv')  # noqa
+
+
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory('data/test_ModelTuner_GradientBoosting_results.pkl'))  # noqa
         # with open(file, 'wb') as output:
         #     pickle.dump(tuner.results, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             tune_results = pickle.load(saved_object)
+
             assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.resampled_stats,
                                                       data_frame2=tuner.results.resampled_stats)
             assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
