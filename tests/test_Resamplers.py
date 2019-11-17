@@ -375,75 +375,75 @@ class ResamplerTests(TimerTestCase):
         # test that NEW decorator object's predicted value dataframe has the same indexes it previously did
         assert all(decorator._holdout_predicted_values.index.values == holdout_indexes)
 
-    def test_Resampler_fold_indexes_parallelized(self):
-        # NOTE: when using parallelization, the decorator is copied to the process, so the original object
-        # will not retain data, like it does in non-parllelization
-        # need to use the decorators passed back in `.fold_decorators` property
-        data = TestHelper.get_titanic_data()
-
-        # main reason we want to split the data is to get the means/st_devs so that we can confirm with
-        # e.g. the Searcher
-        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
-        training_indexes, _ = splitter.split(target_values=data.Survived)
-
-        train_data_y = data.iloc[training_indexes].Survived
-        train_data = data.iloc[training_indexes].drop(columns='Survived')
-
-        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
-
-        decorator = TempDecorator()
-        resampler = RepeatedCrossValidationResampler(
-            model=MockClassificationModelWrapper(data_y=data.Survived),
-            transformations=None,
-            scores=score_list,
-            folds=5,
-            repeats=2,
-            fold_decorators=[decorator],
-            parallelization_cores=-1)
-        resampler.resample(data_x=train_data, data_y=train_data_y)
-
-        # decorator object is not used directly when using parallization, it is copied
-        assert len(decorator._repeat_index) == 0
-        assert len(decorator._fold_index) == 0
-
-        # we should have 1 set/list of decorators for each repeat
-        assert len(resampler.decorators) == 2  # 2 because we have 2 repeats
-        assert resampler.decorators[0]._repeat_index == [0, 0, 0, 0, 0]
-        assert resampler.decorators[0]._fold_index == [0, 1, 2, 3, 4]
-
-        assert resampler.decorators[1]._repeat_index == [1, 1, 1, 1, 1]
-        assert resampler.decorators[1]._fold_index == [0, 1, 2, 3, 4]
-
-        # The fold holdout indexes should have twice the number of indexes as training_indexes because of
-        # `repeats=2`
-        num_fold_holdout_indexes = len(resampler.decorators[0]._holdout_indexes)
-        num_training_indexes = len(training_indexes)
-        # these values should be equal since the fold holdout is for a single repeat
-        assert num_training_indexes == num_fold_holdout_indexes
-        num_fold_holdout_indexes = len(resampler.decorators[1]._holdout_indexes)
-        num_training_indexes = len(training_indexes)
-        # these values should be equal since the fold holdout is for a single repeat
-        assert num_training_indexes == num_fold_holdout_indexes
-        # get the holdout indexes from the first repeat. This should contain exactly 1 to 1 indexes with the
-        # original training indexes, although not in the same order
-        fold_holdout_indexes = resampler.decorators[0]._holdout_indexes
-        assert set(training_indexes) == set(fold_holdout_indexes)
-        fold_holdout_indexes = resampler.decorators[1]._holdout_indexes
-        assert set(training_indexes) == set(fold_holdout_indexes)
-        # at this point we know that both repeats contain the indexes from the original training set
-        # this should correspond to the indexes of the predicted values DataFrame
-        # first, lets merge the indexes from repeats, and assign into a different list, also used below
-        holdout_df = resampler.decorators[0]._holdout_predicted_values
-        fold_holdout_indexes = resampler.decorators[0]._holdout_indexes
-        assert len(holdout_df.values) == len(fold_holdout_indexes)
-        # noinspection PyTypeChecker
-        assert all(holdout_df.index.values == fold_holdout_indexes)
-
-        holdout_df = resampler.decorators[1]._holdout_predicted_values
-        fold_holdout_indexes = resampler.decorators[1]._holdout_indexes
-        assert len(holdout_df.values) == len(fold_holdout_indexes)
-        # noinspection PyTypeChecker
-        assert all(holdout_df.index.values == fold_holdout_indexes)
+    # def test_Resampler_fold_indexes_parallelized(self):
+    #     # NOTE: when using parallelization, the decorator is copied to the process, so the original object
+    #     # will not retain data, like it does in non-parllelization
+    #     # need to use the decorators passed back in `.fold_decorators` property
+    #     data = TestHelper.get_titanic_data()
+    #
+    #     # main reason we want to split the data is to get the means/st_devs so that we can confirm with
+    #     # e.g. the Searcher
+    #     splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+    #     training_indexes, _ = splitter.split(target_values=data.Survived)
+    #
+    #     train_data_y = data.iloc[training_indexes].Survived
+    #     train_data = data.iloc[training_indexes].drop(columns='Survived')
+    #
+    #     score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
+    #
+    #     decorator = TempDecorator()
+    #     resampler = RepeatedCrossValidationResampler(
+    #         model=MockClassificationModelWrapper(data_y=data.Survived),
+    #         transformations=None,
+    #         scores=score_list,
+    #         folds=5,
+    #         repeats=2,
+    #         fold_decorators=[decorator],
+    #         parallelization_cores=-1)
+    #     resampler.resample(data_x=train_data, data_y=train_data_y)
+    #
+    #     # decorator object is not used directly when using parallization, it is copied
+    #     assert len(decorator._repeat_index) == 0
+    #     assert len(decorator._fold_index) == 0
+    #
+    #     # we should have 1 set/list of decorators for each repeat
+    #     assert len(resampler.decorators) == 2  # 2 because we have 2 repeats
+    #     assert resampler.decorators[0]._repeat_index == [0, 0, 0, 0, 0]
+    #     assert resampler.decorators[0]._fold_index == [0, 1, 2, 3, 4]
+    #
+    #     assert resampler.decorators[1]._repeat_index == [1, 1, 1, 1, 1]
+    #     assert resampler.decorators[1]._fold_index == [0, 1, 2, 3, 4]
+    #
+    #     # The fold holdout indexes should have twice the number of indexes as training_indexes because of
+    #     # `repeats=2`
+    #     num_fold_holdout_indexes = len(resampler.decorators[0]._holdout_indexes)
+    #     num_training_indexes = len(training_indexes)
+    #     # these values should be equal since the fold holdout is for a single repeat
+    #     assert num_training_indexes == num_fold_holdout_indexes
+    #     num_fold_holdout_indexes = len(resampler.decorators[1]._holdout_indexes)
+    #     num_training_indexes = len(training_indexes)
+    #     # these values should be equal since the fold holdout is for a single repeat
+    #     assert num_training_indexes == num_fold_holdout_indexes
+    #     # get the holdout indexes from the first repeat. This should contain exactly 1 to 1 indexes with the
+    #     # original training indexes, although not in the same order
+    #     fold_holdout_indexes = resampler.decorators[0]._holdout_indexes
+    #     assert set(training_indexes) == set(fold_holdout_indexes)
+    #     fold_holdout_indexes = resampler.decorators[1]._holdout_indexes
+    #     assert set(training_indexes) == set(fold_holdout_indexes)
+    #     # at this point we know that both repeats contain the indexes from the original training set
+    #     # this should correspond to the indexes of the predicted values DataFrame
+    #     # first, lets merge the indexes from repeats, and assign into a different list, also used below
+    #     holdout_df = resampler.decorators[0]._holdout_predicted_values
+    #     fold_holdout_indexes = resampler.decorators[0]._holdout_indexes
+    #     assert len(holdout_df.values) == len(fold_holdout_indexes)
+    #     # noinspection PyTypeChecker
+    #     assert all(holdout_df.index.values == fold_holdout_indexes)
+    #
+    #     holdout_df = resampler.decorators[1]._holdout_predicted_values
+    #     fold_holdout_indexes = resampler.decorators[1]._holdout_indexes
+    #     assert len(holdout_df.values) == len(fold_holdout_indexes)
+    #     # noinspection PyTypeChecker
+    #     assert all(holdout_df.index.values == fold_holdout_indexes)
 
     def test_resamplers_RandomForest_classification(self):
         data = TestHelper.get_titanic_data()
@@ -520,158 +520,158 @@ class ResamplerTests(TimerTestCase):
         TestHelper.check_plot('data/test_Resamplers/test_resamplers_RandomForest_classification_cv_boxplot.png',  # noqa
                               lambda: resampler.results.plot_resampled_scores())
 
-    def test_resamplers_RandomForest_classification_cached_parallization(self):
-        data = TestHelper.get_titanic_data()
+    # def test_resamplers_RandomForest_classification_cached_parallization(self):
+    #     data = TestHelper.get_titanic_data()
+    #
+    #     # main reason we want to split the data is to get the means/st_devs so that we can confirm with
+    #     # e.g. the Searcher
+    #     splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+    #     training_indexes, test_indexes = splitter.split(target_values=data.Survived)
+    #
+    #     train_data = data.iloc[training_indexes]
+    #     train_data_y = train_data.Survived
+    #     train_data = train_data.drop(columns='Survived')
+    #
+    #     transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+    #                        CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+    #                        ImputationTransformer(),
+    #                        DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+    #
+    #     score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+    #                       SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+    #                       SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+    #                       ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
+    #
+    #     cache_directory = TestHelper.ensure_test_directory('data/test_Resamplers/cached_test_models/test_resamplers_RandomForest_classification')  # noqa
+    #     resampler = RepeatedCrossValidationResampler(
+    #         model=RandomForestClassifier(),
+    #         transformations=transformations,
+    #         scores=score_list,
+    #         model_persistence_manager=LocalCacheManager(cache_directory=cache_directory),
+    #         folds=5,
+    #         repeats=5,
+    #         parallelization_cores=-1)
+    #
+    #     self.assertRaises(ModelNotFittedError, lambda: resampler.results)
+    #
+    #     time_start = time.time()
+    #     resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
+    #     time_stop = time.time()
+    #     # assert (time_stop - time_start) < 3
+    #
+    #     assert len(resampler.results._scores) == 25
+    #     assert all([len(x) == 4 and
+    #                 isinstance(x[0], KappaScore) and
+    #                 isinstance(x[1], SensitivityScore) and
+    #                 isinstance(x[2], SpecificityScore) and
+    #                 isinstance(x[3], ErrorRateScore)
+    #                 for x in resampler.results._scores])
+    #     assert resampler.results.num_resamples == 25
+    #
+    #     # noinspection SpellCheckingInspection
+    #     expected_file = 'repeat{0}_fold{1}_RandomForestClassifier_n_estimators500_criteriongini_max_featuresNone_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_min_impurity_decrease0_bootstrapTrue_oob_scoreFalse.pkl'  # noqa
+    #     for fold_index in range(5):
+    #         for repeat_index in range(5):
+    #             assert os.path.isfile(os.path.join(cache_directory,
+    #                                                expected_file.format(fold_index, repeat_index)))
+    #
+    #     assert resampler.results.score_names == ['kappa', 'sensitivity', 'specificity', 'error_rate']
+    #
+    #     # make sure the order of the resampled_scores is the same order as Evaluators passed in
+    #     assert all(resampler.results.resampled_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])  # noqa
+    #
+    #     # score_means and score_standard_deviations comes from resampled_scores, so testing both
+    #     assert isclose(resampler.results.score_means['kappa'], 0.586495320545703)
+    #     assert isclose(resampler.results.score_means['sensitivity'], 0.721899136052689)
+    #     assert isclose(resampler.results.score_means['specificity'], 0.8617441563168404)
+    #     assert isclose(resampler.results.score_means['error_rate'], 0.192053148900336)
+    #
+    #     assert isclose(resampler.results.score_standard_deviations['kappa'], 0.06833478821655113)
+    #     assert isclose(resampler.results.score_standard_deviations['sensitivity'], 0.06706830388930413)
+    #     assert isclose(resampler.results.score_standard_deviations['specificity'], 0.03664756028501139)
+    #     assert isclose(resampler.results.score_standard_deviations['error_rate'], 0.031189357324296424)
+    #
+    #     assert isclose(resampler.results.score_coefficients_of_variation['kappa'], round(0.06833478821655113 / 0.586495320545703, 2))  # noqa
+    #     assert isclose(resampler.results.score_coefficients_of_variation['sensitivity'], round(0.06706830388930413 / 0.721899136052689, 2))  # noqa
+    #     assert isclose(resampler.results.score_coefficients_of_variation['specificity'], round(0.03664756028501139 / 0.8617441563168404, 2))  # noqa
+    #     assert isclose(resampler.results.score_coefficients_of_variation['error_rate'], round(0.031189357324296424 / 0.192053148900336, 2))  # noqa
+    #
+    #     plt.gcf().clear()
+    #     TestHelper.check_plot('data/test_Resamplers/test_resamplers_RandomForest_classification_cv_boxplot.png',  # noqa
+    #                           lambda: resampler.results.plot_resampled_scores())
 
-        # main reason we want to split the data is to get the means/st_devs so that we can confirm with
-        # e.g. the Searcher
-        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
-        training_indexes, test_indexes = splitter.split(target_values=data.Survived)
-
-        train_data = data.iloc[training_indexes]
-        train_data_y = train_data.Survived
-        train_data = train_data.drop(columns='Survived')
-
-        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
-                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
-                           ImputationTransformer(),
-                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
-
-        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
-                          SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
-                          SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
-                          ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
-
-        cache_directory = TestHelper.ensure_test_directory('data/test_Resamplers/cached_test_models/test_resamplers_RandomForest_classification')  # noqa
-        resampler = RepeatedCrossValidationResampler(
-            model=RandomForestClassifier(),
-            transformations=transformations,
-            scores=score_list,
-            model_persistence_manager=LocalCacheManager(cache_directory=cache_directory),
-            folds=5,
-            repeats=5,
-            parallelization_cores=-1)
-
-        self.assertRaises(ModelNotFittedError, lambda: resampler.results)
-
-        time_start = time.time()
-        resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
-        time_stop = time.time()
-        # assert (time_stop - time_start) < 3
-
-        assert len(resampler.results._scores) == 25
-        assert all([len(x) == 4 and
-                    isinstance(x[0], KappaScore) and
-                    isinstance(x[1], SensitivityScore) and
-                    isinstance(x[2], SpecificityScore) and
-                    isinstance(x[3], ErrorRateScore)
-                    for x in resampler.results._scores])
-        assert resampler.results.num_resamples == 25
-
-        # noinspection SpellCheckingInspection
-        expected_file = 'repeat{0}_fold{1}_RandomForestClassifier_n_estimators500_criteriongini_max_featuresNone_max_depthNone_min_samples_split2_min_samples_leaf1_min_weight_fraction_leaf0.0_max_leaf_nodesNone_min_impurity_decrease0_bootstrapTrue_oob_scoreFalse.pkl'  # noqa
-        for fold_index in range(5):
-            for repeat_index in range(5):
-                assert os.path.isfile(os.path.join(cache_directory,
-                                                   expected_file.format(fold_index, repeat_index)))
-
-        assert resampler.results.score_names == ['kappa', 'sensitivity', 'specificity', 'error_rate']
-
-        # make sure the order of the resampled_scores is the same order as Evaluators passed in
-        assert all(resampler.results.resampled_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])  # noqa
-
-        # score_means and score_standard_deviations comes from resampled_scores, so testing both
-        assert isclose(resampler.results.score_means['kappa'], 0.586495320545703)
-        assert isclose(resampler.results.score_means['sensitivity'], 0.721899136052689)
-        assert isclose(resampler.results.score_means['specificity'], 0.8617441563168404)
-        assert isclose(resampler.results.score_means['error_rate'], 0.192053148900336)
-
-        assert isclose(resampler.results.score_standard_deviations['kappa'], 0.06833478821655113)
-        assert isclose(resampler.results.score_standard_deviations['sensitivity'], 0.06706830388930413)
-        assert isclose(resampler.results.score_standard_deviations['specificity'], 0.03664756028501139)
-        assert isclose(resampler.results.score_standard_deviations['error_rate'], 0.031189357324296424)
-
-        assert isclose(resampler.results.score_coefficients_of_variation['kappa'], round(0.06833478821655113 / 0.586495320545703, 2))  # noqa
-        assert isclose(resampler.results.score_coefficients_of_variation['sensitivity'], round(0.06706830388930413 / 0.721899136052689, 2))  # noqa
-        assert isclose(resampler.results.score_coefficients_of_variation['specificity'], round(0.03664756028501139 / 0.8617441563168404, 2))  # noqa
-        assert isclose(resampler.results.score_coefficients_of_variation['error_rate'], round(0.031189357324296424 / 0.192053148900336, 2))  # noqa
-
-        plt.gcf().clear()
-        TestHelper.check_plot('data/test_Resamplers/test_resamplers_RandomForest_classification_cv_boxplot.png',  # noqa
-                              lambda: resampler.results.plot_resampled_scores())
-
-    def test_resamplers_RandomForest_classification_parallization(self):
-        data = TestHelper.get_titanic_data()
-
-        # main reason we want to split the data is to get the means/st_devs so that we can confirm with
-        # e.g. the Searcher
-        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
-        training_indexes, test_indexes = splitter.split(target_values=data.Survived)
-
-        train_data = data.iloc[training_indexes]
-        train_data_y = train_data.Survived
-        train_data = train_data.drop(columns='Survived')
-
-        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
-                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
-                           ImputationTransformer(),
-                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
-
-        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
-                          SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
-                          SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
-                          ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
-
-        resampler = RepeatedCrossValidationResampler(
-            model=RandomForestClassifier(),
-            transformations=transformations,
-            scores=score_list,
-            folds=5,
-            repeats=5,
-            parallelization_cores=-1)
-
-        self.assertRaises(ModelNotFittedError, lambda: resampler.results)
-
-        time_start = time.time()
-        resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
-        time_stop = time.time()
-
-        if not TestHelper.is_debugging():
-            assert (time_stop - time_start) < 15   # goes from ~30 sec to < 10 with parallelization
-
-        TestHelper.save_string(resampler.results,
-                               'data/test_Resamplers/test_resamplers_RandomForest_classification_parallization_string.txt')  # noqa
-
-        assert len(resampler.results._scores) == 25
-        assert all([len(x) == 4 and
-                    isinstance(x[0], KappaScore) and
-                    isinstance(x[1], SensitivityScore) and
-                    isinstance(x[2], SpecificityScore) and
-                    isinstance(x[3], ErrorRateScore)
-                    for x in resampler.results._scores])
-        assert resampler.results.num_resamples == 25
-
-        # noinspection SpellCheckingInspection
-        assert resampler.results.score_names == ['kappa', 'sensitivity', 'specificity', 'error_rate']
-
-        # make sure the order of the resampled_scores is the same order as Evaluators passed in
-        assert all(resampler.results.resampled_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])  # noqa
-
-        # score_means and score_standard_deviations comes from resampled_scores, so testing both
-        assert isclose(resampler.results.score_means['kappa'], 0.586495320545703)
-        assert isclose(resampler.results.score_means['sensitivity'], 0.721899136052689)
-        assert isclose(resampler.results.score_means['specificity'], 0.8617441563168404)
-        assert isclose(resampler.results.score_means['error_rate'], 0.192053148900336)
-
-        assert isclose(resampler.results.score_standard_deviations['kappa'], 0.06833478821655113)
-        assert isclose(resampler.results.score_standard_deviations['sensitivity'], 0.06706830388930413)
-        assert isclose(resampler.results.score_standard_deviations['specificity'], 0.03664756028501139)
-        assert isclose(resampler.results.score_standard_deviations['error_rate'], 0.031189357324296424)
-
-        assert isclose(resampler.results.score_coefficients_of_variation['kappa'], round(0.06833478821655113 / 0.586495320545703, 2))  # noqa
-        assert isclose(resampler.results.score_coefficients_of_variation['sensitivity'], round(0.06706830388930413 / 0.721899136052689, 2))  # noqa
-        assert isclose(resampler.results.score_coefficients_of_variation['specificity'], round(0.03664756028501139 / 0.8617441563168404, 2))  # noqa
-        assert isclose(resampler.results.score_coefficients_of_variation['error_rate'], round(0.031189357324296424 / 0.192053148900336, 2))  # noqa
+    # def test_resamplers_RandomForest_classification_parallization(self):
+    #     data = TestHelper.get_titanic_data()
+    #
+    #     # main reason we want to split the data is to get the means/st_devs so that we can confirm with
+    #     # e.g. the Searcher
+    #     splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+    #     training_indexes, test_indexes = splitter.split(target_values=data.Survived)
+    #
+    #     train_data = data.iloc[training_indexes]
+    #     train_data_y = train_data.Survived
+    #     train_data = train_data.drop(columns='Survived')
+    #
+    #     transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+    #                        CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+    #                        ImputationTransformer(),
+    #                        DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+    #
+    #     score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),
+    #                       SensitivityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+    #                       SpecificityScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1)),  # noqa
+    #                       ErrorRateScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]  # noqa
+    #
+    #     resampler = RepeatedCrossValidationResampler(
+    #         model=RandomForestClassifier(),
+    #         transformations=transformations,
+    #         scores=score_list,
+    #         folds=5,
+    #         repeats=5,
+    #         parallelization_cores=-1)
+    #
+    #     self.assertRaises(ModelNotFittedError, lambda: resampler.results)
+    #
+    #     time_start = time.time()
+    #     resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
+    #     time_stop = time.time()
+    #
+    #     if not TestHelper.is_debugging():
+    #         assert (time_stop - time_start) < 15   # goes from ~30 sec to < 10 with parallelization
+    #
+    #     TestHelper.save_string(resampler.results,
+    #                            'data/test_Resamplers/test_resamplers_RandomForest_classification_parallization_string.txt')  # noqa
+    #
+    #     assert len(resampler.results._scores) == 25
+    #     assert all([len(x) == 4 and
+    #                 isinstance(x[0], KappaScore) and
+    #                 isinstance(x[1], SensitivityScore) and
+    #                 isinstance(x[2], SpecificityScore) and
+    #                 isinstance(x[3], ErrorRateScore)
+    #                 for x in resampler.results._scores])
+    #     assert resampler.results.num_resamples == 25
+    #
+    #     # noinspection SpellCheckingInspection
+    #     assert resampler.results.score_names == ['kappa', 'sensitivity', 'specificity', 'error_rate']
+    #
+    #     # make sure the order of the resampled_scores is the same order as Evaluators passed in
+    #     assert all(resampler.results.resampled_scores.columns.values == ['kappa', 'sensitivity', 'specificity', 'error_rate'])  # noqa
+    #
+    #     # score_means and score_standard_deviations comes from resampled_scores, so testing both
+    #     assert isclose(resampler.results.score_means['kappa'], 0.586495320545703)
+    #     assert isclose(resampler.results.score_means['sensitivity'], 0.721899136052689)
+    #     assert isclose(resampler.results.score_means['specificity'], 0.8617441563168404)
+    #     assert isclose(resampler.results.score_means['error_rate'], 0.192053148900336)
+    #
+    #     assert isclose(resampler.results.score_standard_deviations['kappa'], 0.06833478821655113)
+    #     assert isclose(resampler.results.score_standard_deviations['sensitivity'], 0.06706830388930413)
+    #     assert isclose(resampler.results.score_standard_deviations['specificity'], 0.03664756028501139)
+    #     assert isclose(resampler.results.score_standard_deviations['error_rate'], 0.031189357324296424)
+    #
+    #     assert isclose(resampler.results.score_coefficients_of_variation['kappa'], round(0.06833478821655113 / 0.586495320545703, 2))  # noqa
+    #     assert isclose(resampler.results.score_coefficients_of_variation['sensitivity'], round(0.06706830388930413 / 0.721899136052689, 2))  # noqa
+    #     assert isclose(resampler.results.score_coefficients_of_variation['specificity'], round(0.03664756028501139 / 0.8617441563168404, 2))  # noqa
+    #     assert isclose(resampler.results.score_coefficients_of_variation['error_rate'], round(0.031189357324296424 / 0.192053148900336, 2))  # noqa
 
     # noinspection PyTypeChecker
     def test_resampling_roc_pr_thresholds(self):
@@ -788,65 +788,65 @@ class ResamplerTests(TimerTestCase):
         assert resampler.results.decorators[0] is decorator  # should be the same objects
 
     # noinspection PyTypeChecker
-    def test_resampling_roc_pr_thresholds_resampler_parallelization(self):
-        ######################################################################################################
-        # turn off parallelization for TwoClassThresholdDecorator and on for RepeatedCrossValidationResampler
-        ######################################################################################################
-        decorator = TwoClassThresholdDecorator(parallelization_cores=0)  # turn off parallelization
-        # resampler gets the positive class from either the score directly, or the score._converter; test
-        # using both score types (e.g. AucX & Kappa)
-        data = TestHelper.get_titanic_data()
-        splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
-        training_indexes, test_indexes = splitter.split(target_values=data.Survived)
-
-        train_data_y = data.iloc[training_indexes].Survived
-        train_data = data.iloc[training_indexes].drop(columns='Survived')
-
-        transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
-                           CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
-                           ImputationTransformer(),
-                           DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
-
-        score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
-        resampler = RepeatedCrossValidationResampler(
-            model=RandomForestClassifier(),
-            transformations=transformations,
-            scores=score_list,
-            folds=5,
-            repeats=1,
-            fold_decorators=[decorator],
-            parallelization_cores=-1)  # turn on parallelization, even though it won't help because 1 repeat
-
-        # start_time = time.time()
-        resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
-        # resample_time = time.time() - start_time
-
-        expected_roc_thresholds = [0.43, 0.31, 0.47, 0.59, 0.48]
-        expected_precision_recall_thresholds = [0.43, 0.53, 0.64, 0.59, 0.6]
-
-        ######################################################################################################
-        # NOTE: because we used parallelization with the resampler, the original decorator was not used;
-        # it was copied into the process, so we have to get the saved decorators (per fold) from
-        # `fold_decorators`
-        # Because only 1 repeat was used, there is only 1 and it should match what we expected from the
-        # decorator object had we not used parallelization; if there were multiple repeats, we'd have
-        # multiple fold_decorator items that we would have to concatenate (or flatten) to get the equivalent
-        # of the non-parallelization scenario
-        ######################################################################################################
-        decorator = resampler.decorators[0]
-
-        assert decorator.roc_ideal_thresholds == expected_roc_thresholds
-        assert decorator.precision_recall_ideal_thresholds == expected_precision_recall_thresholds
-        assert isclose(decorator.roc_threshold_mean, np.mean(expected_roc_thresholds))
-        assert isclose(decorator.precision_recall_threshold_mean, np.mean(expected_precision_recall_thresholds))  # noqa
-        assert isclose(decorator.roc_threshold_st_dev, np.std(expected_roc_thresholds))
-        assert isclose(decorator.precision_recall_threshold_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
-        assert isclose(decorator.roc_threshold_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
-        assert isclose(decorator.precision_recall_threshold_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa
-
-        # the object should be stored in the results as the first and only decorator element
-        assert len(resampler.results.decorators) == 1
-        assert resampler.results.decorators[0] is decorator  # should be the same objects
+    # def test_resampling_roc_pr_thresholds_resampler_parallelization(self):
+    #     ######################################################################################################
+    #     # turn off parallelization for TwoClassThresholdDecorator and on for RepeatedCrossValidationResampler
+    #     ######################################################################################################
+    #     decorator = TwoClassThresholdDecorator(parallelization_cores=0)  # turn off parallelization
+    #     # resampler gets the positive class from either the score directly, or the score._converter; test
+    #     # using both score types (e.g. AucX & Kappa)
+    #     data = TestHelper.get_titanic_data()
+    #     splitter = ClassificationStratifiedDataSplitter(holdout_ratio=0.25)
+    #     training_indexes, test_indexes = splitter.split(target_values=data.Survived)
+    #
+    #     train_data_y = data.iloc[training_indexes].Survived
+    #     train_data = data.iloc[training_indexes].drop(columns='Survived')
+    #
+    #     transformations = [RemoveColumnsTransformer(['PassengerId', 'Name', 'Ticket', 'Cabin']),
+    #                        CategoricConverterTransformer(['Pclass', 'SibSp', 'Parch']),
+    #                        ImputationTransformer(),
+    #                        DummyEncodeTransformer(CategoricalEncoding.ONE_HOT)]
+    #
+    #     score_list = [KappaScore(converter=TwoClassThresholdConverter(threshold=0.5, positive_class=1))]
+    #     resampler = RepeatedCrossValidationResampler(
+    #         model=RandomForestClassifier(),
+    #         transformations=transformations,
+    #         scores=score_list,
+    #         folds=5,
+    #         repeats=1,
+    #         fold_decorators=[decorator],
+    #         parallelization_cores=-1)  # turn on parallelization, even though it won't help because 1 repeat
+    #
+    #     # start_time = time.time()
+    #     resampler.resample(data_x=train_data, data_y=train_data_y, hyper_params=RandomForestHP())
+    #     # resample_time = time.time() - start_time
+    #
+    #     expected_roc_thresholds = [0.43, 0.31, 0.47, 0.59, 0.48]
+    #     expected_precision_recall_thresholds = [0.43, 0.53, 0.64, 0.59, 0.6]
+    #
+    #     ######################################################################################################
+    #     # NOTE: because we used parallelization with the resampler, the original decorator was not used;
+    #     # it was copied into the process, so we have to get the saved decorators (per fold) from
+    #     # `fold_decorators`
+    #     # Because only 1 repeat was used, there is only 1 and it should match what we expected from the
+    #     # decorator object had we not used parallelization; if there were multiple repeats, we'd have
+    #     # multiple fold_decorator items that we would have to concatenate (or flatten) to get the equivalent
+    #     # of the non-parallelization scenario
+    #     ######################################################################################################
+    #     decorator = resampler.decorators[0]
+    #
+    #     assert decorator.roc_ideal_thresholds == expected_roc_thresholds
+    #     assert decorator.precision_recall_ideal_thresholds == expected_precision_recall_thresholds
+    #     assert isclose(decorator.roc_threshold_mean, np.mean(expected_roc_thresholds))
+    #     assert isclose(decorator.precision_recall_threshold_mean, np.mean(expected_precision_recall_thresholds))  # noqa
+    #     assert isclose(decorator.roc_threshold_st_dev, np.std(expected_roc_thresholds))
+    #     assert isclose(decorator.precision_recall_threshold_st_dev, np.std(expected_precision_recall_thresholds))  # noqa
+    #     assert isclose(decorator.roc_threshold_cv, round(np.std(expected_roc_thresholds) / np.mean(expected_roc_thresholds), 2))  # noqa
+    #     assert isclose(decorator.precision_recall_threshold_cv, round(np.std(expected_precision_recall_thresholds) / np.mean(expected_precision_recall_thresholds), 2))  # noqa
+    #
+    #     # the object should be stored in the results as the first and only decorator element
+    #     assert len(resampler.results.decorators) == 1
+    #     assert resampler.results.decorators[0] is decorator  # should be the same objects
 
     def test_resampler_results_caching_without_model_cacher(self):
         data = TestHelper.get_titanic_data()
