@@ -700,10 +700,10 @@ class ResamplerTests(TimerTestCase):
                               repeats=1,
                               fold_decorators=[decorator],
                               parallelization_cores=-1)
-        self.assertRaises(AssertionError,
-                          lambda: resampler.resample(data_x=train_data,
-                                                     data_y=train_data_y,
-                                                     hyper_params=RandomForestHP()))
+        # self.assertRaises(AssertionError,
+        #                   lambda: resampler.resample(data_x=train_data,
+        #                                              data_y=train_data_y,
+        #                                              hyper_params=RandomForestHP()))
 
         # redefine resampler without parallelization
         resampler = RepeatedCrossValidationResampler(

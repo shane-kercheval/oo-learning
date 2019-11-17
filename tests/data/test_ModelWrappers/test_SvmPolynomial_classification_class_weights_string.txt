@@ -23,14 +23,14 @@ Hyper-Parameters
  class_weight={0: 0.3
  1: 0.7}
  coef0=0.0,
-  decision_function_shape='ovr'
+    decision_function_shape='ovr'
  degree=3
  gamma='auto_deprecated',
-  kernel='poly'
+    kernel='poly'
  max_iter=-1
  probability=False
  random_state=42,
-  shrinking=True
+    shrinking=True
  tol=0.001
  verbose=False)
  'cv': 'warn'

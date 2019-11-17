@@ -30,36 +30,36 @@ Feature Importance
 ==================
 
             gain_values
-Sex_female  1715.692997
-Sex_male     627.227300
-Pclass_3     236.291559
-Fare         219.097787
-Pclass_1      34.264726
-Age           28.882754
-Embarked_S     3.310187
-SibSp_1        1.874383
-Embarked_C     1.550320
-SibSp_0        0.603677
-Parch_0        0.393542
-Parch_3        0.000000
-Embarked_Q     0.000000
-Parch_6        0.000000
-Parch_5        0.000000
-Parch_4        0.000000
-Parch_1        0.000000
-Parch_2        0.000000
-SibSp_8        0.000000
-Pclass_2       0.000000
+Sex_female  7641.471283
+Sex_male    2793.461090
+Fare        1179.578966
+Pclass_3    1120.358755
+Age          337.678114
+Pclass_1     305.072609
+Embarked_C    28.477858
+SibSp_1       26.420979
+SibSp_0       24.379930
+Parch_0       23.661283
+Embarked_S    20.644194
+Embarked_Q     9.013640
+Pclass_2       1.205590
 SibSp_4        0.000000
 SibSp_3        0.000000
+SibSp_8        0.000000
 SibSp_2        0.000000
+Parch_1        0.000000
+Parch_2        0.000000
+Parch_3        0.000000
+Parch_4        0.000000
+Parch_5        0.000000
+Parch_6        0.000000
 SibSp_5        0.000000
 
 Training Evaluator
 ==================
 
-{'AUC ROC': 0.8687827
- 'AUC Precision/Recall': 0.83989401
+{'AUC ROC': 0.87028461
+ 'AUC Precision/Recall': 0.84723998
  'Kappa': 0.54817366
  'F1 Score': 0.7148289
  'Two-Class Accuracy': 0.78932584
@@ -86,8 +86,8 @@ Total      459  253    712
 Holdout Evaluator
 =================
 
-{'AUC ROC': 0.8215415
- 'AUC Precision/Recall': 0.78188631
+{'AUC ROC': 0.82318841
+ 'AUC Precision/Recall': 0.78739775
  'Kappa': 0.51791005
  'F1 Score': 0.69230769
  'Two-Class Accuracy': 0.77653631

@@ -20,15 +20,15 @@ Hyper-Parameters
  class_weight={'died': 0.3
  'lived': 0.7}
  dual=True,
-     fit_intercept=False
+          fit_intercept=False
  intercept_scaling=1
  loss='hinge'
  max_iter=1000,
-     multi_class='ovr'
+          multi_class='ovr'
  penalty='l2'
  random_state=42
  tol=0.0001,
-     verbose=0)
+          verbose=0)
  'cv': 'warn'
  'method': 'sigmoid'}
 
