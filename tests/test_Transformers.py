@@ -313,7 +313,7 @@ class TransformerTests(TimerTestCase):
         def transform_column_to_categorical(mapping, dataset, feature):
             actual_to_expected_mapping = dict(zip(mapping.keys(), np.arange(len(mapping))))
             codes = pd.Series(dataset[feature]).map(actual_to_expected_mapping).fillna(-1)
-            return pd.Categorical.from_codes(codes, mapping.values(), ordered=False)
+            return pd.Categorical.from_codes(codes.astype(int), mapping.values(), ordered=False)
 
         training_set['Pclass'] = transform_column_to_categorical(mapping={1: 'a', 2: 'b', 3: 'c'},
                                                                  dataset=training_set,

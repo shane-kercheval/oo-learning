@@ -76,10 +76,10 @@ class BayesianOptimizationTests(TimerTestCase):
         best_indexes = model_tuner.results.resampled_stats.sort_values(by='AUC_ROC_mean',
                                                                        ascending=False).index.values
         assert all(model_tuner.results.sorted_best_indexes == best_indexes)
-        assert all(model_tuner.results.sorted_best_indexes == [2, 3, 4, 0, 1])
+        assert all(model_tuner.results.sorted_best_indexes == [3, 0, 2, 4, 1])
         assert model_tuner.results.best_index == best_indexes[0]
-        assert model_tuner.results.best_model['AUC_ROC_mean'] == 0.8729365330743747
-        assert model_tuner.results.best_hyper_params == {'max_depth': -1, 'num_leaves': 10}
+        assert model_tuner.results.best_model['AUC_ROC_mean'] == 0.8693921743812189
+        assert model_tuner.results.best_hyper_params == {'max_depth': 5, 'num_leaves': 38}
 
         # noinspection PyUnresolvedReferences
         assert all(model_tuner.results.optimizer_results['AUC_ROC'].values ==
@@ -121,7 +121,7 @@ class BayesianOptimizationTests(TimerTestCase):
         tuned_holdout_predictions = model.predict(data_x=transformed_holdout_data)
         score_value = AucRocScore(positive_class=1).calculate(actual_values=holdout_y,
                                                               predicted_values=tuned_holdout_predictions)
-        assert score_value == 0.7928853754940711
+        assert score_value == 0.7867588932806324
 
     def test_BayesianOptimization_Regression_CostFunction(self):
         data = TestHelper.get_cement_data()
@@ -365,7 +365,7 @@ class BayesianOptimizationTests(TimerTestCase):
         holdout_predictions = model.predict(data_x=transformed_holdout_data)
         score_value = AucRocScore(positive_class=1).calculate(actual_values=holdout_y,
                                                               predicted_values=holdout_predictions)
-        assert score_value == 0.7928853754940711
+        assert score_value == 0.7907114624505929
 
     # noinspection PyUnresolvedReferences
     def test_BayesianHyperOptModelTuner_Regression_CostFunction(self):
@@ -560,7 +560,7 @@ class BayesianOptimizationTests(TimerTestCase):
                                                          'PCA': 'EmptyTransformer', 'max_depth': 5,
                                                          'num_leaves': 88}
         assert model_tuner.results.best_index == 1
-        assert all(model_tuner.results.sorted_best_indexes == [1, 0, 3, 2, 4])
+        assert all(model_tuner.results.sorted_best_indexes == [1, 3, 0, 2, 4])
         assert model_tuner.results.number_of_cycles == max_evaluations
         assert model_tuner.results.hyper_param_names == ['CenterScale vs Normalize', 'PCA', 'max_depth',
                                                          'num_leaves']
