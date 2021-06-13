@@ -333,7 +333,7 @@ class XGBoostClassifier(SklearnPredictProbabilityMixin, XGBoostBase):
                               base_score=param_dict['base_score'],
                               random_state=self._seed,
                               # seed=param_dict['seed'],
-                              use_label_encoder=False,
+                              # use_label_encoder=False,
                               missing=param_dict['missing'])
 
         return self.xgb_fit(model=model, data_x=data_x, data_y=data_y)

@@ -223,7 +223,7 @@ class SearcherResults:
 
         for y in range(score_values.shape[0]):
             for x in range(score_values.shape[1]):
-                plt.text(x + .5, y + .5, '%.3f' % score_values.ix[y, x],
+                plt.text(x + .5, y + .5, '%.3f' % score_values.iloc[y, x],
                          horizontalalignment='center',
                          verticalalignment='center')
 
