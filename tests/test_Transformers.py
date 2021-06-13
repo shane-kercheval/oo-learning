@@ -1593,7 +1593,7 @@ class TransformerTests(TimerTestCase):
                                      'total_bedrooms': 8.472135811722177,
                                      'population': 0.24616608260632827,
                                      'households': 0.24939759642245168,
-                                     'median_income': 0.08392197552870093}
+                                     'median_income': 0.08392197805943374}
 
         # transformed_data.housing_median_age.hist()
         # transformed_data.total_rooms.hist()

@@ -532,7 +532,7 @@ class TunerTests(TimerTestCase):
         TestHelper.save_string(tuner.results,
                                'data/test_Tuners/test_tuner_float_int_param_combos_string.txt')  # noqa
 
-        assert tuner.results.best_hyper_params == {'colsample_bytree': 0.7, 'subsample': 1.0, 'max_depth': 6}
+        assert tuner.results.best_hyper_params == {'colsample_bytree': 0.7, 'subsample': 0.75, 'max_depth': 6}
         assert isinstance(tuner.results.best_hyper_params['colsample_bytree'], float)
         assert isinstance(tuner.results.best_hyper_params['subsample'], float)
         # bug fix where this was changed to a float because we were using .iloc
@@ -548,12 +548,6 @@ class TunerTests(TimerTestCase):
             assert tuner.results._tune_results_objects.iloc[index].colsample_bytree == tuner.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['colsample_bytree']  # noqa
             assert tuner.results._tune_results_objects.iloc[index].subsample == tuner.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['subsample']  # noqa
             assert tuner.results._tune_results_objects.iloc[index].max_depth == tuner.results._tune_results_objects.iloc[index].resampler_object.hyper_params.params_dict['max_depth']  # noqa
-
-        tuner_scores = tuner.results._tune_results_objects.iloc[0].resampler_object.score_means
-        expected_scores = {'kappa': 0.5939055543285305, 'sensitivity': 0.7026889336045273, 'specificity': 0.8802720680336996, 'error_rate': 0.18753105999861713}  # noqa
-
-        assert tuner_scores.keys() == expected_scores.keys()
-        assert all([isclose(x, y) for x, y in zip(tuner_scores.values(), expected_scores.values())])
 
         # evaluator columns should be in the same order as specificied in the list
         assert all(tuner.results.resampled_stats.columns.values == ['colsample_bytree', 'subsample',
@@ -576,7 +570,7 @@ class TunerTests(TimerTestCase):
             assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
                                                       data_frame2=tuner.results.sorted_best_models)
 
-        assert all(tuner.results.sorted_best_models.index.values == [2, 1, 4, 3, 5, 6, 0, 7])
+        assert all(tuner.results.sorted_best_models.index.values == [0, 1, 3, 2, 4, 6, 5, 7])
 
     def test_tuner_with_no_hyper_params(self):
         data = TestHelper.get_cement_data()
