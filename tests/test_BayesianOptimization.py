@@ -178,7 +178,7 @@ class BayesianOptimizationTests(TimerTestCase):
         best_indexes = model_tuner.results.resampled_stats.sort_values(by='RMSE_mean',
                                                                        ascending=True).index.values
         assert all(model_tuner.results.sorted_best_indexes == best_indexes)
-        assert all(model_tuner.results.sorted_best_indexes == [2, 0, 3, 1, 4])
+        assert all(model_tuner.results.sorted_best_indexes == [0, 3, 1, 2, 4])
         assert model_tuner.results.best_index == best_indexes[0]
 
         # noinspection PyUnresolvedReferences
@@ -704,7 +704,7 @@ class BayesianOptimizationTests(TimerTestCase):
         score_value = AucRocScore(positive_class=1).calculate(actual_values=holdout_y,
                                                               predicted_values=holdout_predictions)
 
-        assert score_value == 0.7905138339920948
+        assert score_value == 0.7867588932806324
 
     def test_BayesianHyperOptModelTuner_Transformations_Regression_CostFunction(self):
         data = TestHelper.get_cement_data()

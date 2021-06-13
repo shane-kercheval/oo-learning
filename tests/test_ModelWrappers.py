@@ -3069,7 +3069,7 @@ class ModelWrapperTests(TimerTestCase):
 
         assert isclose(roc_auc_score(y_true=holdout_y, y_score=predictions_random_forest[1]), 0.8230566534914362)  # noqa
         assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_decision_tree.predict(data_x=holdout_x)[1]), 0.772463768115942)  # noqa
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_adaboost.predict(data_x=holdout_x)[1]), 0.7928853754940711)  # noqa
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_adaboost.predict(data_x=holdout_x)[1]), 0.7812252964426878)  # noqa
 
         ######################################################################################################
         # VotingStrategy.SOFT
@@ -3106,7 +3106,7 @@ class ModelWrapperTests(TimerTestCase):
         # make sure we are getting the correct averages back
         assert all([isclose(x, y) for x, y in zip(voting_predictions[0], died_averages)])
         assert all([isclose(x, y) for x, y in zip(voting_predictions[1], survived_averages)])
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.8108036890645587)  # noqa
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.8075098814229249)  # noqa
 
         ######################################################################################################
         # VotingStrategy.HARD
@@ -3133,7 +3133,7 @@ class ModelWrapperTests(TimerTestCase):
         # [1 if x > 0.5 else 0 for x in predictions_random_forest[1]]
         # [1 if x > 0.5 else 0 for x in model_aggregator.predict(data_x=holdout_x)[1]]
         # list(holdout_y)
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.7857048748353096)  # noqa
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.8075098814229249)  # noqa
 
     def test_ModelAggregator_soft_median(self):
         data = TestHelper.get_titanic_data()
@@ -3166,7 +3166,7 @@ class ModelWrapperTests(TimerTestCase):
 
         assert isclose(roc_auc_score(y_true=holdout_y, y_score=predictions_random_forest[1]), 0.8230566534914362)  # noqa
         assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_decision_tree.predict(data_x=holdout_x)[1]), 0.772463768115942)  # noqa
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_adaboost.predict(data_x=holdout_x)[1]), 0.7928853754940711)  # noqa
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_adaboost.predict(data_x=holdout_x)[1]), 0.7812252964426878)  # noqa
 
         ######################################################################################################
         # VotingStrategy.SOFT
@@ -3199,7 +3199,7 @@ class ModelWrapperTests(TimerTestCase):
         # make sure we are getting the correct averages back
         assert all([isclose(x, y) for x, y in zip(voting_predictions[0], died_averages)])
         assert all([isclose(x, y) for x, y in zip(voting_predictions[1], survived_averages)])
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.803491436100132)  # noqa
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.800395256916996)  # noqa
 
     def test_ModelAggregator_multi_class(self):
         data = TestHelper.get_iris_data()
@@ -4096,10 +4096,11 @@ class ModelWrapperTests(TimerTestCase):
         # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
         assert predict_callback_called == ['predict_called_train', 'predict_called_holdout']
 
-        expected_training_evaluator_metrics = {'Mean Absolute Error (MAE)': 2348.831092002159, 'Mean Squared Error (MSE)': 12228143.542732708, 'Root Mean Squared Error (RMSE)': 3496.876254992834, 'RMSE to Standard Deviation of Target': 0.29057495884002565, 'R Squared': 0.9155661932951173, 'Total Observations': 1070}  # noqa
-        assert all([isclose(expected_training_evaluator_metrics[key], fitter.training_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
-        expected_holdout_evaluator_metrics = {'Mean Absolute Error (MAE)': 3130.086717021986, 'Mean Squared Error (MSE)': 25676658.487111364, 'Root Mean Squared Error (RMSE)': 5067.214075516385, 'RMSE to Standard Deviation of Target': 0.40915774234766544, 'R Squared': 0.8325899418769614, 'Total Observations': 268}  # noqa
-        assert all([isclose(expected_holdout_evaluator_metrics[key], fitter.holdout_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_ModelStacker_Regression_with_stacker_transformations_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_ModelStacker_Regression_with_stacker_transformations_holdout_evaluator.txt')  # noqa
+
         assert all([x == y for x, y in zip([x.description for x in model_stacker._base_models], ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor'])])  # noqa
         # test resample data
         file_test_model_stacker_resample_data_regression = fh('resample_data_regression_stacker_trans.pkl')
