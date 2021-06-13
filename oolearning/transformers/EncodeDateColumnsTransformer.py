@@ -76,7 +76,7 @@ class EncodeDateColumnsTransformer(TransformerBase):
                 max_date = temp_max
 
         calendar = USFederalHolidayCalendar()
-        holidays = calendar.holidays(start=min_date, end=max_date)
+        holidays = calendar.holidays(start=min_date, end=max_date).to_list()
 
         def create_date_columns(x):
             return pd.Series([x.year,
