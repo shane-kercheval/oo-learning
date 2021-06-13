@@ -1,6 +1,6 @@
-{'Kappa': 0.92099792
- 'Accuracy': 0.94736842
- 'Error Rate': 0.05263158
+{'Kappa': 0.96049896
+ 'Accuracy': 0.97368421
+ 'Error Rate': 0.02631579
  'No Information Rate': 0.34210526
  'Total Observations': 38}
 
@@ -11,5 +11,5 @@ predicted   setosa  versicolor  virginica  Total
 actual                                          
 setosa          12           0          0     12
 versicolor       0          12          1     13
-virginica        0           1         12     13
-Total           12          13         13     38
+virginica        0           0         13     13
+Total           12          12         14     38

@@ -30,46 +30,46 @@ Feature Importance
 ==================
 
             gain_values
-Sex_female  1252.771390
-Fare        1020.690738
-Age          788.566951
-Pclass_3     351.632238
-Pclass_1      93.452655
-Embarked_S    89.632712
-Parch_0       63.705675
-SibSp_1       40.293967
-SibSp_0       39.281282
-Embarked_C    32.359929
-Pclass_2      19.714239
-Sex_male      11.434462
-Parch_1        7.867083
-Embarked_Q     5.160174
-SibSp_2        3.327035
-Parch_2        2.993422
+Sex_female  1241.462213
+Fare         998.008695
+Age          831.406838
+Pclass_3     341.528147
+Pclass_1     102.606565
+Embarked_S    99.926992
+Parch_0       49.179406
+SibSp_0       43.671646
+SibSp_1       39.219723
+Embarked_C    30.564394
+Pclass_2      20.976342
+Sex_male      19.396014
+Parch_2       11.542299
+SibSp_2        3.604910
+Embarked_Q     3.494627
+Parch_1        2.955361
 SibSp_8        0.000000
-SibSp_4        0.000000
-SibSp_3        0.000000
 Parch_3        0.000000
 Parch_4        0.000000
 Parch_5        0.000000
 Parch_6        0.000000
+SibSp_4        0.000000
+SibSp_3        0.000000
 SibSp_5        0.000000
 
 Training Evaluator
 ==================
 
-{'AUC ROC': 0.9917645
- 'AUC Precision/Recall': 0.98766746
- 'Kappa': 0.89552764
- 'F1 Score': 0.93506494
- 'Two-Class Accuracy': 0.9508427
- 'Error Rate': 0.0491573
- 'True Positive Rate': 0.92307692
- 'True Negative Rate': 0.96810934
- 'False Positive Rate': 0.03189066
- 'False Negative Rate': 0.07692308
- 'Positive Predictive Value': 0.94736842
- 'Negative Predictive Value': 0.9529148
+{'AUC ROC': 0.99215667
+ 'AUC Precision/Recall': 0.98816083
+ 'Kappa': 0.8981582
+ 'F1 Score': 0.93632959
+ 'Two-Class Accuracy': 0.95224719
+ 'Error Rate': 0.04775281
+ 'True Positive Rate': 0.91575092
+ 'True Negative Rate': 0.97494305
+ 'False Positive Rate': 0.02505695
+ 'False Negative Rate': 0.08424908
+ 'Positive Predictive Value': 0.95785441
+ 'Negative Predictive Value': 0.94900222
  'Prevalence': 0.38342697
  'No Information Rate': 0.61657303
  'Total Observations': 712}
@@ -79,25 +79,25 @@ Confusion Matrix
 
 predicted    0    1  Total
 actual                    
-0          425   14    439
-1           21  252    273
-Total      446  266    712
+0          428   11    439
+1           23  250    273
+Total      451  261    712
 
 Holdout Evaluator
 =================
 
-{'AUC ROC': 0.80019763
- 'AUC Precision/Recall': 0.7930434
- 'Kappa': 0.56850141
- 'F1 Score': 0.72727273
- 'Two-Class Accuracy': 0.79888268
- 'Error Rate': 0.20111732
+{'AUC ROC': 0.79611331
+ 'AUC Precision/Recall': 0.78620663
+ 'Kappa': 0.54701652
+ 'F1 Score': 0.71641791
+ 'Two-Class Accuracy': 0.7877095
+ 'Error Rate': 0.2122905
  'True Positive Rate': 0.69565217
- 'True Negative Rate': 0.86363636
- 'False Positive Rate': 0.13636364
+ 'True Negative Rate': 0.84545455
+ 'False Positive Rate': 0.15454545
  'False Negative Rate': 0.30434783
- 'Positive Predictive Value': 0.76190476
- 'Negative Predictive Value': 0.81896552
+ 'Positive Predictive Value': 0.73846154
+ 'Negative Predictive Value': 0.81578947
  'Prevalence': 0.38547486
  'No Information Rate': 0.61452514
  'Total Observations': 179}
@@ -107,6 +107,6 @@ Confusion Matrix
 
 predicted    0   1  Total
 actual                   
-0           95  15    110
+0           93  17    110
 1           21  48     69
-Total      116  63    179
+Total      114  65    179

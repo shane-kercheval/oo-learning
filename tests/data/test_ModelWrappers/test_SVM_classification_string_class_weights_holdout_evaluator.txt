@@ -1,15 +1,15 @@
-{'AUC ROC': 0.8256917
- 'AUC Precision/Recall': 0.75857081
- 'Kappa': 0.50991653
- 'F1 Score': 0.69172932
- 'Two-Class Accuracy': 0.77094972
- 'Error Rate': 0.22905028
- 'True Positive Rate': 0.66666667
- 'True Negative Rate': 0.83636364
- 'False Positive Rate': 0.16363636
- 'False Negative Rate': 0.33333333
- 'Positive Predictive Value': 0.71875
- 'Negative Predictive Value': 0.8
+{'AUC ROC': 0.84018445
+ 'AUC Precision/Recall': 0.77548336
+ 'Kappa': 0.56611904
+ 'F1 Score': 0.72307692
+ 'Two-Class Accuracy': 0.79888268
+ 'Error Rate': 0.20111732
+ 'True Positive Rate': 0.68115942
+ 'True Negative Rate': 0.87272727
+ 'False Positive Rate': 0.12727273
+ 'False Negative Rate': 0.31884058
+ 'Positive Predictive Value': 0.7704918
+ 'Negative Predictive Value': 0.81355932
  'Prevalence': 0.38547486
  'No Information Rate': 0.61452514
  'Total Observations': 179}
@@ -19,6 +19,6 @@ Confusion Matrix
 
 predicted  died  lived  Total
 actual                       
-died         92     18    110
-lived        23     46     69
-Total       115     64    179
+died         96     14    110
+lived        22     47     69
+Total       118     61    179

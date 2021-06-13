@@ -30,21 +30,22 @@ Feature Importance
 ==================
 
             gain_values
-Sex_female  1229.828214
-Fare         778.512020
-Age          530.907945
-Pclass_3     339.854099
-Embarked_S    84.965127
-Pclass_1      70.019561
-SibSp_1       30.431529
-Parch_0       30.173181
-Pclass_2      26.334092
-Embarked_C    22.130650
-SibSp_0       19.718654
-Sex_male      10.428376
-Parch_2        4.747721
-SibSp_2        2.225772
-Parch_1        1.448367
+Sex_female  1230.363783
+Fare         804.141493
+Age          566.818670
+Pclass_3     338.854762
+Embarked_S    82.578185
+Pclass_1      77.996033
+Parch_0       31.815091
+Embarked_C    30.936285
+SibSp_1       20.451433
+Pclass_2      16.011730
+SibSp_0       15.251946
+Parch_2       13.545955
+Parch_1        5.000109
+Sex_male       4.791569
+SibSp_2        4.347567
+Embarked_Q     1.025320
 SibSp_3        0.000000
 SibSp_4        0.000000
 SibSp_8        0.000000
@@ -52,5 +53,4 @@ Parch_3        0.000000
 Parch_4        0.000000
 Parch_5        0.000000
 Parch_6        0.000000
-Embarked_Q     0.000000
 SibSp_5        0.000000

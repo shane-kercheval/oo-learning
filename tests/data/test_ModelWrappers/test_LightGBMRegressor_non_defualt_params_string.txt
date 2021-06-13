@@ -29,31 +29,31 @@ Feature Importance
 ==================
 
                gain_values
-age           2.841396e+06
-cement        1.570344e+06
-water         1.249087e+06
-superplastic  5.174182e+05
-fineagg       3.261687e+05
-ash           3.191734e+05
-slag          2.578049e+05
-coarseagg     1.308803e+05
+age           3.175516e+06
+cement        2.028424e+06
+water         1.281708e+06
+superplastic  4.675518e+05
+ash           3.463601e+05
+fineagg       2.856841e+05
+slag          2.577825e+05
+coarseagg     9.661717e+04
 
 Training Evaluator
 ==================
 
-{'Mean Absolute Error (MAE)': 6.9716875
- 'Mean Squared Error (MSE)': 75.78868057
- 'Root Mean Squared Error (RMSE)': 8.70566945
- 'RMSE to Standard Deviation of Target': 0.51920717
- 'R Squared': 0.73042392
+{'Mean Absolute Error (MAE)': 6.55686219
+ 'Mean Squared Error (MSE)': 66.92931393
+ 'Root Mean Squared Error (RMSE)': 8.18103379
+ 'RMSE to Standard Deviation of Target': 0.48791783
+ 'R Squared': 0.76193619
  'Total Observations': 824}
 
 Holdout Evaluator
 =================
 
-{'Mean Absolute Error (MAE)': 6.96726124
- 'Mean Squared Error (MSE)': 83.19081314
- 'Root Mean Squared Error (RMSE)': 9.1208998
- 'RMSE to Standard Deviation of Target': 0.55562455
- 'R Squared': 0.69128135
+{'Mean Absolute Error (MAE)': 6.68763979
+ 'Mean Squared Error (MSE)': 77.07849588
+ 'Root Mean Squared Error (RMSE)': 8.77943597
+ 'RMSE to Standard Deviation of Target': 0.53482335
+ 'R Squared': 0.71396398
  'Total Observations': 206}

@@ -1,5 +1,5 @@
-{'AUC ROC': 0.82318841
- 'AUC Precision/Recall': 0.78739775
+{'AUC ROC': 0.82615283
+ 'AUC Precision/Recall': 0.78114868
  'Kappa': 0.51791005
  'F1 Score': 0.69230769
  'Two-Class Accuracy': 0.77653631
