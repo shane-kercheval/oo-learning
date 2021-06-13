@@ -3,13 +3,13 @@ from setuptools import find_packages
 setup(
     name='oolearning',
     packages=find_packages(),
-    version='0.3.5',
+    version='0.3.6',
     description='A simple machine learning library based on Object Oriented design principles.',
     author='Shane Kercheval',
     author_email='shane.kercheval@gmail.com',
     license='MIT',
     url='https://github.com/shane-kercheval/oo-learning',
-    download_url='https://github.com/shane-kercheval/oo-learning/archive/0.3.5.tar.gz',
+    download_url='https://github.com/shane-kercheval/oo-learning/archive/0.3.6.tar.gz',
     keywords=['machine-learning', 'data-science', 'object-oriented-programming', 'data-analysis'],
     classifiers=[
         # How mature is this project? Common values are
@@ -19,16 +19,17 @@ setup(
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python :: 3'],
     install_requires=[
-        'hdbscan==0.8.15',
-        'xgboost==0.71',
-        'seaborn>=0.8.1',
-        'scipy>=1.0.0',
-        'mock>=2.0.0',
-        'dill>=0.2.7.1',
-        'scikit-learn>=0.19.1',
-        'statsmodels>=0.8.0',
-        'matplotlib>=2.1.2',
-        'numpy>=1.14.0',
-        'pandas>=0.22.0'
+        'cython>=0.29.23',
+        'hdbscan>=0.8.27',
+        'xgboost>=1.4.2',
+        'seaborn>=0.11.1',
+        'scipy>=1.6.2',
+        'mock>=4.0.3',
+        'dill>=0.3.3',
+        'scikit-learn>=0.24.2',
+        'statsmodels>=0.12.2',
+        'matplotlib>=3.3.4',
+        'numpy>=1.20.2',
+        'pandas>=1.2.4'
     ],
 )
