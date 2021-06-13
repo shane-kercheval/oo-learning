@@ -3,41 +3,49 @@ XGBoostClassifier
 Hyper-Parameters
 ================
 
-{'base_score': 0.5
+{'objective': 'binary:logistic'
+ 'use_label_encoder': True
+ 'base_score': 0.5
  'booster': 'gbtree'
  'colsample_bylevel': 1.0
+ 'colsample_bynode': 1
  'colsample_bytree': 1.0
  'gamma': 0.0
+ 'gpu_id': -1
+ 'importance_type': 'gain'
+ 'interaction_constraints': ''
  'learning_rate': 0.1
  'max_delta_step': 0
  'max_depth': 3
  'min_child_weight': 1
- 'missing': None
+ 'missing': nan
+ 'monotone_constraints': '()'
  'n_estimators': 1000
  'n_jobs': 1
- 'nthread': None
- 'objective': 'binary:logistic'
+ 'num_parallel_tree': 1
  'random_state': 42
  'reg_alpha': 0.0
  'reg_lambda': 1.0
  'scale_pos_weight': 1.0
- 'seed': None
- 'silent': True
- 'subsample': 1.0}
+ 'subsample': 1.0
+ 'tree_method': 'exact'
+ 'validate_parameters': 1
+ 'verbosity': 0
+ 'nthread': 1}
 
 Feature Importance
 ==================
 
             gain_values
-Sex_female    57.955865
+Sex_female    57.955866
 Pclass_3      12.182291
-Pclass_1       9.789940
+Pclass_1       9.789942
 Age            7.436421
 Embarked_S     6.556526
 Fare           4.107352
-Embarked_C     3.232783
+Embarked_C     3.232784
 SibSp_1        0.164254
-Embarked_Q     0.078342
+Embarked_Q     0.078341
 
 Training Evaluator
 ==================

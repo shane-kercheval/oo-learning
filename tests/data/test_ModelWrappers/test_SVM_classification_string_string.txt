@@ -15,20 +15,13 @@ Hyper-Parameters
  'base_estimator__random_state': 42
  'base_estimator__tol': 0.0001
  'base_estimator__verbose': 0
- 'base_estimator': LinearSVC(C=1.0
- class_weight=None
- dual=True
- fit_intercept=False,
-          intercept_scaling=1
+ 'base_estimator': LinearSVC(fit_intercept=False
  loss='hinge'
- max_iter=1000
- multi_class='ovr',
-          penalty='l2'
- random_state=42
- tol=0.0001
- verbose=0)
- 'cv': 'warn'
- 'method': 'sigmoid'}
+ random_state=42)
+ 'cv': None
+ 'ensemble': True
+ 'method': 'sigmoid'
+ 'n_jobs': None}
 
 Features Trained
 ================
@@ -61,18 +54,18 @@ Features Trained
 Training Evaluator
 ==================
 
-{'AUC ROC': 0.86006325
- 'AUC Precision/Recall': 0.83095513
- 'Kappa': 0.58078692
- 'F1 Score': 0.73151751
+{'AUC ROC': 0.8609644
+ 'AUC Precision/Recall': 0.83393883
+ 'Kappa': 0.57959592
+ 'F1 Score': 0.72941176
  'Two-Class Accuracy': 0.80617978
  'Error Rate': 0.19382022
- 'True Positive Rate': 0.68864469
- 'True Negative Rate': 0.87927107
- 'False Positive Rate': 0.12072893
- 'False Negative Rate': 0.31135531
- 'Positive Predictive Value': 0.78008299
- 'Negative Predictive Value': 0.81953291
+ 'True Positive Rate': 0.68131868
+ 'True Negative Rate': 0.88382688
+ 'False Positive Rate': 0.11617312
+ 'False Negative Rate': 0.31868132
+ 'Positive Predictive Value': 0.78481013
+ 'Negative Predictive Value': 0.81684211
  'Prevalence': 0.38342697
  'No Information Rate': 0.61657303
  'Total Observations': 712}
@@ -82,25 +75,25 @@ Confusion Matrix
 
 predicted  died  lived  Total
 actual                       
-died        386     53    439
-lived        85    188    273
-Total       471    241    712
+died        388     51    439
+lived        87    186    273
+Total       475    237    712
 
 Holdout Evaluator
 =================
 
-{'AUC ROC': 0.84044796
- 'AUC Precision/Recall': 0.78552583
- 'Kappa': 0.57226736
- 'F1 Score': 0.72
- 'Two-Class Accuracy': 0.80446927
- 'Error Rate': 0.19553073
- 'True Positive Rate': 0.65217391
+{'AUC ROC': 0.83504611
+ 'AUC Precision/Recall': 0.79153086
+ 'Kappa': 0.53167172
+ 'F1 Score': 0.68852459
+ 'Two-Class Accuracy': 0.7877095
+ 'Error Rate': 0.2122905
+ 'True Positive Rate': 0.60869565
  'True Negative Rate': 0.9
  'False Positive Rate': 0.1
- 'False Negative Rate': 0.34782609
- 'Positive Predictive Value': 0.80357143
- 'Negative Predictive Value': 0.80487805
+ 'False Negative Rate': 0.39130435
+ 'Positive Predictive Value': 0.79245283
+ 'Negative Predictive Value': 0.78571429
  'Prevalence': 0.38547486
  'No Information Rate': 0.61452514
  'Total Observations': 179}
@@ -111,5 +104,5 @@ Confusion Matrix
 predicted  died  lived  Total
 actual                       
 died         99     11    110
-lived        24     45     69
-Total       123     56    179
+lived        27     42     69
+Total       126     53    179

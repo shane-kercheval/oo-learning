@@ -10,7 +10,7 @@ Hyper-Parameters
  'intercept_scaling': 1
  'l1_ratio': None
  'max_iter': 100
- 'multi_class': 'warn'
+ 'multi_class': 'auto'
  'n_jobs': None
  'penalty': 'l2'
  'random_state': 42

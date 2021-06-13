@@ -3,38 +3,46 @@ XGBoostClassifier
 Hyper-Parameters
 ================
 
-{'base_score': 0.5
+{'objective': 'binary:logistic'
+ 'use_label_encoder': True
+ 'base_score': 0.5
  'booster': 'gbtree'
  'colsample_bylevel': 1.0
+ 'colsample_bynode': 1
  'colsample_bytree': 1.0
  'gamma': 0.0
+ 'gpu_id': -1
+ 'importance_type': 'gain'
+ 'interaction_constraints': ''
  'learning_rate': 0.1
  'max_delta_step': 0
  'max_depth': 3
  'min_child_weight': 1
- 'missing': None
+ 'missing': nan
+ 'monotone_constraints': '()'
  'n_estimators': 100
  'n_jobs': 1
- 'nthread': None
- 'objective': 'binary:logistic'
+ 'num_parallel_tree': 1
  'random_state': 42
  'reg_alpha': 0.0
  'reg_lambda': 1.0
  'scale_pos_weight': 1.0
- 'seed': None
- 'silent': True
- 'subsample': 1.0}
+ 'subsample': 1.0
+ 'tree_method': 'exact'
+ 'validate_parameters': 1
+ 'verbosity': 0
+ 'nthread': 1}
 
 Feature Importance
 ==================
 
             gain_values
-Sex_female    28.414794
+Sex_female    28.414795
 Pclass_3       8.813900
-Pclass_1       5.065095
+Pclass_1       5.065096
 Embarked_S     3.120648
 Age            2.272749
-Fare           2.211373
+Fare           2.211374
 Embarked_C     1.716742
 Parch_2        1.182637
 SibSp_3        1.147254
@@ -43,8 +51,8 @@ Parch_0        1.051860
 Pclass_2       1.047570
 Parch_1        0.885892
 SibSp_0        0.826098
-SibSp_1        0.627491
-Embarked_Q     0.078342
+SibSp_1        0.627490
+Embarked_Q     0.078341
 
 Training Evaluator
 ==================

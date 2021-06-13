@@ -4,12 +4,13 @@ Hyper-Parameters
 ================
 
 {'base_estimator__C': 1.0
+ 'base_estimator__break_ties': False
  'base_estimator__cache_size': 200
  'base_estimator__class_weight': None
  'base_estimator__coef0': 0.0
  'base_estimator__decision_function_shape': 'ovr'
  'base_estimator__degree': 3
- 'base_estimator__gamma': 'auto_deprecated'
+ 'base_estimator__gamma': 'scale'
  'base_estimator__kernel': 'poly'
  'base_estimator__max_iter': -1
  'base_estimator__probability': False
@@ -17,22 +18,12 @@ Hyper-Parameters
  'base_estimator__shrinking': True
  'base_estimator__tol': 0.001
  'base_estimator__verbose': False
- 'base_estimator': SVC(C=1.0
- cache_size=200
- class_weight=None
- coef0=0.0,
-    decision_function_shape='ovr'
- degree=3
- gamma='auto_deprecated',
-    kernel='poly'
- max_iter=-1
- probability=False
- random_state=42,
-    shrinking=True
- tol=0.001
- verbose=False)
- 'cv': 'warn'
- 'method': 'sigmoid'}
+ 'base_estimator': SVC(kernel='poly'
+ random_state=42)
+ 'cv': None
+ 'ensemble': True
+ 'method': 'sigmoid'
+ 'n_jobs': None}
 
 Features Trained
 ================
@@ -65,18 +56,18 @@ Features Trained
 Training Evaluator
 ==================
 
-{'AUC ROC': 0.86012166
- 'AUC Precision/Recall': 0.82347381
- 'Kappa': 0.58206373
- 'F1 Score': 0.71520343
- 'Two-Class Accuracy': 0.81320225
- 'Error Rate': 0.18679775
- 'True Positive Rate': 0.61172161
- 'True Negative Rate': 0.93849658
- 'False Positive Rate': 0.06150342
- 'False Negative Rate': 0.38827839
- 'Positive Predictive Value': 0.86082474
- 'Negative Predictive Value': 0.7953668
+{'AUC ROC': 0.89996412
+ 'AUC Precision/Recall': 0.88285069
+ 'Kappa': 0.66628253
+ 'F1 Score': 0.7833002
+ 'Two-Class Accuracy': 0.84691011
+ 'Error Rate': 0.15308989
+ 'True Positive Rate': 0.72161172
+ 'True Negative Rate': 0.92482916
+ 'False Positive Rate': 0.07517084
+ 'False Negative Rate': 0.27838828
+ 'Positive Predictive Value': 0.85652174
+ 'Negative Predictive Value': 0.84232365
  'Prevalence': 0.38342697
  'No Information Rate': 0.61657303
  'Total Observations': 712}
@@ -86,25 +77,25 @@ Confusion Matrix
 
 predicted    0    1  Total
 actual                    
-0          412   27    439
-1          106  167    273
-Total      518  194    712
+0          406   33    439
+1           76  197    273
+Total      482  230    712
 
 Holdout Evaluator
 =================
 
-{'AUC ROC': 0.82964427
- 'AUC Precision/Recall': 0.79252853
- 'Kappa': 0.52662426
- 'F1 Score': 0.66055046
- 'Two-Class Accuracy': 0.79329609
- 'Error Rate': 0.20670391
- 'True Positive Rate': 0.52173913
- 'True Negative Rate': 0.96363636
- 'False Positive Rate': 0.03636364
- 'False Negative Rate': 0.47826087
- 'Positive Predictive Value': 0.9
- 'Negative Predictive Value': 0.76258993
+{'AUC ROC': 0.8259552
+ 'AUC Precision/Recall': 0.81494403
+ 'Kappa': 0.60561829
+ 'F1 Score': 0.73770492
+ 'Two-Class Accuracy': 0.82122905
+ 'Error Rate': 0.17877095
+ 'True Positive Rate': 0.65217391
+ 'True Negative Rate': 0.92727273
+ 'False Positive Rate': 0.07272727
+ 'False Negative Rate': 0.34782609
+ 'Positive Predictive Value': 0.8490566
+ 'Negative Predictive Value': 0.80952381
  'Prevalence': 0.38547486
  'No Information Rate': 0.61452514
  'Total Observations': 179}
@@ -114,6 +105,6 @@ Confusion Matrix
 
 predicted    0   1  Total
 actual                   
-0          106   4    110
-1           33  36     69
-Total      139  40    179
+0          102   8    110
+1           24  45     69
+Total      126  53    179
