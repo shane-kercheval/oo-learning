@@ -144,8 +144,8 @@ class TestHelper:
 
     @staticmethod
     def ensure_all_values_equal_from_file(file, expected_dataframe, check_column_types: bool = True):
-        with open(file, 'wb') as output:
-            pickle.dump(expected_dataframe, output, pickle.HIGHEST_PROTOCOL)
+        # with open(file, 'wb') as output:
+        #     pickle.dump(expected_dataframe, output, pickle.HIGHEST_PROTOCOL)
         with open(file, 'rb') as saved_object:
             found_dataframe = pickle.load(saved_object)
             assert TestHelper.ensure_all_values_equal(data_frame1=found_dataframe,
