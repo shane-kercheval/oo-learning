@@ -2882,7 +2882,7 @@ class ModelWrapperTests(TimerTestCase):
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
             assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
-            assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'silent': True, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': 1, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
+            assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 100, 'verbosity': 0, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': 1, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': np.nan}  # noqa
 
             TestHelper.assert_hyper_params_match(hp, fitter.model)
             TestHelper.save_string(fitter,
@@ -2912,7 +2912,7 @@ class ModelWrapperTests(TimerTestCase):
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
             assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
-            assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 1000, 'silent': True, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': 1, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
+            assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 1000, 'verbosity': 0, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': 1, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': np.nan}  # noqa
             TestHelper.assert_hyper_params_match(hp, fitter.model)
             TestHelper.save_string(fitter,
                                    'data/test_ModelWrappers/test_XGBoostClassifier_early_stopping2_string.txt')  # noqa
@@ -2949,7 +2949,7 @@ class ModelWrapperTests(TimerTestCase):
             assert isinstance(fitter.training_evaluator, TwoClassProbabilityEvaluator)
             assert isinstance(fitter.holdout_evaluator, TwoClassProbabilityEvaluator)
             assert fitter.model.feature_names == ['Age', 'Fare', 'Pclass_1', 'Pclass_2', 'Pclass_3', 'Sex_female', 'Sex_male', 'SibSp_0', 'SibSp_1', 'SibSp_2', 'SibSp_3', 'SibSp_4', 'SibSp_5', 'SibSp_8', 'Parch_0', 'Parch_1', 'Parch_2', 'Parch_3', 'Parch_4', 'Parch_5', 'Parch_6', 'Embarked_C', 'Embarked_Q', 'Embarked_S']  # noqa
-            assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 1000, 'silent': True, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': 1, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': None}  # noqa
+            assert fitter.model.hyper_params.params_dict == {'max_depth': 3, 'learning_rate': 0.1, 'n_estimators': 1000, 'verbosity': 0, 'objective': 'binary:logistic', 'booster': 'gbtree', 'n_jobs': 1, 'nthread': 1, 'gamma': 0, 'min_child_weight': 1, 'max_delta_step': 0, 'subsample': 1, 'colsample_bytree': 1, 'colsample_bylevel': 1, 'reg_alpha': 0, 'reg_lambda': 1, 'scale_pos_weight': 1, 'base_score': 0.5, 'missing': np.nan}  # noqa
             TestHelper.assert_hyper_params_match(hp, fitter.model)
             TestHelper.save_string(fitter,
                                    'data/test_ModelWrappers/test_XGBoostClassifier_early_stopping3_string.txt')  # noqa
@@ -3133,7 +3133,7 @@ class ModelWrapperTests(TimerTestCase):
         # [1 if x > 0.5 else 0 for x in predictions_random_forest[1]]
         # [1 if x > 0.5 else 0 for x in model_aggregator.predict(data_x=holdout_x)[1]]
         # list(holdout_y)
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.8075098814229249)  # noqa
+        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.7752305665349144)  # noqa
 
     def test_ModelAggregator_soft_median(self):
         data = TestHelper.get_titanic_data()
@@ -3968,10 +3968,10 @@ class ModelWrapperTests(TimerTestCase):
         # `predict_callback` should be called TWICE (once for training eval & once for holdout eval)
         assert predict_callback_called == ['predict_called_train', 'predict_called_holdout']
 
-        expected_training_evaluator_metrics = {'Mean Absolute Error (MAE)': 1979.2996470890034, 'Mean Squared Error (MSE)': 13329566.751275687, 'Root Mean Squared Error (RMSE)': 3650.9679197817786, 'RMSE to Standard Deviation of Target': 0.30337929502141286, 'R Squared': 0.9079610033523106, 'Total Observations': 1070}  # noqa
-        assert all([isclose(expected_training_evaluator_metrics[key], fitter.training_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
-        expected_holdout_evaluator_metrics = {'Mean Absolute Error (MAE)': 2539.9582884513793, 'Mean Squared Error (MSE)': 22557503.13040883, 'Root Mean Squared Error (RMSE)': 4749.473984601751, 'RMSE to Standard Deviation of Target': 0.3835014712064615, 'R Squared': 0.8529266215824796, 'Total Observations': 268}  # noqa
-        assert all([isclose(expected_holdout_evaluator_metrics[key], fitter.holdout_evaluator.all_quality_metrics[key]) for key in fitter.training_evaluator.all_quality_metrics.keys()])  # noqa
+        TestHelper.save_string(fitter.training_evaluator,
+                               'data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations_training_evaluator.txt')  # noqa
+        TestHelper.save_string(fitter.holdout_evaluator,
+                               'data/test_ModelWrappers/test_ModelStacker_Regression_no_stacker_transformations_holdout_evaluator.txt')  # noqa
 
         assert [x.description for x in model_stacker._base_models] == ['LinearRegressor_polynomial_2', 'CartDecisionTreeRegressor', 'GradientBoostingRegressor']  # noqa
         # test resample data
