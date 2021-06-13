@@ -106,11 +106,11 @@ class XGBoostLinearHP(HyperParamsBase):
         self._params_dict = dict(max_depth=3,
                                  learning_rate=0.1,
                                  n_estimators=n_estimators,
-                                 silent=True,
+                                 verbosity=0,
                                  objective=objective.value,
                                  booster='gblinear',
                                  n_jobs=1,
-                                 nthread=None,
+                                 nthread=1,
                                  gamma=0.0,
                                  min_child_weight=1,
                                  max_delta_step=0,
@@ -121,7 +121,7 @@ class XGBoostLinearHP(HyperParamsBase):
                                  reg_lambda=reg_lambda,
                                  scale_pos_weight=1.0,
                                  base_score=0.5,
-                                 missing=None)
+                                 missing=np.nan)
 
 
 # noinspection SpellCheckingInspection
@@ -131,9 +131,9 @@ class XGBoostTreeHP(HyperParamsBase):
                  max_depth: int = 3,
                  learning_rate: float = 0.1,
                  n_estimators: int = 100,
-                 silent: bool = True,
+                 verbosity: int = 0,
                  n_jobs: int = 1,
-                 nthread: int = None,
+                 nthread: int = 1,
                  gamma: float = 0.0,
                  min_child_weight: int = 1,
                  max_delta_step: int = 0,
@@ -144,7 +144,7 @@ class XGBoostTreeHP(HyperParamsBase):
                  reg_lambda: float = 1.0,
                  scale_pos_weight: float = 1.0,
                  base_score: float = 0.5,
-                 missing: float = None):
+                 missing: float = np.nan):
         """
         See
             https://www.hackerearth.com/practice/machine-learning/machine-learning-algorithms/beginners-tutorial-on-xgboost-parameter-tuning-r/tutorial/
@@ -155,7 +155,7 @@ class XGBoostTreeHP(HyperParamsBase):
         self._params_dict = dict(max_depth=max_depth,
                                  learning_rate=learning_rate,
                                  n_estimators=n_estimators,
-                                 silent=silent,
+                                 verbosity=verbosity,
                                  objective=objective.value,
                                  booster='gbtree',
                                  n_jobs=n_jobs,
@@ -269,7 +269,7 @@ class XGBoostRegressor(SklearnPredictArrayMixin, XGBoostBase):
         model = XGBRegressor(max_depth=param_dict['max_depth'],
                              learning_rate=param_dict['learning_rate'],
                              n_estimators=param_dict['n_estimators'],
-                             silent=param_dict['silent'],
+                             verbosity=param_dict['verbosity'],
                              objective=param_dict['objective'],
                              booster=param_dict['booster'],
                              n_jobs=param_dict['n_jobs'],
@@ -316,7 +316,7 @@ class XGBoostClassifier(SklearnPredictProbabilityMixin, XGBoostBase):
         model = XGBClassifier(max_depth=param_dict['max_depth'],
                               learning_rate=param_dict['learning_rate'],
                               n_estimators=param_dict['n_estimators'],
-                              silent=param_dict['silent'],
+                              verbosity=param_dict['verbosity'],
                               objective=param_dict['objective'],
                               booster=param_dict['booster'],
                               n_jobs=param_dict['n_jobs'],
@@ -333,6 +333,7 @@ class XGBoostClassifier(SklearnPredictProbabilityMixin, XGBoostBase):
                               base_score=param_dict['base_score'],
                               random_state=self._seed,
                               # seed=param_dict['seed'],
+                              use_label_encoder=False,
                               missing=param_dict['missing'])
 
         return self.xgb_fit(model=model, data_x=data_x, data_y=data_y)

@@ -30,7 +30,6 @@ class AdaBoostClassifierHP(HyperParamsBase):
                  max_leaf_nodes: Union[int, None] = None,
                  min_impurity_decrease: float = 0.0,
                  class_weight: Union[dict, List[dict], str, None] = None,
-                 presort: bool = False,
                  ):
         """
         for more info, see
@@ -54,7 +53,6 @@ class AdaBoostClassifierHP(HyperParamsBase):
             max_leaf_nodes=max_leaf_nodes,
             min_impurity_decrease=min_impurity_decrease,
             class_weight=class_weight,
-            presort=presort,
         )
 
 
@@ -83,7 +81,6 @@ class AdaBoostClassifier(SklearnPredictProbabilityMixin, ModelWrapperBase):
                                           max_leaf_nodes=param_dict['max_leaf_nodes'],
                                           min_impurity_decrease=param_dict['min_impurity_decrease'],
                                           class_weight=param_dict['class_weight'],
-                                          presort=param_dict['presort'],
                                           random_state=self._seed),
 
                                     n_estimators=param_dict['n_estimators'],
@@ -112,7 +109,6 @@ class AdaBoostRegressorHP(HyperParamsBase):
                  max_features: Union[int, float, str, None] = None,
                  max_leaf_nodes: Union[int, None] = None,
                  min_impurity_decrease: float = 0.0,
-                 presort: bool = False,
                  ):
         """
         for more info, see
@@ -135,7 +131,6 @@ class AdaBoostRegressorHP(HyperParamsBase):
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             min_impurity_decrease=min_impurity_decrease,
-            presort=presort,
         )
 
 
@@ -163,7 +158,6 @@ class AdaBoostRegressor(SklearnPredictArrayMixin, ModelWrapperBase):
                                         max_features=param_dict['max_features'],
                                         max_leaf_nodes=param_dict['max_leaf_nodes'],
                                         min_impurity_decrease=param_dict['min_impurity_decrease'],
-                                        presort=param_dict['presort'],
                                         random_state=self._seed),
                                    n_estimators=param_dict['n_estimators'],
                                    learning_rate=param_dict['learning_rate'],

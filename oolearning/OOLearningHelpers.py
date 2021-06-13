@@ -16,11 +16,11 @@ class OOLearningHelpers:
 
     @staticmethod
     def is_series_numeric(variable: pd.Series):
-        return variable.dtype in OOLearningHelpers._numeric_dtypes
+        return variable.dtype.type in OOLearningHelpers._numeric_dtypes
 
     @staticmethod
     def is_series_dtype_numeric(dtype: np.dtype):
-        return dtype in OOLearningHelpers._numeric_dtypes
+        return dtype.type in OOLearningHelpers._numeric_dtypes
 
     @staticmethod
     def is_series_boolean(variable: pd.Series):

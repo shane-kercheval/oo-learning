@@ -268,7 +268,9 @@ class ExploreDatasetBase(metaclass=ABCMeta):
         # values to what pandas expects.
         actual_to_expected_mapping = dict(zip(mapping.keys(), np.arange(len(mapping))))
         codes = pd.Series(self._dataset[feature]).map(actual_to_expected_mapping).fillna(-1)
-        self._dataset[feature] = pd.Categorical.from_codes(codes, mapping.values(), ordered=ordered)
+        self._dataset[feature] = pd.Categorical.from_codes(codes.astype(int),
+                                                           mapping.values(),
+                                                           ordered=ordered)
 
     def set_level_order(self, categoric_feature: str, levels: list):
         """

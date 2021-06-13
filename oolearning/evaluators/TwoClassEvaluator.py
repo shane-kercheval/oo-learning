@@ -142,8 +142,11 @@ class TwoClassEvaluator(EvaluatorBase):
                             ha='center')
 
         plt.scatter(x_values, self_y_values, color='g', alpha=0.7, marker='o', s=75)
-        plt.xticks(np.arange(metrics_dataframe.shape[1]+1),
-                   [''] + list(self.all_quality_metrics.keys()),
+
+        metrics_list = list(self.all_quality_metrics.keys())
+        metrics_list.remove('Total Observations')
+        plt.xticks(ticks=np.arange(metrics_dataframe.shape[1]+1),
+                   labels=[''] + metrics_list,
                    rotation=17,
                    ha='right')
         plt.yticks(np.linspace(start=0, stop=1, num=21))
