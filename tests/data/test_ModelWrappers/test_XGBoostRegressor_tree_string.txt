@@ -3,28 +3,34 @@ XGBoostRegressor
 Hyper-Parameters
 ================
 
-{'base_score': 0.5
+{'objective': 'reg:linear'
+ 'base_score': 0.5
  'booster': 'gbtree'
  'colsample_bylevel': 1.0
+ 'colsample_bynode': 1
  'colsample_bytree': 1.0
  'gamma': 0.0
+ 'gpu_id': -1
  'importance_type': 'gain'
+ 'interaction_constraints': ''
  'learning_rate': 0.1
  'max_delta_step': 0
  'max_depth': 3
  'min_child_weight': 1
- 'missing': None
+ 'missing': nan
+ 'monotone_constraints': '()'
  'n_estimators': 100
  'n_jobs': 1
- 'nthread': None
- 'objective': 'reg:linear'
+ 'num_parallel_tree': 1
  'random_state': 42
  'reg_alpha': 0.0
  'reg_lambda': 1.0
  'scale_pos_weight': 1.0
- 'seed': None
- 'silent': True
- 'subsample': 1.0}
+ 'subsample': 1.0
+ 'tree_method': 'exact'
+ 'validate_parameters': 1
+ 'verbosity': 0
+ 'nthread': 1}
 
 Features Trained
 ================
@@ -41,9 +47,9 @@ Features Trained
 Training Evaluator
 ==================
 
-{'Mean Absolute Error (MAE)': 2.86583707
- 'Mean Squared Error (MSE)': 14.91270871
- 'Root Mean Squared Error (RMSE)': 3.86169765
+{'Mean Absolute Error (MAE)': 2.86583709
+ 'Mean Squared Error (MSE)': 14.91270891
+ 'Root Mean Squared Error (RMSE)': 3.86169767
  'RMSE to Standard Deviation of Target': 0.23031211
  'R Squared': 0.94695633
  'Total Observations': 824}
@@ -51,9 +57,9 @@ Training Evaluator
 Holdout Evaluator
 =================
 
-{'Mean Absolute Error (MAE)': 3.88313587
- 'Mean Squared Error (MSE)': 26.19099478
- 'Root Mean Squared Error (RMSE)': 5.11771382
- 'RMSE to Standard Deviation of Target': 0.31175953
+{'Mean Absolute Error (MAE)': 3.88313611
+ 'Mean Squared Error (MSE)': 26.19099591
+ 'Root Mean Squared Error (RMSE)': 5.11771393
+ 'RMSE to Standard Deviation of Target': 0.31175954
  'R Squared': 0.90280599
  'Total Observations': 206}
