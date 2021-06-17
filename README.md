@@ -10,6 +10,21 @@ The power of object-oriented design means the user can easily interchange variou
 
 After model selection, if implementing the model in a production system, the user may or may not want to use a more mature library such as [scikit-learn](https://github.com/scikit-learn/scikit-learn).
 
+
+# Installing
+
+`pip install oolearning`
+
+## Mac M1
+
+- I had to run the following commands to get LightGBM and XGBoost to run on Mac with M1
+
+```
+brew install cmake libomp
+conda install lightgbm
+conda install py-xgboost
+```
+
 # Conventions / Definitions
 
 ## Conventions
