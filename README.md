@@ -27,7 +27,7 @@ conda install py-xgboost
 
 References:
 
--  [Install XGBoost and LightGBM on Apple M1 Macs](https://towardsdatascience.com/install-xgboost-and-lightgbm-on-apple-m1-macs-cb75180a2dda)
+- [Install XGBoost and LightGBM on Apple M1 Macs](https://towardsdatascience.com/install-xgboost-and-lightgbm-on-apple-m1-macs-cb75180a2dda)
 - [python - Getting this simple problem while importing Xgboost on Jupyter notebook - Stack Overflow](https://stackoverflow.com/questions/61971851/getting-this-simple-problem-while-importing-xgboost-on-jupyter-notebook)
 
 # Conventions / Definitions
