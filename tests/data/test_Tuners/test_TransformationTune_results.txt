@@ -11,6 +11,6 @@ Tuner Results
 0   2.0          EmptyTransformer  EmptyTransformer      0.866790        0.021886        0.03
 1   6.0          EmptyTransformer    PCATransformer      0.746310        0.037270        0.05
 2   1.0    CenterScaleTransformer  EmptyTransformer      0.867551        0.022435        0.03
-3   4.0    CenterScaleTransformer    PCATransformer      0.819093        0.025420        0.03
+3   4.0    CenterScaleTransformer    PCATransformer      0.818040        0.025849        0.03
 4   3.0  NormalizationTransformer  EmptyTransformer      0.866790        0.021886        0.03
-5   5.0  NormalizationTransformer    PCATransformer      0.807694        0.027816        0.03
+5   5.0  NormalizationTransformer    PCATransformer      0.806844        0.026870        0.03

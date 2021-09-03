@@ -8,8 +8,8 @@ Tuner Results
 =============
 
    rank  CenterScale vs Normalize               PCA  AUC_ROC_mean  AUC_ROC_st_dev  AUC_ROC_cv
-0   2.0    CenterScaleTransformer    PCATransformer      0.818963        0.024885        0.03
+0   2.0    CenterScaleTransformer    PCATransformer      0.818040        0.025849        0.03
 1   1.0          EmptyTransformer  EmptyTransformer      0.866790        0.021886        0.03
-2   3.0  NormalizationTransformer    PCATransformer      0.807311        0.026318        0.03
-3   4.0  NormalizationTransformer    PCATransformer      0.807311        0.026318        0.03
-4   5.0  NormalizationTransformer    PCATransformer      0.807311        0.026318        0.03
+2   3.0  NormalizationTransformer    PCATransformer      0.807087        0.027604        0.03
+3   4.0  NormalizationTransformer    PCATransformer      0.807087        0.027604        0.03
+4   5.0  NormalizationTransformer    PCATransformer      0.807087        0.027604        0.03
