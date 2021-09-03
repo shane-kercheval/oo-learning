@@ -1,3 +1,4 @@
+from importlib import reload
 import math
 import os
 import pickle
@@ -169,13 +170,14 @@ class TestHelper:
 
     @staticmethod
     def check_plot(file_name: str, get_plot_function: Callable, set_size_w_h: Union[tuple, None] = (11, 7)):
+        reload(plt)  # necessary because mtplotlib throws strange errors about alpha values
+
         def clear():
             plt.gcf().clear()
             plt.cla()
             plt.clf()
             plt.close()
 
-        clear()
         file = os.path.join(os.getcwd(), TestHelper.ensure_test_directory(file_name))
         if os.path.isfile(file):
             os.remove(file)
