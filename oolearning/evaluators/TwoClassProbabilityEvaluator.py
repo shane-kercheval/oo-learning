@@ -267,7 +267,7 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         ax.set_xticklabels(labels=x_tick_labels, size=9)
         ax.set_yticklabels(labels=['{}%'.format(x) for x in range(0, 110, 10)], size=9)
         ax.set_xlim(-5, 105)
-        ax.grid(which='major', alpha=10)
+        ax.grid(which='major', alpha=1)
         for index in range(10, 110, 10):
             ax.annotate('{}%'.format(round(gain_lift_group_data.loc[index]['Model Gain'], 1)),
                         xy=(index + 1, gain_lift_group_data.loc[index]['Model Gain'] - 1),
@@ -312,7 +312,7 @@ class TwoClassProbabilityEvaluator(TwoClassEvaluator):
         ax.figure.set_size_inches(8, 8)
         ax.set_xticklabels(labels=['{}%'.format(x) for x in range(0, 110, 10)], size=9)
         ax.set_xlim(0, 105)
-        ax.grid(which='major', alpha=10)
+        ax.grid(which='major', alpha=1)
         for index in range(10, 110, 10):
             ax.annotate(round(gain_lift_group_data.loc[index]['Model Lift'], 1),
                         xy=(index - 1.5, gain_lift_group_data.loc[index]['Model Lift'] + 0.02),

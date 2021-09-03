@@ -203,6 +203,7 @@ class EvaluatorTests(TimerTestCase):
                               lambda: evaluator.plot_predicted_probability_hist())
 
     def test_TwoClassProbabilityEvaluator_plots_string_positive_class(self):
+        print(os.getcwd())
         target_variable = 'Survived'
         explore = ExploreClassificationDataset(dataset=TestHelper.get_titanic_data(),
                                                target_variable=target_variable,
@@ -222,10 +223,10 @@ class EvaluatorTests(TimerTestCase):
         trainer.train_predict_eval(data=explore.dataset, target_variable='Survived', hyper_params=RandomForestHP())
 
         TestHelper.save_string(trainer.training_evaluator,
-                               '/data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_training.txt')  # noqa
+                               'data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_training.txt')  # noqa
 
         TestHelper.save_string(trainer.holdout_evaluator,
-                               '/data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_holdout.txt')  # noqa
+                               'data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_holdout.txt')  # noqa
 
         TestHelper.check_plot('data/test_Evaluators/test_TwoClassProbabilityEvaluator_plots_string_positive_class_train_calibration.png',  # noqa
                               lambda: trainer.training_evaluator.plot_calibration())
