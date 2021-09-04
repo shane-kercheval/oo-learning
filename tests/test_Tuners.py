@@ -532,7 +532,7 @@ class TunerTests(TimerTestCase):
         TestHelper.save_string(tuner.results,
                                'data/test_Tuners/test_tuner_float_int_param_combos_string.txt')  # noqa
 
-        assert tuner.results.best_hyper_params == {'colsample_bytree': 0.7, 'subsample': 0.75, 'max_depth': 6}
+        assert tuner.results.best_hyper_params == {'colsample_bytree': 0.7, 'subsample': 1.0, 'max_depth': 6}
         assert isinstance(tuner.results.best_hyper_params['colsample_bytree'], float)
         assert isinstance(tuner.results.best_hyper_params['subsample'], float)
         # bug fix where this was changed to a float because we were using .iloc
@@ -570,7 +570,7 @@ class TunerTests(TimerTestCase):
             assert TestHelper.ensure_all_values_equal(data_frame1=tune_results.sorted_best_models,
                                                       data_frame2=tuner.results.sorted_best_models)
 
-        assert all(tuner.results.sorted_best_models.index.values == [0, 1, 3, 2, 4, 6, 5, 7])
+        assert all(tuner.results.sorted_best_models.index.values == [2, 0, 1, 4, 6, 3, 5, 7])
 
     def test_tuner_with_no_hyper_params(self):
         data = TestHelper.get_cement_data()

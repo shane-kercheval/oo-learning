@@ -504,7 +504,7 @@ class BayesianOptimizationTests(TimerTestCase):
                     hyper_params=hyper_params)
         holdout_predictions = model.predict(data_x=transformed_holdout_data)
         score_value = RmseScore().calculate(actual_values=holdout_y, predicted_values=holdout_predictions)
-        assert score_value == 10.001116248623699
+        assert round(score_value, 6) == 10.001116
 
     def test_BayesianHyperOptModelTuner_Transformations_Classification_UtilityFunction(self):
         data = TestHelper.get_titanic_data()

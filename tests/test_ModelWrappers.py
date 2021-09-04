@@ -3067,9 +3067,9 @@ class ModelWrapperTests(TimerTestCase):
         died_averages = np.mean([predictions_random_forest[0].values, predictions_decision_tree[0].values, predictions_adaboost[0].values], axis=0)  # noqa
         survived_averages = np.mean([predictions_random_forest[1].values, predictions_decision_tree[1].values, predictions_adaboost[1].values], axis=0)  # noqa
 
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=predictions_random_forest[1]), 0.8230566534914362)  # noqa
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_decision_tree.predict(data_x=holdout_x)[1]), 0.772463768115942)  # noqa
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_adaboost.predict(data_x=holdout_x)[1]), 0.7812252964426878)  # noqa
+        assert round(roc_auc_score(y_true=holdout_y, y_score=predictions_random_forest[1]), 2) == 0.82
+        assert round(roc_auc_score(y_true=holdout_y, y_score=model_decision_tree.predict(data_x=holdout_x)[1]), 2) == 0.77  # noqa
+        assert round(roc_auc_score(y_true=holdout_y, y_score=model_adaboost.predict(data_x=holdout_x)[1]), 2) == 0.79  # noqa
 
         ######################################################################################################
         # VotingStrategy.SOFT
@@ -3106,7 +3106,7 @@ class ModelWrapperTests(TimerTestCase):
         # make sure we are getting the correct averages back
         assert all([isclose(x, y) for x, y in zip(voting_predictions[0], died_averages)])
         assert all([isclose(x, y) for x, y in zip(voting_predictions[1], survived_averages)])
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.8075098814229249)  # noqa
+        assert round(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 2) == 0.81  # noqa
 
         ######################################################################################################
         # VotingStrategy.HARD
@@ -3133,7 +3133,7 @@ class ModelWrapperTests(TimerTestCase):
         # [1 if x > 0.5 else 0 for x in predictions_random_forest[1]]
         # [1 if x > 0.5 else 0 for x in model_aggregator.predict(data_x=holdout_x)[1]]
         # list(holdout_y)
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.7752305665349144)  # noqa
+        assert round(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 3) == 0.775  # noqa
 
     def test_ModelAggregator_soft_median(self):
         data = TestHelper.get_titanic_data()
@@ -3164,9 +3164,9 @@ class ModelWrapperTests(TimerTestCase):
         survived_averages = np.median([predictions_random_forest[1].values, predictions_decision_tree[1].values,  # noqa
                                        predictions_adaboost[1].values], axis=0)
 
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=predictions_random_forest[1]), 0.8230566534914362)  # noqa
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_decision_tree.predict(data_x=holdout_x)[1]), 0.772463768115942)  # noqa
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_adaboost.predict(data_x=holdout_x)[1]), 0.7812252964426878)  # noqa
+        assert round(roc_auc_score(y_true=holdout_y, y_score=predictions_random_forest[1]), 2) == 0.82
+        assert round(roc_auc_score(y_true=holdout_y, y_score=model_decision_tree.predict(data_x=holdout_x)[1]), 2) == 0.77  # noqa
+        assert round(roc_auc_score(y_true=holdout_y, y_score=model_adaboost.predict(data_x=holdout_x)[1]), 2) == 0.79  # noqa
 
         ######################################################################################################
         # VotingStrategy.SOFT
@@ -3199,7 +3199,7 @@ class ModelWrapperTests(TimerTestCase):
         # make sure we are getting the correct averages back
         assert all([isclose(x, y) for x, y in zip(voting_predictions[0], died_averages)])
         assert all([isclose(x, y) for x, y in zip(voting_predictions[1], survived_averages)])
-        assert isclose(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 0.800395256916996)  # noqa
+        assert round(roc_auc_score(y_true=holdout_y, y_score=model_aggregator.predict(data_x=holdout_x)[1]), 2) == 0.8  # noqa
 
     def test_ModelAggregator_multi_class(self):
         data = TestHelper.get_iris_data()

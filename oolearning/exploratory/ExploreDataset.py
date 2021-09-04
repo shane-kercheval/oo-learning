@@ -111,5 +111,5 @@ class ExploreDataset(ExploreDatasetBase):
     def compare_numeric_boxplot(self, column: str, other: pd.DataFrame):
         x = [self.dataset[column].values,
              other[column].values]
-        plt.boxplot(x, labels=['self', 'other'], whis='range')
+        plt.boxplot(x, labels=['self', 'other'])
         plt.title(column)
