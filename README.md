@@ -1,3 +1,5 @@
+:no_entry: [DEPRECATED] 
+
 # oo-learning
 
 **`oo-learning`** is a Python machine learning library based on Object Oriented design principles.
